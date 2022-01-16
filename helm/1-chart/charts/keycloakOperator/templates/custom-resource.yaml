@@ -4,7 +4,6 @@ kind: Keycloak
 metadata:
   name: {{ .Values.custom_resource.name }}
   annotations:
-    "helm.sh/hook": "post-install"
   namespace: {{ .Release.Namespace }}
   labels:
    app: {{ .Values.custom_resource.name }}
