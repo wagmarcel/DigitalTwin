@@ -14,4 +14,9 @@ spec:
     enabled: {{ .Values.custom_resource.externalAccess.enabled }}
   externalDatabase:
     enabled: {{ .Values.custom_resource.externalDatabase.enabled }}
+  keycloakDeploymentSpec:
+    experimental:
+      env:
+      - name: DB_ADDR
+        value: {{ .Values.keycloak_db.stringData.POSTGRES_EXTERNAL_ADDRESS}}
 {{ end }}
