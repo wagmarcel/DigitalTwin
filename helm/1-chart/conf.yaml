@@ -28,3 +28,16 @@ scorpioBroker:
     queryManagerSecret: notneeded
     subscriptionManagerSecret: notneeded
     registryManagerSecret: notneeded
+alerta:
+  alertaConfig:
+    DATABASE_URL = "postgresql://ngb:postgres@acid-minimal-cluster.digital-twin.svc.cluster.local:5432/monitoring"
+  alertaConfigSercrets:
+    OAUTH2_CLIENT_SECRET: hN12DT7LdfmFpwktGyDYn7m4IAIFhyzH
+    OAUTH2_CLIENT_ID: "alerta-ui"
+    KEYCLOAK_URL: http://keycloak-discovery:8080
+    KEYCLOAK_REALM: alerta
+    AUTH_PROVIDER: 'keycloak'
+    ALLOWED_KEYCLOAK_ROLES: ["admin", "user"]
+    AUTH_REQUIRED: "True"
+    SIGNUP_ENABLED: "False"
+    OIDC_LOGOUT_URL: "http://keycloak-discovery:8080/auth/realms/alerta/protocol/openid-connect/logout"
