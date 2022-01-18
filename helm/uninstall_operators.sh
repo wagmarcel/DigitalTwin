@@ -9,14 +9,16 @@ printf "\033[1mInstalling Zalando postgres-operator\n"
 printf -- "------------------------\033[0m\n"
 
 kubectl -n {NAMESPACE} delete subscription/postgres-operator subscription/keycloak-operator subscription/strimzi-operator operatorgroup/mygroup catalogsource/olm
+kubectl -n operators delete subscription/cert-manager
 
 printf "\n"
 printf "\033[1mUnInstalling OLM\n"
 printf -- "------------------------\033[0m\n"
 export OLM_RELEASE=v0.20.0
-kubectl delete apiservices.apiregistration.k8s.io v1.packages.operators.coreos.com
-kubectl delete -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${OLM_RELEASE}/crds.yaml
-kubectl delete -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${OLM_RELEASE}/olm.yaml
+kubectl delete apiservices.apiregistration.k8s.io v1.packages.operators.coreos.com -n ${NAMESPACE}
+kubectl delete -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${OLM_RELEASE}/crds.yaml -n ${NAMESPACE}
+kubectl delete -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${OLM_RELEASE}/olm.yaml  -n ${NAMESPACE}
+
 
 
 printf "\n"

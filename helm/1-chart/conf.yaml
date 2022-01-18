@@ -17,8 +17,8 @@ strimzi:
   kafkaConnector:
     password: postgres
 imageCredentials:
-  username: 
-  password: 
+  username:
+  password:
 scorpioBroker:
   keycloak_vars:
     KEYCLOAK_SERVER_URL: http://keycloak-discovery:8080/auth

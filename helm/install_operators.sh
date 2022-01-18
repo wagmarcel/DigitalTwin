@@ -1,5 +1,6 @@
 
 NAMESPACE=digital-twin
+CM_NAMESPACE=cert-manager
 
 printf "\n"
 printf "\033[1mInstalling OLM\n"
@@ -38,6 +39,7 @@ printf "\n"
 printf "\033[1mInstalling Subscriptions for Keycloak operator, Strimzi, Postgres-operator \n"
 printf -- "------------------------\033[0m\n"
 kubectl create ns ${NAMESPACE}
+kubectl create ns ${CM_NAMESPACE}
 
 cat << EOF  | kubectl apply -f -
 apiVersion: operators.coreos.com/v1alpha1
@@ -89,6 +91,17 @@ metadata:
   namespace: ${NAMESPACE}
 spec:
   name: strimzi-kafka-operator
+  channel: stable
+  source: operatorhubio-catalog
+  sourceNamespace: olm
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: cert-manager
+  namespace: operators
+spec:
+  name: cert-manager
   channel: stable
   source: operatorhubio-catalog
   sourceNamespace: olm
