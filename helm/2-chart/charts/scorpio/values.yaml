@@ -44,7 +44,7 @@ kafka_vars:
 
 ## credentials for private docker repo
 imageCredentials:
-  name: ibn40-dockerhub-creds
+  name: regcred
 
 ################################### SpringArgs #######################################################################
 springArgs:

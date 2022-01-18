@@ -40,4 +40,3 @@ alerta:
     ALLOWED_KEYCLOAK_ROLES: ["admin", "user"]
     AUTH_REQUIRED: "True"
     SIGNUP_ENABLED: "False"
-    OIDC_LOGOUT_URL: "http://keycloak-discovery:8080/auth/realms/alerta/protocol/openid-connect/logout"

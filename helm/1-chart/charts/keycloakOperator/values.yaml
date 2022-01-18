@@ -152,4 +152,4 @@ keycloak_db:
     enabled: false
     apiVersion: v1
     name: keycloak-db-ssl-cert-secret
-    rootCrt: 
+    rootCrt:
