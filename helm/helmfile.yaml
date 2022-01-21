@@ -1,0 +1,9 @@
+environments:
+  default:
+    values:
+    - default.yaml
+
+releases:
+- name: postgres
+  chart: ./1-chart/charts/postgres
+  namespace: {{ .Values.namespace }} 
