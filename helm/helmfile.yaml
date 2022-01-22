@@ -20,8 +20,8 @@ releases:
   namespace: {{ .Values.namespace }}
   values:
   - dbpassword: {{ .Values.dbpassword }}
+  - keycloakpassword: {{ .Values.keycloakpassword }}
   - default.yaml
   - postgresAddress: {{ .Values.db.teamId -}}-{{- .Values.db.clusterSvcPostfix -}}.{{- .Values.namespace -}}.svc.cluster.local
-
   needs:
   - postgres

@@ -35,11 +35,17 @@ spec:
             done
         env:
         - name: ADMIN_PASSWORD
-          value: {{ .Values.custom_resource.credentials.ADMIN_PASSWORD }}
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-credentials
+              key: ADMIN_PASSWORD
         - name: ADMIN_USERNAME
-          value: {{ .Values.custom_resource.credentials.ADMIN_USERNAME }}
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-credentials
+              key: ADMIN_USERNAME
         - name: KEYCLOAK_AUTH_SERVER
-          value: {{ .Values.keycloakAuthServer }}
+          value: {{ .Values.keycloak.internalAuthService }}
       restartPolicy: OnFailure
       volumes:
       - name: keycloak-realms-volume

@@ -2,7 +2,7 @@
 apiVersion: {{ .Values.custom_resource.apiVersion}}
 kind: Keycloak
 metadata:
-  name: {{ .Values.custom_resource.name }}
+  name: keycloak
   annotations:
   namespace: {{ .Release.Namespace }}
   labels:

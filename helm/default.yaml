@@ -1,5 +1,8 @@
 namespace: iff
-keycloakAdmin: admin
+keycloak:
+  adminName: admin
+  externalAuthService: keycloak.local  # put here the *external* keycloak name, i.e. through ingress
+  internalAuthService: keycloak-discovery:8080
 db:
   teamId: acid
   clusterSvcPostfix: cluster
