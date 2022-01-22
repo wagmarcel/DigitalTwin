@@ -10,6 +10,8 @@ releases:
   namespace: {{ .Values.namespace }}
   values:
   - dbpassword: {{ .Values.dbpassword }}
+  - clusterSvcName: {{ .Values.db.teamId -}}-{{- .Values.db.clusterSvcPostfix }}
+  - default.yaml
 - name: kafka
   chart: ./1-chart/charts/kafka
   namespace: {{ .Values.namespace }}
@@ -18,6 +20,8 @@ releases:
   namespace: {{ .Values.namespace }}
   values:
   - dbpassword: {{ .Values.dbpassword }}
-    keycloakAdmin: keycloakAdmin
+  - default.yaml
+  - postgresAddress: {{ .Values.db.teamId -}}-{{- .Values.db.clusterSvcPostfix -}}.{{- .Values.namespace -}}.svc.cluster.local
+
   needs:
   - postgres

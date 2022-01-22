@@ -4,10 +4,10 @@ metadata:
   name: {{ .Values.clusterSvcName }}
   namespace: {{ .Release.Namespace }}
 spec:
-  teamId: {{ .Values.teamId }}
+  teamId: {{ .Values.db.teamId }}
   volume:
-    size: {{ .Values.pvSize }}
-  numberOfInstances: {{ .Values.podInstances }}
+    size: {{ .Values.db.pvSize }}
+  numberOfInstances: {{ .Values.db.podInstances }}
   users:
 {{ toYaml .Values.dbUsers | indent 4 }}
   databases:

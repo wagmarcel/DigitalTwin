@@ -1,2 +1,7 @@
 namespace: iff
 keycloakAdmin: admin
+db:
+  teamId: acid
+  clusterSvcPostfix: cluster
+  pvSize: 1Gi
+  podInstances: 2

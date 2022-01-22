@@ -134,9 +134,9 @@ keycloak_db:
 
   stringData:
     POSTGRES_DATABASE: keycloakdb
-    POSTGRES_EXTERNAL_ADDRESS: db-service.db-service-namespace.svc.cluster.local
+    POSTGRES_EXTERNAL_ADDRESS:
     POSTGRES_EXTERNAL_PORT: "5432"
-    POSTGRES_PASSWORD: 
+    POSTGRES_PASSWORD:
     # Required for AWS Backup functionality
     POSTGRES_SUPERUSER: "true"
     POSTGRES_USERNAME: "ngb"
