@@ -45,7 +45,7 @@ spec:
               name: keycloak-credentials
               key: ADMIN_USERNAME
         - name: KEYCLOAK_AUTH_SERVER
-          value: {{ .Values.keycloak.internalAuthService }}
+          value: {{ .Values.keycloak.internalAuthService.name }}:{{ .Values.keycloak.internalAuthService.port }}
       restartPolicy: OnFailure
       volumes:
       - name: keycloak-realms-volume
