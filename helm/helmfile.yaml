@@ -15,6 +15,11 @@ releases:
 - name: kafka
   chart: ./charts/kafka
   namespace: {{ .Values.namespace }}
+- name: cert-manager
+  chart: ./charts/cert-manager
+  namespace: {{ .Values.namespace }}
+  values:
+  - default.yaml
 - name: keycloak
   chart: ./charts/keycloak
   namespace: {{ .Values.namespace }}
