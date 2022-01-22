@@ -2,16 +2,22 @@ environments:
   default:
     values:
     - default.yaml
+    - templates.yaml.gotmpl
 
 releases:
 - name: postgres
   chart: ./1-chart/charts/postgres
   namespace: {{ .Values.namespace }}
+  values:
+  - dbpassword: {{ .Values.dbpassword }}
 - name: kafka
   chart: ./1-chart/charts/kafka
   namespace: {{ .Values.namespace }}
 - name: keycloak
   chart: ./1-chart/charts/keycloak
   namespace: {{ .Values.namespace }}
+  values:
+  - dbpassword: {{ .Values.dbpassword }}
+    keycloakAdmin: keycloakAdmin
   needs:
   - postgres

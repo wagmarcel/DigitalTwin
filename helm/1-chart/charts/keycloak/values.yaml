@@ -131,8 +131,6 @@ ingress:
 keycloak_db:
 ## Enable the ingress service
   enabled: true
-  apiVersion: v1
-  name: keycloak-db-secret
 
   stringData:
     POSTGRES_DATABASE: keycloakdb
