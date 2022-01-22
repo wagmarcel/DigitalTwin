@@ -6,17 +6,17 @@ environments:
 
 releases:
 - name: postgres
-  chart: ./1-chart/charts/postgres
+  chart: ./charts/postgres
   namespace: {{ .Values.namespace }}
   values:
   - dbpassword: {{ .Values.dbpassword }}
   - clusterSvcName: {{ .Values.db.teamId -}}-{{- .Values.db.clusterSvcPostfix }}
   - default.yaml
 - name: kafka
-  chart: ./1-chart/charts/kafka
+  chart: ./charts/kafka
   namespace: {{ .Values.namespace }}
 - name: keycloak
-  chart: ./1-chart/charts/keycloak
+  chart: ./charts/keycloak
   namespace: {{ .Values.namespace }}
   values:
   - dbpassword: {{ .Values.dbpassword }}
