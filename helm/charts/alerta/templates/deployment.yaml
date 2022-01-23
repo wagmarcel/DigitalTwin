@@ -28,16 +28,30 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-              {{- if .Values.alertaAdminUsers }}
+            - name: OAUTH2_CLIENT_SECRET
+              value: {{ .Values.keycloak.alertaClientSecret }} 
+            - name: OAUTH2_CLIENT_ID
+              value: {{ .Values.keycloak.alertaClient }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: alerta-db-secret
+                  key: DATABASE_URL
+            - name: KEYCLOAK_URL
+              value: http://{{ .Values.keycloak.internalAuthService.name }}:{{ .Values.keycloak.internalAuthService.port }}
+            - name: KEYCLOAK_REALM
+              value: {{ .Values.keycloak.alertaRealm }}
+            {{- if .Values.alertaAdminUsers }}
             - name: ADMIN_USERS
               value: {{ .Values.alertaAdminUsers | join "," }}
-              {{- end }}
+            {{- end }}
             - name: ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ template "alerta.fullname" . }}
                   key: alerta-admin-password
               {{- if .Values.alertaAdminKey }}
+            
             - name: ADMIN_KEY
               valueFrom:
                 secretKeyRef:

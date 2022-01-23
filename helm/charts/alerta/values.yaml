@@ -58,7 +58,6 @@ alertaAdminUsers: # list of email addresses
 # ref: http://docs.alerta.io/en/latest/configuration.html
 alertaConfig: |
   AUTH_REQUIRED = "True"
-  DATABASE_URL = "postgres://postgres:postgres@db:5432/monitoring"
 
   SEVERITY_MAP = {
   'fatal': 0,
@@ -94,17 +93,12 @@ alertaConfig: |
   ALLOWED_ENVIRONMENTS=['Production', 'Development', 'Code']
 
   AUTH_PROVIDER = 'keycloak'
-  KEYCLOAK_URL = 
-  KEYCLOAK_REALM = 
 
   REQUESTS_CA_BUNDLE=True
   ADMIN_USERS = ['admin']
   USER_DEFAULT_SCOPES = ['read','write:alerts']
 
 alertaConfigSecrets:
-  OAUTH2_CLIENT_ID: alerta-ui
-  OAUTH2_CLIENT_SECRET:
-  #SECRET_KEY:
 
 # ref: http://docs.alerta.io/en/latest/webui.html
 alertaWebUIConfig: |

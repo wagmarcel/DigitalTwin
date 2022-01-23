@@ -27,7 +27,8 @@ spec:
             set -e;
             access_token=$(curl -X POST ${KEYCLOAK_AUTH_SERVER}/realms/master/protocol/openid-connect/token \
             -d "grant_type=password&client_id=admin-cli&username=${ADMIN_USERNAME}&password=${ADMIN_PASSWORD}" | \
-            sed 's/.*"access_token":"\([^"]*\)".*/\1/')
+            sed 's/.*"access_token":"\(ey[^"]*\)".*/\1/')
+            if [ -z "$access_token"]; then exit 1; fi;
             for realm in $(ls /tmp/*-realm-export.json); do 
             echo uploading $realm;
             curl -vv -X POST ${KEYCLOAK_AUTH_SERVER}/admin/realms -H "Content-Type: application/json" \
@@ -45,7 +46,7 @@ spec:
               name: credential-keycloak
               key: ADMIN_USERNAME
         - name: KEYCLOAK_AUTH_SERVER
-          value: {{ .Values.keycloak.internalAuthService.name }}:{{ .Values.keycloak.internalAuthService.port }}/auth
+          value: {{ .Values.keycloak.internalAuthService.name }}:{{ .Values.keycloak.internalAuthService.port }}{{ .Values.keycloak.internalAuthService.path }}
       restartPolicy: OnFailure
       volumes:
       - name: keycloak-realms-volume

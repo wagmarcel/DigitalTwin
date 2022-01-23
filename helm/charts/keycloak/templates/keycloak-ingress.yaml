@@ -19,7 +19,7 @@ spec:
     - {{ .Values.ingress.hostname }}
     secretName: {{ .Values.certmanager.secret }}
   rules:
-  - host: {{ .Values.keycloak.externalAuthService }}
+  - host: {{ .Values.keycloak.externalAuthService.domainname }}
     http:
       paths:
       - backend:

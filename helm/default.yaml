@@ -2,10 +2,17 @@ namespace: iff
 ingressType: traefik # or nginx
 keycloak:
   adminName: admin
-  externalAuthService: keycloak.local  # put here the *external* keycloak name, i.e. through ingress
+  externalAuthService:   # put here the *external* keycloak name, i.e. through ingress 
+    protocol: http
+    domainname: keycloak.local
+    path: /auth
   internalAuthService: 
     name: keycloak-discovery
     port: 8080
+    path: /auth
+  alertaRealm: alerta
+  alertaClient: alerta-ui
+  alertaClientSecret: x8M59QRO8dgG3PYJ4UR03qh5CBBzfLUa
 db:
   teamId: acid
   clusterSvcPostfix: cluster
