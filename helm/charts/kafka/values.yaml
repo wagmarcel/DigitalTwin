@@ -33,7 +33,7 @@ kafkaConnectConfig:
   image: ibn40/digitaltwin
   tag: connect_tgz
   bootstrapServer: my-cluster-kafka-bootstrap:9093
-  imagePullSecrets: ibn40-dockerhub-creds
+  imagePullSecrets: regcred
 
 #################################### kafkaConnector #########################
 kafkaConnector:
