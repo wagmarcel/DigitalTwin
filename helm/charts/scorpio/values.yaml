@@ -14,12 +14,11 @@ postgresOperator:
   ## Database cluster team and service names
   ## clusterSvcName must begin with "<teamId>-"
   teamId: acid
-  clusterSvcName: acid-minimal-cluster
+  clusterSvcName: test
 
 ## environment variables for postgres
 postgres_vars:
   # POSTGRES_SERVICE must be the same as postgresOperator.clusterSvcName
-  POSTGRES_SERVICE: acid-minimal-cluster
   POSTGRES_PORT: 5432
 
 ## environment variables for kafka
@@ -36,7 +35,7 @@ kafka_vars:
 
 ## credentials for private docker repo
 imageCredentials:
-  name: ibn40-dockerhub-creds
+  name: regcred
 
 ################################### SpringArgs #######################################################################
 springArgs:
