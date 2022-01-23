@@ -38,7 +38,7 @@ spec:
                   name: alerta-db-secret
                   key: DATABASE_URL
             - name: KEYCLOAK_URL
-              value: http://{{ .Values.keycloak.internalAuthService.name }}:{{ .Values.keycloak.internalAuthService.port }}
+              value: {{ .Values.keycloak.externalAuthService.protocol }}://{{ .Values.keycloak.externalAuthService.domainname }}
             - name: KEYCLOAK_REALM
               value: {{ .Values.keycloak.alertaRealm }}
             {{- if .Values.alertaAdminUsers }}
