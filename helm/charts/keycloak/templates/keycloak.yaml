@@ -1,5 +1,5 @@
 {{- if .Values.custom_resource.enabled }}
-apiVersion: {{ .Values.custom_resource.apiVersion}}
+apiVersion: keycloak.org/v1alpha1
 kind: Keycloak
 metadata:
   name: keycloak

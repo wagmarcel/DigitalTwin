@@ -105,7 +105,7 @@ custom_resource:
 ## Enable the custom_resource deployment & service
   enabled: true
   apiVersion: keycloak.org/v1alpha1
-  name: example-keycloak
+  name: keycloak
   instances: 1
   externalAccess:
     enabled: false

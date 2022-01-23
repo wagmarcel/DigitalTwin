@@ -37,15 +37,15 @@ spec:
         - name: ADMIN_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: keycloak-credentials
+              name: credential-keycloak
               key: ADMIN_PASSWORD
         - name: ADMIN_USERNAME
           valueFrom:
             secretKeyRef:
-              name: keycloak-credentials
+              name: credential-keycloak
               key: ADMIN_USERNAME
         - name: KEYCLOAK_AUTH_SERVER
-          value: {{ .Values.keycloak.internalAuthService.name }}:{{ .Values.keycloak.internalAuthService.port }}
+          value: {{ .Values.keycloak.internalAuthService.name }}:{{ .Values.keycloak.internalAuthService.port }}/auth
       restartPolicy: OnFailure
       volumes:
       - name: keycloak-realms-volume
