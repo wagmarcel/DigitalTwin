@@ -50,3 +50,17 @@ releases:
   needs:
   - postgres
   - keycloak
+- name: flink
+  chart: ./charts/flink
+  namespace: {{ .Values.namespace }}
+  values:
+  - default.yaml
+  needs:
+  - postgres
+  - keycloak
+  - minio
+- name: minio
+  chart: ./charts/minio
+  namespace: {{ .Values.namespace }}
+  values:
+  - default.yaml
