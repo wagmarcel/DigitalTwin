@@ -54,13 +54,14 @@ releases:
   chart: ./charts/flink
   namespace: {{ .Values.namespace }}
   values:
+  - minioSecretKey: {{ .Values.minioSecretKey }}
   - default.yaml
   needs:
-  - postgres
-  - keycloak
+  - kafka
   - minio
 - name: minio
   chart: ./charts/minio
   namespace: {{ .Values.namespace }}
   values:
+  - minioSecretKey: {{ .Values.minioSecretKey }}
   - default.yaml

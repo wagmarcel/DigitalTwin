@@ -37,7 +37,18 @@ certmanager:
   issuer: letsencrypt-self
 
 flink:
-  imageTag: 1.14.3-scala_2.11-java11
+  imageTag: 1.14.3
   clusterId: iff
   taskmanagers: 1
   jobmanager: 1
+  sqlClientPort: 9000
+  bucket: flink
+  haDir: recovery
+  checkpointDir: checkpoints
+  savepointDir: savepoints
+
+minio:
+  url: http://minio
+  accessKey: console
+  storageSize: 10G
+  healthPath: /minio/health/live
