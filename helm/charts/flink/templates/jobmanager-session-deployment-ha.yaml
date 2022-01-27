@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: flink-jobmanager
   namespace: {{ .Release.Namespace }}
+  annotations:
+    checksum/config: {{ include (print $.Template.BasePath "/flink-configuration-configmap.yaml") . | sha256sum }}
 spec:
   replicas: {{ .Values.flink.jobmanagers }} # Set the value to greater than 1 to start standby JobManagers
   selector:
@@ -15,6 +17,10 @@ spec:
         app: flink
         component: jobmanager
     spec:
+      initContainers:
+      - name: wait-for-minio
+        image: busybox:1.28
+        command: ['sh', '-c', "until wget -S {{ .Values.minio.url }}{{ .Values.minio.healthPath }} 2>&1 | awk '/^  HTTP/{print $2}' | grep 200; do echo waiting for minio; sleep 1; done"]
       containers:
       - name: jobmanager
         image: apache/flink:{{ .Values.flink.imageTag }}
@@ -48,6 +54,32 @@ spec:
           mountPath: /opt/flink/conf
         securityContext:
           runAsUser: 9999  # refers to user _flink_ from official flink image, change if necessary
+      - name: sql-gateway
+        image: k3d-oisp.localhost:12345/flink-sql-gateway:latest
+        workingDir: /opt/gateway
+        command: ["/bin/bash", "-c", "mkdir -p /opt/flink/plugins/s3; \
+          cp /opt/flink/opt/flink-s3-fs-hadoop-*.jar /opt/flink/plugins/s3 ; \
+          nodejs gateway.js"]
+        env:
+        - name: SIMPLE_FLINK_SQL_GATEWAY_PORT
+          value: {{ .Values.flink.sqlClientPort | quote }}
+        - name: DEBUG
+          value: express:*
+        ports:
+        - containerPort: {{ .Values.flink.sqlClientPort }}
+          name: rest
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.flink.sqlClientPort }}
+          initialDelaySeconds: 30
+          periodSeconds: 3
+        volumeMounts:
+        - name: flink-config-volume
+          mountPath: /opt/flink/conf
+        securityContext:
+          runAsUser: 9999  # refers to user _flink_ from official flink image, change if necessary
+
       serviceAccountName: flink-service-account # Service account which has the permissions to create, edit, delete ConfigMaps
       volumes:
       - name: flink-config-volume
@@ -84,3 +116,20 @@ roleRef:
   kind: Role
   name: flink-service-account
   apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flink-jobmanager
+spec:
+  type: ClusterIP
+  ports:
+  - name: rpc
+    port: 6123
+  - name: blob-server
+    port: 6124
+  - name: webui
+    port: 8081
+  selector:
+    app: flink
+    component: jobmanager

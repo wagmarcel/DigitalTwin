@@ -4,10 +4,24 @@ metadata:
   name: iff-minio-tenant
   namespace: {{ .Release.Namespace }}
 spec:
+  env:
+  - name: "MINIO_ROOT_USER"
+    value: "minio"
+  - name: "MINIO_ROOT_PASSWORD"
+    value: {{ .Values.minioSecretKey }}
+  - name: "MINIO_STORAGE_CLASS_STANDARD"
+    value: "EC:2"
+  - name: "MINIO_BROWSER"
+    value: "on"
+  - name: "accesskey"
+    value: ""
+  - name: "secretkey"
+    value: ""
+  requestAutoCert: false
   credsSecret:
     name: iff-creds-secret
-  configuration:
-    name: iff-configuration
+#  configuration:
+#    name: iff-configuration
   users:
     - name: minio-user
   pools:
@@ -21,4 +35,4 @@ spec:
             - ReadWriteOnce
           resources:
             requests:
-              storage: 1Gi
+              storage: {{ .Values.minio.storageSize }}

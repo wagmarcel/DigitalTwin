@@ -16,13 +16,16 @@ data:
     jobmanager.memory.process.size: 1600m
     taskmanager.memory.process.size: 1728m
     parallelism.default: 2
-    s3.endpoint: https://minio
+    s3.endpoint: {{ .Values.minio.url }}
     s3.path.style.access: true
-    s3.access-key: console
-    s3.secret-key: console123
+    s3.access-key: {{ .Values.minio.accessKey }}
+    s3.secret-key: {{ .Values.minioSecretKey }}
+    state.checkpoints.dir: s3://{{ .Values.flink.bucket }}/{{ .Values.flink.checkpointDir }}
+    state.savepoints.dir: s3://{{ .Values.flink.bucket }}/{{ .Values.flink.savepointDir }}
     kubernetes.cluster-id: {{ .Values.flink.clusterId }}
     high-availability: org.apache.flink.kubernetes.highavailability.KubernetesHaServicesFactory
-    high-availability.storageDir: s3://flink/recovery
+    high-availability.storageDir: s3://{{ .Values.flink.bucket }}/{{ .Values.flink.hADir }}
+    kubernetes.namespace: {{ .Release.Namespace }}
     restart-strategy: fixed-delay
     restart-strategy.fixed-delay.attempts: 10
   log4j-console.properties: |+
@@ -32,8 +35,8 @@ data:
     rootLogger.appenderRef.rolling.ref = RollingFileAppender
 
     # Uncomment this if you want to _only_ change Flink's logging
-    #logger.flink.name = org.apache.flink
-    #logger.flink.level = INFO
+    logger.flink.name = org.apache.flink
+    logger.flink.level = TRACE
 
     # The following lines keep the log level of common libraries/connectors on
     # log level INFO. The root logger does not override this. You have to manually
