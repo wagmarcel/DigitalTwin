@@ -1,12 +1,8 @@
 {{- $secret := (lookup "v1" "Secret" .Release.Namespace "minio-user") -}}
 apiVersion: v1
 data:
-  CONSOLE_ACCESS_KEY: {{ .Values.minio.accessKey | b64enc }}
-  {{- if $secret }}
-  CONSOLE_SECRET_KEY: {{ $secret.data.CONSOLE_SECRET_KEY }}
-  {{- else }}
-  CONSOLE_SECRET_KEY: {{ .Values.minioSecretKey | toString | b64enc }}
-  {{- end }}
+  CONSOLE_ACCESS_KEY: {{ "console2" | b64enc }}
+  CONSOLE_SECRET_KEY: {{ "console123" | b64enc }}
 kind: Secret
 metadata:
   name: minio-user

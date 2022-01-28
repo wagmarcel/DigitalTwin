@@ -14,9 +14,9 @@ spec:
   - name: "MINIO_BROWSER"
     value: "on"
   - name: "accesskey"
-    value: ""
+    value: "console"
   - name: "secretkey"
-    value: ""
+    value: "console123"
   requestAutoCert: false
   credsSecret:
     name: iff-creds-secret

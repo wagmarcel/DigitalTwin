@@ -49,6 +49,6 @@ flink:
 
 minio:
   url: http://minio
-  accessKey: console
+  accessKey: console2
   storageSize: 10G
   healthPath: /minio/health/live

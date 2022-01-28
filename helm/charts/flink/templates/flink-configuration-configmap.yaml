@@ -24,7 +24,7 @@ data:
     state.savepoints.dir: s3://{{ .Values.flink.bucket }}/{{ .Values.flink.savepointDir }}
     kubernetes.cluster-id: {{ .Values.flink.clusterId }}
     high-availability: org.apache.flink.kubernetes.highavailability.KubernetesHaServicesFactory
-    high-availability.storageDir: s3://{{ .Values.flink.bucket }}/{{ .Values.flink.hADir }}
+    high-availability.storageDir: s3://{{ .Values.flink.bucket }}/{{ .Values.flink.haDir }}
     kubernetes.namespace: {{ .Release.Namespace }}
     restart-strategy: fixed-delay
     restart-strategy.fixed-delay.attempts: 10
