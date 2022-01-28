@@ -54,7 +54,7 @@ releases:
   chart: ./charts/flink
   namespace: {{ .Values.namespace }}
   values:
-  - minioSecretKey: {{ .Values.minioSecretKey }}
+  - minioUserSecretKey: {{ .Values.minioUserSecretKey }}
   - default.yaml
   needs:
   - kafka
@@ -63,5 +63,6 @@ releases:
   chart: ./charts/minio
   namespace: {{ .Values.namespace }}
   values:
-  - minioSecretKey: {{ .Values.minioSecretKey }}
+  - minioAdminSecretKey: {{ .Values.minioAdminSecretKey }}
+  - minioUserSecretKey: {{ .Values.minioUserSecretKey }}
   - default.yaml

@@ -1,3 +1,4 @@
 dbpassword: {{ randAlphaNum 32 }}
 keycloakpassword: {{ randAlphaNum 32 }}
-minioSecretKey: {{ randAlphaNum 5 }}
+minioAdminSecretKey: {{ randAlphaNum 32 }}
+minioUserSecretKey: {{ randAlphaNum 32 }}

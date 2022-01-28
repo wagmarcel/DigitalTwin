@@ -42,6 +42,7 @@ spec:
           mountPath: /opt/flink/conf/
         securityContext:
           runAsUser: 9999  # refers to user _flink_ from official flink image, change if necessary
+      serviceAccountName: flink-service-account # Service account which has the permissions to create, edit, delete ConfigMaps
       volumes:
       - name: flink-config-volume
         configMap:

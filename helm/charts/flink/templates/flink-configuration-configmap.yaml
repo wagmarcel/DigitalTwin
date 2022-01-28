@@ -1,3 +1,4 @@
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace "minio-user") -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -18,8 +19,12 @@ data:
     parallelism.default: 2
     s3.endpoint: {{ .Values.minio.url }}
     s3.path.style.access: true
-    s3.access-key: {{ .Values.minio.accessKey }}
-    s3.secret-key: {{ .Values.minioSecretKey }}
+    s3.access-key: {{ .Values.minio.userAccessKey }}
+    {{ if $secret }}
+    s3.secret-key: {{ $secret.data.CONSOLE_SECRET_KEY | b64dec }}
+    {{ else }}
+    s3.secret-key: {{ .Values.minioUserSecretKey }}
+    {{ end }}
     state.checkpoints.dir: s3://{{ .Values.flink.bucket }}/{{ .Values.flink.checkpointDir }}
     state.savepoints.dir: s3://{{ .Values.flink.bucket }}/{{ .Values.flink.savepointDir }}
     kubernetes.cluster-id: {{ .Values.flink.clusterId }}
