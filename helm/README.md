@@ -37,26 +37,27 @@ An installation script `install_operators.sh` is provided to deploy the operator
    chmod u+x helmfile_linux_amd64
    ```
 4. Deploy secrets for industry fusion registry
-    ```
-    kubectl -n iff create secret docker-registry regcred --docker-password=<password> --docker-username=<username> --docker-server=https://index.docker.io/v1/
-    ```
-4. Install the charts by using helmfile: `./helmfile_linux_amd64 apply`
-5. Verify all pods are running using `kubectl -n iff get pods`
-6. Login to keycloak with browser using `http://keycloak.local/auth`
 
-   * The username is `admin`, the password can be found by `kubectl -n iff get secret/credential-keycloak -o=jsonpath='{.data.ADMIN_PASSWORD}' | base64 -d`
-7. Verify that there are 3 realms `master`, `org`, `alerta`.
-8. Select `alerta`, define user and get the secret of `alerta-ui` client.
-9. Fill the secret into `default.yaml` in keycloak.alertaClientSecret
-10. Select `org`, define users and assign `Factory Admin` Role on Realm level and for all Scorpio clients: `entity-mananger`, `query-manager`, ...
-11. Get token through http://keycloak.local/auth
-12. Use ngsi-ld api via `ngsild.local`
+   ```
+   kubectl -n iff create secret docker-registry regcred --docker-password=<password> --docker-username=<username> --docker-server=https://index.docker.io/v1/
+   ```
+5. Install the charts by using helmfile: `./helmfile_linux_amd64 apply`
+6. Verify all pods are running using `kubectl -n iff get pods`
+7. Login to keycloak with browser using `http://keycloak.local/auth`
+
+   * The username is `admin`, the password can be found by `	`
+8. Verify that there are 3 realms `master`, `org`, `alerta`.
+9. Select `alerta`, define user and get the secret of `alerta-ui` client.
+10. Fill the secret into `default.yaml` in keycloak.alertaClientSecret
+11. Select `org`, define users and assign `Factory Admin` Role on Realm level and for all Scorpio clients: `entity-mananger`, `query-manager`, ...
+12. Get token through http://keycloak.local/auth
+13. Use ngsi-ld api via `ngsild.local`
 
 ## Troubleshooting
 
 1. Keycloak instance not ready
 2. Alerta not coming up
-2. Alerta and/or Scorpio do not resolve keycloak.local
+3. Alerta and/or Scorpio do not resolve keycloak.local
 
 ## Uninstallation Procedure
 
