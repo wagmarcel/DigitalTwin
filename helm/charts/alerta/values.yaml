@@ -78,9 +78,7 @@ alertaConfig: |
   'warning': '#1E90FF',
   'indeterminate': 'lightblue',
   'ok': '#00CC00',
-  'ok': '#00CC00',
   'unknown': 'silver',
-  'page': ' #f8e900',
   'up' : '#00CC00',
   'down' : 'red'
   }
