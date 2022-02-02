@@ -204,6 +204,50 @@ class TestMonitoring(TestCase):
         self.assertEqual(patch.status["state"], "INITIALIZED")
         self.assertIsNone(patch.status["job_id"])
 
+    #@patch('beamsqlstatementsetoperator.tables_and_views.create_ddl_from_beamsqltables',
+    #       create_ddl_from_beamsqltables)
+    #@patch('beamsqlstatementsetoperator.deploy_statementset',
+    #       submit_statementset_failed)
+    #@patch('beamsqlstatementsetoperator.refresh_state', update_status_not_found)
+    def create_sets(spec, body, namespace, name, logger):
+        return "sets"
+
+    def create_tables(beamsqltables, spec, body, namespace, name, logger):
+        return "tables"
+
+    @patch('beamsqlstatementsetoperator.create_sets', create_sets)
+    @patch('beamsqlstatementsetoperator.create_tables', create_tables)
+    def test_update_handle_views(self):
+        body = {
+            "metadata": {
+                "name": "name",
+                "namespace": "namespace"
+            },
+            "spec": {
+                "sqlstatements": ["select;"],
+                "tables": ["table"],
+                "views": ["view"]
+            },
+            "status": {
+                "state": "INITIALIZED",
+                "job_id": "job_id"
+            }
+        }
+
+        patch = Bunch()
+        patch.status = {}
+
+        beamsqltables = {}
+        beamsqlviews = {
+            "metadata": {
+                "name": "name",
+                "namespace": "namespace"
+            },
+            "sqlstatement": "sqlstatement"
+        }
+        with self.assertRaises(kopf.TemporaryError) as cm:
+            target.monitor(beamsqltables, None, patch, Logger(),
+                       body, body["spec"], body["status"])
 
 class TestDeletion(TestCase):
     def update_status_nochange(body, patch, logger):
