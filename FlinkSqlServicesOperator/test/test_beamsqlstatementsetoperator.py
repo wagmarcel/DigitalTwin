@@ -592,6 +592,8 @@ class TestHelpers(TestCase):
         return {
             "state": "ok"
         }
+    def get_job_status_none(logger, jobid):
+        return None
 
     def send_exception(test, json):
         raise requests.RequestException("Error")
@@ -646,5 +648,24 @@ class TestHelpers(TestCase):
         }
         job_state = target.get_job_state(Logger(), body)
         self.assertEqual(job_state, "ok")
+
+    @patch('flink_util.get_job_status', get_job_status)
+    def test_refresh_state(self):
+        body = Bunch()
+        patch = Bunch()
+        patch.status = {}
+        body.status = { "job_id": "job_id" } 
+        
+        state = target.refresh_state(body, patch, Logger())
+        self.assertEqual("ok", patch.status.get('state'))
+    @patch('flink_util.get_job_status', get_job_status_none)
+    def test_refresh_state_none(self):
+        body = Bunch()
+        patch = Bunch()
+        patch.status = {}
+        body.status = { "job_id": "job_id" } 
+        
+        state = target.refresh_state(body, patch, Logger())
+        self.assertEqual("UNKNOWN", patch.status.get('state'))
 if __name__ == '__main__':
     unittest.main()
