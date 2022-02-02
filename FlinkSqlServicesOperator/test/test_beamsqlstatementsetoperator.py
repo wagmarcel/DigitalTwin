@@ -408,7 +408,7 @@ class TestUpdate(TestCase):
     @patch('kopf.info', kopf_info)
     @patch('flink_util.cancel_job', cancel_job)
     @patch('flink_util.get_job_status', get_job_status_not_running)
-    def test_cancel_job_and_get_state_running(self):
+    def test_cancel_job_and_get_state_not_running(self):
         global job_canceled
         body = {           
             "status": {
@@ -588,6 +588,10 @@ class TestHelpers(TestCase):
         response.json = jsonp
         return response    
 
+    def get_job_status(logger, jobid):
+        return {
+            "state": "ok"
+        }
 
     def send_exception(test, json):
         raise requests.RequestException("Error")
@@ -621,5 +625,26 @@ class TestHelpers(TestCase):
         patch = Bunch()
         patch.status = {}
         target.add_message(Logger(), body, patch, reason, mtype)
+        self.assertEqual(patch.status.get('messages')[0].get('message'), reason)
+    
+    def test_add_message_none(self):
+        reason = 'reason'
+        body = Bunch()
+        body.status = Bunch()
+        body.status
+        mtype = 'mtype'
+        patch = Bunch()
+        patch.status = {}
+        target.add_message(Logger(), body, patch, reason, mtype)
+        self.assertEqual(patch.status.get('messages')[0].get('message'), reason)
+
+    @patch('flink_util.get_job_status', get_job_status)
+    def test_get_job_state(self):
+        body = Bunch()
+        body.status = {
+            "job_id": "job_id"
+        }
+        job_state = target.get_job_state(Logger(), body)
+        self.assertEqual(job_state, "ok")
 if __name__ == '__main__':
     unittest.main()
