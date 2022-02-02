@@ -156,12 +156,41 @@ class TestcreateKafkaDdl(TestCase):
             }
         }
 
-        result = target.create_upsert_kafka_ddl(None, beamsqltable, Logger())
+        result = target.create_upsert_kafka_ddl(beamsqltable, Logger())
         self.assertEqual(result, "CREATE TABLE `name` (`field1` field1,`field2` field2, PRIMARY KEY (primaryKey) NOT ENFORCED) WITH "\
             "('connector' = 'upsert-kafka','value.format' = 'json', 'topic' = 'topic', 'key.format' = 'json',"\
             "'properties.bootstrap.servers' = 'bootstrap.servers');")
 
-    def test_create_upsert_ddl_from_beamsqltable(self):
+    def test_create_upsert_ddl_from_beamsqltable_fail(self):
+        global global_message
+        global_message = ""
+        beamsqltable = Bunch()
+        beamsqltable.metadata = Bunch()
+        beamsqltable.metadata.name = "name"
+        beamsqltable.metadata.namespace = "namespace"
+        beamsqltable.spec = {
+            "connector": "upsert-kafka",
+            "name": "name",
+            "fields": [
+                {"field1": "field1"},
+                {"field2": "field2"}
+            ],
+            "value": {
+                "format": "json"
+            },
+            "kafka": {
+                "topic": "topic",
+                "key.format":  "json",
+                "properties": {
+                    "bootstrap.servers": "bootstrap.servers"
+                }
+            }
+        }
+
+        result = target.create_upsert_kafka_ddl(beamsqltable, Logger())
+        self.assertEqual(result, None)
+
+    def test_create_create_view(self):
         beamsqlview = Bunch()
         beamsqlview.metadata = Bunch()
         beamsqlview.metadata.name = "name"

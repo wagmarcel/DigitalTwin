@@ -204,11 +204,6 @@ class TestMonitoring(TestCase):
         self.assertEqual(patch.status["state"], "INITIALIZED")
         self.assertIsNone(patch.status["job_id"])
 
-    #@patch('beamsqlstatementsetoperator.tables_and_views.create_ddl_from_beamsqltables',
-    #       create_ddl_from_beamsqltables)
-    #@patch('beamsqlstatementsetoperator.deploy_statementset',
-    #       submit_statementset_failed)
-    #@patch('beamsqlstatementsetoperator.refresh_state', update_status_not_found)
     def create_sets(spec, body, namespace, name, logger):
         return "sets"
 
@@ -392,7 +387,7 @@ class TestUpdate(TestCase):
         return {
             "state": "RUNNING"
         }
-    
+
     def get_job_status_not_running(logger, job_id):
         return {
             "state": "UNKNOWN"
@@ -403,7 +398,7 @@ class TestUpdate(TestCase):
 
     def cancel_job_and_get_state_fail(logger, body, patch):
         raise requests.exceptions.RequestException("Error")
-    
+
     def stop_job(logger, job_id, savepoint_dir):
         return "savepoint_id"
 
@@ -436,10 +431,10 @@ class TestUpdate(TestCase):
     @patch('flink_util.get_job_status', get_job_status)
     def test_cancel_job_and_get_state_running(self):
         global job_canceled
-        body = {           
+        body = {
             "status": {
                 "job_id": "job_id"
-            } 
+            }
         }
         job_canceled = False
         job_state = target.cancel_job_and_get_state(Logger(), body, None)
@@ -454,10 +449,10 @@ class TestUpdate(TestCase):
     @patch('flink_util.get_job_status', get_job_status_not_running)
     def test_cancel_job_and_get_state_not_running(self):
         global job_canceled
-        body = {           
+        body = {
             "status": {
                 "job_id": "job_id"
-            } 
+            }
         }
         job_canceled = False
         job_state = target.cancel_job_and_get_state(Logger(), body, None)
@@ -478,7 +473,7 @@ class TestUpdate(TestCase):
             "status": {
                 "job_id": "job_id",
                 "state": "RUNNING",
-            } 
+            }
         }
         patch = Bunch()
         patch.status = {}
@@ -502,7 +497,7 @@ class TestUpdate(TestCase):
             "status": {
                 "job_id": "job_id",
                 "state": "RUNNING",
-            } 
+            }
         }
         patch = Bunch()
         patch.status = {}
@@ -525,7 +520,7 @@ class TestUpdate(TestCase):
             "status": {
                 "job_id": "job_id",
                 "state": "RUNNING",
-            } 
+            }
         }
         patch = Bunch()
         patch.status = {}
@@ -548,7 +543,7 @@ class TestUpdate(TestCase):
             "status": {
                 "job_id": "job_id",
                 "state": "RUNNING",
-            } 
+            }
         }
         patch = Bunch()
         patch.status = {}
@@ -574,7 +569,7 @@ class TestUpdate(TestCase):
             "status": {
                 "job_id": "job_id",
                 "state": "RUNNING",
-            } 
+            }
         }
         patch = Bunch()
         patch.status = {}
@@ -600,7 +595,7 @@ class TestUpdate(TestCase):
             "status": {
                 "job_id": "job_id",
                 "state": "RUNNING",
-            } 
+            }
         }
         patch = Bunch()
         patch.status = {}
@@ -630,7 +625,7 @@ class TestHelpers(TestCase):
         response = Bunch()
         response.status_code = 400
         response.json = jsonp
-        return response    
+        return response
 
     def get_job_status(logger, jobid):
         return {
@@ -661,7 +656,7 @@ class TestHelpers(TestCase):
         statementset = 'statementset'
         with self.assertRaises(target.DeploymentFailedException) as cm:
             target.deploy_statementset(statementset, Logger())
-    
+
     def test_add_message(self):
         reason = 'reason'
         body = Bunch()
@@ -672,7 +667,7 @@ class TestHelpers(TestCase):
         patch.status = {}
         target.add_message(Logger(), body, patch, reason, mtype)
         self.assertEqual(patch.status.get('messages')[0].get('message'), reason)
-    
+
     def test_add_message_none(self):
         reason = 'reason'
         body = Bunch()
@@ -698,8 +693,8 @@ class TestHelpers(TestCase):
         body = Bunch()
         patch = Bunch()
         patch.status = {}
-        body.status = { "job_id": "job_id" } 
-        
+        body.status = { "job_id": "job_id" }
+
         state = target.refresh_state(body, patch, Logger())
         self.assertEqual("ok", patch.status.get('state'))
     @patch('flink_util.get_job_status', get_job_status_none)
@@ -707,8 +702,8 @@ class TestHelpers(TestCase):
         body = Bunch()
         patch = Bunch()
         patch.status = {}
-        body.status = { "job_id": "job_id" } 
-        
+        body.status = { "job_id": "job_id" }
+
         state = target.refresh_state(body, patch, Logger())
         self.assertEqual("UNKNOWN", patch.status.get('state'))
 if __name__ == '__main__':
