@@ -128,6 +128,191 @@ class TestcreateKafkaDdl(TestCase):
         self.assertEqual(result, "CREATE TABLE `name` (`field1` field1,`field2` field2) WITH "\
             "('connector' = 'kafka','format' = 'json', 'topic' = 'topic','properties.bootstrap.servers' = 'bootstrap.servers');")
 
+    def test_create_ddl_from_beamsqltable_noformat(self):
+        global global_message
+        global_message = ""
+        beamsqltable = Bunch()
+        beamsqltable.metadata = Bunch()
+        beamsqltable.metadata.name = "name"
+        beamsqltable.metadata.namespace = "namespace"
+        beamsqltable.spec = {
+            "connector": "kafka",
+            "name": "name",
+            "fields": [
+                {"field1": "field1"},
+                {"field2": "field2"}
+            ],
+            "value": {
+            },
+            "kafka": {
+                "topic": "topic",
+                "properties": {
+                    "bootstrap.servers": "bootstrap.servers"
+                }
+            }
+        }
+
+        result = target.create_kafka_ddl(beamsqltable, Logger())
+        self.assertEqual(result, None)
+
+    def test_create_ddl_from_beamsqltable_noValue(self):
+        global global_message
+        global_message = ""
+        beamsqltable = Bunch()
+        beamsqltable.metadata = Bunch()
+        beamsqltable.metadata.name = "name"
+        beamsqltable.metadata.namespace = "namespace"
+        beamsqltable.spec = {
+            "connector": "kafka",
+            "name": "name",
+            "fields": [
+                {"field1": "field1"},
+                {"field2": "field2"}
+            ],
+            "value": {
+                "format": "json"
+            },
+            "kafka": {
+                "topic": "topic",
+                "properties": {
+                    "bootstrap.servers": "bootstrap.servers"
+                }
+            }
+        }
+
+        result = target.create_kafka_ddl(beamsqltable, Logger())
+        self.assertEqual(result, "CREATE TABLE `name` (`field1` field1,`field2` field2) WITH "\
+            "('connector' = 'kafka','format' = 'json', 'topic' = 'topic','properties.bootstrap.servers' = 'bootstrap.servers');")
+
+
+    def test_create_ddl_from_beamsqltable_notopic(self):
+        global global_message
+        global_message = ""
+        beamsqltable = Bunch()
+        beamsqltable.metadata = Bunch()
+        beamsqltable.metadata.name = "name"
+        beamsqltable.metadata.namespace = "namespace"
+        beamsqltable.spec = {
+            "connector": "kafka",
+            "name": "name",
+            "fields": [
+                {"field1": "field1"},
+                {"field2": "field2"}
+            ],
+            "value": {
+                "format": "json"
+            },
+            "kafka": {
+                "properties": {
+                    "bootstrap.servers": "bootstrap.servers"
+                }
+            }
+        }
+
+        result = target.create_kafka_ddl(beamsqltable, Logger())
+        self.assertEqual(result, None)
+
+
+    def test_create_ddl_from_beamsqltable_noname(self):
+        global global_message
+        global_message = ""
+        beamsqltable = Bunch()
+        beamsqltable.metadata = Bunch()
+        beamsqltable.metadata.name = "name"
+        beamsqltable.metadata.namespace = "namespace"
+        beamsqltable.spec = {
+            "connector": "kafka",
+            "fields": [
+                {"field1": "field1"},
+                {"field2": "field2"}
+            ],
+            "value": {
+                "format": "json"
+            },
+            "kafka": {
+                "topic": "topic",
+                "properties": {
+                    "bootstrap.servers": "bootstrap.servers"
+                }
+            }
+        }
+
+        result = target.create_kafka_ddl(beamsqltable, Logger())
+        self.assertEqual(result, "CREATE TABLE `name` (`field1` field1,`field2` field2) WITH "\
+            "('connector' = 'kafka','format' = 'json', 'topic' = 'topic','properties.bootstrap.servers' = 'bootstrap.servers');")
+
+
+
+
+    def test_create_ddl_from_beamsqltable_nobootstrap(self):
+        global global_message
+        global_message = ""
+        beamsqltable = Bunch()
+        beamsqltable.metadata = Bunch()
+        beamsqltable.metadata.name = "name"
+        beamsqltable.metadata.namespace = "namespace"
+        beamsqltable.spec = {
+            "connector": "kafka",
+            "name": "name",
+            "fields": [
+                {"field1": "field1"},
+                {"field2": "field2"}
+            ],
+            "value": {
+                "format": "json"
+            },
+            "kafka": {
+                "topic": "topic",
+                "properties": {
+                }
+            }
+        }
+
+        result = target.create_kafka_ddl(beamsqltable, Logger())
+        self.assertEqual(result, None)
+
+
+    def test_create_ddl_from_beamsqltable_nokafka(self):
+        global global_message
+        global_message = ""
+        beamsqltable = Bunch()
+        beamsqltable.metadata = Bunch()
+        beamsqltable.metadata.name = "name"
+        beamsqltable.metadata.namespace = "namespace"
+        beamsqltable.spec = {
+            "connector": "kafka",
+            "name": "name",
+            "fields": [
+                {"field1": "field1"},
+                {"field2": "field2"}
+            ],
+            "value": {
+                "format": "json"
+            }
+        }
+
+        result = target.create_kafka_ddl(beamsqltable, Logger())
+        self.assertEqual(result, None)
+
+
+    def test_create_ddl_from_beamsqltable_novalue(self):
+        global global_message
+        global_message = ""
+        beamsqltable = Bunch()
+        beamsqltable.metadata = Bunch()
+        beamsqltable.metadata.name = "name"
+        beamsqltable.metadata.namespace = "namespace"
+        beamsqltable.spec = {
+            "connector": "kafka",
+            "name": "name",
+            "fields": [
+                {"field1": "field1"},
+                {"field2": "field2"}
+            ]
+        }
+
+        result = target.create_kafka_ddl(beamsqltable, Logger())
+        self.assertEqual(result, None)
 
     def test_create_upsert_ddl_from_beamsqltable(self):
         global global_message
@@ -139,6 +324,65 @@ class TestcreateKafkaDdl(TestCase):
         beamsqltable.spec = {
             "connector": "upsert-kafka",
             "name": "name",
+            "fields": [
+                {"field1": "field1"},
+                {"field2": "field2"}
+            ],
+            "primaryKey": ["primaryKey"],
+            "value": {
+                "format": "json"
+            },
+            "kafka": {
+                "topic": "topic",
+                "key.format":  "json",
+                "properties": {
+                    "bootstrap.servers": "bootstrap.servers"
+                }
+            }
+        }
+
+        result = target.create_upsert_kafka_ddl(beamsqltable, Logger())
+        self.assertEqual(result, "CREATE TABLE `name` (`field1` field1,`field2` field2, PRIMARY KEY (primaryKey) NOT ENFORCED) WITH "\
+            "('connector' = 'upsert-kafka','value.format' = 'json', 'topic' = 'topic', 'key.format' = 'json',"\
+            "'properties.bootstrap.servers' = 'bootstrap.servers');")
+
+
+    def test_create_upsert_ddl_from_beamsqltable_novalue(self):
+        global global_message
+        global_message = ""
+        beamsqltable = Bunch()
+        beamsqltable.metadata = Bunch()
+        beamsqltable.metadata.name = "name"
+        beamsqltable.metadata.namespace = "namespace"
+        beamsqltable.spec = {
+            "connector": "upsert-kafka",
+            "name": "name",
+            "fields": [
+                {"field1": "field1"},
+                {"field2": "field2"}
+            ],
+            "primaryKey": ["primaryKey"],
+            "kafka": {
+                "topic": "topic",
+                "key.format":  "json",
+                "properties": {
+                    "bootstrap.servers": "bootstrap.servers"
+                }
+            }
+        }
+
+        result = target.create_upsert_kafka_ddl(beamsqltable, Logger())
+        self.assertEqual(result, None)
+
+    def test_create_upsert_ddl_from_beamsqltable_noname(self):
+        global global_message
+        global_message = ""
+        beamsqltable = Bunch()
+        beamsqltable.metadata = Bunch()
+        beamsqltable.metadata.name = "name"
+        beamsqltable.metadata.namespace = "namespace"
+        beamsqltable.spec = {
+            "connector": "upsert-kafka",
             "fields": [
                 {"field1": "field1"},
                 {"field2": "field2"}
