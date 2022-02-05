@@ -517,5 +517,29 @@ class TestHelpers(TestCase):
         response = target.create_job(body, body['spec'], 'jar_id')
         self.assertEqual(response, 'jobid')
 
+
+    def request_get_overview(url):
+        def json_get():
+            return {"slots-total": 5}
+        result = Bunch()
+        result.status_code = 200
+        result.json = json_get
+        return result
+
+    @patch('kopf.info', kopf_info)
+    @patch('requests.get', request_get_overview)
+    def test_check_readiness(self):
+        global that
+        that = self
+        body = {
+            "metadata": {
+                "name": "name",
+                "namespace": "namespace"
+            }
+        }
+        response = target.check_readiness(body)
+        self.assertEqual(response, 5)
+
+
 if __name__ == '__main__':
     unittest.main()
