@@ -473,5 +473,49 @@ class TestHelpers(TestCase):
         response = target.get_jobname_prefix(body, body["spec"])
         self.assertEqual(response, 'entryclass')
 
+    that = None
+    def get_tokens(users):
+        that.assertDictEqual(users[0], {"user": "user", "password": "password"})
+        return {"user1": "token1", "user2": "token2"}
+    def build_args(args_dict, tokens):
+        that.assertDictEqual(args_dict, {"runner": "runner"})
+        that.assertDictEqual(tokens, {"user1": "token1", "user2": "token2"})
+        pass
+
+    def request_post_run(url, json):
+        def json_run():
+            return {"jobid": "jobid"}
+        result = Bunch()
+        result.status_code = 200
+        result.json = json_run
+        return result
+    @patch('kopf.info', kopf_info)
+    @patch('requests.post', request_post_run)
+    @patch('util.get_tokens', get_tokens)
+    @patch('beamservicesoperator.build_args', build_args)
+    def test_create_job(self):
+        global that
+        that = self
+        body = {
+            "metadata": {
+                "name": "name",
+                "namespace": "namespace"
+            },
+            "spec": {
+                "entryClass": "org.entryClass",
+                "tokens": [
+                    {
+                        "user": "user",
+                        "password": "password"
+                    }
+                ],
+                "args": {"runner": "runner"}
+            },
+            "status": {
+            }
+        }
+        response = target.create_job(body, body['spec'], 'jar_id')
+        self.assertEqual(response, 'jobid')
+
 if __name__ == '__main__':
     unittest.main()
