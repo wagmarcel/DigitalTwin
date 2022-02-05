@@ -273,5 +273,54 @@ class TestUpdates(aiounittest.AsyncTestCase):
         response = await target.updates(None, patch, Logger(), body, body["spec"], body["status"])
         self.assertEqual(patch["status"].get("state"), None)
 
+def cancel_job(job_id):
+    assert(job_id == "id")
+
+class TestDelete(TestCase):
+    @patch('kopf.info', kopf_info)
+    def test_delete(self):
+        body = {
+            "metadata": {
+                "name": "name",
+                "namespace": "namespace"
+            },
+            "spec": {
+                "sqlstatements": ["select;"],
+                "tables": ["table"],
+                "views": ["view"]
+            },
+            "status": {
+                "state": "INITIALIZED",
+                "job_id": "job_id"
+            }
+        }
+        patch = Bunch()
+        patch.status = {}
+        response = target.delete(body)
+        self.assertEqual(response, None)
+
+    @patch('kopf.info', kopf_info)
+    @patch('beamservicesoperator.cancel_job', cancel_job)
+    def test_delete_successful(self):
+        body = {
+            "metadata": {
+                "name": "name",
+                "namespace": "namespace"
+            },
+            "spec": {
+                "sqlstatements": ["select;"],
+                "tables": ["table"],
+                "views": ["view"]
+            },
+            "status": {
+                "state": "INITIALIZED",
+                "job_id": "job_id",
+                "updates": {"deployed": "1234", "jarId": "jarId", "jobCreated": "2345", "jobId": "id"}
+            }
+        }
+        patch = Bunch()
+        patch.status = {}
+        response = target.delete(body)
+
 if __name__ == '__main__':
     unittest.main()
