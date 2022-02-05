@@ -3,7 +3,7 @@ import aiounittest
 import unittest
 from urllib import response
 from bunch import Bunch
-from mock import patch, MagicMock
+from mock import patch, mock_open
 import kopf
 from kopf.testing import KopfRunner
 import os
@@ -31,7 +31,11 @@ def getjsn():
     return {"jobs": [{"id": "id", "status": "RUNNING"}]}
 def getjsnFail():
     return {"jobs": [{"id": "id", "status": "FAILED"}]}
-    
+def getjsonPost():
+    return {"filename": "/filename"}
+def getjsonPut():
+    return {"name": "name"}
+
 def kopf_info(body, reason, message):
     pass
 
@@ -273,6 +277,51 @@ class TestUpdates(aiounittest.AsyncTestCase):
         response = await target.updates(None, patch, Logger(), body, body["spec"], body["status"])
         self.assertEqual(patch["status"].get("state"), None)
 
+
+    def requestsget_good(url):
+        result = Bunch()
+        try:
+            url.index("/jobs/")
+        except ValueError:
+            result.json = getjsn
+        else:
+            result.json = getjsonPut
+        return result
+
+    def get_jobname_prefix(body, spec):
+        return "nam"
+
+
+    def cancel_job(job_id):
+        pass
+    @patch('kopf.info', kopf_info)
+    @patch('requests.get', requestsget_good)
+    @patch('beamservicesoperator.get_jobname_prefix', get_jobname_prefix)
+    @patch('beamservicesoperator.cancel_job', cancel_job)
+    async def test_update_not_jobcreated_not_ready_not_matching_joid(self):
+ 
+        body = {
+            "metadata": {
+                "name": "name",
+                "namespace": "namespace"
+            },
+            "spec": {
+                "sqlstatements": ["select;"],
+                "tables": ["table"],
+                "views": ["view"]
+            },
+            "status": {
+                "state": "INITIALIZED",
+                "job_id": "job_id",
+                "updates": {"deployed": "1234", "jarId": "jarId", "jobCreated": "2345", "jobId": "otherid"},
+                "jarfile": "jarfile"
+            }
+        }
+        patch = Bunch()
+        patch.status = {}
+        response = await target.updates(None, patch, Logger(), body, body["spec"], body["status"])
+        self.assertEqual(patch["status"].get("state"), None)
+
 def cancel_job(job_id):
     assert(job_id == "id")
 
@@ -321,6 +370,108 @@ class TestDelete(TestCase):
         patch = Bunch()
         patch.status = {}
         response = target.delete(body)
+        self.assertEqual(response, None)
+
+class TestHelpers(TestCase):
+    def requestget(url):
+        assert(url == 'url')
+        result = Bunch()
+        result.content = b'content'
+        return result
+    
+    def download_file_via_ftp(url, username, password):
+        return "jarfilepath"
+
+    @patch('requests.get', requestget)
+    def test_download_file_http(self):
+        m = mock_open()
+        with patch('__main__.open', m, create=True):
+            with open('foo', 'wb') as h:
+                h.write(b'some stuff')
+        response = target.download_file_via_http('url')
+        self.assertRegex(response, r"/tmp/[a-f0-9-]*\.jar") 
+
+    @patch('ftplib.FTP', autospec=True)
+    def test_download_file_ftp(self, mock_ftp_constructor):
+        mock_ftp = mock_ftp_constructor.return_value
+        m = mock_open()
+        with patch('__main__.open', m, create=True):
+            with open('foo', 'wb') as h:
+                h.write(b'some stuff')
+        response = target.download_file_via_ftp('ftp://url', 'username', 'password')
+        mock_ftp_constructor.assert_called_with('url', 'username', 'password')
+        self.assertRegex(response, r"/tmp/[a-f0-9-]*\.jar")
+
+    def requestpost(url, files):
+        response = Bunch()
+        response.status_code = 200
+        response.json = getjsonPost
+        return response
+
+    @patch('requests.post', requestpost)
+    @patch('kopf.info', kopf_info)
+    @patch('beamservicesoperator.download_file_via_ftp', download_file_via_ftp)
+    def test_deploy_ftp(self):
+        
+        body = {
+            "metadata": {
+                "name": "name",
+                "namespace": "namespace"
+            },
+            "spec": {
+                'package': {
+                    'url': 'ftp://url',
+                    'username': 'username',
+                    'password': 'password' 
+                }
+            },
+            "status": {
+            }
+        }
+        patchx = Bunch()
+        patchx.status = {}
+        m = mock_open(read_data='data')
+        with mock.patch('builtins.open', m, create=True):
+            with open('jarfilepath') as h:
+                response = target.deploy(body, body["spec"], patchx)
+        self.assertEqual(response, "filename")
+
+    def util_format_template(string, tokens, encode):
+        return "format"
+
+    @patch('util.format_template', util_format_template)
+    def test_build_args(self):
+        
+        args_dict = {
+           "key1": "value1",
+           "key2": "value2",
+           "config": {
+               "format": "value"
+           }
+        }
+        tokens = {
+            "key": "value"
+        }
+        response = target.build_args(args_dict, tokens)
+        self.assertEqual(response, '--key1=value1 --key2=value2 --config=format ')
+
+    @patch('kopf.info', kopf_info)
+    @patch('util.format_template', util_format_template)
+    def test_get_jobname_prefix(self):
+        
+        body = {
+            "metadata": {
+                "name": "name",
+                "namespace": "namespace"
+            },
+            "spec": {
+                "entryClass": "org.entryClass"
+            },
+            "status": {
+            }
+        }
+        response = target.get_jobname_prefix(body, body["spec"])
+        self.assertEqual(response, 'entryclass')
 
 if __name__ == '__main__':
     unittest.main()
