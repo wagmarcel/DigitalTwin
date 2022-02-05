@@ -46,6 +46,8 @@ class Logger():
 def kopf_info(body, reason, message):
     pass
 
+def check_readiness():
+    return True
 
 class TestInit(TestCase):
     @patch('kopf.info', kopf_info)
