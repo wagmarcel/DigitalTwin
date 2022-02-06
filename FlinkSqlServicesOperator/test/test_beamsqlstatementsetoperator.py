@@ -16,40 +16,52 @@
 from unittest import TestCase
 import unittest
 from bunch import Bunch
-from mock import patch, MagicMock
+from mock import patch
 import kopf
-from kopf.testing import KopfRunner
 import requests
 
 import beamsqlstatementsetoperator as target
 
 
-"""
-Mock functions
-"""
-
+# Mock functions
+# --------------
 
 class Logger():
+    """
+    mock for Logger
+    """
     def info(self, message):
-        pass
+        """
+        mock for info
+        """
 
     def debug(self, message):
-        pass
+        """
+        mock for debug
+        """
 
     def error(self, message):
-        pass
+        """
+        mock for error
+        """
 
     def warning(self, message):
-        pass
+        """
+        mock for warnings
+        """
 
-
+# pylint: disable=unused-argument
 def kopf_info(body, reason, message):
-    pass
+    """
+    mock for kopf.info
+    """
 
 def check_readiness():
+    """mock for check_rediness - successful"""
     return True
 
 class TestInit(TestCase):
+    """unit test class for kopf init"""
     @patch('kopf.info', kopf_info)
     def test_init(self):
         body = {
@@ -488,6 +500,7 @@ class TestUpdate(TestCase):
     @patch('kopf.info', kopf_info)
     @patch('beamsqlstatementsetoperator.cancel_job_and_get_state', cancel_job_and_get_state)
     def test_update_none_savepoint(self):
+        """test update without savepoint successful"""
         body = {
             "metadata": {
                 "name": "name",
@@ -501,16 +514,17 @@ class TestUpdate(TestCase):
                 "state": "RUNNING",
             }
         }
-        patch = Bunch()
-        patch.status = {}
-        target.update(body, body["spec"], patch, Logger())
-        self.assertEqual(patch.status["state"], "UPDATING")
-        self.assertIsNone(patch.status["savepoint_id"])
-        self.assertIsNone(patch.status["location"])
+        patchx = Bunch()
+        patchx.status = {}
+        target.update(body, body["spec"], patchx, Logger())
+        self.assertEqual(patchx.status["state"], "UPDATING")
+        self.assertIsNone(patchx.status["savepoint_id"])
+        self.assertIsNone(patchx.status["location"])
 
     @patch('kopf.info', kopf_info)
     @patch('beamsqlstatementsetoperator.cancel_job_and_get_state', cancel_job_and_get_state_fail)
     def test_update_none_savepoint(self):
+        """test update without savepoint fail"""
         body = {
             "metadata": {
                 "name": "name",
@@ -524,16 +538,17 @@ class TestUpdate(TestCase):
                 "state": "RUNNING",
             }
         }
-        patch = Bunch()
-        patch.status = {}
-        with self.assertRaises(kopf.TemporaryError) as cm:
-            target.update(body, body["spec"], patch, Logger())
+        patchx = Bunch()
+        patchx.status = {}
+        with self.assertRaises(kopf.TemporaryError):
+            target.update(body, body["spec"], patchx, Logger())
 
     @patch('kopf.info', kopf_info)
     @patch('flink_util.stop_job', stop_job)
     @patch('flink_util.get_savepoint_state', get_savepoint_state_successful)
     @patch('beamsqlstatementsetoperator.add_message', add_message)
     def test_update_savepoint_successful(self):
+        """test update_savepoint successful"""
         body = {
             "metadata": {
                 "name": "name",
@@ -547,12 +562,12 @@ class TestUpdate(TestCase):
                 "state": "RUNNING",
             }
         }
-        patch = Bunch()
-        patch.status = {}
-        target.update(body, body["spec"], patch, Logger())
-        self.assertEqual(patch.status["savepoint_id"], "savepoint_id")
-        self.assertEqual(patch.status["state"], "UPDATING")
-        self.assertEqual(patch.status["location"], "location")
+        patchx = Bunch()
+        patchx.status = {}
+        target.update(body, body["spec"], patchx, Logger())
+        self.assertEqual(patchx.status["savepoint_id"], "savepoint_id")
+        self.assertEqual(patchx.status["state"], "UPDATING")
+        self.assertEqual(patchx.status["location"], "location")
 
 
     @patch('kopf.info', kopf_info)
@@ -560,6 +575,7 @@ class TestUpdate(TestCase):
     @patch('flink_util.get_savepoint_state', get_savepoint_state_in_progress)
     @patch('beamsqlstatementsetoperator.add_message', add_message)
     def test_update_savepoint_in_progress(self):
+        """test update_savepoint when savepointing is in progress"""
         body = {
             "metadata": {
                 "name": "name",
@@ -573,12 +589,12 @@ class TestUpdate(TestCase):
                 "state": "RUNNING",
             }
         }
-        patch = Bunch()
-        patch.status = {}
-        with self.assertRaises(kopf.TemporaryError) as cm:
-            target.update(body, body["spec"], patch, Logger())
-        self.assertEqual(patch.status["savepoint_id"], "savepoint_id")
-        self.assertEqual(patch.status["state"], "SAVEPOINTING")
+        patchx = Bunch()
+        patchx.status = {}
+        with self.assertRaises(kopf.TemporaryError):
+            target.update(body, body["spec"], patchx, Logger())
+        self.assertEqual(patchx.status["savepoint_id"], "savepoint_id")
+        self.assertEqual(patchx.status["state"], "SAVEPOINTING")
 
 
     @patch('kopf.info', kopf_info)
@@ -586,6 +602,7 @@ class TestUpdate(TestCase):
     @patch('flink_util.get_savepoint_state', get_savepoint_state_not_found)
     @patch('beamsqlstatementsetoperator.add_message', add_message)
     def test_update_savepoint_not_found(self):
+        """test savepoint update strategy where savepoint not found"""
         body = {
             "metadata": {
                 "name": "name",
@@ -599,17 +616,18 @@ class TestUpdate(TestCase):
                 "state": "RUNNING",
             }
         }
-        patch = Bunch()
-        patch.status = {}
-        target.update(body, body["spec"], patch, Logger())
-        self.assertIsNone(patch.status["savepoint_id"])
-        self.assertEqual(patch.status["state"], "RUNNING")
-        self.assertIsNone(patch.status["location"])
+        patchx = Bunch()
+        patchx.status = {}
+        target.update(body, body["spec"], patchx, Logger())
+        self.assertIsNone(patchx.status["savepoint_id"])
+        self.assertEqual(patchx.status["state"], "RUNNING")
+        self.assertIsNone(patchx.status["location"])
 
 class TestHelpers(TestCase):
-
-
+    """unit test class for helpers"""
+    # pylint: disable=no-self-use, no-self-argument
     def send_successful(test, json):
+        """mock send job successful"""
         def jsonp():
             jsonres = Bunch()
             jsonres.job_id = "jobid"
@@ -619,7 +637,9 @@ class TestHelpers(TestCase):
         response.json = jsonp
         return response
 
+    # pylint: disable=no-self-use, no-self-argument
     def send_unsuccessful(test, json):
+        """mock send job unsuccessful"""
         def jsonp():
             jsonres = Bunch()
             jsonres.job_id = "jobid"
@@ -629,60 +649,72 @@ class TestHelpers(TestCase):
         response.json = jsonp
         return response
 
+    # pylint: disable=no-self-use, no-self-argument
     def get_job_status(logger, jobid):
+        """mock get job status"""
         return {
             "state": "ok"
         }
+    # pylint: disable=no-self-use, no-self-argument
     def get_job_status_none(logger, jobid):
+        """mock no job_status found"""
         return None
 
+    # pylint: disable=no-self-use, no-self-argument
     def send_exception(test, json):
+        """mock send_exception"""
         raise requests.RequestException("Error")
 
     @patch('kopf.info', kopf_info)
     @patch('requests.post', send_successful)
+    # pylint: disable=no-self-use
     def test_deploy_statementset(self):
+        """test deploy_statementset successful"""
         statementset = 'statementset'
         target.deploy_statementset(statementset, Logger())
 
     @patch('kopf.info', kopf_info)
     @patch('requests.post', send_unsuccessful)
     def test_deploy_statementset_unsuccessful(self):
+        """test deploy_statementset unsuccessful"""
         statementset = 'statementset'
-        with self.assertRaises(target.DeploymentFailedException) as cm:
+        with self.assertRaises(target.DeploymentFailedException):
             target.deploy_statementset(statementset, Logger())
 
     @patch('kopf.info', kopf_info)
     @patch('requests.post', send_exception)
     def test_deploy_statementset_exception(self):
+        """test deploy_stamenetset with exception"""
         statementset = 'statementset'
-        with self.assertRaises(target.DeploymentFailedException) as cm:
+        with self.assertRaises(target.DeploymentFailedException):
             target.deploy_statementset(statementset, Logger())
 
     def test_add_message(self):
+        """test add_message with string message"""
         reason = 'reason'
         body = Bunch()
         body.status = Bunch()
         body.status.messages = []
         mtype = 'mtype'
-        patch = Bunch()
-        patch.status = {}
-        target.add_message(Logger(), body, patch, reason, mtype)
-        self.assertEqual(patch.status.get('messages')[0].get('message'), reason)
+        patchx = Bunch()
+        patchx.status = {}
+        target.add_message(Logger(), body, patchx, reason, mtype)
+        self.assertEqual(patchx.status.get('messages')[0].get('message'), reason)
 
     def test_add_message_none(self):
+        """"test add_message with None"""
         reason = 'reason'
         body = Bunch()
         body.status = Bunch()
-        body.status
         mtype = 'mtype'
-        patch = Bunch()
-        patch.status = {}
-        target.add_message(Logger(), body, patch, reason, mtype)
-        self.assertEqual(patch.status.get('messages')[0].get('message'), reason)
+        patchx = Bunch()
+        patchx.status = {}
+        target.add_message(Logger(), body, patchx, reason, mtype)
+        self.assertEqual(patchx.status.get('messages')[0].get('message'), reason)
 
     @patch('flink_util.get_job_status', get_job_status)
     def test_get_job_state(self):
+        """test get_job_state"""
         body = Bunch()
         body.status = {
             "job_id": "job_id"
@@ -692,21 +724,23 @@ class TestHelpers(TestCase):
 
     @patch('flink_util.get_job_status', get_job_status)
     def test_refresh_state(self):
+        """test refresh_state"""
         body = Bunch()
-        patch = Bunch()
-        patch.status = {}
+        patchx = Bunch()
+        patchx.status = {}
         body.status = { "job_id": "job_id" }
 
-        state = target.refresh_state(body, patch, Logger())
-        self.assertEqual("ok", patch.status.get('state'))
+        target.refresh_state(body, patchx, Logger())
+        self.assertEqual("ok", patchx.status.get('state'))
     @patch('flink_util.get_job_status', get_job_status_none)
     def test_refresh_state_none(self):
+        """test refresh_state with return None"""
         body = Bunch()
-        patch = Bunch()
-        patch.status = {}
+        patchx = Bunch()
+        patchx.status = {}
         body.status = { "job_id": "job_id" }
 
-        state = target.refresh_state(body, patch, Logger())
-        self.assertEqual("UNKNOWN", patch.status.get('state'))
+        target.refresh_state(body, patchx, Logger())
+        self.assertEqual("UNKNOWN", patchx.status.get('state'))
 if __name__ == '__main__':
     unittest.main()
