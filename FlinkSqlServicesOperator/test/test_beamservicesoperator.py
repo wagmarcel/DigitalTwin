@@ -1,12 +1,8 @@
 from unittest import TestCase, mock
-import aiounittest
 import unittest
-from urllib import response
 from bunch import Bunch
 from mock import patch, mock_open
-import kopf
-from kopf.testing import KopfRunner
-import os
+import aiounittest
 
 import beamservicesoperator as target
 
@@ -38,6 +34,9 @@ def getjsonPut():
 
 def kopf_info(body, reason, message):
     pass
+
+THAT = None
+
 
 def check_readiness():
     return True
@@ -326,8 +325,10 @@ def cancel_job(job_id):
     assert(job_id == "id")
 
 class TestDelete(TestCase):
+    """Unit test class for delete tests"""
     @patch('kopf.info', kopf_info)
     def test_delete(self):
+        """test delete resource"""
         body = {
             "metadata": {
                 "name": "name",
@@ -351,6 +352,7 @@ class TestDelete(TestCase):
     @patch('kopf.info', kopf_info)
     @patch('beamservicesoperator.cancel_job', cancel_job)
     def test_delete_successful(self):
+        """test delete resource successfully"""
         body = {
             "metadata": {
                 "name": "name",
@@ -373,36 +375,44 @@ class TestDelete(TestCase):
         self.assertEqual(response, None)
 
 class TestHelpers(TestCase):
+    """Unit test class for helpers"""
+    # pylint: disable=no-self-argument
     def requestget(url):
+        """mock get content"""
         assert(url == 'url')
         result = Bunch()
         result.content = b'content'
         return result
     
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
     def download_file_via_ftp(url, username, password):
+        """mock downloaded file with path"""
         return "jarfilepath"
 
     @patch('requests.get', requestget)
     def test_download_file_http(self):
-        m = mock_open()
-        with patch('__main__.open', m, create=True):
-            with open('foo', 'wb') as h:
-                h.write(b'some stuff')
+        """test download job with http"""
+        mxx = mock_open()
+        with patch('__main__.open', mxx, create=True):
+            with open('foo', 'wb') as hxx:
+                hxx.write(b'some stuff')
         response = target.download_file_via_http('url')
         self.assertRegex(response, r"/tmp/[a-f0-9-]*\.jar") 
 
     @patch('ftplib.FTP', autospec=True)
     def test_download_file_ftp(self, mock_ftp_constructor):
-        mock_ftp = mock_ftp_constructor.return_value
-        m = mock_open()
-        with patch('__main__.open', m, create=True):
-            with open('foo', 'wb') as h:
-                h.write(b'some stuff')
+        """test download job with ftp"""
+        mxx = mock_open()
+        with patch('__main__.open', mxx, create=True):
+            with open('foo', 'wb') as hxx:
+                hxx.write(b'some stuff')
         response = target.download_file_via_ftp('ftp://url', 'username', 'password')
         mock_ftp_constructor.assert_called_with('url', 'username', 'password')
         self.assertRegex(response, r"/tmp/[a-f0-9-]*\.jar")
 
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
     def requestpost(url, files):
+        """mock successful post of job"""
         response = Bunch()
         response.status_code = 200
         response.json = getjsonPost
@@ -412,7 +422,7 @@ class TestHelpers(TestCase):
     @patch('kopf.info', kopf_info)
     @patch('beamservicesoperator.download_file_via_ftp', download_file_via_ftp)
     def test_deploy_ftp(self):
-        
+        """test deploy job via ftp"""
         body = {
             "metadata": {
                 "name": "name",
@@ -430,18 +440,20 @@ class TestHelpers(TestCase):
         }
         patchx = Bunch()
         patchx.status = {}
-        m = mock_open(read_data='data')
-        with mock.patch('builtins.open', m, create=True):
-            with open('jarfilepath') as h:
+        mxx = mock_open(read_data='data')
+        with mock.patch('builtins.open', mxx, create=True):
+            with open('jarfilepath', encoding='UTF-8'):
                 response = target.deploy(body, body["spec"], patchx)
         self.assertEqual(response, "filename")
 
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
     def util_format_template(string, tokens, encode):
+        """mock format template"""
         return "format"
 
     @patch('util.format_template', util_format_template)
     def test_build_args(self):
-        
+        """test build_args"""
         args_dict = {
            "key1": "value1",
            "key2": "value2",
@@ -458,7 +470,7 @@ class TestHelpers(TestCase):
     @patch('kopf.info', kopf_info)
     @patch('util.format_template', util_format_template)
     def test_get_jobname_prefix(self):
-        
+        """test get_jobname_prefix"""
         body = {
             "metadata": {
                 "name": "name",
@@ -472,18 +484,23 @@ class TestHelpers(TestCase):
         }
         response = target.get_jobname_prefix(body, body["spec"])
         self.assertEqual(response, 'entryclass')
-
-    that = None
+    # pylint: disable=no-self-argument
+    # pylint: disable=E1136
     def get_tokens(users):
-        that.assertDictEqual(users[0], {"user": "user", "password": "password"})
+        """mock get_tokens"""
+        THAT.assertDictEqual(users[0], {"user": "user", "password": "password"})
         return {"user1": "token1", "user2": "token2"}
+    # pylint: disable=no-self-argument
     def build_args(args_dict, tokens):
-        that.assertDictEqual(args_dict, {"runner": "runner"})
-        that.assertDictEqual(tokens, {"user1": "token1", "user2": "token2"})
-        pass
+        """mock build_args"""
+        THAT.assertDictEqual(args_dict, {"runner": "runner"})
+        THAT.assertDictEqual(tokens, {"user1": "token1", "user2": "token2"})
 
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
     def request_post_run(url, json):
+        """mock post to create job successfully"""
         def json_run():
+            """mock json result of post"""
             return {"jobid": "jobid"}
         result = Bunch()
         result.status_code = 200
@@ -493,9 +510,11 @@ class TestHelpers(TestCase):
     @patch('requests.post', request_post_run)
     @patch('util.get_tokens', get_tokens)
     @patch('beamservicesoperator.build_args', build_args)
+    # pylint: disable=global-statement
     def test_create_job(self):
-        global that
-        that = self
+        """test create_job successful"""
+        global THAT
+        THAT = self
         body = {
             "metadata": {
                 "name": "name",
@@ -517,9 +536,11 @@ class TestHelpers(TestCase):
         response = target.create_job(body, body['spec'], 'jar_id')
         self.assertEqual(response, 'jobid')
 
-
+    # pylint: disable=no-self-use, no-self-argument
     def request_get_overview(url):
+        """mock get overview path of flink"""
         def json_get():
+            """mock return of 5 worker slots"""
             return {"slots-total": 5}
         result = Bunch()
         result.status_code = 200
@@ -528,9 +549,11 @@ class TestHelpers(TestCase):
 
     @patch('kopf.info', kopf_info)
     @patch('requests.get', request_get_overview)
+    # pylint: disable=global-statement
     def test_check_readiness(self):
-        global that
-        that = self
+        """test check_readiness with 5 slots"""
+        global THAT
+        THAT = self
         body = {
             "metadata": {
                 "name": "name",
