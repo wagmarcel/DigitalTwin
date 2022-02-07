@@ -13,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+"""
+Unit tests for beamsqlstatementsetoperator.py
+"""
 from unittest import TestCase
 import unittest
 from bunch import Bunch
@@ -64,6 +67,7 @@ class TestInit(TestCase):
     """unit test class for kopf init"""
     @patch('kopf.info', kopf_info)
     def test_init(self):
+        """test init of resource"""
         body = {
             "metadata": {
                 "name": "name",
@@ -71,36 +75,46 @@ class TestInit(TestCase):
             },
             "spec": {}
         }
-        patch = Bunch()
-        patch.status = {}
-        result = target.create(body, body["spec"], patch, Logger())
+        patchx = Bunch()
+        patchx.status = {}
+        result = target.create(body, body["spec"], patchx, Logger())
         self.assertIsNotNone(result['createdOn'])
-        self.assertEqual(patch.status['state'], "INITIALIZED")
-        self.assertIsNone(patch.status['job_id'])
+        self.assertEqual(patchx.status['state'], "INITIALIZED")
+        self.assertIsNone(patchx.status['job_id'])
 
 
 class TestMonitoring(TestCase):
+    """Unit test class for monitoring"""
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
     def create_ddl_from_beamsqltables(beamsqltable, logger):
+        """mock successful DDL creation"""
         return "DDL;"
 
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
     def submit_statementset_successful(statementset, logger):
+        """mock successful statementset creation"""
         # Keeping normal assert statement as this does not seem to
         # be an object method after mocking
         assert statementset == "SET pipeline.name = 'namespace/name';\nDDL;" \
             "\nBEGIN STATEMENT SET;\nselect;\nEND;"
         return "job_id"
 
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
     def submit_statementset_failed(statementset, logger):
+        """mock submission failed"""
         raise target.DeploymentFailedException("Mock submission failed")
 
-    def update_status_not_found(body, patch, logger):
-        patch.status["state"] = "NOT_FOUND"
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    def update_status_not_found(body, patchx, logger):
+        """mock status not found"""
+        patchx.status["state"] = "NOT_FOUND"
 
     @patch('beamsqlstatementsetoperator.tables_and_views.create_ddl_from_beamsqltables',
            create_ddl_from_beamsqltables)
     @patch('beamsqlstatementsetoperator.deploy_statementset',
            submit_statementset_successful)
     def test_update_submission(self):
+        """test update submissino successful"""
         body = {
             "metadata": {
                 "name": "name",
@@ -116,20 +130,21 @@ class TestMonitoring(TestCase):
             }
         }
 
-        patch = Bunch()
-        patch.status = {}
+        patchx = Bunch()
+        patchx.status = {}
 
         beamsqltables = {("namespace", "table"): ({}, {})}
-        target.monitor(beamsqltables, None, patch,  Logger(),
+        target.monitor(beamsqltables, None, patchx,  Logger(),
                        body, body["spec"], body["status"])
-        self.assertEqual(patch.status['state'], "DEPLOYING")
-        self.assertEqual(patch.status['job_id'], "job_id")
+        self.assertEqual(patchx.status['state'], "DEPLOYING")
+        self.assertEqual(patchx.status['job_id'], "job_id")
 
     @patch('beamsqlstatementsetoperator.tables_and_views.create_ddl_from_beamsqltables',
            create_ddl_from_beamsqltables)
     @patch('beamsqlstatementsetoperator.deploy_statementset',
            submit_statementset_failed)
     def test_update_submission_failure(self):
+        """test update with submission failure"""
         body = {
             "metadata": {
                 "name": "name",
@@ -145,23 +160,24 @@ class TestMonitoring(TestCase):
             }
         }
 
-        patch = Bunch()
-        patch.status = {}
+        patchx = Bunch()
+        patchx.status = {}
 
         beamsqltables = {("namespace", "table"): ({}, {})}
         try:
-            target.monitor(beamsqltables, None, patch,  Logger(),
+            target.monitor(beamsqltables, None, patchx,  Logger(),
                            body, body["spec"], body["status"])
         except kopf.TemporaryError:
             pass
-        self.assertEqual(patch.status['state'], "DEPLOYMENT_FAILURE")
-        self.assertIsNone(patch.status['job_id'])
+        self.assertEqual(patchx.status['state'], "DEPLOYMENT_FAILURE")
+        self.assertIsNone(patchx.status['job_id'])
 
     @patch('beamsqlstatementsetoperator.tables_and_views.create_ddl_from_beamsqltables',
            create_ddl_from_beamsqltables)
     @patch('beamsqlstatementsetoperator.deploy_statementset',
            submit_statementset_failed)
     def test_update_table_failure(self):
+        """test update table with failure"""
         body = {
             "metadata": {
                 "name": "name",
@@ -177,14 +193,14 @@ class TestMonitoring(TestCase):
             }
         }
 
-        patch = Bunch()
-        patch.status = {}
+        patchx = Bunch()
+        patchx.status = {}
 
         beamsqltables = {}
-        with self.assertRaises(kopf.TemporaryError) as cm:
-            target.monitor(beamsqltables, None, patch, Logger(),
+        with self.assertRaises(kopf.TemporaryError) as cmx:
+            target.monitor(beamsqltables, None, patchx, Logger(),
                            body, body["spec"], body["status"])
-            self.assertTrue(str(cm.exception).startswith(
+            self.assertTrue(str(cmx.exception).startswith(
                 "Table DDLs could not be created for namespace/name."))
 
     @patch('beamsqlstatementsetoperator.tables_and_views.create_ddl_from_beamsqltables',
@@ -193,6 +209,7 @@ class TestMonitoring(TestCase):
            submit_statementset_failed)
     @patch('beamsqlstatementsetoperator.refresh_state', update_status_not_found)
     def test_update_handle_unknown(self):
+        """test handling unknow job state while update"""
         body = {
             "metadata": {
                 "name": "name",
@@ -208,25 +225,30 @@ class TestMonitoring(TestCase):
             }
         }
 
-        patch = Bunch()
-        patch.status = {}
+        patchx = Bunch()
+        patchx.status = {}
 
         beamsqltables = {}
 
-        target.monitor(beamsqltables, None, patch, Logger(),
+        target.monitor(beamsqltables, None, patchx, Logger(),
                        body, body["spec"], body["status"])
-        self.assertEqual(patch.status["state"], "INITIALIZED")
-        self.assertIsNone(patch.status["job_id"])
+        self.assertEqual(patchx.status["state"], "INITIALIZED")
+        self.assertIsNone(patchx.status["job_id"])
 
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
     def create_sets(spec, body, namespace, name, logger):
+        """mock create sets"""
         return "sets"
 
+    # pylint: disable=no-self-use, unused-argument, no-self-argument, too-many-arguments
     def create_tables(beamsqltables, spec, body, namespace, name, logger):
+        """mock creation of tables"""
         return "tables"
 
     @patch('beamsqlstatementsetoperator.create_sets', create_sets)
     @patch('beamsqlstatementsetoperator.create_tables', create_tables)
     def test_update_handle_views(self):
+        """test handling view during update"""
         body = {
             "metadata": {
                 "name": "name",
@@ -243,8 +265,8 @@ class TestMonitoring(TestCase):
             }
         }
 
-        patch = Bunch()
-        patch.status = {}
+        patchx = Bunch()
+        patchx.status = {}
 
         beamsqltables = {}
         beamsqlviews = {
@@ -254,25 +276,33 @@ class TestMonitoring(TestCase):
             },
             "sqlstatement": "sqlstatement"
         }
-        with self.assertRaises(kopf.TemporaryError) as cm:
-            target.monitor(beamsqltables, None, patch, Logger(),
+        with self.assertRaises(kopf.TemporaryError):
+            target.monitor(beamsqltables, beamsqlviews, patchx, Logger(),
                        body, body["spec"], body["status"])
 
 class TestDeletion(TestCase):
-    def update_status_nochange(body, patch, logger):
-        pass
+    """Unit test class for job deletion tests"""
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    def update_status_nochange(body, patchx, logger):
+        """mock update with no status change"""
 
-    def update_status_change(body, patch, logger):
-        patch.status["state"] = "CANCELED"
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    def update_status_change(body, patchx, logger):
+        """mock job status change"""
+        patchx.status["state"] = "CANCELED"
 
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
     def cancel_job(logger, job_id):
-        pass
+        """mock cancel job successful"""
 
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
     def cancel_job_error(logger, job_id):
+        """mock cancel_job with error"""
         raise kopf.TemporaryError("Could not cancel job")
 
     @patch('kopf.info', kopf_info)
     def test_canceled_delete(self):
+        """test delete job with CANCELED job"""
         body = {
             "metadata": {
                 "name": "name",
@@ -287,15 +317,16 @@ class TestDeletion(TestCase):
                 "job_id": "job_id"
             }
         }
-        patch = Bunch()
-        patch.status = {}
+        patchx = Bunch()
+        patchx.status = {}
 
-        target.delete(body, body["spec"], patch, Logger())
-        self.assertEqual(patch.status, {})
+        target.delete(body, body["spec"], patchx, Logger())
+        self.assertEqual(patchx.status, {})
 
     @patch('kopf.info', kopf_info)
     @patch('beamsqlstatementsetoperator.refresh_state', update_status_nochange)
     def test_canceling_delete(self):
+        """test cancel flink job without status change"""
         body = {
             "metadata": {
                 "name": "name",
@@ -310,16 +341,18 @@ class TestDeletion(TestCase):
                 "job_id": "job_id"
             }
         }
-        patch = Bunch()
-        patch.status = {"state": ""}
+        patchx = Bunch()
+        patchx.status = {"state": ""}
 
-        with self.assertRaises(kopf.TemporaryError) as cm:
-            target.delete(body, body["spec"], patch, Logger())
-            self.assertTrue(str(cm.exception).startswith("Cancelling,"))
+        with self.assertRaises(kopf.TemporaryError) as cmx:
+            target.delete(body, body["spec"], patchx, Logger())
+            self.assertTrue(str(cmx.exception).startswith("Cancelling,"))
 
     @patch('kopf.info', kopf_info)
     @patch('beamsqlstatementsetoperator.refresh_state', update_status_change)
-    def test_canceling_delete(self):
+    # pylint: disable=no-self-use
+    def test_canceling_delete_change(self):
+        """test cancel flink job with CANCELING state"""
         body = {
             "metadata": {
                 "name": "name",
@@ -334,15 +367,16 @@ class TestDeletion(TestCase):
                 "job_id": "job_id"
             }
         }
-        patch = Bunch()
-        patch.status = {"state": ""}
+        patchx = Bunch()
+        patchx.status = {"state": ""}
 
-        target.delete(body, body["spec"], patch, Logger())
+        target.delete(body, body["spec"], patchx, Logger())
 
     @patch('flink_util.cancel_job', cancel_job)
     @patch('beamsqlstatementsetoperator.refresh_state', update_status_nochange)
     @patch('kopf.info', kopf_info)
     def test_canceling_delete_flink_ok(self):
+        """test delete flink job successful"""
         body = {
             "metadata": {
                 "name": "name",
@@ -357,17 +391,18 @@ class TestDeletion(TestCase):
                 "job_id": "job_id"
             }
         }
-        patch = Bunch()
-        patch.status = {"state": ""}
+        patchx = Bunch()
+        patchx.status = {"state": ""}
 
-        with self.assertRaises(kopf.TemporaryError) as cm:
-            target.delete(body, body["spec"], patch, Logger())
-            self.assertTrue(str(cm.exception).startswith("Waiting for"))
-        self.assertEqual(patch.status["state"], "CANCELING")
+        with self.assertRaises(kopf.TemporaryError) as cmx:
+            target.delete(body, body["spec"], patchx, Logger())
+            self.assertTrue(str(cmx.exception).startswith("Waiting for"))
+        self.assertEqual(patchx.status["state"], "CANCELING")
 
     @patch('flink_util.cancel_job', cancel_job_error)
     @patch('kopf.info', kopf_info)
     def test_canceling_delete_flink_error(self):
+        """test deleting flink target unsuccessful"""
         body = {
             "metadata": {
                 "name": "name",
@@ -382,78 +417,97 @@ class TestDeletion(TestCase):
                 "job_id": "job_id"
             }
         }
-        patch = Bunch()
-        patch.status = {"state": ""}
+        patchx = Bunch()
+        patchx.status = {"state": ""}
 
-        with self.assertRaises(kopf.TemporaryError) as cm:
-            target.delete(body, body["spec"], patch, Logger())
-            self.assertTrue(str(cm.exception).startswith("Error trying"))
-        self.assertNotEqual(patch.status["state"], "CANCELING")
+        with self.assertRaises(kopf.TemporaryError) as cmx:
+            target.delete(body, body["spec"], patchx, Logger())
+            self.assertTrue(str(cmx.exception).startswith("Error trying"))
+        self.assertNotEqual(patchx.status["state"], "CANCELING")
 
-job_canceled = False
+JOB_CANCELED = False
 
 class TestUpdate(TestCase):
+    """unit test class to test updates"""
+
+    # pylint: disable=no-self-use, unused-argument, no-self-argument, global-statement
     def cancel_job(logger, job_id):
-        global job_canceled
-        job_canceled = True
-        pass
+        """mock cancel_job"""
+        global JOB_CANCELED
+        JOB_CANCELED = True
+
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
     def get_job_status(logger, job_id):
+        """mock get_job_status running"""
         return {
             "state": "RUNNING"
         }
 
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
     def get_job_status_not_running(logger, job_id):
+        """mock get job_status unknown"""
         return {
             "state": "UNKNOWN"
         }
 
-    def cancel_job_and_get_state(logger, body, patch):
-        pass
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    def cancel_job_and_get_state(logger, body, patchx):
+        """mock cancel_job_and_get state successful"""
 
-    def cancel_job_and_get_state_fail(logger, body, patch):
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    def cancel_job_and_get_state_fail(logger, body, patchx):
+        """mock cancel_job with state fail"""
         raise requests.exceptions.RequestException("Error")
 
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
     def stop_job(logger, job_id, savepoint_dir):
+        """mock stop_job"""
         return "savepoint_id"
 
-
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
     def get_savepoint_state_successful(logger, job_id, savepoint_id):
+        """mock get savepoint_state return successful"""
         return {
             "status": "SUCCESSFUL",
             "location": "location"
         }
 
-
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
     def get_savepoint_state_in_progress(logger, job_id, savepoint_id):
+        """mock get_savepoint_state is in progress"""
         return {
             "status": "IN_PROGRESS",
             "location": "location"
         }
 
-
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
     def get_savepoint_state_not_found(logger, job_id, savepoint_id):
+        """mock savepoint_state_not_found"""
         return {
             "status": "NOT_FOUND",
             "location": "location"
         }
 
-    def add_message(logger, body, patch, reason, mtype):
-        pass
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    def add_message(logger, body, patchx, reason, mtype):
+        """mock add_message"""
 
     @patch('kopf.info', kopf_info)
     @patch('flink_util.cancel_job', cancel_job)
     @patch('flink_util.get_job_status', get_job_status)
+    # pylint: disable=global-statement
     def test_cancel_job_and_get_state_running(self):
-        global job_canceled
+        """test cancel_job_and_get_state with getting job_state RUNNING"""
+        global JOB_CANCELED
         body = {
             "status": {
                 "job_id": "job_id"
             }
         }
-        job_canceled = False
+        JOB_CANCELED = False
         job_state = target.cancel_job_and_get_state(Logger(), body, None)
         self.assertEqual("RUNNING", job_state)
-        self.assertEqual(True, job_canceled)
+        self.assertEqual(True, JOB_CANCELED)
 
 
 
@@ -461,22 +515,25 @@ class TestUpdate(TestCase):
     @patch('kopf.info', kopf_info)
     @patch('flink_util.cancel_job', cancel_job)
     @patch('flink_util.get_job_status', get_job_status_not_running)
+    # pylint: disable=global-statement
     def test_cancel_job_and_get_state_not_running(self):
-        global job_canceled
+        """test cancel_job_and_get_state with non running job"""
+        global JOB_CANCELED
         body = {
             "status": {
                 "job_id": "job_id"
             }
         }
-        job_canceled = False
+        JOB_CANCELED = False
         job_state = target.cancel_job_and_get_state(Logger(), body, None)
         self.assertEqual("UNKNOWN", job_state)
-        self.assertEqual(False, job_canceled)
+        self.assertEqual(False, JOB_CANCELED)
 
 
     @patch('kopf.info', kopf_info)
     @patch('beamsqlstatementsetoperator.cancel_job_and_get_state', cancel_job_and_get_state)
     def test_update_no_savepoint(self):
+        """test update without savepoint when update strategy is not given"""
         body = {
             "metadata": {
                 "name": "name",
@@ -489,12 +546,12 @@ class TestUpdate(TestCase):
                 "state": "RUNNING",
             }
         }
-        patch = Bunch()
-        patch.status = {}
-        target.update(body, body["spec"], patch, Logger())
-        self.assertEqual(patch.status["state"], "UPDATING")
-        self.assertIsNone(patch.status["savepoint_id"])
-        self.assertIsNone(patch.status["location"])
+        patchx = Bunch()
+        patchx.status = {}
+        target.update(body, body["spec"], patchx, Logger())
+        self.assertEqual(patchx.status["state"], "UPDATING")
+        self.assertIsNone(patchx.status["savepoint_id"])
+        self.assertIsNone(patchx.status["location"])
 
 
     @patch('kopf.info', kopf_info)
@@ -523,7 +580,7 @@ class TestUpdate(TestCase):
 
     @patch('kopf.info', kopf_info)
     @patch('beamsqlstatementsetoperator.cancel_job_and_get_state', cancel_job_and_get_state_fail)
-    def test_update_none_savepoint(self):
+    def test_update_none_savepoint_fail(self):
         """test update without savepoint fail"""
         body = {
             "metadata": {
