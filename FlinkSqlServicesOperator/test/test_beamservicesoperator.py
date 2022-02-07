@@ -115,22 +115,24 @@ class TestUpdates(aiounittest.AsyncTestCase):
                 "jarfile": "jarfile"
             }
         }
-        patch = Bunch()
-        patch.status = {}
-        response = await target.updates(None, patch, Logger(), body, body["spec"], body["status"])
+        patchx = Bunch()
+        patchx.status = {}
+        response = await target.updates(None, patchx, Logger(), body, body["spec"], body["status"])
         self.assertEqual(response, {'deployed': True, 'jarId': 'deploy'})
 
 
     def check_readiness(body):
+        """mock readiness of 1 slot"""
         return 1
     def create_job(body, spec, update_status):
+        """mock create job successful"""
         return "job_id"
 
     @patch('kopf.info', kopf_info)
     @patch('beamservicesoperator.check_readiness', check_readiness)
     @patch('beamservicesoperator.create_job', create_job)
     async def test_update_not_jobcreated(self):
- 
+        """test update no job created"""
         body = {
             "metadata": {
                 "name": "name",
@@ -148,18 +150,19 @@ class TestUpdates(aiounittest.AsyncTestCase):
                 "jarfile": "jarfile"
             }
         }
-        patch = Bunch()
-        patch.status = {}
-        response = await target.updates(None, patch, Logger(), body, body["spec"], body["status"])
+        patchx = Bunch()
+        patchx.status = {}
+        response = await target.updates(None, patchx, Logger(), body, body["spec"], body["status"])
         self.assertEqual(response, {'jobCreated': True, 'jobId': 'job_id'})
 
     def check_readiness_0(body):
+        """mock no ready task slots"""
         return 0
     @patch('kopf.info', kopf_info)
     @patch('beamservicesoperator.check_readiness', check_readiness_0)
     @patch('beamservicesoperator.create_job', create_job)
     async def test_update_not_jobcreated_not_ready(self):
- 
+        """test update job not ready"""
         body = {
             "metadata": {
                 "name": "name",
@@ -177,19 +180,20 @@ class TestUpdates(aiounittest.AsyncTestCase):
                 "jarfile": "jarfile"
             }
         }
-        patch = Bunch()
-        patch.status = {}
-        response = await target.updates(None, patch, Logger(), body, body["spec"], body["status"])
+        patchx = Bunch()
+        patchx.status = {}
+        response = await target.updates(None, patchx, Logger(), body, body["spec"], body["status"])
         self.assertEqual(response, None)
 
     def create_job_none(body, spec, update_status):
+        """mock create job unsuccessful"""
         return None
 
     @patch('kopf.info', kopf_info)
     @patch('beamservicesoperator.check_readiness', check_readiness)
     @patch('beamservicesoperator.create_job', create_job_none)
     async def test_update_not_jobcreated_not_ready_no_jobid(self):
- 
+        """test update job without job id"""
         body = {
             "metadata": {
                 "name": "name",
@@ -207,9 +211,9 @@ class TestUpdates(aiounittest.AsyncTestCase):
                 "jarfile": "jarfile"
             }
         }
-        patch = Bunch()
-        patch.status = {}
-        response = await target.updates(None, patch, Logger(), body, body["spec"], body["status"])
+        patchx = Bunch()
+        patchx.status = {}
+        response = await target.updates(None, patchx, Logger(), body, body["spec"], body["status"])
         self.assertEqual(response, {'deployed': False, 'jobCreated': False})
 
 
@@ -221,7 +225,7 @@ class TestUpdates(aiounittest.AsyncTestCase):
     @patch('kopf.info', kopf_info)
     @patch('requests.get', requestsget)
     async def test_update_not_jobcreated_not_ready_no_jobid(self):
- 
+        """test update not ready job"""
         body = {
             "metadata": {
                 "name": "name",
@@ -239,10 +243,10 @@ class TestUpdates(aiounittest.AsyncTestCase):
                 "jarfile": "jarfile"
             }
         }
-        patch = Bunch()
-        patch.status = {}
-        response = await target.updates(None, patch, Logger(), body, body["spec"], body["status"])
-        self.assertEqual(patch["status"].get("state"), "RUNNING")
+        patchx = Bunch()
+        patchx.status = {}
+        await target.updates(None, patchx, Logger(), body, body["spec"], body["status"])
+        self.assertEqual(patchx["status"].get("state"), "RUNNING")
 
 
     def requestsget_FAIL(url):
@@ -253,7 +257,7 @@ class TestUpdates(aiounittest.AsyncTestCase):
     @patch('kopf.info', kopf_info)
     @patch('requests.get', requestsget_FAIL)
     async def test_update_not_jobcreated_not_ready_no_jobid_requestget_getfailed(self):
- 
+        """test update job failed"""
         body = {
             "metadata": {
                 "name": "name",
@@ -271,13 +275,14 @@ class TestUpdates(aiounittest.AsyncTestCase):
                 "jarfile": "jarfile"
             }
         }
-        patch = Bunch()
-        patch.status = {}
-        response = await target.updates(None, patch, Logger(), body, body["spec"], body["status"])
-        self.assertEqual(patch["status"].get("state"), None)
+        patchx = Bunch()
+        patchx.status = {}
+        await target.updates(None, patchx, Logger(), body, body["spec"], body["status"])
+        self.assertEqual(patchx["status"].get("state"), None)
 
 
     def requestsget_good(url):
+        """mock get jobs"""
         result = Bunch()
         try:
             url.index("/jobs/")
@@ -288,17 +293,18 @@ class TestUpdates(aiounittest.AsyncTestCase):
         return result
 
     def get_jobname_prefix(body, spec):
+        """mock get jobname prefix"""
         return "nam"
 
-
     def cancel_job(job_id):
-        pass
+        """mock cancel job successful"""
+
     @patch('kopf.info', kopf_info)
     @patch('requests.get', requestsget_good)
     @patch('beamservicesoperator.get_jobname_prefix', get_jobname_prefix)
     @patch('beamservicesoperator.cancel_job', cancel_job)
     async def test_update_not_jobcreated_not_ready_not_matching_joid(self):
- 
+        """test updating not ready job"""
         body = {
             "metadata": {
                 "name": "name",
@@ -316,12 +322,13 @@ class TestUpdates(aiounittest.AsyncTestCase):
                 "jarfile": "jarfile"
             }
         }
-        patch = Bunch()
-        patch.status = {}
-        response = await target.updates(None, patch, Logger(), body, body["spec"], body["status"])
-        self.assertEqual(patch["status"].get("state"), None)
+        patchx = Bunch()
+        patchx.status = {}
+        await target.updates(None, patchx, Logger(), body, body["spec"], body["status"])
+        self.assertEqual(patchx["status"].get("state"), None)
 
 def cancel_job(job_id):
+    """mock cancel job"""
     assert(job_id == "id")
 
 class TestDelete(TestCase):
@@ -344,8 +351,8 @@ class TestDelete(TestCase):
                 "job_id": "job_id"
             }
         }
-        patch = Bunch()
-        patch.status = {}
+        patchx = Bunch()
+        patchx.status = {}
         response = target.delete(body)
         self.assertEqual(response, None)
 
@@ -369,8 +376,8 @@ class TestDelete(TestCase):
                 "updates": {"deployed": "1234", "jarId": "jarId", "jobCreated": "2345", "jobId": "id"}
             }
         }
-        patch = Bunch()
-        patch.status = {}
+        patchx = Bunch()
+        patchx.status = {}
         response = target.delete(body)
         self.assertEqual(response, None)
 
