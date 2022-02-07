@@ -224,7 +224,7 @@ class TestUpdates(aiounittest.AsyncTestCase):
 
     @patch('kopf.info', kopf_info)
     @patch('requests.get', requestsget)
-    async def test_update_not_jobcreated_not_ready_no_jobid(self):
+    async def test_update_not_jobcreated_not_ready_then_running(self):
         """test update not ready job"""
         body = {
             "metadata": {
@@ -248,14 +248,15 @@ class TestUpdates(aiounittest.AsyncTestCase):
         await target.updates(None, patchx, Logger(), body, body["spec"], body["status"])
         self.assertEqual(patchx["status"].get("state"), "RUNNING")
 
-
-    def requestsget_FAIL(url):
+    # pylint: disable=no-self-use, no-self-argument
+    def requestsget_fail(url):
+        """mock get jobs fail"""
         result = Bunch()
         result.json = getjsnFail
         return result
 
     @patch('kopf.info', kopf_info)
-    @patch('requests.get', requestsget_FAIL)
+    @patch('requests.get', requestsget_fail)
     async def test_update_not_jobcreated_not_ready_no_jobid_requestget_getfailed(self):
         """test update job failed"""
         body = {
@@ -280,7 +281,7 @@ class TestUpdates(aiounittest.AsyncTestCase):
         await target.updates(None, patchx, Logger(), body, body["spec"], body["status"])
         self.assertEqual(patchx["status"].get("state"), None)
 
-
+    # pylint: disable=no-self-argument
     def requestsget_good(url):
         """mock get jobs"""
         result = Bunch()
@@ -292,10 +293,11 @@ class TestUpdates(aiounittest.AsyncTestCase):
             result.json = getjsonPut
         return result
 
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
     def get_jobname_prefix(body, spec):
         """mock get jobname prefix"""
         return "nam"
-
+    # pylint: disable=no-self-argument
     def cancel_job(job_id):
         """mock cancel job successful"""
 
