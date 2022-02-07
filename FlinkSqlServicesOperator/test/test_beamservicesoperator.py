@@ -1,3 +1,4 @@
+"""Unit test for beamservicesoperator.py"""
 from unittest import TestCase, mock
 import unittest
 from bunch import Bunch
@@ -7,43 +8,51 @@ import aiounittest
 import beamservicesoperator as target
 
 
-"""
-Mock functions
-"""
+
+# Mock functions
+# --------------
+
 class Logger():
+    """mock logger class"""
     def info(self, message):
-        pass
+        """info"""
 
     def debug(self, message):
-        pass
+        """debug"""
 
     def error(self, message):
-        pass
+        """error"""
 
     def warning(self, message):
-        pass
+        """warning"""
 
 def getjsn():
+    """get job description RUNNING"""
     return {"jobs": [{"id": "id", "status": "RUNNING"}]}
-def getjsnFail():
+def getjsn_fail():
+    """get job description FAILED"""
     return {"jobs": [{"id": "id", "status": "FAILED"}]}
-def getjsonPost():
+def getjson_post():
+    """post filename"""
     return {"filename": "/filename"}
-def getjsonPut():
+def getjson_put():
+    """put name"""
     return {"name": "name"}
-
+# pylint: disable=unused-argument
 def kopf_info(body, reason, message):
-    pass
+    """mock kopf info"""
 
 THAT = None
 
-
 def check_readiness():
+    """mock check readiniess successful"""
     return True
 
 class TestCreate(TestCase):
+    """Unit test class for create resource"""
     @patch('kopf.info', kopf_info)
     def test_create(self):
+        """test create resource successful"""
         body = {
             "metadata": {
                 "name": "name",
@@ -59,15 +68,17 @@ class TestCreate(TestCase):
                 "job_id": "job_id"
             }
         }
-        patch = Bunch()
-        patch.status = {}
-        response = target.create(body, body["spec"], patch)
+        patchx = Bunch()
+        patchx.status = {}
+        response = target.create(body, body["spec"], patchx)
         self.assertTrue(response.get("createdOn"))
 
 
 class TestUpdates(aiounittest.AsyncTestCase):
+    """Unit test class for updates"""
     @patch('kopf.info', kopf_info)
-    async def test_update_None(self):
+    async def test_update_none(self):
+        """test update unsuccessful"""
         body = {
             "metadata": {
                 "name": "name",
@@ -83,21 +94,24 @@ class TestUpdates(aiounittest.AsyncTestCase):
                 "job_id": "job_id"
             }
         }
-        patch = Bunch()
-        patch.status = {}
-        response = await target.updates(None, patch, Logger(), body, body["spec"], body["status"])
+        patchx = Bunch()
+        patchx.status = {}
+        response = await target.updates(None, patchx, Logger(), body, body["spec"], body["status"])
         self.assertEqual(response, {'deployed': False, 'jobCreated': False})
-        
+
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
     def delete_jar(body, jarfile):
-        pass
-    def deploy(body, spec, patch):
+        """mock delete jar"""
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    def deploy(body, spec, patchx):
+        """mock deploy"""
         return "deploy"
 
     @patch('kopf.info', kopf_info)
     @patch('beamservicesoperator.delete_jar', delete_jar)
     @patch('beamservicesoperator.deploy', deploy)
     async def test_update_deployed(self):
- 
+        """test update deployed"""
         body = {
             "metadata": {
                 "name": "name",
@@ -120,10 +134,12 @@ class TestUpdates(aiounittest.AsyncTestCase):
         response = await target.updates(None, patchx, Logger(), body, body["spec"], body["status"])
         self.assertEqual(response, {'deployed': True, 'jarId': 'deploy'})
 
-
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
     def check_readiness(body):
         """mock readiness of 1 slot"""
         return 1
+
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
     def create_job(body, spec, update_status):
         """mock create job successful"""
         return "job_id"
@@ -155,6 +171,7 @@ class TestUpdates(aiounittest.AsyncTestCase):
         response = await target.updates(None, patchx, Logger(), body, body["spec"], body["status"])
         self.assertEqual(response, {'jobCreated': True, 'jobId': 'job_id'})
 
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
     def check_readiness_0(body):
         """mock no ready task slots"""
         return 0
@@ -185,6 +202,7 @@ class TestUpdates(aiounittest.AsyncTestCase):
         response = await target.updates(None, patchx, Logger(), body, body["spec"], body["status"])
         self.assertEqual(response, None)
 
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
     def create_job_none(body, spec, update_status):
         """mock create job unsuccessful"""
         return None
@@ -216,8 +234,9 @@ class TestUpdates(aiounittest.AsyncTestCase):
         response = await target.updates(None, patchx, Logger(), body, body["spec"], body["status"])
         self.assertEqual(response, {'deployed': False, 'jobCreated': False})
 
-
+    # pylint: disable=no-self-use, unused-argument, no-self-argument
     def requestsget(url):
+        """mock get jobs"""
         result = Bunch()
         result.json = getjsn
         return result
@@ -239,7 +258,8 @@ class TestUpdates(aiounittest.AsyncTestCase):
             "status": {
                 "state": "INITIALIZED",
                 "job_id": "job_id",
-                "updates": {"deployed": "1234", "jarId": "jarId", "jobCreated": "2345", "jobId": "id"},
+                "updates":
+                    {"deployed": "1234", "jarId": "jarId", "jobCreated": "2345", "jobId": "id"},
                 "jarfile": "jarfile"
             }
         }
@@ -252,7 +272,7 @@ class TestUpdates(aiounittest.AsyncTestCase):
     def requestsget_fail(url):
         """mock get jobs fail"""
         result = Bunch()
-        result.json = getjsnFail
+        result.json = getjsn_fail
         return result
 
     @patch('kopf.info', kopf_info)
@@ -272,7 +292,8 @@ class TestUpdates(aiounittest.AsyncTestCase):
             "status": {
                 "state": "INITIALIZED",
                 "job_id": "job_id",
-                "updates": {"deployed": "1234", "jarId": "jarId", "jobCreated": "2345", "jobId": "id"},
+                "updates":
+                    {"deployed": "1234", "jarId": "jarId", "jobCreated": "2345", "jobId": "id"},
                 "jarfile": "jarfile"
             }
         }
@@ -290,7 +311,7 @@ class TestUpdates(aiounittest.AsyncTestCase):
         except ValueError:
             result.json = getjsn
         else:
-            result.json = getjsonPut
+            result.json = getjson_put
         return result
 
     # pylint: disable=no-self-use, unused-argument, no-self-argument
@@ -320,7 +341,9 @@ class TestUpdates(aiounittest.AsyncTestCase):
             "status": {
                 "state": "INITIALIZED",
                 "job_id": "job_id",
-                "updates": {"deployed": "1234", "jarId": "jarId", "jobCreated": "2345", "jobId": "otherid"},
+                "updates":
+                    {"deployed": "1234", "jarId": "jarId",
+                        "jobCreated": "2345", "jobId": "otherid"},
                 "jarfile": "jarfile"
             }
         }
@@ -331,7 +354,7 @@ class TestUpdates(aiounittest.AsyncTestCase):
 
 def cancel_job(job_id):
     """mock cancel job"""
-    assert(job_id == "id")
+    assert job_id == "id"
 
 class TestDelete(TestCase):
     """Unit test class for delete tests"""
@@ -375,7 +398,8 @@ class TestDelete(TestCase):
             "status": {
                 "state": "INITIALIZED",
                 "job_id": "job_id",
-                "updates": {"deployed": "1234", "jarId": "jarId", "jobCreated": "2345", "jobId": "id"}
+                "updates":
+                    {"deployed": "1234", "jarId": "jarId", "jobCreated": "2345", "jobId": "id"}
             }
         }
         patchx = Bunch()
@@ -388,11 +412,11 @@ class TestHelpers(TestCase):
     # pylint: disable=no-self-argument
     def requestget(url):
         """mock get content"""
-        assert(url == 'url')
+        assert url == 'url'
         result = Bunch()
         result.content = b'content'
         return result
-    
+
     # pylint: disable=no-self-use, unused-argument, no-self-argument
     def download_file_via_ftp(url, username, password):
         """mock downloaded file with path"""
@@ -406,7 +430,7 @@ class TestHelpers(TestCase):
             with open('foo', 'wb') as hxx:
                 hxx.write(b'some stuff')
         response = target.download_file_via_http('url')
-        self.assertRegex(response, r"/tmp/[a-f0-9-]*\.jar") 
+        self.assertRegex(response, r"/tmp/[a-f0-9-]*\.jar")
 
     @patch('ftplib.FTP', autospec=True)
     def test_download_file_ftp(self, mock_ftp_constructor):
@@ -424,7 +448,7 @@ class TestHelpers(TestCase):
         """mock successful post of job"""
         response = Bunch()
         response.status_code = 200
-        response.json = getjsonPost
+        response.json = getjson_post
         return response
 
     @patch('requests.post', requestpost)
@@ -441,7 +465,7 @@ class TestHelpers(TestCase):
                 'package': {
                     'url': 'ftp://url',
                     'username': 'username',
-                    'password': 'password' 
+                    'password': 'password'
                 }
             },
             "status": {
