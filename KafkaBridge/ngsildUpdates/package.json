@@ -1,0 +1,16 @@
+{
+  "name": "ngsildUpdate-kafka-bridge",
+  "version": "0.0.1",
+  "description": "Bridge from Kafka to NgsiLD",
+  "main": "app.js",
+  "dependencies": {
+    "kafkajs": "^1.15.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
+  },
+  "author": "Marcel Wagner",
+  "license": "Apache-2.0"
+}
