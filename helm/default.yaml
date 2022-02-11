@@ -57,3 +57,6 @@ minio:
   userAccessKey: minio
   storageSize: 10G
   healthPath: /minio/health/live
+
+alerta:
+  alertaAdminUser: admin

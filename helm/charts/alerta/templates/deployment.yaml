@@ -41,28 +41,23 @@ spec:
               value: {{ .Values.keycloak.externalAuthService.protocol }}://{{ .Values.keycloak.externalAuthService.domainname }}
             - name: KEYCLOAK_REALM
               value: {{ .Values.keycloak.alertaRealm }}
-            {{- if .Values.alertaAdminUsers }}
             - name: ADMIN_USERS
               value: {{ .Values.alertaAdminUsers | join "," }}
-            {{- end }}
             - name: ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ template "alerta.fullname" . }}
+                  name: alerta
                   key: alerta-admin-password
-              {{- if .Values.alertaAdminKey }}
-            
             - name: ADMIN_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ template "alerta.fullname" . }}
+                  name: alerta
                   key: alerta-admin-key
             - name: ALERTA_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ template "alerta.fullname" . }}
-                  key: alerta-api-key
-              {{- end }}
+                  name: alerta
+                  key: alerta-admin-key
               {{- if .Values.alertaInstallPlugins }}
             - name: INSTALL_PLUGINS
               value: {{ .Values.alertaInstallPlugins | join "," }}
