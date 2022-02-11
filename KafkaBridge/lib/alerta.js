@@ -18,14 +18,11 @@
 'use strict';
 var Logger = require("./logger.js");
 const Rest = require("./rest.js");
-const Keycloak = require('keycloak-connect');
 
 module.exports = function Alerta(config) {
   var config = config;
   var logger = new Logger(config);
   var rest = new Rest(config);
-  var authService = config.keycloak.alertaAuthService;
-  var keycloakAdapter = new Keycloak({}, authService);
 
   var token = config.alerta.accessKey;
   var headers;
