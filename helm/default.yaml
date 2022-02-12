@@ -21,10 +21,12 @@ keycloak:
 db:
   teamId: acid
   clusterSvcPostfix: cluster
+  svcPort: 5432
   pvSize: 1Gi
   podInstances: 2
   alertaDb: monitoring
   dbUser: ngb
+  scorpioDb: ngb
   secretPostfix: credentials.postgresql.acid.zalan.do
 
 ingress:
@@ -60,3 +62,17 @@ minio:
 
 alerta:
   alertaAdminUser: admin
+
+kafka:
+  name: my-cluster
+  bootstrapServer: my-cluster-kafka-bootstrap:9092
+  storage:
+    type: persistent-claim
+    size: 5Gi
+  zookeeper:
+    replicas: 1
+    storage:
+      type: persistent-claim
+      size: 1Gi
+  connect:
+    debeziumTopic: ngsild
