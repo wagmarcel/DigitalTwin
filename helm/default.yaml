@@ -14,9 +14,13 @@ keycloak:
     name: keycloak-discovery
     port: 8080
     path: /auth
-  alertaRealm: alerta
-  alertaClient: alerta-ui
-  alertaClientSecret: x8M59QRO8dgG3PYJ4UR03qh5CBBzfLUa
+  alerta:
+    clientSecret: keycloak-client-secret-alerta-ui
+    realm: iff
+    client: alerta-ui
+    redirectUris: 
+    - http://alerta.local/*
+    - https://alerta.local/*
 
 db:
   teamId: acid
@@ -62,6 +66,7 @@ minio:
 
 alerta:
   alertaAdminUser: admin
+
 
 kafka:
   name: my-cluster
