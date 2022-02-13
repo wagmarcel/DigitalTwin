@@ -66,10 +66,12 @@ flink:
 
 minio:
   url: http://minio
+  endpoint: minio
   adminAccessKey: console
   userAccessKey: minio
   storageSize: 10G
   healthPath: /minio/health/live
+  mcImage: minio/mc:RELEASE.2022-02-07T09-25-34Z
 
 alerta:
   alertaAdminUser: admin
