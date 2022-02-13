@@ -25,6 +25,7 @@ keycloak:
     - openid
     - profile
     - email
+    - roles
   scorpio:
     realm: iff
     client: scorpio
