@@ -1,7 +1,6 @@
 ## environment variables for keycloak, do not modify SSL_REQUIRED
 keycloak_vars:
 #  KEYCLOAK_SERVER_URL: http://keycloak.local #https://85.215.213.132:8443/auth
-  REALM: org
   SSL_REQUIRED: none
 
 ## environment variables for adapter service

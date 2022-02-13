@@ -21,6 +21,13 @@ keycloak:
     redirectUris: 
     - http://alerta.local/*
     - https://alerta.local/*
+    defaultClientScopes:
+    - openid
+    - profile
+    - email
+  scorpio:
+    realm: iff
+    client: scorpio
 
 db:
   teamId: acid

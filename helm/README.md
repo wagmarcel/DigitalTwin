@@ -48,6 +48,8 @@ An installation script `install_operators.sh` is provided to deploy the operator
    * The username is `admin`, the password can be found by `kubectl -n iff get secret/credential-keycloak -o=jsonpath='{.data.ADMIN_PASSWORD}' | base64 -d`
 8. Verify that there are 2 realms `master`, `iff`
 9. Verify that there is a user in realm `iff`, named: `realm_user`
+
+   * The password for `realm_user` can be found by  `		kubectl -n iff get secret/credential-iff-realm-user-iff -o jsonpath='{.data.password}'| base64 -d`
 10. Get token through http://keycloak.local/auth
 11. Use ngsi-ld api via `ngsild.local`
 
@@ -72,7 +74,7 @@ Removal instructions for helm charts are provided in the *Uninstallation* sectio
 
 # Configure Keycloak.local dns
 
-edit the coredns configmap of kubesystem:
+Edit the coredns configmap of kubesystem:
 `kubectl -n kube-system edit cm/coredns`
 
 ```

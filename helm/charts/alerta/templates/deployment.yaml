@@ -34,7 +34,7 @@ spec:
                   name: {{ .Values.keycloak.alerta.clientSecret }}
                   key: CLIENT_SECRET
             - name: OAUTH2_CLIENT_ID
-              value: {{ .Values.keycloak.alertaClient }}
+              value: {{ .Values.keycloak.alerta.client }}
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
