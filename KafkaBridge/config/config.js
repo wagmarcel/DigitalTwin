@@ -34,6 +34,11 @@ module.exports ={
 	"ngsildServer": {
 		"host": "ngsild.local",
 		"port": 80
+	},
+	"debeziumBridge": {
+		"topic": "ngsild.public.entity",
+		"entityTopicPrefix": "ngsild.entity",
+		"attributesTopic": "ngsild.attributes",
+		"rdfSources": ['file:///home/marcel/src/Digital-Twin-POC/kafka-bridge/debeziumBridge/config/knowledge.ttl']
 	}
-
 }

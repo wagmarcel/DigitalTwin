@@ -18,11 +18,12 @@
 const GROUPID = "debeziumBridgeGroup";
 const CLIENTID = "ngsildkafkaclient";
 const { Kafka } = require('kafkajs');
-var config = require("./config/config.js");
-var DebeziumBridge = require("./lib/debeziumBridge.js");
-var Logger = require("./lib/logger.js");
+var config = require("../config/config.js");
+var DebeziumBridge = require("../lib/debeziumBridge.js");
+var Logger = require("../lib/logger.js");
 const newEngine = require('@comunica/actor-init-sparql-file').newEngine;
 const iffEngine = newEngine();
+const runningAsMain = require.main === module;
 
 
 var debeziumBridge = new DebeziumBridge(config);
@@ -35,9 +36,6 @@ const kafka = new Kafka({
 
 const consumer = kafka.consumer({ groupId: GROUPID });
 const producer = kafka.producer();
-
-console.log(JSON.stringify(config))
-
 
 var startListener = async function() {
 
@@ -86,6 +84,13 @@ var startListener = async function() {
     })
 }
 
+
+/**
+ * 
+ * @param klass {string} - a RDF klass  
+ * @returns {array<string>} RDF subclasses of klass, e.g.
+ *                          'plasmacutter' => cutter, device
+ */
 var getSubClasses = async function(klass) {
     //TODO: needs caching
     var queryTerm = `
@@ -97,15 +102,16 @@ var getSubClasses = async function(klass) {
     const result = await iffEngine.query(queryTerm, {
         sources: config.debeziumBridge.rdfSources,
     });
-
     const bindings = await result.bindings();
     var subClasses = bindings.reduce((accum, element) => {accum.push(element.get('?o').value); return accum;}, [])
-    console.log("Marcel523 " + subClasses);
-    //console.log(bindings[0].get('?o').value);
-    //console.log(bindings[0].get('?o').termType);
     return subClasses;
 }
 
+/**
+ * returns type-part of uri, e.g. https://test/Device => Device 
+ * @param topic {string} 
+ * @returns 
+ */
 var getTopic = function(topic) {
     return topic.match(/([^\/]*)$/)[0]
 }
@@ -157,6 +163,7 @@ var sendUpdates = async function({entity, updatedAttrs, deletedAttrs}) {
 
     await producer.sendBatch({topicMessages});
 }
-
-logger.info("Now starting Kafka listener");
-startListener();
+if (runningAsMain){
+    logger.info("Now starting Kafka listener");
+    startListener();
+}
