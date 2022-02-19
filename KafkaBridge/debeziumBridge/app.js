@@ -100,7 +100,7 @@ var getSubClasses = async function(klass) {
     } LIMIT 100`;
 
     const result = await iffEngine.query(queryTerm, {
-        sources: config.debeziumBridge.rdfSources,
+        sources: config.debeziumBridge.rdfSources
     });
     const bindings = await result.bindings();
     var subClasses = bindings.reduce((accum, element) => {accum.push(element.get('?o').value); return accum;}, [])
