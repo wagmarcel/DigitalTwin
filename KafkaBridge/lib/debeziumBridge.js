@@ -64,8 +64,8 @@ module.exports = function DebeziumBridge(config) {
   };
 
   /**
-   * 
-   * @param {object} ba - before/after object
+   * Provide entitiy and attributes separated
+   * @param {object} ba - before/after object from Debezium 
    * 
    */
   this.parseBeforeAfterEntity = function(ba) {
@@ -77,9 +77,13 @@ module.exports = function DebeziumBridge(config) {
     
     try {
       ba_entity = JSON.parse(ba.data);
+      // Delete all non-properties as defined by ETSI SPEC (ETSI GS CIM 009 V1.5.1 (2021-11))
       delete ba_entity["@id"];
-      delete ba_entity["@type"]
-      ba_entity.id = ba.id;
+      delete ba_entity["@type"];
+      delete ba_entity["https://uri.etsi.org/ngsi-ld/createdAt"];
+      delete ba_entity["https://uri.etsi.org/ngsi-ld/modifiedAt"];
+      delete ba_entity["https://uri.etsi.org/ngsi-ld/obvervedAt"];
+      ba_entity.id = ba.id; 
       ba_entity.type = ba.type;
     } catch (e) { logger.error(`Cannot parse debezium before field ${e}`); return;} // not throwing an error due to the fact that it cannot be fixed in next try
     
@@ -99,7 +103,6 @@ module.exports = function DebeziumBridge(config) {
         if (!Array.isArray(refObjArray)) {
           refObjArray = [refObjArray];
         }
-        //console.log("Marcel443 " + JSON.stringify(refObjArray))
         ba_attrs[key] = [];
         refObjArray.forEach((refObj, index) => {
           var obj = {};
@@ -145,20 +148,41 @@ module.exports = function DebeziumBridge(config) {
   this.diffAttributes = function(beforeAttrs, afterAttrs) {
     var updatedAttrs =  {};
     var deletedAttrs = {};
+    
+    // Determine all attributes which are found in beforeAttrs but not in afterAttrs
+    // These attributes are added to deleteAttrs
     Object.keys(beforeAttrs).forEach(key => {
-      //var obj = {};
       if (afterAttrs[key] === undefined || afterAttrs[key] === null || !Array.isArray(afterAttrs[key]) || afterAttrs[key].length === 0) {
-        var obj = beforeAttrs[key].reduce((accum, element) => {var obj = {}; obj["id"] = element["id"]; obj["index"] = element["index"]; accum.push(obj); return accum}, [])
-        //obj["id"] = beforeAttrs[key]["id"];
+        var obj = beforeAttrs[key].reduce((accum, element) => {
+          var obj = {}; 
+          obj["id"] = element["id"]; 
+          obj["index"] = element["index"]; 
+          accum.push(obj); 
+          return accum;
+        }, [])
         deletedAttrs[key] = obj;
       }
     })
+
+    // Determine all attributes which are changed and add them to updatedAttrs
+    // Detect wheter before had higher index and add these to deleteAttrs
     Object.keys(afterAttrs).forEach(key => {
-      //var obj = {};
+      // if the attributes are unequal
+      // add every different attribute per index to the updatedAttrs
+      // add every attribute which have indexes in before but not mentioned in after to deletedAttrs 
       if (!_.isEqual(afterAttrs[key], beforeAttrs[key])) {
-        // delete all old elements
-        var obj = afterAttrs[key].reduce((accum, element) => {var obj = {}; obj["id"] = element["id"]; obj["index"] = element["index"]; accum.push(obj); return accum}, [])
-        deletedAttrs[key] = obj;
+        // delete all old elements with higher indexes
+        // the attribute lists are sorted so length diff reveals what has to be deleted
+        var delementArray = [];
+        if (beforeAttrs.length > afterAttrs.length) {
+          for(var i = afterAttrs.length; i < beforeAttrs.length; i++) {
+            var delement = {};
+            delement[id] = beforeAttrs[id];
+            delement[index] = i;
+            delementArray.push(delement);
+          }
+          deletedAttrs[key] = delementArray;
+        }
         // and create new one
         updatedAttrs[key] = afterAttrs[key];
       }
