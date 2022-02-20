@@ -1,15 +1,14 @@
 FROM node:16
-ADD alerta alerta
-ADD debeziumBridge debeziumBridge
-ADD ngsildUpdates ngsildUpdates
-ADD package.json package.json
+COPY alerta/ /opt/alerta/
+COPY debeziumBridge/ /opt/debeziumBridge/
+COPY ngsildUpdates/ /opt/ngsildUpdates/
+ADD package.json /opt/package.json
 ADD package-lock.json package-lock.json
-ADD lib/ lib
-add config/ config
-ADD test test
-ADD .eslintrc.json .eslintrc.json
-WORKDIR /
+COPY lib/ /opt/lib/
+COPY config/ /opt/config/
+ADD test/ /opt/test/
+ADD .eslintrc.json /opt/.eslintrc.json
+WORKDIR /opt
 RUN npm install && npm run lint && npm run test
-
 ENV NODE_ENV=production
 USER 9999

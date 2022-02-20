@@ -17,8 +17,9 @@
 
 const GROUPID = "debeziumBridgeGroup";
 const CLIENTID = "ngsildkafkaclient";
+const fs = require('fs')
 const { Kafka } = require('kafkajs');
-var config = require("../config/config.js");
+var config = require("../config/config.json");
 var DebeziumBridge = require("../lib/debeziumBridge.js");
 var Logger = require("../lib/logger.js");
 const newEngine = require('@comunica/actor-init-sparql-file').newEngine;
@@ -82,6 +83,12 @@ var startListener = async function() {
             }
         })
     })
+    try {
+        fs.writeFileSync('/tmp/ready', "ready")
+        fs.writeFileSync('/tmp/healthy', "healthy")
+      } catch (err) {
+        logger.error(err)
+      }
 }
 
 

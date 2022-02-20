@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "./node_modules/.bin/mocha test/test*.js"
+    "test": "./node_modules/.bin/mocha test/test*.js",
+    "lint": "echo linting comes soon"
   },
   "author": "Marcel Wagner",
   "license": "Apache-2.0",
