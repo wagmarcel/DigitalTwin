@@ -37,8 +37,8 @@ module.exports ={
 	},
 	"debeziumBridge": {
 		"topic": "iff.ngsild.public.entity",
-		"entityTopicPrefix": "ngsild.entity",
-		"attributesTopic": "ngsild.attributes",
-		"rdfSources": ['file:///home/marcel/src/Digital-Twin-POC/kafka-bridge/debeziumBridge/config/knowledge.ttl']
+		"entityTopicPrefix": "iff.ngsild.entities",
+		"attributesTopic": "iff.ngsild.attributes",
+		"rdfSources": ['../config/knowledge.ttl']
 	}
 }
