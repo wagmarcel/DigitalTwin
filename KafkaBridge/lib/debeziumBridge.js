@@ -64,7 +64,7 @@ module.exports = function DebeziumBridge(config) {
   };
 
   /**
-   * Provide entitiy and attributes separated
+   * Provide entitiy and attributes separated, prepared for StreamingSQL
    * @param {object} ba - before/after object from Debezium 
    * 
    */
@@ -112,18 +112,22 @@ module.exports = function DebeziumBridge(config) {
           obj.name = key;
           if (refObj["https://uri.etsi.org/ngsi-ld/hasValue"] !== undefined) {
             obj["type"] = "https://uri.etsi.org/ngsi-ld/Property";
+             // every Property is array with one element, hence [0] is no restriction
             obj["https://uri.etsi.org/ngsi-ld/hasValue"] = refObj["https://uri.etsi.org/ngsi-ld/hasValue"][0]["@value"];
-            obj["valuetype"] = refObj["https://uri.etsi.org/ngsi-ld/hasValue"][0]["@type"];
+            if (refObj["https://uri.etsi.org/ngsi-ld/hasValue"][0]["@type"] !== undefined) {
+              // every Property is array with one element, hence [0] is no restriction
+              obj["valuetype"] = refObj["https://uri.etsi.org/ngsi-ld/hasValue"][0]["@type"];
+            }
           }
           else if (refObj["https://uri.etsi.org/ngsi-ld/hasObject"] !== undefined) {
             obj["type"] = "https://uri.etsi.org/ngsi-ld/Relationship";
+            // every Relationship is array with one element, hence [0] is no restriction
             obj["https://uri.etsi.org/ngsi-ld/hasObject"] = refObj["https://uri.etsi.org/ngsi-ld/hasObject"][0]["@id"];
           } else {
             return
           }
           obj.index = index;
           ba_attrs[key].push(obj);
-          //console.log("Marcel442 " + JSON.stringify(obj));
         })
       });
     return {"entity": res_entity, "attributes": ba_attrs}
