@@ -94,3 +94,6 @@ kafka:
     debeziumTopicPrefix: iff.ngsild
     tableIncludeList: public.entity$
     image: debezium-postgresql-connector
+kafkaBridge:
+  debezium:
+    replicaCount: 1

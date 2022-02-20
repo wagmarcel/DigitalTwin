@@ -77,3 +77,8 @@ releases:
   - minioAdminSecretKey: {{ .Values.minioAdminSecretKey }}
   - minioUserSecretKey: {{ .Values.minioUserSecretKey }}
   - default.yaml
+- name: kafka-bridges
+  chart: ./charts/kafka-bridges
+  namespace: {{ .Values.namespace }}
+  values:
+  - default.yaml

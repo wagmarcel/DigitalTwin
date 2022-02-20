@@ -1,7 +1,7 @@
 
-module.exports ={
+{	
 	"kafka": {
-		"brokers": ["my-cluster-kafka-bootstrap:9092"],
+		"brokers": ["my-cluster-kafka-bootstrap:9092"]
 	},
 	"alerta": {
 		"topic": "iff.alerts",
@@ -39,6 +39,6 @@ module.exports ={
 		"topic": "iff.ngsild.public.entity",
 		"entityTopicPrefix": "iff.ngsild.entities",
 		"attributesTopic": "iff.ngsild.attributes",
-		"rdfSources": ['../config/knowledge.ttl']
+		"rdfSources": ["../config/knowledge.ttl"]
 	}
 }
