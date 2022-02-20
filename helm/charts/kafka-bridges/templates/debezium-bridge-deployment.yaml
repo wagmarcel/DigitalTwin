@@ -15,6 +15,7 @@ spec:
       labels:
         app: debezium-bridge
       annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/bridge-configmap.yaml") . | sha256sum }}
     spec:
       containers:
         - name: debezium-bridge
@@ -43,9 +44,9 @@ spec:
               - /tmp/ready
             initialDelaySeconds: 5
           volumeMounts:
-          -name: config
-           mountPath: /opt/config
-           readOnly: true
+            - name: config
+              mountPath: /opt/config
+              readOnly: true
           resources:
       volumes:
       - name: config
@@ -56,5 +57,5 @@ spec:
           items:
           - key: "config.json"
             path: "config.json"
-          - key: "knowlege.ttl"
-            path: "knowlege.ttl"
+          - key: "knowledge.ttl"
+            path: "knowledge.ttl"
