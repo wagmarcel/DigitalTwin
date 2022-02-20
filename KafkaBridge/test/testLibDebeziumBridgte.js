@@ -76,4 +76,75 @@ describe('Test diff Attributes', function () {
         assert.deepEqual(result.deletedAttrs, {});
         revert();
     });
+    it('Should delete value but no update', async function () {
+        var config = {}
+        var Logger = function() {
+            return logger;
+        }
+        var beforeAttrs = {
+            "attr1": [{
+                "id": "id",
+                "value": "value",
+                "index": 0
+            }],
+            "attr2": [{
+                "id": "id2",
+                "value": "value3",
+                "index": 0
+            }]
+        }
+        var afterAttrs = {
+            "attr1": [{
+                "id": "id",
+                "value": "value",
+                "index": 0
+            }]
+        }
+        var revert = toTest.__set__("Logger", Logger); 
+        var debeziumBridge = new toTest(config);
+        var result = debeziumBridge.diffAttributes(beforeAttrs, afterAttrs);
+        assert.deepEqual(result.updatedAttrs, {});
+        assert.deepEqual(result.deletedAttrs, {"attr2": [{"id":"id2", "index": 0}]});
+        revert();
+    });
+    it('Should delete higher index value and update changed value', async function () {
+        var config = {}
+        var Logger = function() {
+            return logger;
+        }
+        var beforeAttrs = {
+            "attr1": [
+                {
+                "id": "id",
+                "value": "value",
+                "index": 0
+               },
+               {
+                "id": "id",
+                "value": "value2",
+                "index": 1
+               }
+        ],
+            "attr2": [{
+                "id": "id2",
+                "value": "value3",
+                "index": 0
+            }]
+        }
+        var afterAttrs = {
+            "attr1": [
+                {
+                "id": "id3",
+                "value": "value4",
+                "index": 0
+                }
+            ]
+        }
+        var revert = toTest.__set__("Logger", Logger); 
+        var debeziumBridge = new toTest(config);
+        var result = debeziumBridge.diffAttributes(beforeAttrs, afterAttrs);
+        assert.deepEqual(result.updatedAttrs, {"attr1": [{"id": "id3", "value": "value4", "index": 0 }]});
+        assert.deepEqual(result.deletedAttrs, {"attr2": [{"id":"id2", "index": 0}], "attr1": [{"id": "id", "index": 1}]});
+        revert();
+    });
 });  

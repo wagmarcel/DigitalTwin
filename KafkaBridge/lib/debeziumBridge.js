@@ -174,11 +174,11 @@ module.exports = function DebeziumBridge(config) {
         // delete all old elements with higher indexes
         // the attribute lists are sorted so length diff reveals what has to be deleted
         var delementArray = [];
-        if (beforeAttrs.length > afterAttrs.length) {
-          for(var i = afterAttrs.length; i < beforeAttrs.length; i++) {
+        if (beforeAttrs[key].length > afterAttrs[key].length) {
+          for(var i = afterAttrs[key].length; i < beforeAttrs[key].length; i++) {
             var delement = {};
-            delement[id] = beforeAttrs[id];
-            delement[index] = i;
+            delement["id"] = beforeAttrs[key][i]["id"];
+            delement["index"] = i;
             delementArray.push(delement);
           }
           deletedAttrs[key] = delementArray;
