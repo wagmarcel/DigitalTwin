@@ -31,7 +31,6 @@ const kafka = new Kafka({
 })
 
 const consumer = kafka.consumer({ groupId: GROUPID })
-console.log(JSON.stringify(config))
 
 var startListener = async function() {
 
@@ -43,7 +42,6 @@ var startListener = async function() {
             try {
                 var body = JSON.parse(message.value);
                 await state.ngsildUpdates(body);
-                //.catch((err) => logger.error("Could not send model update: " + err))
             } catch (e) {
                 logger.error("could not process message: " + e);
             }

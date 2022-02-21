@@ -16,7 +16,6 @@
 	},
 	"keycloak": {
 		"ngsildUpdatesAuthService": {
-			"port": 80,
 			"auth-server-url":  "http://keycloak.local/auth",
 			"realm": "iff",
 			"clientId": "ngsild-updates",
@@ -30,9 +29,7 @@
 	"ngsildUpdates": {
 		"topic": "iff.ngsildUpdates",
 		"refreshIntervalInSeconds": 200,
-		"clientIdVariable": "NGSILD_UPDATES_CLIENT_ID",
-		"clientSecretVariable": "NGSILD_UPDATES_CLIENT_SECRET",
-		"clientRealmVariable": "NGSILD_UPDATES_CLIENT_REALM"
+		"clientSecretVariable": "NGSILD_UPDATES_CLIENT_SECRET"
 	},        
 	"ngsildServer": {
 		"host": "ngsild.local",
