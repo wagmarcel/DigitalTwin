@@ -37,7 +37,9 @@ data:
       },
       "ngsildUpdates": {
               "topic": "iff.ngsildUpdates",
-              "refreshIntervalInSeconds": 60
+              "refreshIntervalInSeconds": 200,
+		          "clientIdVariable": "NGSILD_UPDATES_CLIENT_ID",
+		          "clientSecretVariable": "NGSILD_UPDATES_CLIENT_SECRET"
       },        
       "ngsildServer": {
               "host": "ngsild.local",
