@@ -101,3 +101,5 @@ kafka:
 kafkaBridge:
   debezium:
     replicaCount: 1
+  alerta:
+    replicaCount: 1

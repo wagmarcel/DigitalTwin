@@ -16,7 +16,7 @@
 'use strict';
 
 var Logger = require("./logger.js");
-const Fiware = require("./fiware.js");
+const Fiware = require("./ngsild.js");
 const { exception } = require("console");
 const Keycloak = require('keycloak-connect');
 
@@ -25,6 +25,10 @@ module.exports = function State(config) {
     var fiware = new Fiware(config);
     var logger = new Logger(config);
     var authService = config.keycloak.ngsildUpdatesAuthService;
+    authService.clientId = process.env[config.ngsildUpdates.clientIdVariable];
+    authService.resource = process.env[config.ngsildUpdates.clientIdVariable];
+    authService.secret = process.env[config.ngsildUpdates.clientSecretVariable];
+    authService.realm = process.env[config.ngsildUpdates.clientRealmVariable];
     var keycloakAdapter = new Keycloak({}, authService);
     var token;
     var headers = {};
@@ -39,7 +43,7 @@ module.exports = function State(config) {
     if (refreshIntervalInMs !== undefined && refreshIntervalInMs !== null) {
       setInterval(this.updateToken, refreshIntervalInMs);
     }
-
+    this.updateToken();
 
   /**
    * 

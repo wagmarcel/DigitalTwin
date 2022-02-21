@@ -13,7 +13,7 @@ spec:
   template:
     metadata:
       labels:
-        app: debezium-bridge
+        app: alerta-bridge
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/bridge-configmap.yaml") . | sha256sum }}
     spec:

@@ -18,7 +18,7 @@
 const GROUPID = "statekafkabridge";
 const CLIENTID = "statekafkaclient";
 const { Kafka } = require('kafkajs');
-var config = require("../config/config.js");
+var config = require("../config/config.json");
 var State = require("../lib/ngsildUpdates.js");
 var Logger = require("../lib/logger.js");
 

@@ -18,10 +18,10 @@
 		"ngsildUpdatesAuthService": {
 			"port": 80,
 			"auth-server-url":  "http://keycloak.local/auth",
-			"realm": "scorpio",
-			"clientId": "ngsildUpdates",
-			"resource": "ngsildUpdates",
-			"secret": "g5mazZJStwUpJGyochsHQC3kS7gnwycA",
+			"realm": "iff",
+			"clientId": "ngsild-updates",
+			"resource": "ngsild-updates",
+			"secret": "secret",
 			"bearer-only": true,
 			"verify-token-audience": false,
 			"ssl-required": false
@@ -29,7 +29,10 @@
 	},
 	"ngsildUpdates": {
 		"topic": "iff.ngsildUpdates",
-		"refreshIntervalInSeconds": 60
+		"refreshIntervalInSeconds": 200,
+		"clientIdVariable": "NGSILD_UPDATES_CLIENT_ID",
+		"clientSecretVariable": "NGSILD_UPDATES_CLIENT_SECRET",
+		"clientRealmVariable": "NGSILD_UPDATES_CLIENT_REALM"
 	},        
 	"ngsildServer": {
 		"host": "ngsild.local",
