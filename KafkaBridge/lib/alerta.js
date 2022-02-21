@@ -20,25 +20,15 @@ var Logger = require("./logger.js");
 const Rest = require("./rest.js");
 
 module.exports = function Alerta(config) {
+  const token = process.env[config.alerta.accessKeyVariable];
   var config = config;
   var logger = new Logger(config);
   var rest = new Rest(config);
 
-  var token = config.alerta.accessKey;
   var headers;
 
-  //setInterval(this.updateToken, config.alerta.tokenRefreshInterval * 1000);
-
-  /*this.updateToken = async function() {
-    token = await keycloakAdapter.grantManager
-          .obtainFromClientCredentials();
-    return token;
-  }*/
-
   this.sendAlert = async function(body){
-    /*if (token === undefined) {
-        token = await this.updateToken();
-    }*/
+
     headers = {};
     headers["Authorization"] = "Key " + token;
 

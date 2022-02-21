@@ -18,7 +18,7 @@
 const GROUPID = "alertakafkabridge";
 const CLIENTID = "alertakafkaclient";
 const { Kafka } = require('kafkajs');
-var config = require("../config/config.js");
+var config = require("../config/config.json");
 var Alerta = require("../lib/alerta.js");
 var Logger = require("../lib/logger.js");
 
