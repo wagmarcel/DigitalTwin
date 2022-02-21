@@ -18,6 +18,7 @@
 const GROUPID = "alertakafkabridge";
 const CLIENTID = "alertakafkaclient";
 const { Kafka } = require('kafkajs');
+const fs = require('fs')
 var config = require("../config/config.json");
 var Alerta = require("../lib/alerta.js");
 var Logger = require("../lib/logger.js");
@@ -79,6 +80,13 @@ var startListener = async function() {
             }
         })
     })
+    try {
+        fs.writeFileSync('/tmp/ready', "ready")
+        fs.writeFileSync('/tmp/healthy', "healthy")
+      } catch (err) {
+        logger.error(err)
+      }
+
 }
 
 logger.info("Now staring Kafka listener");
