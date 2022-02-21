@@ -9,7 +9,7 @@ data:
   config.json: |
     {
       "kafka": {
-              "brokers": ["my-cluster-kafka-bootstrap:9092"]
+              "brokers": [{{ .Values.kafka.bootstrapServer | quote }}}}]
       },
       "alerta": {
               "topic": "iff.alerts",
@@ -24,12 +24,11 @@ data:
       },
       "keycloak": {
               "ngsildUpdatesAuthService": {
-                      "port": 80,
-                      "auth-server-url":  "http://keycloak.local/auth",
-                      "realm": "scorpio",
-                      "clientId": "ngsildUpdates",
-                      "resource": "ngsildUpdates",
-                      "secret": "g5mazZJStwUpJGyochsHQC3kS7gnwycA",
+                      "auth-server-url":  {{ printf "%s://%s%s" .Values.keycloak.externalAuthService.protocol .Values.keycloak.externalAuthService.domainname .Values.keycloak.externalAuthService.path }}
+                      "realm": {{ .Values.keycloak.ngsildUpdates.realm}},
+                      "clientId": {{ .Values.keycloak.ngsildUpdates.client}},
+                      "resource": {{ .Values.keycloak.ngsildUpdates.client}},
+                      "secret": "secret",
                       "bearer-only": true,
                       "verify-token-audience": false,
                       "ssl-required": false
@@ -38,8 +37,7 @@ data:
       "ngsildUpdates": {
               "topic": "iff.ngsildUpdates",
               "refreshIntervalInSeconds": 200,
-		          "clientIdVariable": "NGSILD_UPDATES_CLIENT_ID",
-		          "clientSecretVariable": "NGSILD_UPDATES_CLIENT_SECRET"
+              "clientSecretVariable": "NGSILD_UPDATES_CLIENT_SECRET"
       },        
       "ngsildServer": {
               "host": "ngsild.local",

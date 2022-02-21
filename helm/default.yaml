@@ -103,3 +103,5 @@ kafkaBridge:
     replicaCount: 1
   alerta:
     replicaCount: 1
+  ngsildUpdates:
+    replicaCount: 1

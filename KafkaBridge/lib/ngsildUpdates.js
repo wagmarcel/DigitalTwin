@@ -16,19 +16,16 @@
 'use strict';
 
 var Logger = require("./logger.js");
-const Fiware = require("./ngsild.js");
+const NgsiLd = require("./ngsild.js");
 const { exception } = require("console");
 const Keycloak = require('keycloak-connect');
 
 module.exports = function State(config) {
     var config = config;
-    var fiware = new Fiware(config);
+    var ngsild = new NgsiLd(config);
     var logger = new Logger(config);
     var authService = config.keycloak.ngsildUpdatesAuthService;
-    authService.clientId = process.env[config.ngsildUpdates.clientIdVariable];
-    authService.resource = process.env[config.ngsildUpdates.clientIdVariable];
     authService.secret = process.env[config.ngsildUpdates.clientSecretVariable];
-    authService.realm = process.env[config.ngsildUpdates.clientRealmVariable];
     var keycloakAdapter = new Keycloak({}, authService);
     var token;
     var headers = {};
@@ -77,14 +74,14 @@ module.exports = function State(config) {
     try {
       // update the entity - do not create it
       if (op === "update") {
-          result = await fiware.updateProperties(id, entity, !overwrite, {headers});
+          result = await ngsild.updateProperties(id, entity, !overwrite, {headers});
           if (result.statusCode !== 204 && result.statusCode !== 207) {
             throw new Error("Entity cannot update entity:" + JSON.stringify(result.body))
           } 
         
       } else if (op === "upsert") {
         // in this case, entity will be created if not existing
-        result = await fiware.replaceEntities([entity], !overwrite, {headers});
+        result = await ngsild.replaceEntities([entity], !overwrite, {headers});
         if (result.statusCode !== 204) {
           throw new Error("Cannot upsert entity:" + JSON.stringify(result.body));
         }
