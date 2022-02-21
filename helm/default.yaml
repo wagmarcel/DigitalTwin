@@ -29,6 +29,10 @@ keycloak:
   scorpio:
     realm: iff
     client: scorpio
+  ngsildUpdates:
+    realm: iff
+    client: ngsild-updates
+    serviceRole: scorpio.Factory-Admin
 
 db:
   teamId: acid
