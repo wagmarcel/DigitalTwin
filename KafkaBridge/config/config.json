@@ -9,7 +9,7 @@
 		"port": "8080",
 		"protocol": "http:",
 		"tokenRefreshInterval": 60,
-		"accessKey": "t9ODS70LWNqEEo_0f2lDN7bnTAfiW0ucciAthrHj"
+		"accessKeyVariable": "ALERTA_API_KEY"
 	},
 	"logger": {
 		"loglevel": "debug"
