@@ -10,10 +10,10 @@ metadata:
 spec:
   tls:
   - hosts:
-    - {{ .Values.ingress.scorpio }}
+    - {{ .Values.scorpio.externalUrl }}
     secretName: {{ .Values.certmanager.secret }}
   rules:
-  - host: {{ .Values.ingress.scorpio }}
+  - host: {{ .Values.scorpio.externalUrl }}
     http:
       paths:
       - backend:
