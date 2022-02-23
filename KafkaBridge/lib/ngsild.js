@@ -343,7 +343,7 @@ function fiwareApi(config) {
     headers["Content-Type"] = "application/ld+json";
     const options = {
       hostname: config.ngsildServer.host,
-      port: config.ngsildServer.port,
+      protocol: config.ngsildServer.protocol,
       path: `/ngsi-ld/v1/entityOperations/upsert${queryString}`,
       headers: headers,
       method: 'POST',

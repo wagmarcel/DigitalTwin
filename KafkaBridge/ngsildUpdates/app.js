@@ -18,6 +18,7 @@
 const GROUPID = "statekafkabridge";
 const CLIENTID = "statekafkaclient";
 const { Kafka } = require('kafkajs');
+const fs = require('fs')
 var config = require("../config/config.json");
 var State = require("../lib/ngsildUpdates.js");
 var Logger = require("../lib/logger.js");
@@ -74,6 +75,12 @@ var startListener = async function() {
             }
         })
     })
+    try {
+        fs.writeFileSync('/tmp/ready', "ready")
+        fs.writeFileSync('/tmp/healthy', "healthy")
+      } catch (err) {
+        logger.error(err)
+      }
 }
 
 logger.info("Now starting Kafka listener");

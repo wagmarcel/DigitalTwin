@@ -9,25 +9,24 @@ data:
   config.json: |
     {
       "kafka": {
-              "brokers": [{{ .Values.kafka.bootstrapServer | quote }}}}]
+              "brokers": [{{ .Values.kafka.bootstrapServer | quote }}]
       },
       "alerta": {
-              "topic": "iff.alerts",
-              "hostname": "alerta",
-              "port": "8080",
-              "protocol": "http:",
-              "tokenRefreshInterval": 60,
+              "topic": {{ .Values.kafkaBridge.alerta.listenTopic | quote }},
+              "hostname": {{ .Values.alerta.internalService | quote }},
+              "port": {{ .Values.alerta.internalPort | quote }},
+              "protocol": {{ .Values.alerta.internalProtocol | quote }},
               "accessKeyVariable": "ALERTA_API_KEY"
       },
       "logger": {
-              "loglevel": "debug"
+              "loglevel": "info" 
       },
       "keycloak": {
               "ngsildUpdatesAuthService": {
-                      "auth-server-url":  {{ printf "%s://%s%s" .Values.keycloak.externalAuthService.protocol .Values.keycloak.externalAuthService.domainname .Values.keycloak.externalAuthService.path }}
-                      "realm": {{ .Values.keycloak.ngsildUpdates.realm}},
-                      "clientId": {{ .Values.keycloak.ngsildUpdates.client}},
-                      "resource": {{ .Values.keycloak.ngsildUpdates.client}},
+                      "auth-server-url":  {{ printf "%s://%s%s" .Values.keycloak.externalAuthService.protocol .Values.keycloak.externalAuthService.domainname .Values.keycloak.externalAuthService.path | quote}},
+                      "realm": {{ .Values.keycloak.ngsildUpdates.realm | quote }},
+                      "clientId": {{ .Values.keycloak.ngsildUpdates.client | quote }},
+                      "resource": {{ .Values.keycloak.ngsildUpdates.client | quote }},
                       "secret": "secret",
                       "bearer-only": true,
                       "verify-token-audience": false,
@@ -35,13 +34,12 @@ data:
               }
       },
       "ngsildUpdates": {
-              "topic": "iff.ngsildUpdates",
-              "refreshIntervalInSeconds": 200,
+              "topic": {{ .Values.kafkaBridge.ngsildUpdates.listenTopic | quote }},
+              "refreshIntervalInSeconds": {{ .Values.kafkaBridge.ngsildUpdates.tokenRefreshInterval | quote}},
               "clientSecretVariable": "NGSILD_UPDATES_CLIENT_SECRET"
       },        
       "ngsildServer": {
-              "host": "ngsild.local",
-              "port": 80
+              "host": {{ printf "%s://%s" .Values.scorpio.externalProtocol .Values.scorpio.externalUrl | quote}}
       },
       "debeziumBridge": {
               "topic": "iff.ngsild.public.entity",
