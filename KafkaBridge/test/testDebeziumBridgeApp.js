@@ -19,7 +19,8 @@ const { assert } = require('chai');
 const chai = require('chai');
 const { resolve } = require('path/posix');
 global.should = chai.should();
-
+const expect = chai.expect;
+const sinon = require("sinon");
 const rewire = require('rewire');
 const toTest = rewire('../debeziumBridge/app.js');
 
@@ -161,6 +162,79 @@ describe('Test sendUpdates', function () {
         toTest.__set__('config', config);
         toTest.__set__('getSubClasses', getSubClasses);
         await sendUpdates({entity, updatedAttrs, deletedAttrs});
+        revert();
+    });
+});
+describe('Test startListener', function () {
+    it('Setup Kafka listener, readiness and health status', async function () {
+        var consumer = {
+            run: function(run) {
+                return new Promise(function(resolve, reject){
+                    resolve();
+                })
+            },
+            connect: function(){},
+            subscribe: function(obj) {
+                obj.topic.should.equal("topic");
+                obj.fromBeginning.should.equal(false) 
+            },
+            disconnect: function() {
+            }
+        }
+        var producer = {
+            connect: function() {}
+        }
+        var fs = {
+            writeFileSync: function(file, message) {
+                expect(file).to.satisfy(function(str) {
+                    if (str == '/tmp/ready' || str == '/tmp/healthy') {
+                        return true
+                    }
+                });
+                expect(message).to.satisfy(function(str) {
+                    if (str == 'ready' || str == 'healthy') {
+                        return true
+                    }
+                });
+            }
+        }
+        var config = {
+            debeziumBridge: {
+                topic: "topic"
+            }
+        }
+        var process = {
+            on: async function(type, f) {
+                expect(type).to.satisfy(function(type) {
+                    if (type == 'unhandledRejection' || type == 'uncaughtException') {
+                        return true
+                    }
+                })
+                await f("Test Error");
+            },
+            exit: function(value) {
+            },
+            once: async function(type, f) {
+                await f("Test Error");
+            }
+        }
+        const consumerDisconnectSpy = sinon.spy(consumer, "disconnect")
+        const consumerConnectSpy = sinon.spy(consumer, "connect")
+        const producerConnectSpy = sinon.spy(producer, "connect")
+        const processExitSpy = sinon.spy(process, "exit");
+        const processOnceSpy = sinon.spy(process, "once");
+        var revert = toTest.__set__('consumer', consumer);
+        toTest.__set__('producer', producer);
+        toTest.__set__('fs', fs);
+        toTest.__set__('config', config);
+        toTest.__set__('process', process);
+        const startListener = toTest.__get__('startListener');
+        await startListener();
+        consumerDisconnectSpy.callCount.should.equal(5);
+        assert(consumerConnectSpy.calledOnce);
+        assert(producerConnectSpy.calledOnce);
+        processExitSpy.withArgs(0).callCount.should.equal(2);
+        assert(processOnceSpy.calledThrice);
         revert();
     });
 });
