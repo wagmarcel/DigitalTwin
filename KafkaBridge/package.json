@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "./node_modules/.bin/mocha test/test*.js",
+    "test": "./node_modules/.bin/nyc --check-coverage ./node_modules/.bin/mocha --lines 80",
     "lint": "echo linting comes soon"
   },
   "author": "Marcel Wagner",
@@ -20,6 +20,8 @@
   "devDependencies": {
     "chai": "^4.3.6",
     "mocha": "^9.2.1",
-    "rewire": "^6.0.0"
+    "nyc": "^15.1.0",
+    "rewire": "^6.0.0",
+    "sinon": "^13.0.1"
   }
 }
