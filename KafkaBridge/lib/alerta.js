@@ -37,7 +37,6 @@ module.exports = function Alerta(config) {
     
     const options = {
       hostname: config.alerta.hostname,
-      port: config.alerta.port,
       protocol: config.alerta.protocol,
       path: `/api/alert`,
       method: 'POST',
