@@ -190,7 +190,7 @@ function fiwareApi(config) {
   
     const options = {
       hostname: config.ngsildServer.host,
-      port: config.ngsildServer.port,
+      protocol: config.ngsildServer.protocol,
       path: '/ngsi-ld/v1/csourceRegistrations/' + id,
       method: 'DELETE'
       
