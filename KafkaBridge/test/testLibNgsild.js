@@ -30,7 +30,7 @@ const logger = {
   
 
 describe('Test getNgsildEntity', function () {
-    it('Should get body with correct path and token', async function () {
+    it('Should use correct options', async function () {
 
         var config = {
             ngsildServer: {
@@ -68,7 +68,7 @@ describe('Test getNgsildEntity', function () {
     });
 });
 describe('Test getNgsildEntities', function () {
-    it('Should get body with correct path and token', async function () {
+    it('Should use correct options', async function () {
 
         var config = {
             ngsildServer: {
@@ -86,7 +86,6 @@ describe('Test getNgsildEntities', function () {
         var expectedOptions = {
             hostname: "hostname",
             protocol: "http",
-            path: '/ngsi-ld/v1/entities/id',
             method: 'GET',
             path: "/ngsi-ld/v1/entities?id=urn1,urn2&idPattern=pattern&attrs=attr1,attr2&type=type&q=query1|query2",
             headers: {
@@ -115,7 +114,7 @@ describe('Test getNgsildEntities', function () {
 });
 
 describe('Test getNgsildCSourceRegistrations', function () {
-    it('Should get body with correct path and token', async function () {
+    it('Should use correct options', async function () {
 
         var config = {
             ngsildServer: {
@@ -133,7 +132,6 @@ describe('Test getNgsildCSourceRegistrations', function () {
         var expectedOptions = {
             hostname: "hostname",
             protocol: "http",
-            path: '/ngsi-ld/v1/entities/id',
             method: 'GET',
             path: "/ngsi-ld/v1/csourceRegistrations?id=urn1,urn2&idPattern=pattern&attrs=attr1,attr2&type=type",
             headers: {
@@ -157,6 +155,43 @@ describe('Test getNgsildCSourceRegistrations', function () {
         toTest.__set__("Rest", Rest);
         var ngsild = new toTest(config);
         var result = ngsild.getNgsildCSourceRegistrations(params);
+        revert();
+    });
+});
+describe('Test deleteNgsildCSourceRegistration', function () {
+    it('Should use correct options', async function () {
+
+        var config = {
+            ngsildServer: {
+                host: "hostname",
+                protocol: "http" 
+            }
+        }
+        var Logger = function() {
+            return logger;
+        }
+        var Rest = function() {
+            return rest;
+        }
+
+        var expectedOptions = {
+            hostname: "hostname",
+            protocol: "http",
+            path: '/ngsi-ld/v1/entities/id',
+            method: 'DELETE',
+            path: "/ngsi-ld/v1/csourceRegistrations/id"
+        };
+        const rest = {
+            getBody: function(options) {
+                assert.deepEqual(options, expectedOptions);
+                return "body"
+            }
+        }
+
+        var revert = toTest.__set__("Logger", Logger);
+        toTest.__set__("Rest", Rest);
+        var ngsild = new toTest(config);
+        var result = ngsild.deleteNgsildCSourceRegistration("id");
         revert();
     });
 });
