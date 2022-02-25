@@ -15,7 +15,6 @@
 */
 'use strict';
 var Logger = require("./logger.js");
-const http = require('http');
 const Rest = require("./rest.js");
 
 
@@ -28,7 +27,7 @@ function fiwareApi(config) {
   this.getNgsildEntity = function(id){
     const options = {
       hostname: config.ngsildServer.host,
-      port: config.ngsildServer.port,
+      protocol: config.ngsildServer.protocol,
       path: '/ngsi-ld/v1/entities/' + id,
       method: 'GET',
       headers: {
@@ -107,7 +106,7 @@ function fiwareApi(config) {
     
     const options = {
       hostname: config.ngsildServer.host,
-      port: config.ngsildServer.port,
+      protocol: config.ngsildServer.protocol,
       path: '/ngsi-ld/v1/entities' + queryString,
       method: 'GET',
       headers: {
@@ -173,7 +172,7 @@ function fiwareApi(config) {
 
     const options = {
       hostname: config.ngsildServer.host,
-      port: config.ngsildServer.port,
+      protocol: config.ngsildServer.protocol,
       path: '/ngsi-ld/v1/csourceRegistrations' + queryString,
       method: 'GET',
       headers: {
