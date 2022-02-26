@@ -216,12 +216,12 @@ function fiwareApi(config) {
     }
     const options = {
       hostname: config.ngsildServer.host,
-      port: config.ngsildServer.port,
+      protocol: config.ngsildServer.protocol,
       path: '/ngsi-ld/v1/csourceRegistrations/' + id,
       headers: headers,
       method: 'PATCH'
     };
-    return rest.postBody(options, data);
+    return rest.postBody({options, body: data});
   };
 
   /**
@@ -245,7 +245,7 @@ function fiwareApi(config) {
       headers: headers,
       method: 'POST',
     };
-    return rest.postBody(options, data);
+    return rest.postBody({options, body: data});
   };
 
   /**
@@ -283,7 +283,7 @@ function fiwareApi(config) {
       },
       method: 'POST',
     };
-    return rest.postBody(options, data);
+    return rest.postBody({options, body: data});
   };
 
   /**
@@ -303,7 +303,7 @@ function fiwareApi(config) {
       },
       method: 'POST',
     };
-    return rest.postBody(options, data);
+    return rest.postBody({options, body: data});
   };
 
   /**
@@ -315,7 +315,7 @@ function fiwareApi(config) {
 
     const options = {
       hostname: config.ngsildServer.host,
-      port: config.ngsildServer.port,
+      protocol: config.ngsildServer.protocol,
       path: `/ngsi-ld/v1/entities`,
       headers: {
         "Content-Type": "application/ld+json"
@@ -347,7 +347,7 @@ function fiwareApi(config) {
       headers: headers,
       method: 'POST',
     };
-    return rest.postBody({options, "body": entities});
+    return rest.postBody({options, body: entities});
   };
 
 
@@ -370,12 +370,12 @@ function fiwareApi(config) {
 
     const options = {
       hostname: config.ngsildServer.host,
-      port: config.ngsildServer.port,
+      protocol: config.ngsildServer.protocol,
       path: path,
       method: 'POST',
       headers: headers
     };
-    return rest.postBody(options, data, false, {"noStringify": "true"})
+    return rest.postBody({options, body: data, disableChunks: false, noStringify: true})
 
   };
 
@@ -417,12 +417,12 @@ function fiwareApi(config) {
     logger.debug(`subscribing id: ${id} type: ${type}`);
     const options = {
       hostname: config.ngsildServer.host,
-      port: config.ngsildServer.port,
+      protocol: config.ngsildServer.protocol,
       path: '/ngsi-ld/v1/subscriptions/',
       headers: {"Content-Type": "application/ld+json"},
       method: 'POST'
     };
-    return rest.postBody(options, data);
+    return rest.postBody({options, body: data});
   };
 
   this.updateSubscription = function(id, type, interval) {
@@ -443,7 +443,7 @@ function fiwareApi(config) {
       headers: {"Content-Type": "application/ld+json"},
       method: 'PATCH'
     };
-    return rest.postBody(options, data);
+    return rest.postBody({options, body: data});
   };
 
 
