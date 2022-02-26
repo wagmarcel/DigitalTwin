@@ -322,7 +322,7 @@ function fiwareApi(config) {
       },
       method: 'POST',
     };
-    return rest.postBody(options, data);
+    return rest.postBody({options, body: data});
   };
 
   /**
@@ -394,7 +394,7 @@ function fiwareApi(config) {
       }
     }
     
-    return this.updateProperties(id, data, noOverwrite);
+    return this.updateProperties(id, data, noOverwrite,{});
   };
 
   /**
@@ -438,7 +438,7 @@ function fiwareApi(config) {
 
     const options = {
       hostname: config.ngsildServer.host,
-      port: config.ngsildServer.port,
+      protocol: config.ngsildServer.protocol,
       path: '/ngsi-ld/v1/subscriptions/' + id,
       headers: {"Content-Type": "application/ld+json"},
       method: 'PATCH'

@@ -791,16 +791,16 @@ describe('Test createEntity', function () {
             hostname: "hostname",
             protocol: "http",
             method: 'POST',
-            path: "/ngsi-ld/v1/entityOperations/delete"
+            path: "/ngsi-ld/v1/entities"
 ,
             headers: {
-                "Content-Type": "application/json" 
+                "Content-Type": "application/ld+json" 
             }
         };
         const rest = {
             postBody: function(obj) {
                 assert.deepEqual(obj.options, expectedOptions);
-                assert.deepEqual(obj.body, ids);
+                assert.deepEqual(obj.body, entity);
                 return "created"
             }
         }
@@ -812,6 +812,177 @@ describe('Test createEntity', function () {
         var ngsild = new toTest(config);
         var result = ngsild.createEntity(entity);
         result.should.equal("created");
+        revert();
+    });
+});
+describe('Test updateProperty', function () {
+    it('Should use correct options and Property', async function () {
+
+        var config = {
+            ngsildServer: {
+                host: "hostname",
+                protocol: "http" 
+            }
+        }
+        var Logger = function() {
+            return logger;
+        }
+        var Rest = function() {
+            return rest;
+        }
+
+        var expectedOptions = {
+            hostname: "hostname",
+            protocol: "http",
+            method: 'POST',
+            path: "/ngsi-ld/v1/entities/id/attrs",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        };
+        const rest = {
+            postBody: function(obj) {
+                assert.deepEqual(obj.options, expectedOptions);
+                assert.deepEqual(obj.body, entity);
+                assert.equal(obj.disableChunks, false);
+                assert.equal(obj.noStringify, true);
+                return "updated";
+            }
+        }
+
+        const entity = {
+            "key": {
+                "type": "Property",
+                "value": "value"
+            }
+        }
+        const headers = {
+            "header": "header"
+        }
+        var revert = toTest.__set__("Logger", Logger);
+        toTest.__set__("Rest", Rest);
+        var ngsild = new toTest(config);
+        var result = ngsild.updateProperty("id", "key", "value", false, false);
+        result.should.equal("updated");
+        revert();
+    });
+    it('Should use correct options and Relationship ', async function () {
+
+        var config = {
+            ngsildServer: {
+                host: "hostname",
+                protocol: "http" 
+            }
+        }
+        var Logger = function() {
+            return logger;
+        }
+        var Rest = function() {
+            return rest;
+        }
+
+        var expectedOptions = {
+            hostname: "hostname",
+            protocol: "http",
+            method: 'POST',
+            path: "/ngsi-ld/v1/entities/id/attrs",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        };
+        const rest = {
+            postBody: function(obj) {
+                assert.deepEqual(obj.options, expectedOptions);
+                assert.deepEqual(obj.body, entity);
+                assert.equal(obj.disableChunks, false);
+                assert.equal(obj.noStringify, true);
+                return "updated";
+            }
+        }
+
+        const entity = {
+            "key": {
+                "type": "Relationship",
+                "object": "value"
+            }
+        }
+        const headers = {
+            "header": "header"
+        }
+        var revert = toTest.__set__("Logger", Logger);
+        toTest.__set__("Rest", Rest);
+        var ngsild = new toTest(config);
+        var result = ngsild.updateProperty("id", "key", "value", true, false);
+        result.should.equal("updated");
+        revert();
+    });
+});
+describe('Test updateSubscription', function () {
+    it('Should use correct options', async function () {
+
+        var config = {
+            ngsildServer: {
+                host: "hostname",
+                protocol: "http" 
+            },
+            bridgeConfig: {
+                host: "host",
+                port: 123
+            }
+        }
+        var Logger = function() {
+            return logger;
+        }
+        var Rest = function() {
+            return rest;
+        }
+
+        var expectedOptions = {
+            hostname: "hostname",
+            protocol: "http",
+            method: 'PATCH',
+            path: "/ngsi-ld/v1/subscriptions/id",
+            headers: {
+                "Content-Type": "application/ld+json"
+            }
+        };
+        const rest = {
+            postBody: function(obj) {
+                assert.deepEqual(obj.options, expectedOptions);
+                assert.deepEqual(obj.body, entity);
+                return "updated";
+            }
+        }
+
+        const entity = {
+            "@context": [
+                "https://fiware.github.io/data-models/context.jsonld",
+                "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.3.jsonld",
+                "host:123/jsonld/undefined"
+            ],
+            description: "Notify me if type are changed",
+            entities: [
+                {
+                    type: "http://example/type"
+                }
+            ],
+            notification: {
+                endpoint: {
+                    accept: "application/json",
+                    uri: "host:123/subscription"
+                }
+            },
+            timeInterval: 200,
+            type: "Subscription"
+        }
+        const headers = {
+            "header": "header"
+        }
+        var revert = toTest.__set__("Logger", Logger);
+        toTest.__set__("Rest", Rest);
+        var ngsild = new toTest(config);
+        var result = ngsild.updateSubscription("id", "http://example/type", 200);
+        result.should.equal("updated");
         revert();
     });
 });
