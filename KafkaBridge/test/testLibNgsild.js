@@ -685,3 +685,133 @@ describe('Test subscribe', function () {
         revert();
     });
 });
+describe('Test updateNgsildCSourceRegistration', function () {
+    it('Should use correct options and used Content-Type ld+json', async function () {
+
+        var config = {
+            ngsildServer: {
+                host: "hostname",
+                protocol: "http" 
+            }
+        }
+        var Logger = function() {
+            return logger;
+        }
+        var Rest = function() {
+            return rest;
+        }
+
+        var expectedOptions = {
+            hostname: "hostname",
+            protocol: "http",
+            path: '/ngsi-ld/v1/entities/id',
+            method: 'PATCH',
+            path: "/ngsi-ld/v1/csourceRegistrations/id",
+            headers: {
+                "Content-Type": "application/ld+json"                 
+            }
+        };
+        const rest = {
+            postBody: function(obj) {
+                assert.deepEqual(obj.options, expectedOptions);
+                assert.deepEqual(obj.body, entity);
+            }
+        }
+
+        const entity = {
+            id: "id"
+        }
+
+        var revert = toTest.__set__("Logger", Logger);
+        toTest.__set__("Rest", Rest);
+        var ngsild = new toTest(config);
+        var result = ngsild.updateNgsildCSourceRegistration(entity, true);
+        revert();
+    });
+    it('Should use correct options and used Content-Type json', async function () {
+
+        var config = {
+            ngsildServer: {
+                host: "hostname",
+                protocol: "http" 
+            }
+        }
+        var Logger = function() {
+            return logger;
+        }
+        var Rest = function() {
+            return rest;
+        }
+
+        var expectedOptions = {
+            hostname: "hostname",
+            protocol: "http",
+            path: '/ngsi-ld/v1/entities/id',
+            method: 'PATCH',
+            path: "/ngsi-ld/v1/csourceRegistrations/id",
+            headers: {
+                "Content-Type": "application/json"                 
+            }
+        };
+        const rest = {
+            postBody: function(obj) {
+                assert.deepEqual(obj.options, expectedOptions);
+                assert.deepEqual(obj.body, entity);
+            }
+        }
+
+        const entity = {
+            id: "id"
+        }
+
+        var revert = toTest.__set__("Logger", Logger);
+        toTest.__set__("Rest", Rest);
+        var ngsild = new toTest(config);
+        var result = ngsild.updateNgsildCSourceRegistration(entity, false);
+        revert();
+    });
+});
+describe('Test createEntity', function () {
+    it('Should use correct options', async function () {
+
+        var config = {
+            ngsildServer: {
+                host: "hostname",
+                protocol: "http" 
+            }
+        }
+        var Logger = function() {
+            return logger;
+        }
+        var Rest = function() {
+            return rest;
+        }
+
+        var expectedOptions = {
+            hostname: "hostname",
+            protocol: "http",
+            method: 'POST',
+            path: "/ngsi-ld/v1/entityOperations/delete"
+,
+            headers: {
+                "Content-Type": "application/json" 
+            }
+        };
+        const rest = {
+            postBody: function(obj) {
+                assert.deepEqual(obj.options, expectedOptions);
+                assert.deepEqual(obj.body, ids);
+                return "created"
+            }
+        }
+        const entity = {
+            id: "id"
+        };
+        var revert = toTest.__set__("Logger", Logger);
+        toTest.__set__("Rest", Rest);
+        var ngsild = new toTest(config);
+        var result = ngsild.createEntity(entity);
+        result.should.equal("created");
+        revert();
+    });
+});
