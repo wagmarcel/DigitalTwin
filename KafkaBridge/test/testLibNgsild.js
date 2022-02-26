@@ -222,9 +222,9 @@ describe('Test createNgsildCSourceRegistration', function () {
             }
         };
         const rest = {
-            postBody: function(options, data) {
-                assert.deepEqual(options, expectedOptions);
-                assert.deepEqual(data, entity);
+            postBody: function(obj) {
+                assert.deepEqual(obj.options, expectedOptions);
+                assert.deepEqual(obj.body, entity);
             }
         }
 
@@ -266,9 +266,9 @@ describe('Test createNgsildCSourceRegistration', function () {
             }
         };
         const rest = {
-            postBody: function(options, data) {
-                assert.deepEqual(options, expectedOptions);
-                assert.deepEqual(data, entity);
+            postBody: function(obj) {
+                assert.deepEqual(obj.options, expectedOptions);
+                assert.deepEqual(obj.body, entity);
             }
         }
 
@@ -349,9 +349,9 @@ describe('Test deleteEntities', function () {
             }
         };
         const rest = {
-            postBody: function(options, data) {
-                assert.deepEqual(options, expectedOptions);
-                assert.deepEqual(data, ids);
+            postBody: function(obj) {
+                assert.deepEqual(obj.options, expectedOptions);
+                assert.deepEqual(obj.body, ids);
                 return "deleted"
             }
         }
@@ -390,9 +390,9 @@ describe('Test createEntities', function () {
             }
         };
         const rest = {
-            postBody: function(options, data) {
-                assert.deepEqual(options, expectedOptions);
-                assert.deepEqual(data, entities);
+            postBody: function(obj) {
+                assert.deepEqual(obj.options, expectedOptions);
+                assert.deepEqual(obj.body, entities);
                 return "created";
             }
         }
@@ -517,6 +517,106 @@ describe('Test replaceEntities', function () {
         var ngsild = new toTest(config);
         var result = ngsild.replaceEntities(entities, true, {headers});
         result.should.equal("replaced");
+        revert();
+    });
+});
+describe('Test updateProperties', function () {
+    it('Should use correct options ', async function () {
+
+        var config = {
+            ngsildServer: {
+                host: "hostname",
+                protocol: "http" 
+            }
+        }
+        var Logger = function() {
+            return logger;
+        }
+        var Rest = function() {
+            return rest;
+        }
+
+        var expectedOptions = {
+            hostname: "hostname",
+            protocol: "http",
+            method: 'POST',
+            path: "/ngsi-ld/v1/entities/id/attrs?options=noOverwrite",
+            headers: {
+                "Content-Type": "application/json",
+                "header": "header"
+            }
+        };
+        const rest = {
+            postBody: function(obj) {
+                assert.deepEqual(obj.options, expectedOptions);
+                assert.deepEqual(obj.body, entity);
+                assert.equal(obj.disableChunks, false);
+                assert.equal(obj.noStringify, true);
+                return "updated";
+            }
+        }
+
+        const entity = {
+            entity: "entity"
+        }
+        const headers = {
+            "header": "header"
+        }
+        var revert = toTest.__set__("Logger", Logger);
+        toTest.__set__("Rest", Rest);
+        var ngsild = new toTest(config);
+        var result = ngsild.updateProperties("id", entity, true, {headers});
+        result.should.equal("updated");
+        revert();
+    });
+});
+describe('Test updateProperties', function () {
+    it('Should use correct options and not use noOverwrite', async function () {
+
+        var config = {
+            ngsildServer: {
+                host: "hostname",
+                protocol: "http" 
+            }
+        }
+        var Logger = function() {
+            return logger;
+        }
+        var Rest = function() {
+            return rest;
+        }
+
+        var expectedOptions = {
+            hostname: "hostname",
+            protocol: "http",
+            method: 'POST',
+            path: "/ngsi-ld/v1/entities/id/attrs",
+            headers: {
+                "Content-Type": "application/json",
+                "header": "header"
+            }
+        };
+        const rest = {
+            postBody: function(obj) {
+                assert.deepEqual(obj.options, expectedOptions);
+                assert.deepEqual(obj.body, entity);
+                assert.equal(obj.disableChunks, false);
+                assert.equal(obj.noStringify, true);
+                return "updated";
+            }
+        }
+
+        const entity = {
+            entity: "entity"
+        }
+        const headers = {
+            "header": "header"
+        }
+        var revert = toTest.__set__("Logger", Logger);
+        toTest.__set__("Rest", Rest);
+        var ngsild = new toTest(config);
+        var result = ngsild.updateProperties("id", entity, false, {headers});
+        result.should.equal("updated");
         revert();
     });
 });
