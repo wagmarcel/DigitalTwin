@@ -238,8 +238,6 @@ describe('Test createNgsildCSourceRegistration', function () {
         var result = ngsild.createNgsildCSourceRegistration(entity, true);
         revert();
     });
-});
-describe('Test createNgsildCSourceRegistration', function () {
     it('Should use correct options and used Content-Type json', async function () {
 
         var config = {
@@ -466,8 +464,6 @@ describe('Test replaceEntities', function () {
         result.should.equal("replaced");
         revert();
     });
-});
-describe('Test replaceEntities', function () {
     it('Should use correct options and add ?option=update to path', async function () {
 
         var config = {
@@ -569,8 +565,6 @@ describe('Test updateProperties', function () {
         result.should.equal("updated");
         revert();
     });
-});
-describe('Test updateProperties', function () {
     it('Should use correct options and not use noOverwrite', async function () {
 
         var config = {
@@ -617,6 +611,77 @@ describe('Test updateProperties', function () {
         var ngsild = new toTest(config);
         var result = ngsild.updateProperties("id", entity, false, {headers});
         result.should.equal("updated");
+        revert();
+    });
+});
+describe('Test subscribe', function () {
+    it('Should use correct options ', async function () {
+
+        var config = {
+            ngsildServer: {
+                host: "hostname",
+                protocol: "http" 
+            },
+            bridgeConfig: {
+                host: "host",
+                port: 123
+            }
+        }
+        var Logger = function() {
+            return logger;
+        }
+        var Rest = function() {
+            return rest;
+        }
+
+        var expectedOptions = {
+            hostname: "hostname",
+            protocol: "http",
+            method: 'POST',
+            path: "/ngsi-ld/v1/subscriptions/",
+            headers: {
+                "Content-Type": "application/ld+json"
+            }
+        };
+        const rest = {
+            postBody: function(obj) {
+                assert.deepEqual(obj.options, expectedOptions);
+                assert.deepEqual(obj.body, entity);
+                return "subscribed";
+            }
+        }
+
+        const entity = {
+            "@context": [
+                "https://fiware.github.io/data-models/context.jsonld",
+                "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.3.jsonld",
+                "host:123/jsonld/undefined"
+            ],
+            description: "Notify me if type are changed",
+            entities: [
+                {
+                    type: "http://example/type"
+                }
+            ],
+            id: "id",
+            notification: {
+                endpoint: {
+                    accept: "application/json",
+                    uri: "host:123/subscription"
+                }
+            },
+            timeInterval: 200,
+            type: "Subscription"
+        }
+      
+        const headers = {
+            "header": "header"
+        }
+        var revert = toTest.__set__("Logger", Logger);
+        toTest.__set__("Rest", Rest);
+        var ngsild = new toTest(config);
+        var result = ngsild.subscribe("id", "http://example/type", 200);
+        result.should.equal("subscribed");
         revert();
     });
 });
