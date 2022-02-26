@@ -240,7 +240,7 @@ function fiwareApi(config) {
     }
     const options = {
       hostname: config.ngsildServer.host,
-      port: config.ngsildServer.port,
+      protocol: config.ngsildServer.protocol,
       path: `/ngsi-ld/v1/csourceRegistrations`,
       headers: headers,
       method: 'POST',
@@ -256,7 +256,7 @@ function fiwareApi(config) {
     logger.debug(`getAllObjectsOfType type: ${type}`);
     const options = {
       hostname: config.ngsildServer.host,
-      port: config.ngsildServer.port,
+      protocol: config.ngsildServer.protocol,
       path: '/ngsi-ld/v1/entities' + "?type=" + type,
       method: 'GET',
       headers: {
@@ -276,7 +276,7 @@ function fiwareApi(config) {
 
     const options = {
       hostname: config.ngsildServer.host,
-      port: config.ngsildServer.port,
+      protocol: config.ngsildServer.protocol,
       path: `/ngsi-ld/v1/entityOperations/delete`,
       headers: {
         "Content-Type": "application/json"
@@ -296,7 +296,7 @@ function fiwareApi(config) {
     //return new Promise(function(resolve, reject) {
     const options = {
       hostname: config.ngsildServer.host,
-      port: config.ngsildServer.port,
+      protocol: config.ngsildServer.protocol,
       path: `/ngsi-ld/v1/entityOperations/create`,
       headers: {
         "Content-Type": "application/ld+json"
