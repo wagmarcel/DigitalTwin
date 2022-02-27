@@ -15,73 +15,69 @@
 */
 'use strict';
 
-const GROUPID = "statekafkabridge";
-const CLIENTID = "statekafkaclient";
+const GROUPID = 'statekafkabridge';
+const CLIENTID = 'statekafkaclient';
 const { Kafka } = require('kafkajs');
-const fs = require('fs')
-var config = require("../config/config.json");
-var State = require("../lib/ngsildUpdates.js");
-var Logger = require("../lib/logger.js");
+const fs = require('fs');
+const config = require('../config/config.json');
+const State = require('../lib/ngsildUpdates.js');
+const Logger = require('../lib/logger.js');
 
-var state = new State(config);
-var logger = new Logger(config);
+const state = new State(config);
+const logger = new Logger(config);
 
 const kafka = new Kafka({
   clientId: CLIENTID,
   brokers: config.kafka.brokers
-})
+});
 
-const consumer = kafka.consumer({ groupId: GROUPID })
+const consumer = kafka.consumer({ groupId: GROUPID });
 
-var startListener = async function() {
+const startListener = async function () {
+  await consumer.connect();
+  await consumer.subscribe({ topic: config.ngsildUpdates.topic, fromBeginning: false });
 
-    await consumer.connect()
-    await consumer.subscribe({ topic: config.ngsildUpdates.topic, fromBeginning: false })
-
-    await consumer.run({
-        eachMessage: async ({ topic, partition, message }) => {
-            try {
-                var body = JSON.parse(message.value);
-                await state.ngsildUpdates(body);
-            } catch (e) {
-                logger.error("could not process message: " + e);
-            }
-
-        },
-    }).catch(e => logger.error(`[StateUpdater/consumer] ${e.message}`, e))
-
-    const errorTypes = ['unhandledRejection', 'uncaughtException']
-    const signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2']
-
-    errorTypes.map(type => {
-        process.on(type, async e => {
-            try {
-            console.log(`process.on ${type}`)
-            console.error(e)
-            await consumer.disconnect()
-            process.exit(0)
-            } catch (_) {
-            process.exit(1)
-            }
-        })
-    })
-
-    signalTraps.map(type => {
-        process.once(type, async () => {
-            try {
-                await consumer.disconnect()
-            } finally {
-                process.kill(process.pid, type)
-            }
-        })
-    })
-    try {
-        fs.writeFileSync('/tmp/ready', "ready")
-        fs.writeFileSync('/tmp/healthy', "healthy")
-      } catch (err) {
-        logger.error(err)
+  await consumer.run({
+    eachMessage: async ({ topic, partition, message }) => {
+      try {
+        const body = JSON.parse(message.value);
+        await state.ngsildUpdates(body);
+      } catch (e) {
+        logger.error('could not process message: ' + e);
       }
-}
+    }
+  }).catch(e => logger.error(`[StateUpdater/consumer] ${e.message}`, e));
 
-logger.info("Now starting Kafka listener");
+  const errorTypes = ['unhandledRejection', 'uncaughtException'];
+  const signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2'];
+
+  errorTypes.map(type =>
+    process.on(type, async e => {
+      try {
+        console.log(`process.on ${type}`);
+        console.error(e);
+        await consumer.disconnect();
+        process.exit(0);
+      } catch (_) {
+        process.exit(1);
+      }
+    }));
+
+  signalTraps.map(type =>
+    process.once(type, async () => {
+      try {
+        await consumer.disconnect();
+      } finally {
+        process.kill(process.pid, type);
+      }
+    }));
+  try {
+    fs.writeFileSync('/tmp/ready', 'ready');
+    fs.writeFileSync('/tmp/healthy', 'healthy');
+  } catch (err) {
+    logger.error(err);
+  }
+};
+
+logger.info('Now starting Kafka listener');
 startListener();
