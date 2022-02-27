@@ -14,38 +14,33 @@
 * limitations under the License.
 */
 
-
 'use strict';
-var Logger = require("./logger.js");
-const Rest = require("./rest.js");
+const Logger = require('./logger.js');
+const Rest = require('./rest.js');
 
-module.exports = function Alerta(config) {
+module.exports = function Alerta (conf) {
+  const config = conf;
   const token = process.env[config.alerta.accessKeyVariable];
-  var config = config;
-  var logger = new Logger(config);
-  var rest = new Rest(config);
+  const logger = new Logger(config);
+  const rest = new Rest(config);
 
-  var headers;
+  let headers;
 
-  this.sendAlert = async function(body){
-
+  this.sendAlert = async function (body) {
     headers = {};
-    headers["Authorization"] = "Key " + token;
+    headers.Authorization = 'Key ' + token;
 
-    logger.debug(`send alert with body ${JSON.stringify(body)}`)
-    headers["Content-type"] = "application/json";
-    
+    logger.debug(`send alert with body ${JSON.stringify(body)}`);
+    headers['Content-type'] = 'application/json';
+
     const options = {
       hostname: config.alerta.hostname,
       protocol: config.alerta.protocol,
-      path: `/api/alert`,
+      port: config.alerta.port,
+      path: '/api/alert',
       method: 'POST',
       headers: headers
     };
-    return rest.postBody({options, body, "disableChunks": true})
-  
+    return await rest.postBody({ options, body, disableChunks: true });
   };
-}
-  
-
-  
+};

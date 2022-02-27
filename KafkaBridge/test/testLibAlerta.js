@@ -20,59 +20,64 @@ const chai = require('chai');
 global.should = chai.should();
 
 const rewire = require('rewire');
-const { rest } = require('underscore');
-const toTest = rewire('../lib/alerta.js');
+const ToTest = rewire('../lib/alerta.js');
 
 const logger = {
-    debug: function () {},
-    error: function () {}
-  };
-  
+  debug: function () {},
+  error: function () {}
+};
 
 describe('Test sendAlerts', function () {
-    it('Should post body with correct path and token', async function () {
+  it('Should post body with correct path and token', async function () {
+    const config = {
+      alerta: {
+        accessKeyVariable: 'ACCESS_KEY_VARIABLE',
+        hostname: 'hostname',
+        port: 1234,
+        protocol: 'http:'
+      }
+    };
+    const Logger = function () {
+      return logger;
+    };
+    const Rest = function () {
+      return rest;
+    };
+    const process = {
+      env: {
+        ACCESS_KEY_VARIABLE: 'access_key'
+      }
+    };
+    const body = {
+      key: 'value',
+      key2: 'value2'
+    };
+    const expectedOptions = {
+      headers: {
+        Authorization: 'Key access_key',
+        'Content-type': 'application/json'
+      },
+      hostname: 'hostname',
+      protocol: 'http:',
+      port: 1234,
+      path: '/api/alert',
+      method: 'POST'
 
-        var config = {
-            alerta: {
-                accessKeyVariable: "ACCESS_KEY_VARIABLE",
-                hostname: "hostname",
-                protocol: "http" 
-            }
-        }
-        var Logger = function() {
-            return logger;
-        }
-        var Rest = function() {
-            return rest;
-        }
-        var process = {
-            env: {
-                "ACCESS_KEY_VARIABLE": "access_key"
-            }
-        }
-        var body = {
-            "key":  "value",
-            "key2": "value2"
-        }
-        var expectedOptions = {
-            hostname: "hostname",
-            protocol: "http",
-            path: '/api/alert',
-            method: 'POST',
-
-        }
-        const rest = {
-            postBody: function(obj) {
-                obj.options.should.deepEqual(expectedOptions);
-                obj.body.should.deepEqual(body);
-                obj.disableChunks.should.deepEqual(true);
-            }
-        }
-        var revert = toTest.__set__("Logger", Logger);
-        toTest.__set__("process", process);
-        toTest.__set__("Rest", Rest);
-        var alerta = new toTest(config);
-        var result = alerta.sendAlert(body);
-        revert();
-    });
+    };
+    const rest = {
+      postBody: function (obj) {
+        assert.deepEqual(obj.options, expectedOptions);
+        assert.deepEqual(obj.body, body);
+        obj.disableChunks.should.equal(true);
+        return 'posted';
+      }
+    };
+    const revert = ToTest.__set__('Logger', Logger);
+    ToTest.__set__('process', process);
+    ToTest.__set__('Rest', Rest);
+    const alerta = new ToTest(config);
+    const result = await alerta.sendAlert(body);
+    result.should.equal('posted');
+    revert();
+  });
 });

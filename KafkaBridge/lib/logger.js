@@ -15,18 +15,18 @@
 */
 'use strict';
 
-const {format, createLogger, transports} = require('winston');
-const { combine, errors, timestamp} = format;
+const { format, createLogger, transports } = require('winston');
+const { combine, errors, timestamp } = format;
 
-module.exports = function Logger(config){
-  return createLogger ({
+module.exports = function Logger (config) {
+  return createLogger({
     level: config.logger.loglevel,
     format: combine(
       format.json(),
       errors({ stack: true }),
       timestamp()),
     transports: [
-      new transports.Console({format: format.simple()})
+      new transports.Console({ format: format.simple() })
     ]
   });
-}
+};

@@ -13,6 +13,9 @@
 # limitations under the License.
 #
 
+if [ -z "${SELF_HOSTED_RUNNER}" ]; then
+    SUDO=sudo
+fi
 
 # Patch Coredns to add keyloak.local
 # ----------------------------------
@@ -34,4 +37,6 @@ kubectl -n kube-system delete pod ${COREDNS_POD}
 
 # Update /etc/hosts
 # -----------------
-sudo bash -c "echo $INGRESS_IP keycloak.local alerta.local ngsild.local >> /etc/hosts"
+echo Update hostfile for local api
+echo ------------------
+${SUDO} bash -c "echo $INGRESS_IP keycloak.local alerta.local ngsild.local >> /etc/hosts"

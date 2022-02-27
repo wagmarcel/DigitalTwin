@@ -10,16 +10,16 @@ metadata:
 spec:
   tls:
   - hosts:
-    - {{ .Values.scorpio.externalUrl }}
+    - {{ .Values.scorpio.externalHostname }}
     secretName: {{ .Values.certmanager.secret }}
   rules:
-  - host: {{ .Values.scorpio.externalUrl }}
+  - host: {{ .Values.scorpio.externalHostname }}
     http:
       paths:
       - backend:
           service:
-            name: {{ .Values.scorpio.gatewaySvc.name }}
+            name: {{ .Values.scorpio.internalHostname }}
             port:
-              number: {{ .Values.scorpio.gatewaySvc.port }}
+              number: {{ .Values.scorpio.internalPort }}
         path: /
         pathType: ImplementationSpecific

@@ -15,79 +15,91 @@
 */
 'use strict';
 
-var Logger = require("./logger.js");
-const NgsiLd = require("./ngsild.js");
-const { exception } = require("console");
+const Logger = require('./logger.js');
+const NgsiLd = require('./ngsild.js');
 const Keycloak = require('keycloak-connect');
 
-module.exports = function NgsildUpdates(config) {
-    var config = config;
-    var ngsild = new NgsiLd(config);
-    var logger = new Logger(config);
-    var authService = config.keycloak.ngsildUpdatesAuthService;
-    authService.secret = process.env[config.ngsildUpdates.clientSecretVariable];
-    var keycloakAdapter = new Keycloak({}, authService);
-    var token;
-    var headers = {};
-    var refreshIntervalInMs = config.ngsildUpdates.refreshIntervalInSeconds * 1000;
+const getFlag = function (value) {
+  if (value === 'true' || value === true) {
+    return true;
+  }
+  return false;
+};
 
-    this.updateToken = async function() {
-      token = await keycloakAdapter.grantManager
-            .obtainFromClientCredentials();
-      logger.debug("Service token refreshed!");
-      return token;
-    }
-    if (refreshIntervalInMs !== undefined && refreshIntervalInMs !== null) {
-      setInterval(this.updateToken, refreshIntervalInMs);
-    }
-    this.updateToken();
+module.exports = function NgsildUpdates (conf) {
+  const config = conf;
+  const ngsild = new NgsiLd(config);
+  const logger = new Logger(config);
+  const authService = config.keycloak.ngsildUpdatesAuthService;
+  authService.secret = process.env[config.ngsildUpdates.clientSecretVariable];
+  const keycloakAdapter = new Keycloak({}, authService);
+  let token;
+  let headers = {};
+  const refreshIntervalInMs = config.ngsildUpdates.refreshIntervalInSeconds * 1000;
+
+  this.updateToken = async function () {
+    token = await keycloakAdapter.grantManager
+      .obtainFromClientCredentials();
+    logger.debug('Service token refreshed!');
+    return token;
+  };
+  if (refreshIntervalInMs !== undefined && refreshIntervalInMs !== null) {
+    setInterval(this.updateToken, refreshIntervalInMs);
+  }
+  this.updateToken();
 
   /**
-   * 
+   *
    * @param {object} body - object from ngsildUpdate channel
-   * 
+   *
    * body should contain:
    *  parentId: NGSI-LD id of parent of object - must be defined and !== null
    *  parentRel: parent relationship name which relates to childId (in NGIS-LD terminology)
    *  childObj: NGSI-LD object - either childObj or childId must be defined and !== null.
    */
-  this.ngsildUpdates = async function(body) {
-
+  this.ngsildUpdates = async function (body) {
     if (token === undefined) {
       token = await this.updateToken();
     }
 
     headers = {};
-    headers["Authorization"] = "Bearer " + token.access_token.token;
-    
-    if (body.op  === undefined || body.entity === undefined || body.id === undefined || body.overwrite === undefined){
-      logger.error("Format of message " + JSON.stringify(body) + " is invalid! Ignoring!");
+    headers.Authorization = 'Bearer ' + token.access_token.token;
+
+    if (body.op === undefined || body.entities === undefined || body.overwriteOrReplace === undefined) {
+      logger.error('Format of message ' + JSON.stringify(body) + ' is invalid! Ignoring!');
       return;
     }
 
-    var op = body.op;
-    var entity = body.entity;
-    var id = body.id;
-    var overwrite = body.overwrite;
-    var result;
+    const op = body.op;
+    const entities = body.entities;
+    const overwriteOrReplace = getFlag(body.overwriteOrReplace);
+    let result;
 
     try {
       // update the entity - do not create it
-      if (op === "update") {
-          result = await ngsild.updateProperties(id, entity, !overwrite, {headers});
-          if (result.statusCode !== 204 && result.statusCode !== 207) {
-            throw new Error("Entity cannot update entity:" + JSON.stringify(result.body))
-          } 
-        
-      } else if (op === "upsert") {
+      if (op === 'update') {
+        // NOTE: The batch update API of Scorpio does not yet support noOverwrite options. For the time being
+        // the batch processing will be done sequentially - until this is fixed in Scorpio
+        const promises = [];
+        entities.forEach(entity => {
+          promises.push(ngsild.updateProperties({ id: entity.id, body: entity, isOverwrite: overwriteOrReplace }, { headers })
+            .then(result => {
+              if (result.statusCode !== 204 && result.statusCode !== 207) {
+                throw new Error('Entity cannot update entity:' + JSON.stringify(result.body));
+              }
+            })
+          );
+        });
+        promises.reduce((p, fn) => p.then(fn), Promise.resolve()).catch((e) => logger.error('Could not updateProperties: ' + e));
+      } else if (op === 'upsert') {
         // in this case, entity will be created if not existing
-        result = await ngsild.replaceEntities([entity], !overwrite, {headers});
+        result = await ngsild.replaceEntities(entities, overwriteOrReplace, { headers });
         if (result.statusCode !== 204) {
-          throw new Error("Cannot upsert entity:" + JSON.stringify(result.body));
+          throw new Error('Cannot upsert entity:' + JSON.stringify(result.body));
         }
       }
-    } catch(e) {
-      throw new Error("Error in REST call: " + e); 
+    } catch (e) {
+      throw new Error('Error in REST call: ' + e.stack);
     }
-  }
-}
+  };
+};

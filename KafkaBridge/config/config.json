@@ -7,7 +7,7 @@
 		"topic": "iff.alerts",
 		"hostname": "alerta",
 		"port": "8080",
-		"protocol": "http",
+		"protocol": "http:",
 		"accessKeyVariable": "ALERTA_API_KEY"
 	},
 	"logger": {
@@ -31,8 +31,9 @@
 		"clientSecretVariable": "NGSILD_UPDATES_CLIENT_SECRET"
 	},        
 	"ngsildServer": {
-		"host": "ngsild.local",
-		"protocol": "http"
+		"hostname": "gateway",
+		"protocol": "http:",
+		"port": 9090
 	},
 	"debeziumBridge": {
 		"topic": "iff.ngsild.public.entity",
