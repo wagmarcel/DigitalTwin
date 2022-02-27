@@ -20,7 +20,7 @@ const NgsiLd = require("./ngsild.js");
 const { exception } = require("console");
 const Keycloak = require('keycloak-connect');
 
-module.exports = function State(config) {
+module.exports = function NgsildUpdates(config) {
     var config = config;
     var ngsild = new NgsiLd(config);
     var logger = new Logger(config);
