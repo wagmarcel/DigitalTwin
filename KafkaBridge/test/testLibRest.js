@@ -225,7 +225,7 @@ describe('Test postBody', function () {
     });
 });
 describe('Test getBody', function () {
-    it('Should write body', async function () {
+    it('Should get body', async function () {
 
         var config = {
             ngsildServer: {
