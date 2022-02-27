@@ -40,6 +40,6 @@ module.exports = function Alerta (conf) {
       method: 'POST',
       headers: headers
     };
-    return rest.postBody({ options, body, disableChunks: true });
+    return await rest.postBody({ options, body, disableChunks: true });
   };
 };
