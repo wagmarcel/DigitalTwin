@@ -224,3 +224,69 @@ describe('Test postBody', function () {
         revert();
     });
 });
+describe('Test getBody', function () {
+    it('Should write body', async function () {
+
+        var config = {
+            ngsildServer: {
+                host: "hostname",
+                protocol: "http" 
+            }
+        }
+        var Logger = function() {
+            return logger;
+        }
+        var options = {
+            option: "option"
+        };
+        var expOptions = {
+            option: "option"
+        };
+
+        var body = "body";
+        var evmap = {};
+        var req = {
+            on: function(ev, cb) {
+                ev.should.equal('error');
+            },
+            write: function(bo) {
+                bo.should.equal(JSON.stringify(body));
+            },
+            end: function() {
+
+            }
+        };
+        var http = {
+            request: function(options, callback) {
+                assert.deepEqual(options, expOptions);
+                var res = {
+                    on: function(ev, cb) {
+                        evmap[ev] = cb;
+                    },
+                    statusCode: 200
+                };
+                callback(res);
+                return req;
+            }
+        }
+        var resBody = {
+            body: "body"
+        }
+        var expResult = {
+            statusCode: 200,
+            body: resBody
+        }
+        var revert = toTest.__set__("Logger", Logger);
+        toTest.__set__("http", http);
+        const reqSpy = sinon.spy(req, "end")
+        var rest = new toTest(config);
+        setTimeout(function(){
+            evmap['data'](JSON.stringify(resBody))
+            evmap['end']();
+        }, 1000);
+        var result = await rest.getBody(options);
+        assert.deepEqual(result, expResult);
+        assert(reqSpy.calledOnce, "req.end not called once!");
+        revert();
+    });
+});

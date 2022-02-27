@@ -70,7 +70,6 @@ module.exports = function Rest(config) {
    */
   this.getBody = function(options){
     return new Promise(function(resolve, reject) {
-      //options.method = 'GET';
       const req = http.request(options, res => {
         var statusCode = res.statusCode;
         var body = ''
