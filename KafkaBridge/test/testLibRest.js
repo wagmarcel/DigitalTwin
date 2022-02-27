@@ -43,6 +43,10 @@ describe('Test postBody', function () {
         var options = {
             option: "option"
         };
+        var expOptions = {
+            option: "option"
+        };
+
         var body = "body";
         var evmap = {};
         var req = {
@@ -58,6 +62,7 @@ describe('Test postBody', function () {
         };
         var http = {
             request: function(options, callback) {
+                assert.deepEqual(options, expOptions);
                 var res = {
                     on: function(ev, cb) {
                         evmap[ev] = cb;
@@ -84,6 +89,136 @@ describe('Test postBody', function () {
             evmap['end']();
         }, 1000);
         var result = await rest.postBody({options, body, noStringify: false, disableChunks: false});
+        assert.deepEqual(result, expResult);
+        assert(reqSpy.calledOnce, "req.end not called once!");
+        revert();
+    });
+    it('Should write body, no stringify', async function () {
+
+        var config = {
+            ngsildServer: {
+                host: "hostname",
+                protocol: "http" 
+            }
+        }
+        var Logger = function() {
+            return logger;
+        }
+        var options = {
+            option: "option"
+        };
+        var expOptions = {
+            option: "option"
+        };        
+        var body = "body";
+        var evmap = {};
+        var req = {
+            on: function(ev, cb) {
+                ev.should.equal('error');
+            },
+            write: function(bo) {
+                bo.should.equal(body);
+            },
+            end: function() {
+
+            }
+        };
+        var http = {
+            request: function(options, callback) {
+                assert.deepEqual(options, expOptions);
+                var res = {
+                    on: function(ev, cb) {
+                        evmap[ev] = cb;
+                    },
+                    statusCode: 200
+                };
+                callback(res);
+                return req;
+            }
+        }
+        var resBody = {
+            body: "body"
+        }
+        var expResult = {
+            statusCode: 200,
+            body: resBody
+        }
+        var revert = toTest.__set__("Logger", Logger);
+        toTest.__set__("http", http);
+        const reqSpy = sinon.spy(req, "end")
+        var rest = new toTest(config);
+        setTimeout(function(){ 
+            evmap['data'](JSON.stringify(resBody))
+            evmap['end']();
+        }, 1000);
+        var result = await rest.postBody({options, body, noStringify: true, disableChunks: false});
+        assert.deepEqual(result, expResult);
+        assert(reqSpy.calledOnce, "req.end not called once!");
+        revert();
+    });
+    it('Should write body, with explicit length header', async function () {
+
+        var config = {
+            ngsildServer: {
+                host: "hostname",
+                protocol: "http" 
+            }
+        }
+        var Logger = function() {
+            return logger;
+        }
+        var expOptions = {
+            option: "option",
+            headers: {
+                "Content-Length": 6
+            }
+        };
+        var options = {
+            option: "option",
+            headers: {}
+        }
+        var body = "body";
+        var evmap = {};
+        var req = {
+            on: function(ev, cb) {
+                ev.should.equal('error');
+            },
+            write: function(bo) {
+                bo.should.equal(JSON.stringify(body));
+            },
+            end: function() {
+
+            }
+        };
+        var http = {
+            request: function(options, callback) {
+                assert.deepEqual(options, expOptions);
+                var res = {
+                    on: function(ev, cb) {
+                        evmap[ev] = cb;
+                    },
+                    statusCode: 200
+                };
+                callback(res);
+                return req;
+            }
+        }
+        var resBody = {
+            body: "body"
+        }
+        var expResult = {
+            statusCode: 200,
+            body: resBody
+        }
+        var revert = toTest.__set__("Logger", Logger);
+        toTest.__set__("http", http);
+        const reqSpy = sinon.spy(req, "end")
+        var rest = new toTest(config);
+        setTimeout(function(){ 
+            evmap['data'](JSON.stringify(resBody))
+            evmap['end']();
+        }, 1000);
+        var result = await rest.postBody({options, body, noStringify: false, disableChunks: true});
         assert.deepEqual(result, expResult);
         assert(reqSpy.calledOnce, "req.end not called once!");
         revert();
