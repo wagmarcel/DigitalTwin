@@ -14,175 +14,175 @@
 * limitations under the License.
 */
 'use strict';
-var Logger = require("./logger.js");
-const { exception } = require("console");
-const { forEach } = require("underscore");
-var _ = require('underscore');
+const Logger = require('./logger.js');
+const _ = require('underscore');
 
-module.exports = function DebeziumBridge(config) {
-    var config = config;
-    var logger = new Logger(config);
+module.exports = function DebeziumBridge (conf) {
+  const config = conf;
+  const logger = new Logger(config);
   /**
-   * 
+   *
    * @param {object} body - object from stateUpdate
-   * 
+   *
    * body should be in debezium format:
    *  before: entity before
    *  after: entity after
    */
-  this.parse = function(body) {
-    //var before = body.before;
-    //var beforeObj = {};
-    //var beforeAttrs = {};
-    var result =  {
-      "entity": null,
-      "updatedAttrs": null,
-      "deletedAttrs":  null
-  }
+  this.parse = function (body) {
+    // var before = body.before;
+    // var beforeObj = {};
+    // var beforeAttrs = {};
+    let result = {
+      entity: null,
+      updatedAttrs: null,
+      deletedAttrs: null
+    };
     if (body === null || body === undefined) {
       return result;
     }
-    var before = this.parseBeforeAfterEntity(body.before);
-    var beforeEntity = before.entity;
-    var beforeAttrs = before.attributes;
-    var after = this.parseBeforeAfterEntity(body.after);
-    var afterEntity = after.entity;
-    var afterAttrs = after.attributes; 
-    var isEntityUpdated = this.diffEntity(beforeEntity, afterEntity);
-    const {updatedAttrs, deletedAttrs} = this.diffAttributes(beforeAttrs, afterAttrs);
-    console.log("Marcel552 " + JSON.stringify(updatedAttrs) + "----------" + JSON.stringify(deletedAttrs))
-    var isChanged = isEntityUpdated || Object.keys(updatedAttrs).length > 0 || Object.keys(deletedAttrs).length > 0;
+    const before = this.parseBeforeAfterEntity(body.before);
+    const beforeEntity = before.entity;
+    const beforeAttrs = before.attributes;
+    const after = this.parseBeforeAfterEntity(body.after);
+    const afterEntity = after.entity;
+    const afterAttrs = after.attributes;
+    const isEntityUpdated = this.diffEntity(beforeEntity, afterEntity);
+    const { updatedAttrs, deletedAttrs } = this.diffAttributes(beforeAttrs, afterAttrs);
+    console.log('Marcel552 ' + JSON.stringify(updatedAttrs) + '----------' + JSON.stringify(deletedAttrs));
+    const isChanged = isEntityUpdated || Object.keys(updatedAttrs).length > 0 || Object.keys(deletedAttrs).length > 0;
     if (isChanged && Object.keys(afterEntity).length === 0) {
       afterEntity.id = beforeEntity.id;
     }
-    result =  {
-      "entity": isChanged ? afterEntity : null,
-      "updatedAttrs": isChanged ? afterAttrs : null,
-      "deletedAttrs": isChanged ? deletedAttrs : null
-  }
+    result = {
+      entity: isChanged ? afterEntity : null,
+      updatedAttrs: isChanged ? afterAttrs : null,
+      deletedAttrs: isChanged ? deletedAttrs : null
+    };
     return result;
   };
 
   /**
    * Provide entitiy and attributes separated, prepared for StreamingSQL
-   * @param {object} ba - before/after object from Debezium 
-   * 
+   * @param {object} ba - before/after object from Debezium
+   *
    */
-  this.parseBeforeAfterEntity = function(ba) {
-    var ba_entity =  {};
-    var ba_attrs =  {};
-    if (ba == null || ba == undefined) {
-      return {"entity": {}, "attributes": {}}
+  this.parseBeforeAfterEntity = function (ba) {
+    let baEntity = {};
+    const baAttrs = {};
+    if (ba === null || ba === undefined) {
+      return { entity: {}, attributes: {} };
     }
-    
+
     try {
-      ba_entity = JSON.parse(ba.data);
+      baEntity = JSON.parse(ba.data);
       // Delete all non-properties as defined by ETSI SPEC (ETSI GS CIM 009 V1.5.1 (2021-11))
-      delete ba_entity["@id"];
-      delete ba_entity["@type"];
-      delete ba_entity["https://uri.etsi.org/ngsi-ld/createdAt"];
-      delete ba_entity["https://uri.etsi.org/ngsi-ld/modifiedAt"];
-      delete ba_entity["https://uri.etsi.org/ngsi-ld/obvervedAt"];
-      ba_entity.id = ba.id; 
-      ba_entity.type = ba.type;
-    } catch (e) { logger.error(`Cannot parse debezium before field ${e}`); return;} // not throwing an error due to the fact that it cannot be fixed in next try
-    
+      delete baEntity['@id'];
+      delete baEntity['@type'];
+      delete baEntity['https://uri.etsi.org/ngsi-ld/createdAt'];
+      delete baEntity['https://uri.etsi.org/ngsi-ld/modifiedAt'];
+      delete baEntity['https://uri.etsi.org/ngsi-ld/obvervedAt'];
+      baEntity.id = ba.id;
+      baEntity.type = ba.type;
+    } catch (e) { logger.error(`Cannot parse debezium before field ${e}`); return; } // not throwing an error due to the fact that it cannot be fixed in next try
+
     // create entity table
-    var id = ba_entity.id;
-    var res_entity = {};
-    Object.keys(ba_entity).filter(key => key != "type" && key != "id").forEach(key => res_entity[key] = id + "\\" + key );
-    res_entity.id = ba_entity.id;
-    res_entity.type = ba_entity.type;
+    let id = baEntity.id;
+    const resEntity = {};
+    Object.keys(baEntity).filter(key => key !== 'type' && key !== 'id')
+      .forEach(key => {
+        resEntity[key] = id + '\\' + key;
+      });
+    resEntity.id = baEntity.id;
+    resEntity.type = baEntity.type;
 
     // create attribute table
-    var id = ba_entity.id;
-    Object.keys(ba_entity).filter(key => key != "type" && key != "id").forEach(
+    id = baEntity.id;
+    Object.keys(baEntity).filter(key => key !== 'type' && key !== 'id').forEach(
       key => {
-        var refId = id + "\\" + key;
-        var refObjArray = ba_entity[key];
+        const refId = id + '\\' + key;
+        let refObjArray = baEntity[key];
         if (!Array.isArray(refObjArray)) {
           refObjArray = [refObjArray];
         }
-        ba_attrs[key] = [];
+        baAttrs[key] = [];
         refObjArray.forEach((refObj, index) => {
-          var obj = {};
+          const obj = {};
           obj.id = refId;
           obj.entityId = id;
           obj.synchronized = true;
           obj.name = key;
-          if (refObj["https://uri.etsi.org/ngsi-ld/hasValue"] !== undefined) {
-            obj["type"] = "https://uri.etsi.org/ngsi-ld/Property";
-             // every Property is array with one element, hence [0] is no restriction
-            obj["https://uri.etsi.org/ngsi-ld/hasValue"] = refObj["https://uri.etsi.org/ngsi-ld/hasValue"][0]["@value"];
-            if (refObj["https://uri.etsi.org/ngsi-ld/hasValue"][0]["@type"] !== undefined) {
+          if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'] !== undefined) {
+            obj.type = 'https://uri.etsi.org/ngsi-ld/Property';
+            // every Property is array with one element, hence [0] is no restriction
+            obj['https://uri.etsi.org/ngsi-ld/hasValue'] = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'];
+            if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'] !== undefined) {
               // every Property is array with one element, hence [0] is no restriction
-              obj["valuetype"] = refObj["https://uri.etsi.org/ngsi-ld/hasValue"][0]["@type"];
+              obj.valuetype = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'];
             }
-          }
-          else if (refObj["https://uri.etsi.org/ngsi-ld/hasObject"] !== undefined) {
-            obj["type"] = "https://uri.etsi.org/ngsi-ld/Relationship";
+          } else if (refObj['https://uri.etsi.org/ngsi-ld/hasObject'] !== undefined) {
+            obj.type = 'https://uri.etsi.org/ngsi-ld/Relationship';
             // every Relationship is array with one element, hence [0] is no restriction
-            obj["https://uri.etsi.org/ngsi-ld/hasObject"] = refObj["https://uri.etsi.org/ngsi-ld/hasObject"][0]["@id"];
+            obj['https://uri.etsi.org/ngsi-ld/hasObject'] = refObj['https://uri.etsi.org/ngsi-ld/hasObject'][0]['@id'];
           } else {
-            return
+            return;
           }
           obj.index = index;
-          ba_attrs[key].push(obj);
-        })
+          baAttrs[key].push(obj);
+        });
       });
-    return {"entity": res_entity, "attributes": ba_attrs}
-  }
+    return { entity: resEntity, attributes: baAttrs };
+  };
 
   /**
-   * 
+   *
    * @param {object} before - before object
    * @param {object} after - after object
    * @returns true if Entities are different
    */
-  this.diffEntity = function(before, after) {
-    return !_.isEqual(before, after); 
-   }
+  this.diffEntity = function (before, after) {
+    return !_.isEqual(before, after);
+  };
 
   /**
-   * 
+   *
    * @param {object} beforeAttrs - object with atrributes
    * @param {object} afterAttrs - object with attributes
    * @returns list with updated and deleted atributes {updatedAttrs, deletedAttrs}
    */
-  this.diffAttributes = function(beforeAttrs, afterAttrs) {
-    var updatedAttrs =  {};
-    var deletedAttrs = {};
-    
+  this.diffAttributes = function (beforeAttrs, afterAttrs) {
+    const updatedAttrs = {};
+    const deletedAttrs = {};
+
     // Determine all attributes which are found in beforeAttrs but not in afterAttrs
     // These attributes are added to deleteAttrs
     Object.keys(beforeAttrs).forEach(key => {
       if (afterAttrs[key] === undefined || afterAttrs[key] === null || !Array.isArray(afterAttrs[key]) || afterAttrs[key].length === 0) {
-        var obj = beforeAttrs[key].reduce((accum, element) => {
-          var obj = {}; 
-          obj["id"] = element["id"]; 
-          obj["index"] = element["index"]; 
-          accum.push(obj); 
+        const obj = beforeAttrs[key].reduce((accum, element) => {
+          const obj = {};
+          obj.id = element.id;
+          obj.index = element.index;
+          accum.push(obj);
           return accum;
-        }, [])
+        }, []);
         deletedAttrs[key] = obj;
       }
-    })
+    });
 
     // Determine all attributes which are changed and add them to updatedAttrs
     // Detect wheter before had higher index and add these to deleteAttrs
     Object.keys(afterAttrs).forEach(key => {
       // if the attributes are unequal
       // add every different attribute per index to the updatedAttrs
-      // add every attribute which have indexes in before but not mentioned in after to deletedAttrs 
+      // add every attribute which have indexes in before but not mentioned in after to deletedAttrs
       if (!_.isEqual(afterAttrs[key], beforeAttrs[key])) {
         // delete all old elements with higher indexes
         // the attribute lists are sorted so length diff reveals what has to be deleted
-        var delementArray = [];
+        const delementArray = [];
         if (beforeAttrs[key].length > afterAttrs[key].length) {
-          for(var i = afterAttrs[key].length; i < beforeAttrs[key].length; i++) {
-            var delement = {};
-            delement["id"] = beforeAttrs[key][i]["id"];
-            delement["index"] = i;
+          for (let i = afterAttrs[key].length; i < beforeAttrs[key].length; i++) {
+            const delement = {};
+            delement.id = beforeAttrs[key][i].id;
+            delement.index = i;
             delementArray.push(delement);
           }
           deletedAttrs[key] = delementArray;
@@ -191,6 +191,6 @@ module.exports = function DebeziumBridge(config) {
         updatedAttrs[key] = afterAttrs[key];
       }
     });
-    return {updatedAttrs, deletedAttrs}
-  }
-}
+    return { updatedAttrs, deletedAttrs };
+  };
+};
