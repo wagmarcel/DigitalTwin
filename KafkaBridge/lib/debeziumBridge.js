@@ -48,10 +48,10 @@ module.exports = function DebeziumBridge (conf) {
     const afterAttrs = after.attributes;
     const isEntityUpdated = this.diffEntity(beforeEntity, afterEntity);
     const { updatedAttrs, deletedAttrs } = this.diffAttributes(beforeAttrs, afterAttrs);
-    console.log('Marcel552 ' + JSON.stringify(updatedAttrs) + '----------' + JSON.stringify(deletedAttrs));
     const isChanged = isEntityUpdated || Object.keys(updatedAttrs).length > 0 || Object.keys(deletedAttrs).length > 0;
     if (isChanged && Object.keys(afterEntity).length === 0) {
       afterEntity.id = beforeEntity.id;
+      afterEntity.type = beforeEntity.type;
     }
     result = {
       entity: isChanged ? afterEntity : null,
@@ -178,7 +178,7 @@ module.exports = function DebeziumBridge (conf) {
         // delete all old elements with higher indexes
         // the attribute lists are sorted so length diff reveals what has to be deleted
         const delementArray = [];
-        if (beforeAttrs[key].length > afterAttrs[key].length) {
+        if (beforeAttrs[key] !== undefined && beforeAttrs[key].length > afterAttrs[key].length) {
           for (let i = afterAttrs[key].length; i < beforeAttrs[key].length; i++) {
             const delement = {};
             delement.id = beforeAttrs[key][i].id;

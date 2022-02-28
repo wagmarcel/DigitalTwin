@@ -49,7 +49,7 @@ const startListener = async function () {
         const result = await debeziumBridge.parse(body);
         sendUpdates({ entity: result.entity, updatedAttrs: result.updatedAttrs, deletedAttrs: result.deletedAttrs });
       } catch (e) {
-        logger.error('could not process message: ' + e);
+        logger.error('could not process message: ' + e.stack);
       }
     }
   }).catch(e => logger.error(`[StateUpdater/consumer] ${e.message}`, e));
