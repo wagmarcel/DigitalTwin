@@ -3,6 +3,7 @@
 NAMESPACE=iff
 USERSECRET=secret/credential-iff-realm-user-iff
 USER=realm_user
+CLIENT_ID=scorpio
 KEYCLOAKURL=http://keycloak.local/auth/realms
 CUTTER=/tmp/CUTTER
 KAFKA_BOOTSTRAP=my-cluster-kafka-bootstrap:9092
@@ -100,7 +101,7 @@ get_password() {
     kubectl -n ${NAMESPACE} get ${USERSECRET} -o jsonpath='{.data.password}'| base64 -d
 }
 get_token() {
-    curl -d 'client_id=scorpio' -d "username=${USER}" -d "password=$password" -d 'grant_type=password' "${KEYCLOAKURL}/${NAMESPACE}/protocol/openid-connect/token"| jq ".access_token"| tr -d '"'
+    curl -d "client_id=${CLIENT_ID}" -d "username=${USER}" -d "password=$password" -d 'grant_type=password' "${KEYCLOAKURL}/${NAMESPACE}/protocol/openid-connect/token"| jq ".access_token"| tr -d '"'
 }
 
 # create ngsild entity
@@ -143,13 +144,13 @@ teardown(){
     sleep 5
     echo "# now killing kafkacat and evaluate result" >&3
     killall kafkacat
-    run compare_create_attributes /tmp/KAFKACAT_ATTRIBUTES
+    run compare_create_attributes ${KAFKACAT_ATTRIBUTES}
     [ "$status" -eq 0 ]
 
-    run compare_create_cutter /tmp/KAFKACAT_ENTITY_CUTTER
+    run compare_create_cutter ${KAFKACAT_ENTITY_CUTTER}
     [ "$status" -eq 0 ]
 
-    run compare_create_plasmacutter /tmp/KAFKACAT_ENTITY_PLASMACUTTER
+    run compare_create_plasmacutter ${KAFKACAT_ENTITY_PLASMACUTTER}
     [ "$status" -eq 0 ]
 }
 
@@ -167,12 +168,12 @@ teardown(){
     sleep 5
     echo "# now killing kafkacat and evaluate result" >&3
     killall kafkacat
-    run compare_delete_attributes /tmp/KAFKACAT_ATTRIBUTES
+    run compare_delete_attributes ${KAFKACAT_ATTRIBUTES}
     [ "$status" -eq 0 ]
 
-    run compare_delete_cutter /tmp/KAFKACAT_ENTITY_CUTTER
+    run compare_delete_cutter ${KAFKACAT_ENTITY_CUTTER}
     [ "$status" -eq 0 ]
 
-    run compare_delete_plasmacutter /tmp/KAFKACAT_ENTITY_PLASMACUTTER
+    run compare_delete_plasmacutter ${KAFKACAT_ENTITY_PLASMACUTTER}
     [ "$status" -eq 0 ]
 }
