@@ -45,7 +45,7 @@ data:
               "topic": "iff.ngsild.public.entity",
               "entityTopicPrefix": "iff.ngsild.entities",
               "attributesTopic": "iff.ngsild.attributes",
-              "rdfSources": ["../config/knowledge.ttl"]
+              "rdfSources": ["/opt/config/knowledge.ttl"]
       }
     }
   knowledge.ttl: |

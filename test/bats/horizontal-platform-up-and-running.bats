@@ -143,6 +143,17 @@ DETIK_DEBUG="true"
 }
 @test "verify that alerta is up and running" {
 
-    run try "at most 30 times every 60s to get pod named 'alerta' and verify that 'status.containerStatuses[0].ready' is 'true'"
+    run try "at most 30 times every 60s to get pod named 'alerta-.[^r][^i]' and verify that 'status.containerStatuses[0].ready' is 'true'"
+    [ "$status" -eq 0 ]
+}
+@test "verify that bridges are up and running" {
+
+    run try "at most 30 times every 60s to get pod named 'alerta-bridge' and verify that 'status.containerStatuses[0].ready' is 'true'"
+    [ "$status" -eq 0 ]
+
+    run try "at most 30 times every 60s to get pod named 'debezium-bridge' and verify that 'status.containerStatuses[0].ready' is 'true'"
+    [ "$status" -eq 0 ]
+
+    run try "at most 30 times every 60s to get pod named 'ngsild-updates-bridge' and verify that 'status.containerStatuses[0].ready' is 'true'"
     [ "$status" -eq 0 ]
 }
