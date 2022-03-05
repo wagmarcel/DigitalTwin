@@ -15,7 +15,7 @@
 */
 'use strict';
 
-const GROUPID = 'alertakafkabridge2';
+const GROUPID = 'alertakafkabridge';
 const CLIENTID = 'alertakafkaclient';
 const { Kafka } = require('kafkajs');
 const fs = require('fs');
