@@ -23,7 +23,7 @@ data:
       },
       "keycloak": {
               "ngsildUpdatesAuthService": {
-                      "auth-server-url":  {{ printf "%s://%s%s" .Values.keycloak.externalAuthService.protocol .Values.keycloak.externalAuthService.domainname .Values.keycloak.externalAuthService.path | quote}},
+                      "auth-server-url":  {{ printf "%s//%s%s" .Values.keycloak.externalAuthService.protocol .Values.keycloak.externalAuthService.domainname .Values.keycloak.externalAuthService.path | quote}},
                       "realm": {{ .Values.keycloak.ngsildUpdates.realm | quote }},
                       "clientId": {{ .Values.keycloak.ngsildUpdates.client | quote }},
                       "resource": {{ .Values.keycloak.ngsildUpdates.client | quote }},

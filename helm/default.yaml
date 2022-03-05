@@ -7,7 +7,7 @@ ingressType: traefik # or nginx
 keycloak:
   adminName: admin
   externalAuthService:   # put here the *external* keycloak name, i.e. through ingress 
-    protocol: http
+    protocol: "http:"
     domainname: keycloak.local
     path: /auth
   internalAuthService: 
@@ -51,7 +51,7 @@ scorpio:
     port: 9090
   tag: 3.0.0-SNAPSHOT
   externalUrl: ngsild.local
-  externalProtocol: "http"
+  externalProtocol: "http:"
 
 certmanager:
   secret: selfsigned-cert-tls
@@ -82,7 +82,7 @@ alerta:
   alertaAdminUser: admin
   internalService: alerta
   internalPort: 8080
-  internalProtocol: "http"
+  internalProtocol: "http:"
 
 kafka:
   name: my-cluster

@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
-load "lib/utils"
-load "lib/detik"
+load "../lib/utils"
+load "../lib/detik"
 
 DETIK_CLIENT_NAME="kubectl"
 DETIK_CLIENT_NAMESPACE="minio-operator"

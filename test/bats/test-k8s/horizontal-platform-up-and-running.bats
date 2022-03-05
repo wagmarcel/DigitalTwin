@@ -14,8 +14,8 @@
 # limitations under the License.
 #
 
-load "lib/utils"
-load "lib/detik"
+load "../lib/utils"
+load "../lib/detik"
 
 DETIK_CLIENT_NAME="kubectl"
 DETIK_CLIENT_NAMESPACE="iff"
