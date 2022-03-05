@@ -33,7 +33,8 @@ describe('Test sendAlerts', function () {
       alerta: {
         accessKeyVariable: 'ACCESS_KEY_VARIABLE',
         hostname: 'hostname',
-        protocol: 'http'
+        port: 1234,
+        protocol: 'http:'
       }
     };
     const Logger = function () {
@@ -57,7 +58,8 @@ describe('Test sendAlerts', function () {
         'Content-type': 'application/json'
       },
       hostname: 'hostname',
-      protocol: 'http',
+      protocol: 'http:',
+      port: 1234,
       path: '/api/alert',
       method: 'POST'
 
