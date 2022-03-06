@@ -46,9 +46,6 @@ db:
   secretPostfix: credentials.postgresql.acid.zalan.do
 
 scorpio:
-  gatewaySvc:
-    name: gateway
-    port: 9090
   tag: 3.0.0-SNAPSHOT
   externalHostname: ngsild.local
   externalProtocol: "http:"

@@ -359,9 +359,9 @@ function fiwareApi (conf) {
    * @param {boolean} isUpdate - if this is true, the objects are only updated, not replaced
    * @param {array[Object]} headers - additional headers
    */
-  this.replaceEntities = function (entities, isUpdate, { headers }) {
-    let queryString = '';
-    if (isUpdate === true) {
+  this.replaceEntities = function (entities, isReplace, { headers }) {
+    let queryString = '?options=replace';
+    if (!isReplace) {
       queryString = '?options=update';
     }
     headers = headers || {};
@@ -377,16 +377,42 @@ function fiwareApi (conf) {
     return rest.postBody({ options, body: entities });
   };
 
-  this.updateProperties = function (id, updateObject, noOverwrite, { headers }) {
-    logger.debug(`updateProperties with id ${id}, updateObject ${JSON.stringify(updateObject)}, noUpdate ${noOverwrite}`);
-    const data = updateObject;
+/**
+   * Update Entities defined by array - this is creating new attributes if needed
+   * @param {array[Object]} entities - Array of entities to create or update
+   * @param {boolean} isOverwrite - if this is false, the objects are NOT overwritten
+   * @param {array[Object]} headers - additional headers
+   */
+ this.updateEntities = function (entities, isOverwrite, { headers }) {
+  let queryString = '';
+  if (!isOverwrite) {
+    queryString = '?options=noOverwrite';
+  }
+  headers = headers || {};
+  headers['Content-Type'] = 'application/ld+json';
+  const options = {
+    hostname: config.ngsildServer.hostname,
+    protocol: config.ngsildServer.protocol,
+    port: config.ngsildServer.port,
+    path: `/ngsi-ld/v1/entityOperations/update${queryString}`,
+    headers: headers,
+    method: 'POST'
+  };
+  return rest.postBody({ options, body: entities });
+};
+
+  this.updateProperties = async function ({ id, body, isOverwrite, noStringify }, { headers }) {
+    logger.debug(`updateProperties with id ${id}, body ${JSON.stringify(body)}, noUpdate ${isOverwrite}`);
     let path = `/ngsi-ld/v1/entities/${id}/attrs`;
     let contentType = 'application/json';
 
-    if (noOverwrite) {
+    if (noStringify === undefined) {
+      noStringify = false
+    }
+    if (!isOverwrite) {
       path += '?options=noOverwrite';
     }
-    if (updateObject['@context'] !== undefined) {
+    if (body['@context'] !== undefined) {
       contentType = 'application/ld+json';
     }
 
@@ -401,10 +427,10 @@ function fiwareApi (conf) {
       method: 'POST',
       headers: headers
     };
-    return rest.postBody({ options, body: data, disableChunks: false, noStringify: true });
+    return rest.postBody({ options, body, disableChunks: false, noStringify: noStringify });
   };
 
-  this.updateProperty = function (id, propertyKey, propertyValue, isRelation, noOverwrite) {
+  this.updateProperty = function (id, propertyKey, propertyValue, isRelation, isOverwrite) {
     logger.debug(`updateProperty with id ${id}, propertyKey ${propertyKey}, propertyValue ${propertyValue}`);
     const data = {};
     if (isRelation) {
@@ -419,7 +445,7 @@ function fiwareApi (conf) {
       };
     }
 
-    return this.updateProperties(id, data, noOverwrite, {});
+    return this.updateProperties(id, data, isOverwrite, {});
   };
 
   /**

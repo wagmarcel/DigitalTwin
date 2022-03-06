@@ -41,6 +41,13 @@ module.exports = function NgsildUpdates (conf) {
   }
   this.updateToken();
 
+  const getFlag = function(value){
+    if (value === "true" || value === true ) {
+      return true;
+    }
+    return false;
+  }
+
   /**
    *
    * @param {object} body - object from ngsildUpdate channel
@@ -58,33 +65,43 @@ module.exports = function NgsildUpdates (conf) {
     headers = {};
     headers.Authorization = 'Bearer ' + token.access_token.token;
 
-    if (body.op === undefined || body.entity === undefined || body.id === undefined || body.overwrite === undefined) {
+    if (body.op === undefined || body.entities === undefined || body.overwriteOrReplace === undefined) {
       logger.error('Format of message ' + JSON.stringify(body) + ' is invalid! Ignoring!');
       return;
     }
 
     const op = body.op;
-    const entity = body.entity;
+    const entities = body.entities;
     const id = body.id;
-    const overwrite = body.overwrite;
+    const overwriteOrReplace = getFlag(body.overwriteOrReplace);
     let result;
 
     try {
       // update the entity - do not create it
       if (op === 'update') {
-        result = await ngsild.updateProperties(id, entity, !overwrite, { headers });
-        if (result.statusCode !== 204 && result.statusCode !== 207) {
-          throw new Error('Entity cannot update entity:' + JSON.stringify(result.body));
-        }
+        // NOTE: The batch update API of Scorpio does not yet support noOverwrite options. For the time being
+        // the batch processing will be done sequentially - until this is fixed in Scorpio
+        var promises = [];
+        entities.forEach(entity => {
+          promises.push(ngsild.updateProperties({id: entity.id, body: entity, isOverwrite: overwriteOrReplace }, { headers })
+            .then(result => {
+              if (result.statusCode !== 204 && result.statusCode !== 207) {
+                throw new Error('Entity cannot update entity:' + JSON.stringify(result.body));
+              }
+              return;
+            })
+          );
+        });
+        promises.reduce((p, fn) => p.then(fn), Promise.resolve()).catch((e) => logger.error("Could not updateProperties: " + e));        
       } else if (op === 'upsert') {
         // in this case, entity will be created if not existing
-        result = await ngsild.replaceEntities([entity], !overwrite, { headers });
+        result = await ngsild.replaceEntities(entities, overwriteOrReplace, { headers });
         if (result.statusCode !== 204) {
           throw new Error('Cannot upsert entity:' + JSON.stringify(result.body));
         }
       }
     } catch (e) {
-      throw new Error('Error in REST call: ' + e);
+      throw new Error('Error in REST call: ' + e.stack);
     }
   };
 };

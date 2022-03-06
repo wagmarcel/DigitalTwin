@@ -41,7 +41,7 @@ data:
       "ngsildServer": {
               "hostname": {{ .Values.scorpio.internalHostname | quote}},
               "port": {{ .Values.scorpio.internalPort | quote}},
-              "protocol": {{ .Values.scorpio.internalProtocol | quote}},
+              "protocol": {{ .Values.scorpio.internalProtocol | quote}}
       },
       "debeziumBridge": {
               "topic": "iff.ngsild.public.entity",

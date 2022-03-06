@@ -382,7 +382,7 @@ describe('Test replaceEntities', function () {
       protocol: 'http:',
       port: 1234,
       method: 'POST',
-      path: '/ngsi-ld/v1/entityOperations/upsert',
+      path: '/ngsi-ld/v1/entityOperations/upsert?options=replace',
       headers: {
         'Content-Type': 'application/ld+json',
         header: 'header'
@@ -410,7 +410,7 @@ describe('Test replaceEntities', function () {
     const revert = ToTest.__set__('Logger', Logger);
     ToTest.__set__('Rest', Rest);
     const ngsild = new ToTest(config);
-    const result = ngsild.replaceEntities(entities, false, { headers });
+    const result = ngsild.replaceEntities(entities, true, { headers });
     result.should.equal('replaced');
     revert();
   });
@@ -455,7 +455,7 @@ describe('Test replaceEntities', function () {
     const revert = ToTest.__set__('Logger', Logger);
     ToTest.__set__('Rest', Rest);
     const ngsild = new ToTest(config);
-    const result = ngsild.replaceEntities(entities, true, { headers });
+    const result = ngsild.replaceEntities(entities, false, { headers });
     result.should.equal('replaced');
     revert();
   });
@@ -500,7 +500,7 @@ describe('Test updateProperties', function () {
     ToTest.__set__('Rest', Rest);
     const ngsild = new ToTest(config);
     const result = ngsild.updateProperties('id', entity, true, { headers });
-    result.should.equal('updated');
+    result.then((ret) => ret.should.equal('updated'));
     revert();
   });
   it('Should use correct options and not use noOverwrite', async function () {
@@ -542,7 +542,7 @@ describe('Test updateProperties', function () {
     ToTest.__set__('Rest', Rest);
     const ngsild = new ToTest(config);
     const result = ngsild.updateProperties('id', entity, false, { headers });
-    result.should.equal('updated');
+    result.then(ret => ret.should.equal('updated'));
     revert();
   });
 });
@@ -767,7 +767,7 @@ describe('Test updateProperty', function () {
     ToTest.__set__('Rest', Rest);
     const ngsild = new ToTest(config);
     const result = ngsild.updateProperty('id', 'key', 'value', false, false);
-    result.should.equal('updated');
+    result.then(ret => ret.should.equal('updated'));
     revert();
   });
   it('Should use correct options and Relationship ', async function () {
@@ -808,7 +808,7 @@ describe('Test updateProperty', function () {
     ToTest.__set__('Rest', Rest);
     const ngsild = new ToTest(config);
     const result = ngsild.updateProperty('id', 'key', 'value', true, false);
-    result.should.equal('updated');
+    result.then(ret => ret.should.equal('updated'));
     revert();
   });
 });
