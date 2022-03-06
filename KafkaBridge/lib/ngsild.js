@@ -377,29 +377,29 @@ function fiwareApi (conf) {
     return rest.postBody({ options, body: entities });
   };
 
-/**
+  /**
    * Update Entities defined by array - this is creating new attributes if needed
    * @param {array[Object]} entities - Array of entities to create or update
    * @param {boolean} isOverwrite - if this is false, the objects are NOT overwritten
    * @param {array[Object]} headers - additional headers
    */
- this.updateEntities = function (entities, isOverwrite, { headers }) {
-  let queryString = '';
-  if (!isOverwrite) {
-    queryString = '?options=noOverwrite';
-  }
-  headers = headers || {};
-  headers['Content-Type'] = 'application/ld+json';
-  const options = {
-    hostname: config.ngsildServer.hostname,
-    protocol: config.ngsildServer.protocol,
-    port: config.ngsildServer.port,
-    path: `/ngsi-ld/v1/entityOperations/update${queryString}`,
-    headers: headers,
-    method: 'POST'
+  this.updateEntities = function (entities, isOverwrite, { headers }) {
+    let queryString = '';
+    if (!isOverwrite) {
+      queryString = '?options=noOverwrite';
+    }
+    headers = headers || {};
+    headers['Content-Type'] = 'application/ld+json';
+    const options = {
+      hostname: config.ngsildServer.hostname,
+      protocol: config.ngsildServer.protocol,
+      port: config.ngsildServer.port,
+      path: `/ngsi-ld/v1/entityOperations/update${queryString}`,
+      headers: headers,
+      method: 'POST'
+    };
+    return rest.postBody({ options, body: entities });
   };
-  return rest.postBody({ options, body: entities });
-};
 
   this.updateProperties = async function ({ id, body, isOverwrite, noStringify }, { headers }) {
     logger.debug(`updateProperties with id ${id}, body ${JSON.stringify(body)}, noUpdate ${isOverwrite}`);
@@ -407,7 +407,7 @@ function fiwareApi (conf) {
     let contentType = 'application/json';
 
     if (noStringify === undefined) {
-      noStringify = false
+      noStringify = false;
     }
     if (!isOverwrite) {
       path += '?options=noOverwrite';

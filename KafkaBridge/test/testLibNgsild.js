@@ -879,3 +879,95 @@ describe('Test updateSubscription', function () {
     revert();
   });
 });
+describe('Test updateEntities', function () {
+  it('Should use correct options', async function () {
+    const Logger = function () {
+      return logger;
+    };
+    const Rest = function () {
+      return rest;
+    };
+
+    const expectedOptions = {
+      hostname: 'hostname',
+      protocol: 'http:',
+      port: 1234,
+      method: 'POST',
+      path: '/ngsi-ld/v1/entityOperations/update',
+      headers: {
+        'Content-Type': 'application/ld+json',
+        header: 'header'
+      }
+    };
+    const rest = {
+      postBody: function (obj) {
+        assert.deepEqual(obj.options, expectedOptions);
+        assert.deepEqual(obj.body, entities);
+        return 'replaced';
+      }
+    };
+
+    const entities = [
+      {
+        entity: 'entity'
+      },
+      {
+        entity: 'entity2'
+      }
+    ];
+    const headers = {
+      header: 'header'
+    };
+    const revert = ToTest.__set__('Logger', Logger);
+    ToTest.__set__('Rest', Rest);
+    const ngsild = new ToTest(config);
+    const result = ngsild.updateEntities(entities, true, { headers });
+    result.should.equal('replaced');
+    revert();
+  });
+  it('Should use correct options and add ?options=noOverwrite to path', async function () {
+    const Logger = function () {
+      return logger;
+    };
+    const Rest = function () {
+      return rest;
+    };
+
+    const expectedOptions = {
+      hostname: 'hostname',
+      protocol: 'http:',
+      port: 1234,
+      method: 'POST',
+      path: '/ngsi-ld/v1/entityOperations/update?options=noOverwrite',
+      headers: {
+        'Content-Type': 'application/ld+json',
+        header: 'header'
+      }
+    };
+    const rest = {
+      postBody: function (obj) {
+        assert.deepEqual(obj.options, expectedOptions);
+        assert.deepEqual(obj.body, entities);
+        return 'replaced';
+      }
+    };
+
+    const entities = [
+      {
+        entity: 'entity'
+      },
+      {
+        entity: 'entity2'
+      }
+    ];
+    const headers = {
+      header: 'header'
+    };
+    const revert = ToTest.__set__('Logger', Logger);
+    ToTest.__set__('Rest', Rest);
+    const ngsild = new ToTest(config);
+    const result = ngsild.updateEntities(entities, false, { headers });
+    result.should.equal('replaced');
+    revert();
+  });
+});

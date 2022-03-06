@@ -166,3 +166,23 @@ describe('Test libNgsildUpdates', function () {
     revert();
   });
 });
+describe('Test getFlag', function () {
+  it('Should get true', async function () {
+    const getFlag = ToTest.__get__('getFlag');
+    let flag = getFlag('true');
+    flag.should.equal(true);
+    flag = getFlag(true);
+    flag.should.equal(true);
+  });
+  it('Should get false', async function () {
+    const getFlag = ToTest.__get__('getFlag');
+    let flag = getFlag('false');
+    flag.should.equal(false);
+    flag = getFlag(false);
+    flag.should.equal(false);
+    flag = getFlag(undefined);
+    flag.should.equal(false);
+    flag = getFlag(null);
+    flag.should.equal(false);
+  });
+});
