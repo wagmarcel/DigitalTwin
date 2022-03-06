@@ -8,11 +8,14 @@ KEYCLOAKURL=http://keycloak.local/auth/realms
 UPSERT_FILTER=/tmp/UPSERT_FILTER
 UPSERT_FILTER_OVERWRITE=/tmp/UPSERT_FILTER_OVERWRITE
 UPSERT_FILTER_NON_OVERWRITE=/tmp/UPSERT_FILTER_NON_OVERWRITE
+UPSERT_2_ENTITIES=/tmp/UPSERT_2_ENTITIES
 UPDATE_FILTER=/tmp/UPDATE_FILTER
 UPDATE_FILTER_NO_OVERWRITE=/tmp/UPDATE_FILTER_NO_OVERWRITE
+UPDATE_2_ENTITIES=/tmp/UPDATE_2_ENTITIES
 KAFKA_BOOTSTRAP=my-cluster-kafka-bootstrap:9092
 KAFKACAT_NGSILD_UPDATES_TOPIC=iff.ngsildUpdates
 FILTER_ID=urn:filter:1
+CUTTER_ID=urn:plasmacutter:1
 RECEIVED_ENTITY=/tmp/RECEIVED_ENTITY
 
 cat << EOF | tr -d '\n' > ${UPSERT_FILTER}
@@ -157,6 +160,93 @@ cat << EOF | tr -d '\n' > ${UPDATE_FILTER_NO_OVERWRITE}
 }
 EOF
 
+cat << EOF | tr -d '\n' > ${UPSERT_2_ENTITIES}
+{
+    "op": "upsert",
+    "overwriteOrReplace": "false",
+    "entities": [
+        {
+        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+        "id": "${FILTER_ID}",
+        "type": "https://industry-fusion.com/types/v0.9/filter",
+        "https://industry-fusion.com/types/v0.9/state": {
+          "type": "Property",
+          "value": "OFFF"
+        },
+        "https://industry-fusion.com/types/v0.9/strength": {
+          "type": "Property",
+          "value": "0.9"
+        },
+        "https://industry-fusion.com/types/v0.9/hasCartridge": {
+          "type": "Relationship",
+          "object": "urn:filterCartridge:1"
+        }
+      },
+      {
+        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+        "id": "${CUTTER_ID}",
+        "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
+        "https://industry-fusion.com/types/v0.9/state": {
+        "type": "Property",
+        "value": "OFF"
+        },
+        "https://industry-fusion.com/types/v0.9/hasWorkpiece": {
+        "type": "Relationship",
+        "object": "urn:workpiece:1"
+        },
+        "https://industry-fusion.com/types/v0.9/hasFilter": {
+        "type": "Relationship",
+        "object": "urn:filter:1"
+        }
+      }
+    ]
+}
+EOF
+
+cat << EOF | tr -d '\n' > ${UPDATE_2_ENTITIES}
+{
+    "op": "update",
+    "overwriteOrReplace": "true",
+    "entities": [
+        {
+        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+        "id": "${FILTER_ID}",
+        "type": "https://industry-fusion.com/types/v0.9/filter",
+        "https://industry-fusion.com/types/v0.9/state": {
+          "type": "Property",
+          "value": "OFF"
+        },
+        "https://industry-fusion.com/types/v0.9/strength": {
+          "type": "Property",
+          "value": "1.0"
+        },
+        "https://industry-fusion.com/types/v0.9/hasCartridge": {
+          "type": "Relationship",
+          "object": "urn:filterCartridge:2"
+        }
+      },
+      {
+        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+        "id": "${CUTTER_ID}",
+        "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
+        "https://industry-fusion.com/types/v0.9/state": {
+        "type": "Property",
+        "value": "ON"
+        },
+        "https://industry-fusion.com/types/v0.9/hasWorkpiece": {
+        "type": "Relationship",
+        "object": "urn:workpiece:2"
+        },
+        "https://industry-fusion.com/types/v0.9/hasFilter": {
+        "type": "Relationship",
+        "object": "urn:filter:2"
+        }
+      }
+    ]
+}
+EOF
+
+
 # compare entity with reference
 # $1: file to compare with
 compare_inserted_entity() {
@@ -290,29 +380,105 @@ compare_updated_no_overwrite_entity() {
 EOF
 }
 
+# compare entity with reference
+# $1: file to compare with
+compare_cutter_entity() {
+    cat << EOF | jq | diff $1 - >&3
+{
+  "id": "urn:plasmacutter:1",
+  "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
+  "https://industry-fusion.com/types/v0.9/hasFilter": {
+    "type": "Relationship",
+    "object": "urn:filter:1"
+  },
+  "https://industry-fusion.com/types/v0.9/hasWorkpiece": {
+    "type": "Relationship",
+    "object": "urn:workpiece:1"
+  },
+  "https://industry-fusion.com/types/v0.9/state": {
+    "type": "Property",
+    "value": "OFF"
+  },
+  "@context": [
+    "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
+  ]
+}
+EOF
+}
+
+# compare entity with reference
+# $1: file to compare with
+compare_update_cutter_entity() {
+    cat << EOF | jq | diff $1 - >&3
+{
+  "id": "urn:plasmacutter:1",
+  "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
+  "https://industry-fusion.com/types/v0.9/hasFilter": {
+    "type": "Relationship",
+    "object": "urn:filter:2"
+  },
+  "https://industry-fusion.com/types/v0.9/hasWorkpiece": {
+    "type": "Relationship",
+    "object": "urn:workpiece:2"
+  },
+  "https://industry-fusion.com/types/v0.9/state": {
+    "type": "Property",
+    "value": "ON"
+  },
+  "@context": [
+    "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
+  ]
+}
+EOF
+}
+
+# compare entity with reference
+# $1: file to compare with
+compare_updated_filter_entity() {
+    cat << EOF | jq | diff $1 - >&3
+{
+  "id" : "urn:filter:1",
+  "type" : "https://industry-fusion.com/types/v0.9/filter",
+  "https://industry-fusion.com/types/v0.9/hasCartridge" : {
+    "type" : "Relationship",
+    "object" : "urn:filterCartridge:2"
+  },
+  "https://industry-fusion.com/types/v0.9/state" : {
+    "type" : "Property",
+    "value" : "OFF"
+  },
+  "https://industry-fusion.com/types/v0.9/strength" : {
+    "type" : "Property",
+    "value" : "1.0"
+  },
+  "@context" : [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
+}
+EOF
+}
+
 get_password() {
-    kubectl -n ${NAMESPACE} get ${USERSECRET} -o jsonpath='{.data.password}'| base64 -d
+    kubectl -n ${NAMESPACE} get ${USERSECRET} -o jsonpath='{.data.password}' 2>/dev/null| base64 -d
 }
 get_token() {
-    curl -d "client_id=${CLIENT_ID}" -d "username=${USER}" -d "password=$password" -d 'grant_type=password' "${KEYCLOAKURL}/${NAMESPACE}/protocol/openid-connect/token"| jq ".access_token"| tr -d '"' 2>/dev/null
+    curl -d "client_id=${CLIENT_ID}" -d "username=${USER}" -d "password=$password" -d 'grant_type=password' "${KEYCLOAKURL}/${NAMESPACE}/protocol/openid-connect/token" 2>/dev/null| jq ".access_token"| tr -d '"'
 }
 
 # get ngsild entity
 # $1: auth token
 # $2: id of entity
 get_ngsild() {
-    curl -vv -X GET -H "Authorization: Bearer $1" http://ngsild.local/ngsi-ld/v1/entities/$2 -H "Content-Type: application/ld+json" 2>/dev/null
+    curl -X GET -H "Authorization: Bearer $1" http://ngsild.local/ngsi-ld/v1/entities/$2 -H "Content-Type: application/ld+json" 2>/dev/null
 }
 
 # deletes ngsild entity
 # $1: auth token
 # $2: id of entity to delete
 delete_ngsild() {
-    curl -vv -X DELETE -H "Authorization: Bearer $1" http://ngsild.local/ngsi-ld/v1/entities/$2 -H "Content-Type: application/ld+json" 2>/dev/null
+    curl -X DELETE -H "Authorization: Bearer $1" http://ngsild.local/ngsi-ld/v1/entities/$2 -H "Content-Type: application/ld+json" 2>/dev/null
 }
 
 setup() {
-    (exec sudo -E kubefwd -n iff -l app.kubernetes.io/name=kafka svc 2>&1 >/dev/null) &
+    (exec sudo -E kubefwd -n iff -l app.kubernetes.io/name=kafka svc  >/dev/null 2>&1) &
     echo "# launched kubefwd for kafka, wait some seconds to give kubefwd to launch the services"
     sleep 2
 }
@@ -374,12 +540,12 @@ teardown(){
 @test "verify ngsild-update bridge is updating ngsi-ld entitiy" {
 
     cat ${UPSERT_FILTER}| kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP}
-    echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle" >&3
+    echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle"
     sleep 2
     password=$(get_password)
     token=$(get_token)
     cat ${UPDATE_FILTER}| kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP}
-    echo "# Sent update object to ngsi-ld-updates-bridge, wait some time to let it settle" >&3
+    echo "# Sent update object to ngsi-ld-updates-bridge, wait some time to let it settle"
     sleep 2
     get_ngsild ${token} ${FILTER_ID} | jq >${RECEIVED_ENTITY}
     delete_ngsild ${token} ${FILTER_ID}
@@ -389,15 +555,48 @@ teardown(){
 
 @test "verify ngsild-update bridge is updating with noOverwrite option ngsi-ld entitiy" {
     cat ${UPSERT_FILTER}| kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP}
-    echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle" >&3
+    echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle"
     sleep 2
     password=$(get_password)
     token=$(get_token)
     cat ${UPDATE_FILTER_NO_OVERWRITE}| kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP}
-    echo "# Sent update object to ngsi-ld-updates-bridge, wait some time to let it settle" >&3
+    echo "# Sent update object to ngsi-ld-updates-bridge, wait some time to let it settle"
     sleep 2
     get_ngsild ${token} ${FILTER_ID} | jq >${RECEIVED_ENTITY}
     delete_ngsild ${token} ${FILTER_ID}
     run compare_updated_no_overwrite_entity ${RECEIVED_ENTITY}
+    [ "$status" -eq 0 ]
+}
+
+@test "verify ngsild-update bridge is upserting 2 entities" {
+    cat ${UPSERT_2_ENTITIES}| kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP}
+    echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle"
+    sleep 2
+    password=$(get_password)
+    token=$(get_token)
+    get_ngsild ${token} ${FILTER_ID} | jq >${RECEIVED_ENTITY}
+    delete_ngsild ${token} ${FILTER_ID}
+    run compare_inserted_entity ${RECEIVED_ENTITY}
+    [ "$status" -eq 0 ]
+    get_ngsild ${token} ${CUTTER_ID} | jq >${RECEIVED_ENTITY}
+    delete_ngsild ${token} ${CUTTER_ID}
+    run compare_cutter_entity ${RECEIVED_ENTITY}
+    [ "$status" -eq 0 ]
+}
+
+@test "verify ngsild-update bridge is updating 2 entities" {
+    cat ${UPSERT_2_ENTITIES}| kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP}
+    cat ${UPDATE_2_ENTITIES}| kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP}
+    echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle"
+    sleep 2
+    password=$(get_password)
+    token=$(get_token)
+    get_ngsild ${token} ${FILTER_ID} | jq >${RECEIVED_ENTITY}
+    delete_ngsild ${token} ${FILTER_ID}
+    run compare_updated_filter_entity ${RECEIVED_ENTITY}
+    [ "$status" -eq 0 ]
+    get_ngsild ${token} ${CUTTER_ID} | jq >${RECEIVED_ENTITY}
+    delete_ngsild ${token} ${CUTTER_ID}
+    run compare_update_cutter_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
 }
