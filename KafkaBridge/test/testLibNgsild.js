@@ -27,14 +27,16 @@ const logger = {
   error: function () {}
 };
 
+const config = {
+  ngsildServer: {
+    hostname: 'hostname',
+    protocol: 'http:',
+    port: 1234
+  }
+};
+
 describe('Test getNgsildEntity', function () {
   it('Should use correct options', async function () {
-    const config = {
-      ngsildServer: {
-        host: 'hostname',
-        protocol: 'http'
-      }
-    };
     const Logger = function () {
       return logger;
     };
@@ -44,7 +46,8 @@ describe('Test getNgsildEntity', function () {
 
     const expectedOptions = {
       hostname: 'hostname',
-      protocol: 'http',
+      protocol: 'http:',
+      port: 1234,
       path: '/ngsi-ld/v1/entities/id',
       method: 'GET',
       headers: {
@@ -67,12 +70,6 @@ describe('Test getNgsildEntity', function () {
 });
 describe('Test getNgsildEntities', function () {
   it('Should use correct options', async function () {
-    const config = {
-      ngsildServer: {
-        host: 'hostname',
-        protocol: 'http'
-      }
-    };
     const Logger = function () {
       return logger;
     };
@@ -82,7 +79,8 @@ describe('Test getNgsildEntities', function () {
 
     const expectedOptions = {
       hostname: 'hostname',
-      protocol: 'http',
+      protocol: 'http:',
+      port: 1234,
       method: 'GET',
       path: '/ngsi-ld/v1/entities?id=urn1,urn2&idPattern=pattern&attrs=attr1,attr2&type=type&q=query1|query2',
       headers: {
@@ -113,12 +111,6 @@ describe('Test getNgsildEntities', function () {
 
 describe('Test getNgsildCSourceRegistrations', function () {
   it('Should use correct options', async function () {
-    const config = {
-      ngsildServer: {
-        host: 'hostname',
-        protocol: 'http'
-      }
-    };
     const Logger = function () {
       return logger;
     };
@@ -128,7 +120,8 @@ describe('Test getNgsildCSourceRegistrations', function () {
 
     const expectedOptions = {
       hostname: 'hostname',
-      protocol: 'http',
+      protocol: 'http:',
+      port: 1234,
       method: 'GET',
       path: '/ngsi-ld/v1/csourceRegistrations?id=urn1,urn2&idPattern=pattern&attrs=attr1,attr2&type=type',
       headers: {
@@ -158,12 +151,6 @@ describe('Test getNgsildCSourceRegistrations', function () {
 });
 describe('Test deleteNgsildCSourceRegistration', function () {
   it('Should use correct options', async function () {
-    const config = {
-      ngsildServer: {
-        host: 'hostname',
-        protocol: 'http'
-      }
-    };
     const Logger = function () {
       return logger;
     };
@@ -173,7 +160,8 @@ describe('Test deleteNgsildCSourceRegistration', function () {
 
     const expectedOptions = {
       hostname: 'hostname',
-      protocol: 'http',
+      protocol: 'http:',
+      port: 1234,
       method: 'DELETE',
       path: '/ngsi-ld/v1/csourceRegistrations/id'
     };
@@ -194,12 +182,6 @@ describe('Test deleteNgsildCSourceRegistration', function () {
 });
 describe('Test createNgsildCSourceRegistration', function () {
   it('Should use correct options and used Content-Type ld+json', async function () {
-    const config = {
-      ngsildServer: {
-        host: 'hostname',
-        protocol: 'http'
-      }
-    };
     const Logger = function () {
       return logger;
     };
@@ -209,7 +191,8 @@ describe('Test createNgsildCSourceRegistration', function () {
 
     const expectedOptions = {
       hostname: 'hostname',
-      protocol: 'http',
+      protocol: 'http:',
+      port: 1234,
       method: 'POST',
       path: '/ngsi-ld/v1/csourceRegistrations',
       headers: {
@@ -236,12 +219,6 @@ describe('Test createNgsildCSourceRegistration', function () {
     revert();
   });
   it('Should use correct options and used Content-Type json', async function () {
-    const config = {
-      ngsildServer: {
-        host: 'hostname',
-        protocol: 'http'
-      }
-    };
     const Logger = function () {
       return logger;
     };
@@ -251,7 +228,8 @@ describe('Test createNgsildCSourceRegistration', function () {
 
     const expectedOptions = {
       hostname: 'hostname',
-      protocol: 'http',
+      protocol: 'http:',
+      port: 1234,
       method: 'POST',
       path: '/ngsi-ld/v1/csourceRegistrations',
       headers: {
@@ -280,12 +258,6 @@ describe('Test createNgsildCSourceRegistration', function () {
 });
 describe('Test getAllObjectsOfType', function () {
   it('Should use correct options', async function () {
-    const config = {
-      ngsildServer: {
-        host: 'hostname',
-        protocol: 'http'
-      }
-    };
     const Logger = function () {
       return logger;
     };
@@ -295,7 +267,8 @@ describe('Test getAllObjectsOfType', function () {
 
     const expectedOptions = {
       hostname: 'hostname',
-      protocol: 'http',
+      protocol: 'http:',
+      port: 1234,
       method: 'GET',
       path: '/ngsi-ld/v1/entities?type=type',
       headers: {
@@ -318,12 +291,6 @@ describe('Test getAllObjectsOfType', function () {
 });
 describe('Test deleteEntities', function () {
   it('Should use correct options', async function () {
-    const config = {
-      ngsildServer: {
-        host: 'hostname',
-        protocol: 'http'
-      }
-    };
     const Logger = function () {
       return logger;
     };
@@ -333,7 +300,8 @@ describe('Test deleteEntities', function () {
 
     const expectedOptions = {
       hostname: 'hostname',
-      protocol: 'http',
+      protocol: 'http:',
+      port: 1234,
       method: 'POST',
       path: '/ngsi-ld/v1/entityOperations/delete',
       headers: {
@@ -358,12 +326,6 @@ describe('Test deleteEntities', function () {
 });
 describe('Test createEntities', function () {
   it('Should use correct options', async function () {
-    const config = {
-      ngsildServer: {
-        host: 'hostname',
-        protocol: 'http'
-      }
-    };
     const Logger = function () {
       return logger;
     };
@@ -373,7 +335,8 @@ describe('Test createEntities', function () {
 
     const expectedOptions = {
       hostname: 'hostname',
-      protocol: 'http',
+      protocol: 'http:',
+      port: 1234,
       method: 'POST',
       path: '/ngsi-ld/v1/entityOperations/create',
       headers: {
@@ -407,12 +370,6 @@ describe('Test createEntities', function () {
 });
 describe('Test replaceEntities', function () {
   it('Should use correct options', async function () {
-    const config = {
-      ngsildServer: {
-        host: 'hostname',
-        protocol: 'http'
-      }
-    };
     const Logger = function () {
       return logger;
     };
@@ -422,7 +379,8 @@ describe('Test replaceEntities', function () {
 
     const expectedOptions = {
       hostname: 'hostname',
-      protocol: 'http',
+      protocol: 'http:',
+      port: 1234,
       method: 'POST',
       path: '/ngsi-ld/v1/entityOperations/upsert',
       headers: {
@@ -457,12 +415,6 @@ describe('Test replaceEntities', function () {
     revert();
   });
   it('Should use correct options and add ?option=update to path', async function () {
-    const config = {
-      ngsildServer: {
-        host: 'hostname',
-        protocol: 'http'
-      }
-    };
     const Logger = function () {
       return logger;
     };
@@ -472,7 +424,8 @@ describe('Test replaceEntities', function () {
 
     const expectedOptions = {
       hostname: 'hostname',
-      protocol: 'http',
+      protocol: 'http:',
+      port: 1234,
       method: 'POST',
       path: '/ngsi-ld/v1/entityOperations/upsert?options=update',
       headers: {
@@ -509,12 +462,6 @@ describe('Test replaceEntities', function () {
 });
 describe('Test updateProperties', function () {
   it('Should use correct options ', async function () {
-    const config = {
-      ngsildServer: {
-        host: 'hostname',
-        protocol: 'http'
-      }
-    };
     const Logger = function () {
       return logger;
     };
@@ -524,7 +471,8 @@ describe('Test updateProperties', function () {
 
     const expectedOptions = {
       hostname: 'hostname',
-      protocol: 'http',
+      protocol: 'http:',
+      port: 1234,
       method: 'POST',
       path: '/ngsi-ld/v1/entities/id/attrs?options=noOverwrite',
       headers: {
@@ -556,12 +504,6 @@ describe('Test updateProperties', function () {
     revert();
   });
   it('Should use correct options and not use noOverwrite', async function () {
-    const config = {
-      ngsildServer: {
-        host: 'hostname',
-        protocol: 'http'
-      }
-    };
     const Logger = function () {
       return logger;
     };
@@ -571,7 +513,8 @@ describe('Test updateProperties', function () {
 
     const expectedOptions = {
       hostname: 'hostname',
-      protocol: 'http',
+      protocol: 'http:',
+      port: 1234,
       method: 'POST',
       path: '/ngsi-ld/v1/entities/id/attrs',
       headers: {
@@ -607,8 +550,9 @@ describe('Test subscribe', function () {
   it('Should use correct options ', async function () {
     const config = {
       ngsildServer: {
-        host: 'hostname',
-        protocol: 'http'
+        hostname: 'hostname',
+        protocol: 'http:',
+        port: 1234
       },
       bridgeConfig: {
         host: 'host',
@@ -624,7 +568,8 @@ describe('Test subscribe', function () {
 
     const expectedOptions = {
       hostname: 'hostname',
-      protocol: 'http',
+      protocol: 'http:',
+      port: 1234,
       method: 'POST',
       path: '/ngsi-ld/v1/subscriptions/',
       headers: {
@@ -672,12 +617,6 @@ describe('Test subscribe', function () {
 });
 describe('Test updateNgsildCSourceRegistration', function () {
   it('Should use correct options and used Content-Type ld+json', async function () {
-    const config = {
-      ngsildServer: {
-        host: 'hostname',
-        protocol: 'http'
-      }
-    };
     const Logger = function () {
       return logger;
     };
@@ -687,7 +626,8 @@ describe('Test updateNgsildCSourceRegistration', function () {
 
     const expectedOptions = {
       hostname: 'hostname',
-      protocol: 'http',
+      protocol: 'http:',
+      port: 1234,
       method: 'PATCH',
       path: '/ngsi-ld/v1/csourceRegistrations/id',
       headers: {
@@ -714,12 +654,6 @@ describe('Test updateNgsildCSourceRegistration', function () {
     revert();
   });
   it('Should use correct options and used Content-Type json', async function () {
-    const config = {
-      ngsildServer: {
-        host: 'hostname',
-        protocol: 'http'
-      }
-    };
     const Logger = function () {
       return logger;
     };
@@ -729,7 +663,8 @@ describe('Test updateNgsildCSourceRegistration', function () {
 
     const expectedOptions = {
       hostname: 'hostname',
-      protocol: 'http',
+      protocol: 'http:',
+      port: 1234,
       method: 'PATCH',
       path: '/ngsi-ld/v1/csourceRegistrations/id',
       headers: {
@@ -758,12 +693,6 @@ describe('Test updateNgsildCSourceRegistration', function () {
 });
 describe('Test createEntity', function () {
   it('Should use correct options', async function () {
-    const config = {
-      ngsildServer: {
-        host: 'hostname',
-        protocol: 'http'
-      }
-    };
     const Logger = function () {
       return logger;
     };
@@ -773,7 +702,8 @@ describe('Test createEntity', function () {
 
     const expectedOptions = {
       hostname: 'hostname',
-      protocol: 'http',
+      protocol: 'http:',
+      port: 1234,
       method: 'POST',
       path: '/ngsi-ld/v1/entities',
       headers: {
@@ -800,12 +730,6 @@ describe('Test createEntity', function () {
 });
 describe('Test updateProperty', function () {
   it('Should use correct options and Property', async function () {
-    const config = {
-      ngsildServer: {
-        host: 'hostname',
-        protocol: 'http'
-      }
-    };
     const Logger = function () {
       return logger;
     };
@@ -815,7 +739,8 @@ describe('Test updateProperty', function () {
 
     const expectedOptions = {
       hostname: 'hostname',
-      protocol: 'http',
+      protocol: 'http:',
+      port: 1234,
       method: 'POST',
       path: '/ngsi-ld/v1/entities/id/attrs',
       headers: {
@@ -846,12 +771,6 @@ describe('Test updateProperty', function () {
     revert();
   });
   it('Should use correct options and Relationship ', async function () {
-    const config = {
-      ngsildServer: {
-        host: 'hostname',
-        protocol: 'http'
-      }
-    };
     const Logger = function () {
       return logger;
     };
@@ -861,7 +780,8 @@ describe('Test updateProperty', function () {
 
     const expectedOptions = {
       hostname: 'hostname',
-      protocol: 'http',
+      protocol: 'http:',
+      port: 1234,
       method: 'POST',
       path: '/ngsi-ld/v1/entities/id/attrs',
       headers: {
@@ -896,8 +816,9 @@ describe('Test updateSubscription', function () {
   it('Should use correct options', async function () {
     const config = {
       ngsildServer: {
-        host: 'hostname',
-        protocol: 'http'
+        hostname: 'hostname',
+        protocol: 'http:',
+        port: 1234
       },
       bridgeConfig: {
         host: 'host',
@@ -913,7 +834,8 @@ describe('Test updateSubscription', function () {
 
     const expectedOptions = {
       hostname: 'hostname',
-      protocol: 'http',
+      protocol: 'http:',
+      port: 1234,
       method: 'PATCH',
       path: '/ngsi-ld/v1/subscriptions/id',
       headers: {
