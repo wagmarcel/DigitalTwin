@@ -39,7 +39,9 @@ data:
               "clientSecretVariable": "NGSILD_UPDATES_CLIENT_SECRET"
       },        
       "ngsildServer": {
-              "host": {{ printf "%s://%s" .Values.scorpio.externalProtocol .Values.scorpio.externalUrl | quote}}
+              "hostname": {{ .Values.scorpio.internalHostname | quote}},
+              "port": {{ .Values.scorpio.internalPort | quote}},
+              "protocol": {{ .Values.scorpio.internalProtocol | quote}},
       },
       "debeziumBridge": {
               "topic": "iff.ngsild.public.entity",

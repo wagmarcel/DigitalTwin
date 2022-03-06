@@ -50,8 +50,12 @@ scorpio:
     name: gateway
     port: 9090
   tag: 3.0.0-SNAPSHOT
-  externalUrl: ngsild.local
+  externalHostname: ngsild.local
   externalProtocol: "http:"
+  internalHostname: gateway
+  internalPort: 9090
+  internalProtocol: "http:"
+
 
 certmanager:
   secret: selfsigned-cert-tls

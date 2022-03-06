@@ -31,8 +31,9 @@
 		"clientSecretVariable": "NGSILD_UPDATES_CLIENT_SECRET"
 	},        
 	"ngsildServer": {
-		"host": "ngsild.local",
-		"protocol": "http:"
+		"hostname": "gateway",
+		"protocol": "http:",
+		"port": 9090
 	},
 	"debeziumBridge": {
 		"topic": "iff.ngsild.public.entity",
