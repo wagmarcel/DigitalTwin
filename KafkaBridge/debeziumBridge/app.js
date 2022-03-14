@@ -15,7 +15,7 @@
 */
 'use strict';
 
-const GROUPID = 'debeziumBridgeGroup';
+const GROUPID = 'debeziumBridgeGroup2';
 const CLIENTID = 'ngsildkafkaclient';
 const fs = require('fs');
 const { Kafka } = require('kafkajs');
