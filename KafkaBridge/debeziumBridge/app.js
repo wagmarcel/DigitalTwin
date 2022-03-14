@@ -15,7 +15,7 @@
 */
 'use strict';
 
-const GROUPID = 'debeziumBridgeGroup';
+const GROUPID = 'debeziumBridgeGroup2';
 const CLIENTID = 'ngsildkafkaclient';
 const fs = require('fs');
 const { Kafka } = require('kafkajs');
@@ -146,14 +146,24 @@ const sendUpdates = async function ({ entity, updatedAttrs, deletedAttrs }) {
   });
 
   if (deletedAttrs !== null && deletedAttrs !== undefined && Object.keys(deletedAttrs).length > 0) {
-    const deleteMessages = Object.entries(deletedAttrs).map(([key, value]) => { return { key: genKey, value: JSON.stringify(value) }; });
+    // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
+    const deleteMessages = Object.entries(deletedAttrs).flatMap(([key, value]) =>
+      value.map(val => {
+        return { key: genKey, value: JSON.stringify(val) };
+      })
+    );
     topicMessages.push({
       topic: config.debeziumBridge.attributesTopic,
       messages: deleteMessages
     });
   }
   if (updatedAttrs !== null && updatedAttrs !== undefined && Object.keys(updatedAttrs).length > 0) {
-    const updateMessages = Object.entries(updatedAttrs).map(([key, value]) => { return { key: genKey, value: JSON.stringify(value) }; });
+    // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
+    const updateMessages = Object.entries(updatedAttrs).flatMap(([key, value]) =>
+      value.map(val => {
+        return { key: genKey, value: JSON.stringify(val) };
+      })
+    );
     topicMessages.push({
       topic: config.debeziumBridge.attributesTopic,
       messages: updateMessages

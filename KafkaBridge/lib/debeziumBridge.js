@@ -55,7 +55,7 @@ module.exports = function DebeziumBridge (conf) {
     }
     result = {
       entity: isChanged ? afterEntity : null,
-      updatedAttrs: isChanged ? afterAttrs : null,
+      updatedAttrs: isChanged ? updatedAttrs : null,
       deletedAttrs: isChanged ? deletedAttrs : null
     };
     return result;
