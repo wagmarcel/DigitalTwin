@@ -1,0 +1,19 @@
+apiVersion: industry-fusion.com/v1alpha1
+kind: BeamSqlStatementSet
+metadata:
+  name: core-services
+spec:
+  sqlstatements:
+    - insert into alerts
+      select resource, event, environment, service, severity, customer, `text` from
+      (
+        select *,
+        LAG(severity) OVER (PARTITION BY resource, event ORDER BY ts ASC) AS last_severity,
+        LAG(environment) OVER (PARTITION BY resource, event ORDER BY ts ASC) AS last_environment,
+        LAG(customer) OVER (PARTITION BY resource, event ORDER BY ts ASC) AS last_customer
+      FROM alerts_filter)
+      where last_severity IS NULL or last_severity <> severity or last_customer <> customer or last_environment <> environment;
+  tables:
+    - alerts
+    - alerts-bulk
+    - alerts-filter
