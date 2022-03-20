@@ -15,5 +15,4 @@ spec:
       where last_severity IS NULL or last_severity <> severity or last_customer <> customer or last_environment <> environment;
   tables:
     - alerts
-    - alerts-bulk
     - alerts-filter
