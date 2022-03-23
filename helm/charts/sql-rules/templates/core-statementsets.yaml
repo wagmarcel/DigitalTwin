@@ -7,12 +7,27 @@ spec:
     - insert into alerts
       select resource, event, environment, service, severity, customer, `text` from
       (
-        select *,
-        LAG(severity) OVER (PARTITION BY resource, event ORDER BY ts ASC) AS last_severity,
-        LAG(environment) OVER (PARTITION BY resource, event ORDER BY ts ASC) AS last_environment,
-        LAG(customer) OVER (PARTITION BY resource, event ORDER BY ts ASC) AS last_customer
-      FROM alerts_filter)
-      where last_severity IS NULL or last_severity <> severity or last_customer <> customer or last_environment <> environment;
+        select resource, event, 
+          last_value(environment) as environment, 
+          service, 
+          last_value(A.customer) as customer, 
+          last_value(`text`) as `text`, 
+          LAG(A.severity) as last_severity, 
+          last_value(A.severity) as severity, 
+          LAG(A.customer) as last_customer,
+          LAG(A.environment) as last_environment
+        from
+          alerts_filter as A
+          GROUP BY A.resource, A.event, A.service
+          WINDOW w as (
+          PARTITION BY resource, event
+          ORDER BY `ts` ASC
+          ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)
+      )
+      WHERE last_severity <> severity OR 
+        last_severity IS NULL OR 
+        last_environment <> environment OR
+        last_customer <> customer;
   tables:
     - alerts
     - alerts-filter

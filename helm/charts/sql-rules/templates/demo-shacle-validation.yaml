@@ -1,0 +1,43 @@
+apiVersion: industry-fusion.com/v1alpha2
+kind: BeamSqlStatementSet
+metadata:
+  name: demo-shacle-validation
+spec:
+  sqlstatements:
+    - INSERT INTO alerts_bulk
+      SELECT this AS resource, 
+        'Data validation' AS event,
+        'Development' AS environment,
+        ARRAY ['SHACL Validator'] AS service,
+        CASE WHEN cnt <> 1 AND typ IS NOT NULL THEN 'warning'
+        ELSE 'ok' END as severity,
+        'customer' AS customer,
+        CASE WHEN cnt <> 1 AND typ IS NOT NULL THEN 
+          'Model validation for relationship https://industry-fusion.com/types/v0.9/hasFilter failed for '|| 
+          this || ' . Found ' || CAST(cnt as STRING) || ' relationships instead of 1!'
+        ELSE 'All ok' END as `text`
+      FROM
+      (
+        SELECT A.id AS this, COUNT(C.`type`) AS cnt, A.`type` AS typ
+        FROM cutter_view as A
+        LEFT JOIN attributes_view AS B on A.`https://industry-fusion.com/types/v0.9/hasFilter` = B.id
+        LEFT JOIN filter_view AS C on B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
+        WHERE
+        A.`type` IS NULL OR
+        (
+          A.`type` IS NOT NULL
+          AND (B.`type` = 'https://uri.etsi.org/ngsi-ld/Relationship' OR B.`type` IS NULL)
+          AND (B.entityId = A.id OR B.entityId IS NULL)
+          AND (B.name = 'https://industry-fusion.com/types/v0.9/hasFilter' OR B.name IS NULL)
+        )
+        GROUP by A.id, A.`type`
+      );
+  tables:
+    - alerts-bulk
+    - cutter
+    - filter
+    - attributes
+  views:
+    - cutter-view
+    - filter-view
+    - attributes-view
