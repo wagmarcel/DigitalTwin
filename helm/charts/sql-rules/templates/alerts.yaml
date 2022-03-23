@@ -39,8 +39,8 @@ spec:
     - 'severity': STRING
     - 'customer': STRING
     - 'text': STRING
-    - 'watermark': FOR ts AS ts
-    - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
+    - 'watermark': FOR `timestamp` AS `timestamp`
+    - 'timestamp': TIMESTAMP(3) METADATA VIRTUAL
   kafka:
     topic: {{ .Values.kafkaBridge.alerta.bulkTopic }}
     properties:
