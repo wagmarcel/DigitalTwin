@@ -87,6 +87,47 @@ spec:
 apiVersion: industry-fusion.com/v1alpha2
 kind: BeamSqlTable
 metadata:
+  name: workpiece
+spec:
+  name: workpiece
+  connector: kafka
+  fields:
+  - 'id': STRING
+  - 'type':  STRING
+  - 'https://industry-fusion.com/types/v0.9/material': STRING
+  - 'https://schema.org/depth': STRING
+  - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
+  - 'watermark': FOR ts AS ts - INTERVAL '0.001' SECOND
+  kafka:
+    topic: {{ .Values.kafkaBridge.debezium.entityTopicPrefix }}.workpiece
+    properties:
+      bootstrap.servers: {{ .Values.kafka.bootstrapServer }}
+    scan.startup.mode: earliest-offset
+  value:
+    format: json
+    json.fail-on-missing-field: false
+    json.ignore-parse-errors: true
+---
+apiVersion: industry-fusion.com/v1alpha1
+kind: BeamSqlView
+metadata:
+  name: workpiece-view
+spec:
+  name: workpiece_view
+  sqlstatement: |
+    SELECT id, `type`,
+      `https://industry-fusion.com/types/v0.9/material`,
+      `https://schema.org/depth`
+    FROM (
+      SELECT *,
+      ROW_NUMBER() OVER (PARTITION BY `id`
+         ORDER BY ts DESC) AS rownum
+      FROM `workpiece` )
+      WHERE rownum = 1;
+---
+apiVersion: industry-fusion.com/v1alpha2
+kind: BeamSqlTable
+metadata:
   name: attributes
 spec:
   name: attributes
