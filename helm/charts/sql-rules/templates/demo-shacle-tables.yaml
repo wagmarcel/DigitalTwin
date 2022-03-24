@@ -128,6 +128,49 @@ spec:
 apiVersion: industry-fusion.com/v1alpha2
 kind: BeamSqlTable
 metadata:
+  name: filter-cartridge
+spec:
+  name: filter_cartridge
+  connector: kafka
+  fields:
+  - 'id': STRING
+  - 'type':  STRING
+  - 'https://industry-fusion.com/types/v0.9/wasteClass': STRING
+  - 'https://industry-fusion.com/types/v0.9/usedFrom': STRING
+  - 'https://industry-fusion.com/types/v0.9/usedUntil': STRING
+  - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
+  - 'watermark': FOR ts AS ts - INTERVAL '0.001' SECOND
+  kafka:
+    topic: {{ .Values.kafkaBridge.debezium.entityTopicPrefix }}.filterCartridge
+    properties:
+      bootstrap.servers: {{ .Values.kafka.bootstrapServer }}
+    scan.startup.mode: earliest-offset
+  value:
+    format: json
+    json.fail-on-missing-field: false
+    json.ignore-parse-errors: true
+---
+apiVersion: industry-fusion.com/v1alpha1
+kind: BeamSqlView
+metadata:
+  name: filter-cartridge-view
+spec:
+  name: filter_cartridge_view
+  sqlstatement: |
+    SELECT id, `type`,
+     `https://industry-fusion.com/types/v0.9/wasteClass`,
+     `https://industry-fusion.com/types/v0.9/usedFrom`,
+     `https://industry-fusion.com/types/v0.9/usedUntil`
+    FROM (
+      SELECT *,
+      ROW_NUMBER() OVER (PARTITION BY `id`
+         ORDER BY ts DESC) AS rownum
+      FROM `filter-cartridge` )
+      WHERE rownum = 1;
+---
+apiVersion: industry-fusion.com/v1alpha2
+kind: BeamSqlTable
+metadata:
   name: attributes
 spec:
   name: attributes
