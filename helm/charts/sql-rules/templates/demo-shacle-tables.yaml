@@ -165,7 +165,7 @@ spec:
       SELECT *,
       ROW_NUMBER() OVER (PARTITION BY `id`
          ORDER BY ts DESC) AS rownum
-      FROM `filter-cartridge` )
+      FROM `filter_cartridge` )
       WHERE rownum = 1;
 ---
 apiVersion: industry-fusion.com/v1alpha2
