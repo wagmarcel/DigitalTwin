@@ -3,7 +3,7 @@ PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX iff: <https://industry-fusion.com/types/v0.9/>
 
 iff:filter rdfs:subClassOf iff:device .
-iff:filterCartridge rdfs:subClassOf iff:device
+iff:filterCartridge rdfs:subClassOf iff:device .
 iff:plasmacutter rdfs:subClassOf iff:cutter .
 iff:lasercutter rdfs:subClassOf iff:cutter .
 iff:cutter rdfs:subClassOf iff:device .

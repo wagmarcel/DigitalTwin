@@ -111,6 +111,27 @@ spec:
                   )
               GROUP BY A.id, A.`type`
           );
+    - INSERT INTO alerts_bulk
+      SELECT idx AS resource, 
+          'Data validation' AS event,
+          'Development' AS environment,
+          ARRAY ['SHACL Validator'] AS service,
+          CASE WHEN val is NULL or NOT JSON_EXISTS(val,'$.@id') 
+              OR ( JSON_VALUE(val, '$.@id') <> 'https://industry-fusion.com/types/v0.9/WC0' AND
+                  JSON_VALUE(val, '$.@id') <> 'https://industry-fusion.com/types/v0.9/WC1' AND
+                  JSON_VALUE(val, '$.@id') <> 'https://industry-fusion.com/types/v0.9/WC2')
+              THEN 'warning'
+              ELSE 'ok' END AS severity,
+          'customer'  customer,
+          CASE WHEN val is NULL or NOT JSON_EXISTS(val,'$.@id') 
+              OR ( JSON_VALUE(val, '$.@id') <> 'https://industry-fusion.com/types/v0.9/WC0' AND
+                  JSON_VALUE(val, '$.@id') <> 'https://industry-fusion.com/types/v0.9/WC1' AND
+                  JSON_VALUE(val, '$.@id') <> 'https://industry-fusion.com/types/v0.9/WC2')
+              THEN 'Model validation for relationship https://industry-fusion.com/types/v0.9/state failed for ' || idx || '. Invalid value ' || IFNULL(val, 'NULL')
+              ELSE 'All ok' END as `text`
+      FROM (
+          SELECT A.id as idx, B.`https://uri.etsi.org/ngsi-ld/hasValue` as val FROM filter_cartridge_view AS A JOIN attributes_view AS B ON A.`https://industry-fusion.com/types/v0.9/wasteClass` = B.id
+      );
   tables:
     - alerts-bulk
     - cutter

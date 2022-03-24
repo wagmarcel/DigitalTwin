@@ -117,7 +117,12 @@ module.exports = function DebeziumBridge (conf) {
           if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'] !== undefined) {
             obj.type = 'https://uri.etsi.org/ngsi-ld/Property';
             // every Property is array with one element, hence [0] is no restriction
-            obj['https://uri.etsi.org/ngsi-ld/hasValue'] = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'];
+            // Property can be Literal => @value or IRI => @id
+            if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'] !== undefined) {
+              obj['https://uri.etsi.org/ngsi-ld/hasValue'] = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'];
+            } else if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@id'] !== undefined) { // Property can be IRI => @id
+              obj['https://uri.etsi.org/ngsi-ld/hasValue'] = "{\"@id\": \"" + refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@id'] + "\"}";
+            }
             if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'] !== undefined) {
               // every Property is array with one element, hence [0] is no restriction
               obj.valuetype = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'];
