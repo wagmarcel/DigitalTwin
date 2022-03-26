@@ -36,6 +36,7 @@ module.exports = function NgsildUpdates (conf) {
   let token;
   let headers = {};
   const refreshIntervalInMs = config.ngsildUpdates.refreshIntervalInSeconds * 1000;
+  const syncOnAttribute = config.bridgeCommon.kafkaSyncOnAttribute;
 
   this.updateToken = async function () {
     token = await keycloakAdapter.grantManager
@@ -48,16 +49,26 @@ module.exports = function NgsildUpdates (conf) {
   }
   this.updateToken();
 
+/**
+ * Adds to every NGSILD entity the kafkaSyncOn attribute
+ * entities: NGSILD entities to update
+ */
+  const addSyncOnAttribute = function(entities, timestamp) {
+    entities.forEach(entity => {
+      entity[syncOnAttribute] = {
+        type: "Property",
+        value: String(timestamp)
+      }
+    })
+  }
   /**
    *
    * @param {object} body - object from ngsildUpdate channel
    *
    * body should contain:
-   *  parentId: NGSI-LD id of parent of object - must be defined and !== null
-   *  parentRel: parent relationship name which relates to childId (in NGIS-LD terminology)
-   *  childObj: NGSI-LD object - either childObj or childId must be defined and !== null.
+   *  op, entities, overwriteOrReplace
    */
-  this.ngsildUpdates = async function (body) {
+  this.ngsildUpdates = async function (body, timestamp) {
     if (token === undefined) {
       token = await this.updateToken();
     }
@@ -74,6 +85,7 @@ module.exports = function NgsildUpdates (conf) {
     const entities = body.entities;
     const overwriteOrReplace = getFlag(body.overwriteOrReplace);
     let result;
+    addSyncOnAttribute(entities,timestamp);
 
     try {
       // update the entity - do not create it
