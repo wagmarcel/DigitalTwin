@@ -49,18 +49,18 @@ module.exports = function NgsildUpdates (conf) {
   }
   this.updateToken();
 
-/**
+  /**
  * Adds to every NGSILD entity the kafkaSyncOn attribute
  * entities: NGSILD entities to update
  */
-  const addSyncOnAttribute = function(entities, timestamp) {
+  const addSyncOnAttribute = function (entities, timestamp) {
     entities.forEach(entity => {
       entity[syncOnAttribute] = {
-        type: "Property",
+        type: 'Property',
         value: String(timestamp)
-      }
-    })
-  }
+      };
+    });
+  };
   /**
    *
    * @param {object} body - object from ngsildUpdate channel
@@ -85,7 +85,7 @@ module.exports = function NgsildUpdates (conf) {
     const entities = body.entities;
     const overwriteOrReplace = getFlag(body.overwriteOrReplace);
     let result;
-    addSyncOnAttribute(entities,timestamp);
+    addSyncOnAttribute(entities, timestamp);
 
     try {
       // update the entity - do not create it

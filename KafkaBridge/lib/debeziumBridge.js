@@ -17,7 +17,6 @@
 const Logger = require('./logger.js');
 const _ = require('underscore');
 
-
 module.exports = function DebeziumBridge (conf) {
   const config = conf;
   const logger = new Logger(config);
@@ -32,7 +31,6 @@ module.exports = function DebeziumBridge (conf) {
    *  after: entity after
    */
   this.parse = function (body) {
-
     let result = {
       entity: null,
       updatedAttrs: null,
@@ -49,20 +47,20 @@ module.exports = function DebeziumBridge (conf) {
     const afterAttrs = after.attributes;
     const isEntityUpdated = this.diffEntity(beforeEntity, afterEntity);
     const { updatedAttrs, deletedAttrs } = this.diffAttributes(beforeAttrs, afterAttrs);
-    const isKafkaUpdate = updatedAttrs[syncOnAttribute] !== undefined; // when syncOnAttribute is used, it means that update 
+    const isKafkaUpdate = updatedAttrs[syncOnAttribute] !== undefined; // when syncOnAttribute is used, it means that update
     // did not come through API but through Kafka channel
     // so do not forward to avoid 'infinity' loop
     delete deletedAttrs[syncOnAttribute]; // this attribute is only used to detect API vs Kafka inputs
     delete updatedAttrs[syncOnAttribute]; // remove it before detecting changes
-    delete afterEntity[syncOnAttribute]; 
+    delete afterEntity[syncOnAttribute];
     const isChanged = isEntityUpdated || Object.keys(updatedAttrs).length > 0 || Object.keys(deletedAttrs).length > 0;
 
-    var deletedEntity;
+    let deletedEntity;
     if (isChanged && Object.keys(afterEntity).length === 0) {
       deletedEntity = {
         id: beforeEntity.id,
         type: beforeEntity.type
-      }
+      };
     }
     result = {
       entity: isChanged ? afterEntity : null,
@@ -130,7 +128,7 @@ module.exports = function DebeziumBridge (conf) {
             if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'] !== undefined) {
               obj['https://uri.etsi.org/ngsi-ld/hasValue'] = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'];
             } else if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@id'] !== undefined) { // Property can be IRI => @id
-              obj['https://uri.etsi.org/ngsi-ld/hasValue'] = "{\"@id\": \"" + refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@id'] + "\"}";
+              obj['https://uri.etsi.org/ngsi-ld/hasValue'] = '{"@id": "' + refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@id'] + '"}';
             }
             if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'] !== undefined) {
               // every Property is array with one element, hence [0] is no restriction
