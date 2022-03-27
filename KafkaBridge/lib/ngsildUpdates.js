@@ -26,19 +26,19 @@ const getFlag = function (value) {
   return false;
 };
 
-  /**
+/**
  * Adds to every NGSILD entity the kafkaSyncOn attribute
  * entities: NGSILD entities to update
  */
-   const addSyncOnAttribute = function (entities, syncOnAttribute, timestamp) {
-    entities.forEach(entity => {
-      entity[syncOnAttribute] = {
-        type: 'Property',
-        value: String(timestamp)
-      };
-    });
-  };
-  
+const addSyncOnAttribute = function (entities, syncOnAttribute, timestamp) {
+  entities.forEach(entity => {
+    entity[syncOnAttribute] = {
+      type: 'Property',
+      value: String(timestamp)
+    };
+  });
+};
+
 module.exports = function NgsildUpdates (conf) {
   const config = conf;
   const ngsild = new NgsiLd(config);
@@ -55,7 +55,7 @@ module.exports = function NgsildUpdates (conf) {
     token = await keycloakAdapter.grantManager
       .obtainFromClientCredentials();
     logger.debug('Service token refreshed!');
-    //return token;
+    // return token;
   };
   if (refreshIntervalInMs !== undefined && refreshIntervalInMs !== null) {
     setInterval(this.updateToken, refreshIntervalInMs);

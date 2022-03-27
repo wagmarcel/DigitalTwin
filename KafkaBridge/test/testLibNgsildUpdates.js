@@ -18,7 +18,6 @@
 const { assert } = require('chai');
 const chai = require('chai');
 global.should = chai.should();
-const sinon = require('sinon');
 
 const rewire = require('rewire');
 const ToTest = rewire('../lib/ngsildUpdates.js');
@@ -28,7 +27,7 @@ const logger = {
   error: function () {}
 };
 
-const addSyncOnAttribute = function() {};
+const addSyncOnAttribute = function () {};
 
 describe('Test libNgsildUpdates', function () {
   it('Should post body with correct path and token for nonOverwrite update', async function () {
@@ -43,7 +42,7 @@ describe('Test libNgsildUpdates', function () {
         }
       },
       bridgeCommon: {
-        kafkaSyncOnAttribute: "kafkaSyncOn"
+        kafkaSyncOnAttribute: 'kafkaSyncOn'
       }
     };
     const Logger = function () {
@@ -57,8 +56,8 @@ describe('Test libNgsildUpdates', function () {
     const body = {
       op: 'update',
       entities: [{
-        id: "id",
-        type: "type"
+        id: 'id',
+        type: 'type'
       }],
       overwriteOrReplace: false
     };
@@ -67,16 +66,17 @@ describe('Test libNgsildUpdates', function () {
     };
     const Ngsild = function () {
       return {
-        updateProperties: function ({id, body, isOverwrite}, { headers }) {
+        updateProperties: function ({ id, body, isOverwrite }, { headers }) {
           updatePropertiesCalled = true;
           id.should.equal('id');
-          assert.deepEqual(body, {id: "id", type: "type"});
+          assert.deepEqual(body, { id: 'id', type: 'type' });
           isOverwrite.should.equal(false);
           assert.deepEqual(headers, expHeaders);
-          return new Promise(function(resolve){
+          return new Promise(function (resolve) {
             resolve({
-            statusCode: 204
-          })});
+              statusCode: 204
+            });
+          });
         },
         replaceEntities: function () {
         }
@@ -84,7 +84,7 @@ describe('Test libNgsildUpdates', function () {
     };
     const setInterval = function (fun, interv) {
     };
-    
+
     const Keycloak = function () {
       return {
         grantManager: {
@@ -123,7 +123,7 @@ describe('Test libNgsildUpdates', function () {
         }
       },
       bridgeCommon: {
-        kafkaSyncOnAttribute: "kafkaSyncOn"
+        kafkaSyncOnAttribute: 'kafkaSyncOn'
       }
     };
     const Logger = function () {
@@ -137,8 +137,8 @@ describe('Test libNgsildUpdates', function () {
     const body = {
       op: 'upsert',
       entities: [{
-        id: "id",
-        type: "type"
+        id: 'id',
+        type: 'type'
       }],
       overwriteOrReplace: false
     };
@@ -149,7 +149,7 @@ describe('Test libNgsildUpdates', function () {
       return {
         replaceEntities: function ([entity], isReplace, { headers }) {
           replaceEntitiyCalled = true;
-          assert.deepEqual(entity, {id: "id", type: "type"})
+          assert.deepEqual(entity, { id: 'id', type: 'type' });
           isReplace.should.equal(false);
           assert.deepEqual(headers, expHeaders);
           return {
@@ -210,42 +210,37 @@ describe('Test getFlag', function () {
 });
 describe('Test addSyncOnAttribute', function () {
   const ToTest = rewire('../lib/ngsildUpdates.js');
-  it('Should get true', function() {
+  it('Should get true', function () {
     const addSyncOnAttribute = ToTest.__get__('addSyncOnAttribute');
-    const config = {
-      bridgeCommon: {
-        kafkaSyncOnAttribute: "kafkaSyncOn"
-      }
-    };
     const entities = [
       {
-        id: "id",
-        type: "type"
+        id: 'id',
+        type: 'type'
       },
       {
-        id: "id2",
-        type: "type"
+        id: 'id2',
+        type: 'type'
       }
     ];
     const expectedResult = [
       {
-        id: "id",
-        type: "type",
+        id: 'id',
+        type: 'type',
         synchOnAttribute: {
-          type: "Property",
-          value: "1"
+          type: 'Property',
+          value: '1'
         }
       },
       {
-        id: "id2",
-        type: "type",
+        id: 'id2',
+        type: 'type',
         synchOnAttribute: {
-          type: "Property",
-          value: "1"
+          type: 'Property',
+          value: '1'
         }
       }
     ];
-    addSyncOnAttribute(entities, "synchOnAttribute", 1);
+    addSyncOnAttribute(entities, 'synchOnAttribute', 1);
     assert.deepEqual(entities, expectedResult);
   });
 });
