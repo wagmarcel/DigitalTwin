@@ -440,14 +440,15 @@ describe('Test parse', function () {
       return logger;
     };
     const expectedResult = {
-      entity: null,
+      entity: {},
       deletedEntity: {
-        id: "id" 
+        id: "id",
+        type: "type"
       },
-      updatedAttrs: null,
-      deletedAttrs: [{
+      updatedAttrs: {},
+      deletedAttrs: {
         attribute: "attribute"
-      }]
+      }
     };
     const body = {
       before: {
@@ -467,6 +468,151 @@ describe('Test parse', function () {
     const updatedAttrs = {};
     const deletedAttrs = {
       attribute: "attribute"
+    }
+    const parseBeforeAfterEntity =  function(body){
+      return body;
+    }
+    const diffAttributes = function(beforeAttrs, afterAttrs) {
+      assert.deepEqual(body.before.attributes, beforeAttrs);
+      assert.deepEqual(body.after.attributes, afterAttrs);
+      return {
+        updatedAttrs: updatedAttrs,
+        deletedAttrs: deletedAttrs
+      }
+    }
+    const diffEntity = function(beforeEntity, afterEntity) {
+      assert.deepEqual(body.before.entity, beforeEntity);
+      assert.deepEqual(body.after.entity, afterEntity);
+      return true;
+    }
+    const revert = ToTest.__set__('Logger', Logger);
+    const debeziumBridge = new ToTest(config);
+    debeziumBridge.parseBeforeAfterEntity = parseBeforeAfterEntity;
+    debeziumBridge.diffAttributes = diffAttributes;
+    debeziumBridge.diffEntity = diffEntity;
+    const result = debeziumBridge.parse(body);
+    assert.deepEqual(result, expectedResult);
+    revert();
+  });
+  it('Should return updated Entity and updated attributes result, but no deleted entity/attributes', async function () {
+    const config = {
+      bridgeCommon: {
+        kafkaSyncOnAttribute: "kafkaSyncOn"
+      }
+    };
+    const Logger = function () {
+      return logger;
+    };
+    const expectedResult = {
+      entity: {
+          id: "id",
+          type: "type"
+      },
+      deletedEntity: undefined,
+      updatedAttrs: {
+        attribute: "attribute2"
+      },
+      deletedAttrs: {
+      }
+    };
+    const body = {
+      before: {
+        entity: {
+          id: "id",
+          type: "type"
+        },
+        attributes: [{
+          attribute: "attribute"
+        }]
+      },
+      after: {
+        entity: {
+          id: "id",
+          type: "type"          
+        },
+        attributes: {
+          attribute: "attribute2"
+        }
+      }
+    }
+    const updatedAttrs = {
+      attribute: "attribute2"
+    };
+    const deletedAttrs = {
+    }
+    const parseBeforeAfterEntity =  function(body){
+      return body;
+    }
+    const diffAttributes = function(beforeAttrs, afterAttrs) {
+      assert.deepEqual(body.before.attributes, beforeAttrs);
+      assert.deepEqual(body.after.attributes, afterAttrs);
+      return {
+        updatedAttrs: updatedAttrs,
+        deletedAttrs: deletedAttrs
+      }
+    }
+    const diffEntity = function(beforeEntity, afterEntity) {
+      assert.deepEqual(body.before.entity, beforeEntity);
+      assert.deepEqual(body.after.entity, afterEntity);
+      return true;
+    }
+    const revert = ToTest.__set__('Logger', Logger);
+    const debeziumBridge = new ToTest(config);
+    debeziumBridge.parseBeforeAfterEntity = parseBeforeAfterEntity;
+    debeziumBridge.diffAttributes = diffAttributes;
+    debeziumBridge.diffEntity = diffEntity;
+    const result = debeziumBridge.parse(body);
+    assert.deepEqual(result, expectedResult);
+    revert();
+  });
+  it('Should return updated Entity and updated attributes result and deleted attributes', async function () {
+    const config = {
+      bridgeCommon: {
+        kafkaSyncOnAttribute: "kafkaSyncOn"
+      }
+    };
+    const Logger = function () {
+      return logger;
+    };
+    const expectedResult = {
+      entity: {
+          id: "id",
+          type: "type"
+      },
+      deletedEntity: undefined,
+      updatedAttrs: {
+        attribute: "attribute2"
+      },
+      deletedAttrs: {
+        attribute2: "attribute2"
+      }
+    };
+    const body = {
+      before: {
+        entity: {
+          id: "id",
+          type: "type"
+        },
+        attributes: [{
+          attribute: "attribute",
+          attribute2: "attribute2"
+        }]
+      },
+      after: {
+        entity: {
+          id: "id",
+          type: "type"          
+        },
+        attributes: {
+          attribute: "attribute2"
+        }
+      }
+    }
+    const updatedAttrs = {
+      attribute: "attribute2"
+    };
+    const deletedAttrs = {
+      attribute2: "attribute2" 
     }
     const parseBeforeAfterEntity =  function(body){
       return body;
