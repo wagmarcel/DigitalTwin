@@ -6,7 +6,7 @@ spec:
   sqlstatements:
     - INSERT INTO alerts_bulk
       SELECT this AS resource, 
-          'Data validation' AS event,
+          'Data validation of hasFilter' AS event,
           'Development' AS environment,
           ARRAY ['SHACL Validator'] AS service,
           CASE WHEN (cnt > 1 OR cnt <> cnt2) AND typ IS NOT NULL THEN 'warning'
@@ -33,7 +33,7 @@ spec:
           );
     - INSERT INTO alerts_bulk
       SELECT this AS resource, 
-          'Data validation' AS event,
+          'Data validation of hasWorkpiece' AS event,
           'Development' AS environment,
           ARRAY ['SHACL Validator'] AS service,
           CASE WHEN (cnt > 1 OR cnt <> cnt2) AND typ IS NOT NULL THEN 'warning'
@@ -60,7 +60,7 @@ spec:
           );
     - INSERT INTO alerts_bulk
       SELECT id AS resource, 
-          'Data validation' AS event,
+          'Data validation of state' AS event,
           'Development' AS environment,
           ARRAY ['SHACL Validator'] AS service,
           CASE WHEN val <> 'ON' AND val <> 'OFF' THEN 'warning'
@@ -73,7 +73,7 @@ spec:
       );
     - INSERT INTO alerts_bulk
       SELECT id AS resource, 
-          'Data validation' AS event,
+          'Data validation of state' AS event,
           'Development' AS environment,
           ARRAY ['SHACL Validator'] AS service,
           CASE WHEN val <> 'ON' AND val <> 'OFF' THEN 'warning'
@@ -86,7 +86,7 @@ spec:
       );
     - INSERT INTO alerts_bulk
       SELECT this AS resource, 
-          'Data validation' AS event,
+          'Data validation of hasCartridge' AS event,
           'Development' AS environment,
           ARRAY ['SHACL Validator'] AS service,
           CASE WHEN (cnt > 1 OR cnt <> cnt2) AND typ IS NOT NULL THEN 'warning'
@@ -113,7 +113,7 @@ spec:
           );
     - INSERT INTO alerts_bulk
       SELECT idx AS resource, 
-          'Data validation' AS event,
+          'Data validation of wasteClass' AS event,
           'Development' AS environment,
           ARRAY ['SHACL Validator'] AS service,
           CASE WHEN val is NULL or NOT JSON_EXISTS(val,'$.@id') 
