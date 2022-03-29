@@ -83,7 +83,16 @@ module.exports = function NgsildUpdates (conf) {
     }
 
     const op = body.op;
-    const entities = body.entities;
+    let entities;
+    if (typeof body.entities === 'string') {
+      try {
+        entities = JSON.parse(body.entities);
+      } catch (e) {
+        logger.error('Could not parse entities field. Ignoring record.' + body.entities);
+      }
+    } else {
+      entities = body.entities;
+    }
     const overwriteOrReplace = getFlag(body.overwriteOrReplace);
     let result;
     addSyncOnAttribute(entities, syncOnAttribute, timestamp);
