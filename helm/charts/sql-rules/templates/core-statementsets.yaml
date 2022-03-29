@@ -28,6 +28,23 @@ spec:
         last_severity IS NULL OR 
         last_environment <> environment OR
         last_customer <> customer;
+    - >-
+      insert into ngsild_updates
+      select 'update', true, '[{"id": "' || id || '",' || LISTAGG(testagg) || '}]' from (
+      select  window_start, window_end
+      , A.entityId as id, A.name as name,
+          '"' || A.name 
+                      || '":{"type": "' 
+                      || LAST_VALUE(A.`type`) 
+                      || IF(LAST_VALUE(A.`type`) =  'https://uri.etsi.org/ngsi-ld/Relationship',' ", "object": "', '", "value": "') 
+                      || IF(LAST_VALUE(A.`type`) =  'https://uri.etsi.org/ngsi-ld/Relationship', LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasObject`), LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasValue`)) 
+                      || '"}'  as testagg
+      FROM TABLE( TUMBLE(TABLE attributes, DESCRIPTOR(ts), INTERVAL '2' second)) as A
+      where A.entityId is NOT NULL
+      group by A.entityId, A.name, window_start, window_end
+      ) group by window_start, window_end, id;
   tables:
     - alerts
     - alerts-filter
+    - attributes
+    - ngsild-updates
