@@ -104,10 +104,15 @@ module.exports = function NgsildUpdates (conf) {
         // the batch processing will be done sequentially - until this is fixed in Scorpio
         const promises = [];
         entities.forEach(entity => {
+          // basic health check of entity
+          if (entity.id === undefined || entity.id == null || entity.type === undefined || entity.type === null) {
+            logger.error('Unhealthy entity - ignoring it:' + JSON.stringify(entity));
+            return; // not healthy entity, ignore it
+          }
           promises.push(ngsild.updateProperties({ id: entity.id, body: entity, isOverwrite: overwriteOrReplace }, { headers })
             .then(result => {
               if (result.statusCode !== 204 && result.statusCode !== 207) {
-                throw new Error('Entity cannot update entity:' + JSON.stringify(result.body));
+                logger.error('Entity cannot update entity:' + JSON.stringify(result.body)); // throw no error, log it and ignore it, repeating would probably not solve it
               }
             })
           );
@@ -117,7 +122,7 @@ module.exports = function NgsildUpdates (conf) {
         // in this case, entity will be created if not existing
         result = await ngsild.replaceEntities(entities, overwriteOrReplace, { headers });
         if (result.statusCode !== 204) {
-          throw new Error('Cannot upsert entity:' + JSON.stringify(result.body));
+          logger.error('Cannot upsert entity:' + JSON.stringify(result.body)); // throw no error, log it and igonore it, repeating would probalby not solve it
         }
       }
     } catch (e) {
