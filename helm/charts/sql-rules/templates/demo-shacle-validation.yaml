@@ -132,6 +132,53 @@ spec:
       FROM (
           SELECT A.id as idx, B.`https://uri.etsi.org/ngsi-ld/hasValue` as val FROM filter_cartridge_view AS A JOIN attributes_view AS B ON A.`https://industry-fusion.com/types/v0.9/wasteClass` = B.id
       );
+    - INSERT INTO alerts_bulk
+      SELECT this AS resource, 
+          'Cutter has assigned filter check' AS event,
+          'Development' AS environment,
+          ARRAY ['Digital Twin'] AS service,
+          CASE WHEN cnt < 1 AND typ IS NOT NULL THEN 'warning'
+              ELSE 'ok' END AS severity,
+          'customer'  customer,
+          CASE WHEN cnt < 1 AND typ IS NOT NULL THEN 'Cutter ' || this || ' has no assigned filter(s).'
+              ELSE 'OK' END as `text`
+          FROM
+          (
+              SELECT A.id AS this, count(C.`type`) AS cnt, A.`type` AS typ
+              FROM cutter_view AS A
+              LEFT JOIN attributes_view AS B ON A.`https://industry-fusion.com/types/v0.9/hasFilter` = B.id
+              LEFT JOIN filter_view AS C ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
+              WHERE
+                  (B.`type` = 'https://uri.etsi.org/ngsi-ld/Relationship' OR B.`type` IS NULL)
+                  AND (B.entityId = A.id OR B.entityId IS NULL)
+                  AND (B.name = 'https://industry-fusion.com/types/v0.9/hasFilter' OR B.name IS NULL)
+          GROUP BY A.id, A.`type`
+          );
+    - INSERT INTO alerts_bulk
+      SELECT cutterId AS resource,
+            'Cutter and Filter relationship check' AS event,
+            'Development' AS environment,
+            ARRAY ['Digital Twin'] AS service,
+            CASE WHEN cutter_state = 'ON' AND filter_state <> 'ON' AND filter_state IS NOT NULL THEN 'critical'
+                  WHEN filter_state = 'ON' AND cutter_state <> 'ON' THEN 'warning'
+                  ELSE 'ok'
+            END as severity,
+            'customer' as customer,
+            CASE WHEN cutter_state = 'ON' AND filter_state <> 'ON' AND filter_state IS NOT NULL THEN 'Cutter ' || cutterId || ' is running without running filter.'
+                  WHEN filter_state = 'ON' AND cutter_state <> 'ON' THEN 'Filter connected to ' || cutterId || ' is running but cutter is off'
+                  ELSE 'OK'
+            END as `text`
+      FROM (
+          SELECT A.id AS cutterId,
+              D.`https://uri.etsi.org/ngsi-ld/hasValue` as filter_state,
+              E.`https://uri.etsi.org/ngsi-ld/hasValue` as cutter_state FROM cutter_view AS A
+          JOIN attributes_view AS B ON A.`https://industry-fusion.com/types/v0.9/hasFilter` = B.id
+          LEFT JOIN filter_view AS C ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
+          LEFT JOIN attributes_view AS D ON C.`https://industry-fusion.com/types/v0.9/state` = D.id
+          JOIN attributes_view AS E ON A.`https://industry-fusion.com/types/v0.9/state` = E.id
+          WHERE A.`type` IS NOT NULL AND D.`https://uri.etsi.org/ngsi-ld/hasValue` IS NOT NULL
+       );
+
   tables:
     - alerts-bulk
     - cutter
