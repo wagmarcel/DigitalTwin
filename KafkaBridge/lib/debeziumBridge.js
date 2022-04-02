@@ -119,7 +119,6 @@ module.exports = function DebeziumBridge (conf) {
           const obj = {};
           obj.id = refId;
           obj.entityId = id;
-          obj.synchronized = true;
           obj.name = key;
           if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'] !== undefined) {
             obj.type = 'https://uri.etsi.org/ngsi-ld/Property';

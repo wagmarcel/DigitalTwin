@@ -180,7 +180,8 @@ spec:
     - 'id': STRING
     - 'entityId': STRING
     - 'name': STRING
-    - 'synchronized': BOOLEAN
+    - 'nodeType': STRING
+    - 'nodeValue': STRING
     - 'index': INTEGER
     - 'type': STRING
     - 'type': STRING
@@ -205,7 +206,7 @@ metadata:
 spec:
   name: attributes_view
   sqlstatement: |
-    SELECT id, entityId, name, synchronized, index, `type`,
+    SELECT id, entityId, name, nodeType, nodeValue, index, `type`,
            `https://uri.etsi.org/ngsi-ld/hasValue`,
            `https://uri.etsi.org/ngsi-ld/hasObject`
     FROM (
