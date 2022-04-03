@@ -132,8 +132,7 @@ module.exports = function DebeziumBridge (conf) {
               obj.nodeType = '@id';
             } else if (typeof refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0] === 'object') { // no @id, no @value, must be a @json type
               obj['https://uri.etsi.org/ngsi-ld/hasValue'] = JSON.stringify(refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]);
-              obj.valueType = '@json';
-              obj.nodeType = '@value';
+              obj.nodeType = '@json';
             }
 
             if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'] !== undefined) {
