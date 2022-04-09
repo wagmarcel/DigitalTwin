@@ -40,7 +40,7 @@ spec:
       ROW_NUMBER() OVER (PARTITION BY `id`
          ORDER BY ts DESC) AS rownum
       FROM `cutter` )
-      WHERE rownum = 1;
+      WHERE rownum = 1 and `type` IS NOT NULL;
 ---
 apiVersion: industry-fusion.com/v1alpha2
 kind: BeamSqlTable
@@ -83,7 +83,7 @@ spec:
       ROW_NUMBER() OVER (PARTITION BY `id`
          ORDER BY ts DESC) AS rownum
       FROM `filter` )
-      WHERE rownum = 1;
+      WHERE rownum = 1 and `type` IS NOT NULL;
 ---
 apiVersion: industry-fusion.com/v1alpha2
 kind: BeamSqlTable
@@ -124,7 +124,7 @@ spec:
       ROW_NUMBER() OVER (PARTITION BY `id`
          ORDER BY ts DESC) AS rownum
       FROM `workpiece` )
-      WHERE rownum = 1;
+      WHERE rownum = 1 and `type` IS NOT NULL;
 ---
 apiVersion: industry-fusion.com/v1alpha2
 kind: BeamSqlTable
@@ -167,7 +167,7 @@ spec:
       ROW_NUMBER() OVER (PARTITION BY `id`
          ORDER BY ts DESC) AS rownum
       FROM `filter_cartridge`)
-      WHERE rownum = 1;
+      WHERE rownum = 1 and `type` IS NOT NULL;
 ---
 apiVersion: industry-fusion.com/v1alpha2
 kind: BeamSqlTable
@@ -181,9 +181,8 @@ spec:
     - 'entityId': STRING
     - 'name': STRING
     - 'nodeType': STRING
-    - 'nodeValue': STRING
+    - 'valueType': STRING
     - 'index': INTEGER
-    - 'type': STRING
     - 'type': STRING
     - 'https://uri.etsi.org/ngsi-ld/hasValue': STRING
     - 'https://uri.etsi.org/ngsi-ld/hasObject': STRING
@@ -214,4 +213,4 @@ spec:
       ROW_NUMBER() OVER (PARTITION BY `id`
          ORDER BY ts DESC) AS rownum
       FROM `attributes`)
-      WHERE rownum = 1;
+      WHERE rownum = 1 and entityId is NOT NULL;
