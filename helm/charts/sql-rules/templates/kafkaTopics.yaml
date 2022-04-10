@@ -8,3 +8,17 @@ metadata:
 spec:
   partitions: 1
   replicas: 1
+  config:
+    retention.ms: 300000
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: {{.Values.kafkaBridge.alerta.listenTopic}}
+  labels:
+    strimzi.io/cluster: my-cluster
+spec:
+  partitions: 1
+  replicas: 1
+  config:
+    retention.ms: 86400000
