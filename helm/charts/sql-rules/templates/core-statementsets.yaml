@@ -39,8 +39,16 @@ spec:
               select window_start, window_end, entityId, name, 
               '{"type": "' 
                       || LAST_VALUE(A.`type`) 
-                      || IF(LAST_VALUE(A.`type`) =  'https://uri.etsi.org/ngsi-ld/Relationship',' ", "object": "', '", "value": "') 
-                      || IF(LAST_VALUE(A.`type`) =  'https://uri.etsi.org/ngsi-ld/Relationship', LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasObject`), LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasValue`)) 
+                      || IF(LAST_VALUE(A.`type`) =  'https://uri.etsi.org/ngsi-ld/Relationship',' ", "object": "', '", "value": ') 
+                      || IF(LAST_VALUE(A.`type`) =  'https://uri.etsi.org/ngsi-ld/Relationship', LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasObject`),
+                              /* Value depends on the nodeType: @id, @value, or @json*/
+                              /* @value is the default case, encapsulate within ""*/
+                              IF((LAST_VALUE(A.nodeType) <> '@json' AND LAST_VALUE(A.nodeType) <> '@id') OR LAST_VALUE(A.nodeType) IS NULL, '"' || LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasValue`) || '"',
+                                  /* @id needs encoding with "@id": value */
+                                  IF(LAST_VALUE(A.nodeType) = '@id', '"@id": "' || LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasValue`) || '"',
+                                  /* @json is put directly into value field */
+                                      IF(LAST_VALUE(A.nodeType) = '@json', LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasValue`), 'null' /*should not happen */)))
+                      )
                       || '}' as indexagg
               FROM TABLE( TUMBLE(TABLE attributes, DESCRIPTOR(ts), INTERVAL '2' second)) as A
               WHERE A.entityId IS NOT NULL
