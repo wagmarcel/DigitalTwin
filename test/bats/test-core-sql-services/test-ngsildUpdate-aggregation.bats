@@ -63,12 +63,12 @@ EOF
 
 compare_attributes1() {
     cat << EOF | diff "$1" - >&3
-{"op":"update","overwriteOrReplace":true,"entities":"[{\"id\": \"${CUTTER_ID}\",\"https://industry-fusion.com/types/v0.9/state\":{\"type\": \"https://uri.etsi.org/ngsi-ld/Property\", \"value\": \"ON\"}}]"}
+{"op":"update","overwriteOrReplace":true,"entities":"[{\"id\": \"${CUTTER_ID}\",\"https://industry-fusion.com/types/v0.9/state\":[{\"type\": \"https://uri.etsi.org/ngsi-ld/Property\", \"value\": \"ON\"}]}]"}
 EOF
 }
 compare_attributes2() {
     cat << EOF | diff "$1" - >&3
-{"op":"update","overwriteOrReplace":true,"entities":"[{\"id\": \"${CUTTER_ID}\",\"https://industry-fusion.com/types/v0.9/state\":{\"type\": \"https://uri.etsi.org/ngsi-ld/Property\", \"value\": \"OFF\"}}]"}
+{"op":"update","overwriteOrReplace":true,"entities":"[{\"id\": \"${CUTTER_ID}\",\"https://industry-fusion.com/types/v0.9/state\":[{\"type\": \"https://uri.etsi.org/ngsi-ld/Property\", \"value\": \"OFF\"}]}]"}
 EOF
 }
 compare_attributes3() {
@@ -78,18 +78,18 @@ compare_attributes3() {
   "overwriteOrReplace": true
 }
 EOF
-    cat << EOF | diff "$2" - >&3
+    cat << EOF | jq -S | diff "$2" - >&3
 [
   {
     "id": "urn:plasmacutter-test:12345",
-    "https://industry-fusion.com/types/v0.9/state": {
+    "https://industry-fusion.com/types/v0.9/state": [{
       "type": "https://uri.etsi.org/ngsi-ld/Property",
       "value": "OFF"
-    },
-    "https://industry-fusion.com/types/v0.9/state2": {
+    }],
+    "https://industry-fusion.com/types/v0.9/state2": [{
       "type": "https://uri.etsi.org/ngsi-ld/Property",
       "value": "ON"
-    }
+    }]
   }
 ]
 EOF
@@ -146,8 +146,8 @@ teardown(){
     kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${FLUSH_ATTRIBUTE}
     sleep 1
     killall kafkacat
-    grep -v flush < ${KAFKACAT_ATTRIBUTES} | jq 'del (.entities)'> ${KAFKACAT_ATTRIBUTES_FILTERED}
-    grep -v flush < ${KAFKACAT_ATTRIBUTES} | jq '.entities | fromjson'> ${KAFKACAT_ATTRIBUTES_FROMJSON} 
+    grep -v flush < ${KAFKACAT_ATTRIBUTES} | jq -S 'del (.entities)'> ${KAFKACAT_ATTRIBUTES_FILTERED}
+    grep -v flush < ${KAFKACAT_ATTRIBUTES} | jq -S '.entities | fromjson'> ${KAFKACAT_ATTRIBUTES_FROMJSON} 
     run compare_attributes3 ${KAFKACAT_ATTRIBUTES_FILTERED} ${KAFKACAT_ATTRIBUTES_FROMJSON}
     [ "$status" -eq 0 ]
 }
