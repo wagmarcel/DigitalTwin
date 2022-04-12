@@ -30,7 +30,9 @@ spec:
         last_severity IS NULL OR
         last_environment <> environment OR
         last_customer <> customer;
-    - >-
+    - |-
+      /* aggregates entities from attributes topic and insert it every 2 seconds in update channel
+        part of CORE SERVICES */
       insert into ngsild_updates
       select 'update', true, '[{"id": "' || id || '",' || LISTAGG(attributeagg) || '}]' 
       from (
@@ -39,8 +41,8 @@ spec:
               select window_start, window_end, entityId, name, 
               '{"type": "' 
                       || LAST_VALUE(A.`type`) 
-                      || IF(LAST_VALUE(A.`type`) =  'https://uri.etsi.org/ngsi-ld/Relationship',' ", "object": "', '", "value": ') 
-                      || IF(LAST_VALUE(A.`type`) =  'https://uri.etsi.org/ngsi-ld/Relationship', LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasObject`),
+                      || IF(LAST_VALUE(A.`type`) =  'https://uri.etsi.org/ngsi-ld/Relationship','", "object": "', '", "value": ') 
+                      || IF(LAST_VALUE(A.`type`) =  'https://uri.etsi.org/ngsi-ld/Relationship', LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasObject`) || '"',
                               /* Value depends on the nodeType: @id, @value, or @json*/
                               /* @value is the default case, encapsulate within ""*/
                               IF((LAST_VALUE(A.nodeType) <> '@json' AND LAST_VALUE(A.nodeType) <> '@id') OR LAST_VALUE(A.nodeType) IS NULL, '"' || LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasValue`) || '"',

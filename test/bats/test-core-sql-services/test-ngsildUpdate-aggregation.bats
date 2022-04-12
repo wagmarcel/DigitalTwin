@@ -7,6 +7,8 @@ fi
 ATTRIBUTE1=/tmp/ATTRIBUTE1
 ATTRIBUTE2=/tmp/ATTRIBUTE2
 ATTRIBUTE3=/tmp/ATTRIBUTE3
+ATTRIBUTE4=/tmp/ATTRIBUTE4
+ATTRIBUTE5=/tmp/ATTRIBUTE5
 FLUSH_ATTRIBUTE=/tmp/FLUSH_ATTRIBUTE
 ATTRIBUTES_TOPIC=iff.ngsild.attributes
 KAFKACAT_ATTRIBUTES=/tmp/KAFKACAT_ATTRIBUTES
@@ -20,7 +22,6 @@ cat << EOF | tr -d '\n' > ${ATTRIBUTE1}
 {
     "id": "${CUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state",
     "entityId": "${CUTTER_ID}",
-    "synchronized": false,
     "name": "https://industry-fusion.com/types/v0.9/state",
     "type": "https://uri.etsi.org/ngsi-ld/Property",
     "https://uri.etsi.org/ngsi-ld/hasValue": "ON",
@@ -31,7 +32,6 @@ cat << EOF | tr -d '\n' > ${ATTRIBUTE2}
 {
     "id": "${CUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state",
     "entityId": "${CUTTER_ID}",
-    "synchronized": false,
     "name": "https://industry-fusion.com/types/v0.9/state",
     "type": "https://uri.etsi.org/ngsi-ld/Property",
     "https://uri.etsi.org/ngsi-ld/hasValue": "OFF",
@@ -42,7 +42,6 @@ cat << EOF | tr -d '\n' > ${FLUSH_ATTRIBUTE}
 {
     "id": "flush\\\https://industry-fusion.com/types/v0.9/state",
     "entityId": "flush",
-    "synchronized": false,
     "name": "https://industry-fusion.com/types/v0.9/flush",
     "type": "https://uri.etsi.org/ngsi-ld/Property",
     "https://uri.etsi.org/ngsi-ld/hasValue": "flush",
@@ -50,6 +49,27 @@ cat << EOF | tr -d '\n' > ${FLUSH_ATTRIBUTE}
 }
 EOF
 cat << EOF | tr -d '\n' > ${ATTRIBUTE3}
+{
+    "id": "${CUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state2",
+    "entityId": "${CUTTER_ID}",
+    "name": "https://industry-fusion.com/types/v0.9/state2",
+    "type": "https://uri.etsi.org/ngsi-ld/Property",
+    "https://uri.etsi.org/ngsi-ld/hasValue": "ON",
+    "index": 0
+}
+EOF
+cat << EOF | tr -d '\n' > ${ATTRIBUTE4}
+{
+    "id": "${CUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasWorkpiece",
+    "entityId": "${CUTTER_ID}",
+    "name": "https://industry-fusion.com/types/v0.9/hasWorkpiece",
+    "type": "https://uri.etsi.org/ngsi-ld/Relationship",
+    "nodeType": "@id",
+    "https://uri.etsi.org/ngsi-ld/hasObject": "urn:workpiece:1",
+    "index": 0
+}
+EOF
+cat << EOF | tr -d '\n' > ${ATTRIBUTE5}
 {
     "id": "${CUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state2",
     "entityId": "${CUTTER_ID}",
@@ -94,6 +114,11 @@ EOF
 ]
 EOF
 }
+compare_attributes4() {
+    cat << EOF | diff "$1" - >&3
+{"op":"update","overwriteOrReplace":true,"entities":"[{\"id\": \"${CUTTER_ID}\",\"https://industry-fusion.com/types/v0.9/hasWorkpiece\":[{\"type\": \"https://uri.etsi.org/ngsi-ld/Relationship\", \"object\": \"urn:workpiece:1\"}]}]"}
+EOF
+}
 
 setup() {
     # shellcheck disable=SC2086
@@ -109,6 +134,7 @@ teardown(){
 
 
 @test "verify attribute is forwarded to ngsild-update bridge" {
+    skip
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
     sleep 2 # wait for next aggregation window
     kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${ATTRIBUTE1}
@@ -122,6 +148,7 @@ teardown(){
     [ "$status" -eq 0 ]
 }
 @test "verify last of 2 same attributes is forwarded to ngsild-update bridge" {
+    skip
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
     sleep 2 # wait for next aggregation window
     kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${ATTRIBUTE1}
@@ -136,6 +163,7 @@ teardown(){
     [ "$status" -eq 0 ]
 }
 @test "verify last of 2 same attributes and 1 other attribute are jointly forwarded to ngsild-update bridge" {
+    skip
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
     sleep 2 # wait for next aggregation window
     kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${ATTRIBUTE1}
@@ -149,5 +177,18 @@ teardown(){
     grep -v flush < ${KAFKACAT_ATTRIBUTES} | jq -S 'del (.entities)'> ${KAFKACAT_ATTRIBUTES_FILTERED}
     grep -v flush < ${KAFKACAT_ATTRIBUTES} | jq -S '.entities | fromjson'> ${KAFKACAT_ATTRIBUTES_FROMJSON} 
     run compare_attributes3 ${KAFKACAT_ATTRIBUTES_FILTERED} ${KAFKACAT_ATTRIBUTES_FROMJSON}
+    [ "$status" -eq 0 ]
+}
+@test "verify attribute is forwarded to ngsild-update bridge as relationship" {
+    (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
+    sleep 2 # wait for next aggregation window
+    kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${ATTRIBUTE4}
+    echo "# Sent attribute to attribute topic, wait some time for aggregation"
+    sleep 2 # wait until current window is over and send trigger
+    kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${FLUSH_ATTRIBUTE}
+    sleep 1
+    killall kafkacat
+    grep -v flush > ${KAFKACAT_ATTRIBUTES_FILTERED} < ${KAFKACAT_ATTRIBUTES}
+    run compare_attributes4 ${KAFKACAT_ATTRIBUTES_FILTERED}
     [ "$status" -eq 0 ]
 }
