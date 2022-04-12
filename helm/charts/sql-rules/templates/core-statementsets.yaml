@@ -47,7 +47,7 @@ spec:
                               /* @value is the default case, encapsulate within ""*/
                               IF((LAST_VALUE(A.nodeType) <> '@json' AND LAST_VALUE(A.nodeType) <> '@id') OR LAST_VALUE(A.nodeType) IS NULL, '"' || LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasValue`) || '"',
                                   /* @id needs encoding with "@id": value */
-                                  IF(LAST_VALUE(A.nodeType) = '@id', '"@id": "' || LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasValue`) || '"',
+                                  IF(LAST_VALUE(A.nodeType) = '@id', '{"@id": "' || LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasValue`) || '"}',
                                   /* @json is put directly into value field */
                                       IF(LAST_VALUE(A.nodeType) = '@json', LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasValue`), 'null' /*should not happen */)))
                       )

@@ -71,12 +71,12 @@ cat << EOF | tr -d '\n' > ${ATTRIBUTE4}
 EOF
 cat << EOF | tr -d '\n' > ${ATTRIBUTE5}
 {
-    "id": "${CUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state2",
+    "id": "${CUTTER_ID}\\\https://industry-fusion.com/types/v0.9/refState",
     "entityId": "${CUTTER_ID}",
-    "synchronized": false,
-    "name": "https://industry-fusion.com/types/v0.9/state2",
+    "name": "https://industry-fusion.com/types/v0.9/refState",
     "type": "https://uri.etsi.org/ngsi-ld/Property",
-    "https://uri.etsi.org/ngsi-ld/hasValue": "ON",
+    "https://uri.etsi.org/ngsi-ld/hasValue": "https://industry-fusion.com/v0.9/refStateIRI",
+    "nodeType": "@id",
     "index": 0
 }
 EOF
@@ -114,9 +114,16 @@ EOF
 ]
 EOF
 }
+
 compare_attributes4() {
     cat << EOF | diff "$1" - >&3
 {"op":"update","overwriteOrReplace":true,"entities":"[{\"id\": \"${CUTTER_ID}\",\"https://industry-fusion.com/types/v0.9/hasWorkpiece\":[{\"type\": \"https://uri.etsi.org/ngsi-ld/Relationship\", \"object\": \"urn:workpiece:1\"}]}]"}
+EOF
+}
+
+compare_attributes5() {
+    cat << EOF | diff "$1" - >&3
+{"op":"update","overwriteOrReplace":true,"entities":"[{\"id\": \"${CUTTER_ID}\",\"https://industry-fusion.com/types/v0.9/refState\":[{\"type\": \"https://uri.etsi.org/ngsi-ld/Property\", \"value\": {\"@id\": \"https://industry-fusion.com/v0.9/refStateIRI\"}}]}]"}
 EOF
 }
 
@@ -180,6 +187,7 @@ teardown(){
     [ "$status" -eq 0 ]
 }
 @test "verify attribute is forwarded to ngsild-update bridge as relationship" {
+    skip
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
     sleep 2 # wait for next aggregation window
     kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${ATTRIBUTE4}
@@ -190,5 +198,18 @@ teardown(){
     killall kafkacat
     grep -v flush > ${KAFKACAT_ATTRIBUTES_FILTERED} < ${KAFKACAT_ATTRIBUTES}
     run compare_attributes4 ${KAFKACAT_ATTRIBUTES_FILTERED}
+    [ "$status" -eq 0 ]
+}
+@test "verify attribute is forwarded to ngsild-update bridge as iri" {
+    (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
+    sleep 2 # wait for next aggregation window
+    kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${ATTRIBUTE5}
+    echo "# Sent attribute to attribute topic, wait some time for aggregation"
+    sleep 2 # wait until current window is over and send trigger
+    kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${FLUSH_ATTRIBUTE}
+    sleep 1
+    killall kafkacat
+    grep -v flush > ${KAFKACAT_ATTRIBUTES_FILTERED} < ${KAFKACAT_ATTRIBUTES}
+    run compare_attributes5 ${KAFKACAT_ATTRIBUTES_FILTERED}
     [ "$status" -eq 0 ]
 }
