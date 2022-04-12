@@ -64,6 +64,19 @@ cat << EOF > ${CUTTER}
                 "https://industry-fusion.com/types/v0.9/my": "json2"
             }
         }
+    ],
+    "https://industry-fusion.com/types/v0.9/multiState": [
+        {
+            "type": "Property",
+            "value": "OFF"
+        },
+        {
+            "type": "Property",
+            "value": {
+                "@value": "ON",
+                "type": "https://industry-fusion.com/types/v0.9/multiStateType"
+            }
+        }
     ]
 }
 EOF
@@ -106,6 +119,15 @@ compare_create_attributes() {
 "type":"https://uri.etsi.org/ngsi-ld/Property",\
 "https://uri.etsi.org/ngsi-ld/hasValue":"{\"@type\":[\"https://industry-fusion.com/types/v0.9/myJsonType\"],\"https://industry-fusion.com/types/v0.9/my\":[{\"@value\":\"json\"}]}",\
 "nodeType":"@json","valueType":["https://industry-fusion.com/types/v0.9/myJsonType"],"index":0}
+{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/multiState",\
+"entityId":"${PLASMACUTTER_ID}",\
+"name":"https://industry-fusion.com/types/v0.9/multiState","type":"https://uri.etsi.org/ngsi-ld/Property",\
+"https://uri.etsi.org/ngsi-ld/hasValue":"OFF","nodeType":"@value","index":0}
+{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/multiState",\
+"entityId":"${PLASMACUTTER_ID}",\
+"name":"https://industry-fusion.com/types/v0.9/multiState",\
+"type":"https://uri.etsi.org/ngsi-ld/Property","https://uri.etsi.org/ngsi-ld/hasValue":"ON",\
+"nodeType":"@value","valueType":"https://industry-fusion.com/types/v0.9/multiStateType","index":1}
 {"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state",\
 "entityId":"${PLASMACUTTER_ID}",\
 "name":"https://industry-fusion.com/types/v0.9/state",\
@@ -122,6 +144,8 @@ compare_delete_attributes() {
 {"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValueArray","index":0}
 {"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValueArray","index":1}
 {"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValue","index":0}
+{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/multiState","index":0}
+{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/multiState","index":1}
 {"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state","index":0}
 EOF
 }
@@ -131,6 +155,7 @@ compare_create_cutter() {
 {"https://industry-fusion.com/types/v0.9/state":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state",\
 "https://industry-fusion.com/types/v0.9/jsonValue":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValue",\
 "https://industry-fusion.com/types/v0.9/jsonValueArray":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValueArray",\
+"https://industry-fusion.com/types/v0.9/multiState": "${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/multiState",\
 "https://industry-fusion.com/types/v0.9/hasFilter":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasFilter",\
 "https://industry-fusion.com/types/v0.9/hasWorkpiece":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasWorkpiece",\
 "id":"${PLASMACUTTER_ID}","type":"https://industry-fusion.com/types/v0.9/plasmacutter"}
@@ -148,6 +173,7 @@ compare_create_plasmacutter() {
 {"https://industry-fusion.com/types/v0.9/state":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state",\
 "https://industry-fusion.com/types/v0.9/jsonValue":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValue",\
 "https://industry-fusion.com/types/v0.9/jsonValueArray":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValueArray",\
+"https://industry-fusion.com/types/v0.9/multiState": "${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/multiState",\
 "https://industry-fusion.com/types/v0.9/hasFilter":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasFilter",\
 "https://industry-fusion.com/types/v0.9/hasWorkpiece":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasWorkpiece",\
 "id":"${PLASMACUTTER_ID}","type":"https://industry-fusion.com/types/v0.9/plasmacutter"}
