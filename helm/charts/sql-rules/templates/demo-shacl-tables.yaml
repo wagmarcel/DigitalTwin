@@ -218,7 +218,7 @@ spec:
     - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
     - 'watermark': FOR ts AS ts - INTERVAL '0.001' SECOND
   kafka:
-    topic: '{{.Values.kafkaBridge.debezium.entityTopicPrefix}}.filter-cartridge'
+    topic: '{{.Values.kafkaBridge.debezium.entityTopicPrefix}}.filterCartridge'
     properties:
       bootstrap.servers: {{.Values.kafka.bootstrapServer}}
     scan.startup.mode: earliest-offset
