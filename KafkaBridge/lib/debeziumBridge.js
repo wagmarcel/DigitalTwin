@@ -34,7 +34,8 @@ module.exports = function DebeziumBridge (conf) {
     let result = {
       entity: null,
       updatedAttrs: null,
-      deletedAttrs: null
+      deletedAttrs: null,
+      insertedAttrs: null
     };
     if (body === null || body === undefined) {
       return result;
@@ -55,13 +56,13 @@ module.exports = function DebeziumBridge (conf) {
     delete updatedAttrs[syncOnAttribute]; // remove it before detecting changes
     delete insertedAttrs[syncOnAttribute]; // remove it before detecting changes
     delete afterEntity[syncOnAttribute];
+    // isChanged: When there are changes in any of the attrs or entity
     const isChanged = isEntityUpdated || Object.keys(updatedAttrs).length > 0 || 
-                      Object.keys(deletedAttrs).length > 0 || Object.keys(deletedAttrs).length > 0;
-
+                      Object.keys(deletedAttrs).length > 0 || Object.keys(insertedAttrs).length > 0;
     // deletedEntity needs to remember type so that it can be deleted for 
     // all subtypes. However, type must be removed lated since it is not part of
     // primary key. Deletion means to set everythin, which is not primary key to null
-    let deletedEntity;
+    let deletedEntity = null;
     if (isChanged && Object.keys(afterEntity).length === 0) {
       deletedEntity = {
         id: beforeEntity.id,
@@ -201,14 +202,7 @@ module.exports = function DebeziumBridge (conf) {
     // These attributes are added to insertedAttrs
     Object.keys(afterAttrs).forEach(key => {
       if (beforeAttrs[key] === undefined || beforeAttrs[key] === null || !Array.isArray(beforeAttrs[key]) || beforeAttrs[key].length === 0) {
-        const obj = afterAttrs[key].reduce((accum, element) => {
-          const obj = {};
-          obj.id = element.id;
-          obj.index = element.index;
-          accum.push(obj);
-          return accum;
-        }, []);
-        insertedAttrs[key] = obj;
+        insertedAttrs[key] = afterAttrs[key];
       }
     });
 
@@ -220,7 +214,8 @@ module.exports = function DebeziumBridge (conf) {
       // if the attributes are unequal
       // add every different attribute per index to the updatedAttrs
       // add every attribute which have indexes in before but not mentioned in after to deletedAttrs
-      if (beforeAttrs[key] != undefined && !_.isEqual(afterAttrs[key], beforeAttrs[key])) {
+      if (beforeAttrs[key] != undefined && beforeAttrs[key] != null &&
+        !_.isEqual(afterAttrs[key], beforeAttrs[key])) {
         // delete all old elements with higher indexes
         // the attribute lists are sorted so length diff reveals what has to be deleted
         const delementArray = [];
