@@ -408,7 +408,8 @@ describe('Test parse', function () {
       entity: null,
       deletedEntity: undefined,
       updatedAttrs: null,
-      deletedAttrs: null
+      deletedAttrs: null,
+      insertedAttrs: null
     };
     const body = {
       before: {
@@ -446,6 +447,7 @@ describe('Test parse', function () {
         type: 'type'
       },
       updatedAttrs: {},
+      insertedAttrs: {},
       deletedAttrs: {
         attribute: 'attribute'
       }
@@ -477,7 +479,8 @@ describe('Test parse', function () {
       assert.deepEqual(body.after.attributes, afterAttrs);
       return {
         updatedAttrs: updatedAttrs,
-        deletedAttrs: deletedAttrs
+        deletedAttrs: deletedAttrs,
+        insertedAttrs: {}
       };
     };
     const diffEntity = function (beforeEntity, afterEntity) {
@@ -512,6 +515,7 @@ describe('Test parse', function () {
       updatedAttrs: {
         attribute: 'attribute2'
       },
+      insertedAttrs: {},
       deletedAttrs: {
       }
     };
@@ -548,7 +552,8 @@ describe('Test parse', function () {
       assert.deepEqual(body.after.attributes, afterAttrs);
       return {
         updatedAttrs: updatedAttrs,
-        deletedAttrs: deletedAttrs
+        deletedAttrs: deletedAttrs,
+        insertedAttrs: {},
       };
     };
     const diffEntity = function (beforeEntity, afterEntity) {
@@ -585,7 +590,8 @@ describe('Test parse', function () {
       },
       deletedAttrs: {
         attribute2: 'attribute2'
-      }
+      },
+      insertedAttrs: {}
     };
     const body = {
       before: {
@@ -622,7 +628,82 @@ describe('Test parse', function () {
       assert.deepEqual(body.after.attributes, afterAttrs);
       return {
         updatedAttrs: updatedAttrs,
-        deletedAttrs: deletedAttrs
+        deletedAttrs: deletedAttrs,
+        insertedAttrs: {}
+      };
+    };
+    const diffEntity = function (beforeEntity, afterEntity) {
+      assert.deepEqual(body.before.entity, beforeEntity);
+      assert.deepEqual(body.after.entity, afterEntity);
+      return true;
+    };
+    const revert = ToTest.__set__('Logger', Logger);
+    const debeziumBridge = new ToTest(config);
+    debeziumBridge.parseBeforeAfterEntity = parseBeforeAfterEntity;
+    debeziumBridge.diffAttributes = diffAttributes;
+    debeziumBridge.diffEntity = diffEntity;
+    const result = debeziumBridge.parse(body);
+    assert.deepEqual(result, expectedResult);
+    revert();
+  });
+  it('Should return updated Entity and inserted attributes', async function () {
+    const config = {
+      bridgeCommon: {
+        kafkaSyncOnAttribute: 'kafkaSyncOn'
+      }
+    };
+    const Logger = function () {
+      return logger;
+    };
+    const expectedResult = {
+      entity: {
+        id: 'id',
+        type: 'type'
+      },
+      deletedEntity: undefined,
+      updatedAttrs: {},
+      deletedAttrs: {},
+      insertedAttrs: {
+        attribute: 'attribute'
+      }
+    };
+    const body = {
+      before: {
+        entity: {
+          id: 'id',
+          type: 'type'
+        },
+        attributes: [{
+        }]
+      },
+      after: {
+        entity: {
+          id: 'id',
+          type: 'type'
+        },
+        attributes: {
+          attribute: 'attribute'
+
+        }
+      }
+    };
+    const updatedAttrs = {
+    };
+    const deletedAttrs = {
+    };
+    const insertedAttrs = {
+      attribute: 'attribute'
+    };
+    const parseBeforeAfterEntity = function (body) {
+      return body;
+    };
+    const diffAttributes = function (beforeAttrs, afterAttrs) {
+      assert.deepEqual(body.before.attributes, beforeAttrs);
+      assert.deepEqual(body.after.attributes, afterAttrs);
+      return {
+        updatedAttrs: updatedAttrs,
+        deletedAttrs: deletedAttrs,
+        insertedAttrs: insertedAttrs
       };
     };
     const diffEntity = function (beforeEntity, afterEntity) {

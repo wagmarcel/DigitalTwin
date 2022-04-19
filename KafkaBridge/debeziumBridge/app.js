@@ -123,9 +123,11 @@ const getTopic = function (topic) {
  * @param deleteAttrs {object} - contains the list of attributes of the entity which have to be deleted
  * @returns
  */
-const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, deletedAttrs }) {
+const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, deletedAttrs, insertedAttrs }) {
   let removeType = false;
 
+  // Remember deletion after subclasses have been determined.
+  // Then remove type later
   if (deletedEntity !== undefined && deletedEntity !== null) {
     entity = deletedEntity;
     removeType = true;
@@ -140,6 +142,7 @@ const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, delet
   }
   const topicMessages = [];
 
+  // Now remove type. This has been determined earlier.
   if (removeType) {
     // delete of entities is done by set everything to NULL
     delete entity.type;
@@ -178,6 +181,18 @@ const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, delet
     topicMessages.push({
       topic: config.debeziumBridge.attributesTopic,
       messages: updateMessages
+    });
+  }
+  if (insertedAttrs !== null && insertedAttrs !== undefined && Object.keys(insertedAttrs).length > 0) {
+    // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
+    const insertMessages = Object.entries(insertedAttrs).flatMap(([key, value]) =>
+      value.map(val => {
+        return { key: genKey, value: JSON.stringify(val) };
+      })
+    );
+    topicMessages.push({
+      topic: config.debeziumBridge.attributesTopic,
+      messages: insertMessages
     });
   }
 
