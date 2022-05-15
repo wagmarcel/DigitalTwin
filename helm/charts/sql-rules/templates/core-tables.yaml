@@ -147,3 +147,51 @@ spec:
          ORDER BY ts DESC) AS rownum
       FROM `attributes`)
       WHERE rownum = 1 and entityId is NOT NULL;
+---
+apiVersion: industry-fusion.com/v1alpha2
+kind: BeamSqlTable
+metadata:
+  name: cloud-events
+spec:
+  name: cloud_events
+  connector: upsert-kafka
+  fields:
+    - 'source': STRING
+    - 'specversion': STRING
+    - 'type': STRING
+    - 'data': STRING
+    - 'time': TIMESTAMP(3) METADATA VIRTUAL
+  kafka:
+    topic: {{.Values.kafkaBridge.cloudEvents.topic}}
+    properties:
+      bootstrap.servers: {{.Values.kafka.bootstrapServer}}
+    key.format: json
+  value:
+    format: json
+    json.fail-on-missing-field: false
+    json.ignore-parse-errors: true
+  primaryKey: [source]
+---
+apiVersion: industry-fusion.com/v1alpha2
+kind: BeamSqlTable
+metadata:
+  name: cloud-events-filter
+spec:
+  name: cloud_events_filter
+  connector: kafka
+  fields:
+    - 'source': STRING
+    - 'specversion': STRING
+    - 'type': STRING
+    - 'data': STRING
+    - 'timestamp': TIMESTAMP(3) METADATA FROM 'timestamp'
+    - 'watermark': FOR `timestamp` AS `timestamp`
+  kafka:
+    topic: {{.Values.kafkaBridge.cloudEvents.topic}}
+    properties:
+      bootstrap.servers: {{.Values.kafka.bootstrapServer}}
+    scan.startup.mode: latest-offset
+  value:
+    format: json
+    json.fail-on-missing-field: false
+    json.ignore-parse-errors: true

@@ -71,6 +71,7 @@ flink:
   defaultParalellism: 1
   alertWindow: '0.001'
   ngsildUpdateWindow: '0.001'
+  cloudEventsUpdateWindow: '0.001'
 
 minio:
   url: http://minio
@@ -123,3 +124,7 @@ kafkaBridge:
     tokenRefreshInterval: 200
     listenTopic: "iff.ngsild-updates"
     listenTopicRetention: 86400000
+  cloudEvents:
+    replicaCount: 1
+    topic: "iff.cloud-events"
+    topicRetention: 86400000
