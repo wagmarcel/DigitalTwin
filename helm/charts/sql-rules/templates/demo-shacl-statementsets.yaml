@@ -65,30 +65,36 @@ spec:
                     GROUP BY A.id, A.`type`
             );
         - |-
-            /* validate property state of all machine entities
+            /* validate property state of all machine entities 
             part of shacle-validator demo */
             INSERT INTO alerts_bulk
-            SELECT this AS resource,
+            SELECT this AS resource, 
                 'Data validation of state' AS event,
                 'Development' AS environment,
                 ARRAY ['SHACL Validator'] AS service,
-                CASE WHEN typ IS NOT NULL AND (nodeType <> '@id'
-                    OR (val <> 'https://industry-fusion.com/types/v0.9/state_OFF'
-                    AND val <> 'https://industry-fusion.com/types/v0.9/state_ON')) THEN 'warning'
-                    ELSE 'ok' END AS severity,
+                severity,
                 'customer'  customer,
-                CASE WHEN typ IS NOT NULL AND (nodeType <> '@id'
-                    OR (val <> 'https://industry-fusion.com/types/v0.9/state_OFF'
-                    AND val <> 'https://industry-fusion.com/types/v0.9/state_ON'))
+                CASE WHEN severity <> 'ok' 
                     THEN 'Model validation for relationship https://industry-fusion.com/types/v0.9/state failed for '|| this || ': Invalid value ' || val
                     ELSE 'State ok' END as `text`
             FROM (
-                SELECT A.id as this,
-                    A.`type` as typ,
-                    B.`https://uri.etsi.org/ngsi-ld/hasValue` as val,
-                    B.nodeType as nodeType
-                FROM machine_view AS A
-                LEFT JOIN attributes_view AS B ON A.`https://industry-fusion.com/types/v0.9/state` = B.id
+                SELECT this, typ, val, nodeType,
+                CASE WHEN typ IS NOT NULL AND (nodeType <> '@id' 
+                    OR (  val <> 'https://industry-fusion.com/types/v0.9/state_OFF' 
+                    AND val <> 'https://industry-fusion.com/types/v0.9/state_ON'
+                    AND val <> 'https://industry-fusion.com/types/v0.9/state_PREPARATION'
+                    AND val <> 'https://industry-fusion.com/types/v0.9/state_PROCESSING'
+                    AND val <> 'https://industry-fusion.com/types/v0.9/state_CLEARING'
+                    AND val <> 'https://industry-fusion.com/types/v0.9/state_COOLINGDOWN')) THEN 'warning'
+                    ELSE 'ok' END AS severity
+                FROM (
+                    SELECT A.id as this,
+                        A.`type` as typ,
+                        B.`https://uri.etsi.org/ngsi-ld/hasValue` as val,
+                        B.nodeType as nodeType 
+                    FROM machine_view AS A
+                    JOIN attributes_view AS B ON A.`https://industry-fusion.com/types/v0.9/state` = B.id
+                )
             );
         - |-
             /* validate relationship hasCartridge of filter object
@@ -143,32 +149,33 @@ spec:
                     LEFT JOIN attributes_view AS B ON A.`https://industry-fusion.com/types/v0.9/wasteClass` = B.id
             );
         - |-
-            /* Digital Twin service: check joint cutter and filter states
-            No need for left joins: If Filter relation does not exist, the validator will tell */
+            /* Digital Twin service: check joint cutter and filter states from cuuter POV*/
             INSERT INTO alerts_bulk
             SELECT cutterId AS resource,
                 'Cutter and Filter relationship check' AS event,
                 'Development' AS environment,
                 ARRAY ['Digital Twin'] AS service,
-                CASE WHEN cutter_state = 'https://industry-fusion.com/types/v0.9/state_ON'
-                        AND filter_state <> 'https://industry-fusion.com/types/v0.9/state_ON'
-                        AND filter_state IS NOT NULL
+                CASE WHEN cutter_state = 'https://industry-fusion.com/types/v0.9/state_PROCESSING' 
+                        AND (filter_state <> 'https://industry-fusion.com/types/v0.9/state_ON' 
+                            OR filter_state IS NULL)
                         THEN 'critical'
                         ELSE 'ok'
                 END as severity,
                 'customer' as customer,
-                CASE WHEN cutter_state = 'https://industry-fusion.com/types/v0.9/state_ON' AND filter_state <> 'https://industry-fusion.com/types/v0.9/state_ON' AND filter_state IS NOT NULL THEN 'Cutter ' || cutterId || ' is running without running filter.'
+                CASE WHEN cutter_state = 'https://industry-fusion.com/types/v0.9/state_PROCESSING' AND (filter_state <> 'https://industry-fusion.com/types/v0.9/state_ON' OR filter_state IS NULL) THEN 'Cutter ' || cutterId || ' is processing without running filter.'
                         ELSE 'OK'
                 END as `text`
             FROM (
                 SELECT A.id AS cutterId,
-                    D.`https://uri.etsi.org/ngsi-ld/hasValue` as filter_state,
+                    B.filter_state as filter_state,
                     E.`https://uri.etsi.org/ngsi-ld/hasValue` as cutter_state FROM cutter_view AS A
-                LEFT JOIN attributes_view AS B ON A.`https://industry-fusion.com/types/v0.9/hasFilter` = B.id
-                LEFT JOIN filter_view AS C ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
-                LEFT JOIN attributes_view AS D ON C.`https://industry-fusion.com/types/v0.9/state` = D.id
                 LEFT JOIN attributes_view AS E ON A.`https://industry-fusion.com/types/v0.9/state` = E.id
-                where A.`type` is NOT NULL
+                LEFT JOIN ( 
+                    select D.`https://uri.etsi.org/ngsi-ld/hasValue` as filter_state, B.id as id from attributes_view AS B
+                    JOIN filter_view AS C ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
+                    JOIN attributes_view AS D ON C.`https://industry-fusion.com/types/v0.9/state` = D.id
+                ) AS B ON A.`https://industry-fusion.com/types/v0.9/hasFilter` = B.id
+                where E.`https://uri.etsi.org/ngsi-ld/hasValue` is NOT NULL
             );
         - |-
             /* Digital Twin service: check joint cutter and filter states from filter POV
@@ -179,12 +186,12 @@ spec:
                 'Development' AS environment,
                 ARRAY ['Digital Twin'] AS service,
                 CASE WHEN filter_state = 'https://industry-fusion.com/types/v0.9/state_ON'
-                        AND cutter_state <> 'https://industry-fusion.com/types/v0.9/state_ON'
+                        AND cutter_state <> 'https://industry-fusion.com/types/v0.9/state_PROCESSING'
                         THEN 'warning'
                         ELSE 'ok'
                 END as severity,
                 'customer' as customer,
-                CASE WHEN filter_state = 'https://industry-fusion.com/types/v0.9/state_ON' AND cutter_state <> 'https://industry-fusion.com/types/v0.9/state_ON' THEN 'Fitter ' || filterId || ' is running without running cutter.'
+                CASE WHEN filter_state = 'https://industry-fusion.com/types/v0.9/state_ON' AND cutter_state <> 'https://industry-fusion.com/types/v0.9/state_PROCESSING' THEN 'Fitter ' || filterId || ' is running without running cutter.'
                         ELSE 'OK'
                 END as `text`
             FROM (
@@ -195,7 +202,7 @@ spec:
                 LEFT JOIN cutter_view AS C ON B.id = C.`https://industry-fusion.com/types/v0.9/hasFilter`
                 LEFT JOIN attributes_view AS D ON A.`https://industry-fusion.com/types/v0.9/state` = D.id
                 LEFT JOIN attributes_view AS E ON C.`https://industry-fusion.com/types/v0.9/state` = E.id
-                where A.`type` is NOT NULL
+                
             );
         - |-
             /* validate relationship hasFilter of plasmacutter object for DIGITAL-TWIN SERVICE */
@@ -222,6 +229,58 @@ spec:
                         AND (B.name = 'https://industry-fusion.com/types/v0.9/hasFilter' OR B.name IS NULL)
                 GROUP BY A.id, A.`type`
                 );
+        - |-
+            /* Updates usedUntil timestamp of filter cartridge */
+            insert into cloud_events
+            select cutter_id || '/com.industry-fusion.ngsild-updates/updateFilterTimestamp' as source, '1.0' as specversion, 'com.industry-fusion.ngsild-updates/updateFilterTimestamp' as `type`,
+            CASE WHEN cutter_state = 'https://industry-fusion.com/types/v0.9/state_PROCESSING'
+                    AND filter_state = 'https://industry-fusion.com/types/v0.9/state_ON'
+                THEN 
+                    '{ "op": "update", "overwriteOrReplace": "true", "entities": "[{ \"@context\": \"https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld\", \"https://industry-fusion.com/types/v0.9/usedUntil\": {\"type\": \"Property\", \"value\": \"' 
+                    || CAST(current_timestamp AS STRING) || '\"}, \"id\": \"'
+                || filter_cartridge_id || '\"}]"}'
+                ELSE NULL END as data
+            from
+            (SELECT A.id as cutter_id,
+                F.id as filter_cartridge_id,    
+                G.`https://uri.etsi.org/ngsi-ld/hasValue` as cutter_state, 
+                H.`https://uri.etsi.org/ngsi-ld/hasValue` as filter_state
+                
+                FROM cutter_view AS A
+                JOIN attributes_view AS B ON A.`https://industry-fusion.com/types/v0.9/hasFilter` = B.id
+                JOIN filter_view AS D ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = D.id
+                JOIN attributes_view AS E ON D.`https://industry-fusion.com/types/v0.9/hasCartridge` = E.id
+                JOIN filter_cartridge_view AS F ON E.`https://uri.etsi.org/ngsi-ld/hasObject` = F.id
+                JOIN attributes_view as G on A.`https://industry-fusion.com/types/v0.9/state` = G.id
+                JOIN attributes_view as H on D.`https://industry-fusion.com/types/v0.9/state` = H.id
+            );
+        - |-
+            /* update usedFrom timestamp from filterCartridge*/
+            insert into cloud_events
+            select cutter_id || '/com.industry-fusion.ngsild-updates/updateUsedFromTimestamp' as source, '1.0' as specversion, 'com.industry-fusion.ngsild-updates/updateUsedFromTimestamp' as `type`,
+            CASE WHEN cutter_state = 'https://industry-fusion.com/types/v0.9/state_PROCESSING'
+                    AND filter_state = 'https://industry-fusion.com/types/v0.9/state_ON' AND usedFrom is NULL
+                THEN 
+                    '{ "op": "update", "overwriteOrReplace": "false", "entities": "[{ \"@context\": \"https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld\", \"https://industry-fusion.com/types/v0.9/usedFrom\": {\"type\": \"Property\", \"value\": \"' 
+                    || CAST(current_timestamp AS STRING) || '\"}, \"id\": \"'
+                || filter_cartridge_id || '\"}]"}'
+                ELSE NULL END as data
+            from
+            (SELECT A.id as cutter_id,
+                F.id as filter_cartridge_id,    
+                G.`https://uri.etsi.org/ngsi-ld/hasValue` as cutter_state, 
+                H.`https://uri.etsi.org/ngsi-ld/hasValue` as filter_state,
+                K.`https://uri.etsi.org/ngsi-ld/hasValue` as usedFrom
+                
+                FROM cutter_view AS A
+                JOIN attributes_view AS B ON A.`https://industry-fusion.com/types/v0.9/hasFilter` = B.id
+                JOIN filter_view AS D ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = D.id
+                JOIN attributes_view AS E ON D.`https://industry-fusion.com/types/v0.9/hasCartridge` = E.id
+                JOIN filter_cartridge_view AS F ON E.`https://uri.etsi.org/ngsi-ld/hasObject` = F.id
+                JOIN attributes_view as G on A.`https://industry-fusion.com/types/v0.9/state` = G.id
+                JOIN attributes_view as H on D.`https://industry-fusion.com/types/v0.9/state` = H.id
+                LEFT JOIN attributes_view as K ON F.`https://industry-fusion.com/types/v0.9/usedUntil` = K.id
+            );
     tables:
         - alerts-bulk
         - machine
@@ -230,6 +289,7 @@ spec:
         - workpiece
         - attributes
         - filter-cartridge
+        - cloud-events
     views:
         - machine-view
         - cutter-view
