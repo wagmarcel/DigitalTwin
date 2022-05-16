@@ -82,7 +82,7 @@ spec:
                 CASE WHEN typ IS NOT NULL AND (nodeType <> '@id' 
                     OR (  val <> 'https://industry-fusion.com/types/v0.9/state_OFF' 
                     AND val <> 'https://industry-fusion.com/types/v0.9/state_ON'
-                    AND val <> 'https://industry-fusion.com/types/v0.9/state_PREPARATION'
+                    AND val <> 'https://industry-fusion.com/types/v0.9/state_PREPARING'
                     AND val <> 'https://industry-fusion.com/types/v0.9/state_PROCESSING'
                     AND val <> 'https://industry-fusion.com/types/v0.9/state_CLEARING'
                     AND val <> 'https://industry-fusion.com/types/v0.9/state_COOLINGDOWN')) THEN 'warning'
@@ -296,8 +296,46 @@ spec:
             from
             (select *,
                 MAP['1.4301', 1, '1.4302', 1, '1.4303', 1, '1.4304', 1, '1.4305', 1, '1.3301', 2, '1.3302', 2, '1.3303', 2, '1.3304', 2, '1.3305', 2, '1.5301', 3, '1.5302', 3, '1.5303', 3, '1.5304', 3, '1.5305', 3] as mat2wcmap,
-                MAP[1, 'https://industry-fusion.com/types/v0.9/WC0', 2, 'https://industry-fusion.com/types/v0.9/WC1', 3, 'https://industry-fusion.com/types/v0.9/WC2'] as wcmap,
-                MAP['https://industry-fusion.com/types/v0.9/WC0', 1, 'https://industry-fusion.com/types/v0.9/WC1', 2, 'https://industry-fusion.com/types/v0.9/WC2', 3] as wctoordermap
+                MAP[0, 'https://industry-fusion.com/types/v0.9/WC0', 1, 'https://industry-fusion.com/types/v0.9/WC1', 2, 'https://industry-fusion.com/types/v0.9/WC2', 3, 'https://industry-fusion.com/types/v0.9/WC3'] as wcmap,
+                MAP['https://industry-fusion.com/types/v0.9/WC0', 0, 'https://industry-fusion.com/types/v0.9/WC1', 1, 'https://industry-fusion.com/types/v0.9/WC2', 2, 'https://industry-fusion.com/types/v0.9/WC3', 3] as wctoordermap
+            from
+
+            (SELECT A.id as cutter_id,
+                F.id as filter_cartridge_id,    
+                G.`https://uri.etsi.org/ngsi-ld/hasValue` as cutter_state, 
+                H.`https://uri.etsi.org/ngsi-ld/hasValue` as filter_state,
+                J.`https://uri.etsi.org/ngsi-ld/hasValue` as material,
+                K.`https://uri.etsi.org/ngsi-ld/hasValue` as wasteClass
+                
+                FROM cutter_view AS A
+                JOIN attributes_view AS B ON A.`https://industry-fusion.com/types/v0.9/hasFilter` = B.id
+                JOIN attributes_view AS C ON A.`https://industry-fusion.com/types/v0.9/hasWorkpiece` = C.id
+                JOIN filter_view AS D ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = D.id
+                JOIN attributes_view AS E ON D.`https://industry-fusion.com/types/v0.9/hasCartridge` = E.id
+                JOIN filter_cartridge_view AS F ON E.`https://uri.etsi.org/ngsi-ld/hasObject` = F.id
+                JOIN attributes_view as G on A.`https://industry-fusion.com/types/v0.9/state` = G.id
+                JOIN attributes_view as H on D.`https://industry-fusion.com/types/v0.9/state` = H.id
+                JOIN workpiece_view as I on C.`https://uri.etsi.org/ngsi-ld/hasObject` = I.id
+                JOIN attributes_view as J on I.`https://industry-fusion.com/types/v0.9/material` = J.id
+                LEFT JOIN attributes_view as K ON F.`https://industry-fusion.com/types/v0.9/wasteClass` = K.id
+            ));
+        - |-
+            /* Alert when wasteClass increases */
+            insert into cloud_events
+            select
+            cutter_id || '/com.industry-fusion.alerts.wasteClassChange' as source, '1.0' as specversion, 'com.industry-fusion.ngsild-updates.wasteClassChange' as `type`,
+                CASE WHEN cutter_state = 'https://industry-fusion.com/types/v0.9/state_PREPARING'
+                    AND mat2wcmap[material] > wctoordermap[wasteClass]
+                    THEN 
+                    '{ "resource": "' || cutter_id || '", "event": "com.industry-fusion.alerts.wasteClassChange",  "environment": "Development", "service": ["SHACL Validator"],"severity": "major", "customer": "customer", "text": " When this workpiece is processed, the wasteclass gets worse: '
+                    || 'from ' || wasteClass || ' to ' || wcmap[mat2wcmap[material]] || '"}'
+                    ELSE
+                            '{ "resource": "' || cutter_id || '", "event": "com.industry-fusion.alerts.wasteClassChange",  "environment": "Development", "service": ["SHACL Validator"],"severity": "ok", "customer": "customer", "text": "ok"}'  END as data
+            from
+            (select *,
+                MAP['1.4301', 1, '1.4302', 1, '1.4303', 1, '1.4304', 1, '1.4305', 1, '1.3301', 2, '1.3302', 2, '1.3303', 2, '1.3304', 2, '1.3305', 2, '1.5301', 3, '1.5302', 3, '1.5303', 3, '1.5304', 3, '1.5305', 3] as mat2wcmap,
+                MAP[0, 'https://industry-fusion.com/types/v0.9/WC0', 1, 'https://industry-fusion.com/types/v0.9/WC1', 2, 'https://industry-fusion.com/types/v0.9/WC2', 3, 'https://industry-fusion.com/types/v0.9/WC3'] as wcmap,
+                MAP['https://industry-fusion.com/types/v0.9/WC0', 0, 'https://industry-fusion.com/types/v0.9/WC1', 1, 'https://industry-fusion.com/types/v0.9/WC2', 2, 'https://industry-fusion.com/types/v0.9/WC3', 3] as wctoordermap
             from
 
             (SELECT A.id as cutter_id,
