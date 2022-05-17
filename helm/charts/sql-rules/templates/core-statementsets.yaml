@@ -87,7 +87,24 @@ spec:
                     GROUP BY window_start, window_end, source
                 )
             where INSTR(source, 'com.industry-fusion.ngsild-updates') IS NOT NULL;
-
+        - |-
+            /* Forwards ngsild-updates from cloudevent table
+            This is part of the core service */
+            insert into alerts_bulk
+            select IFNULL(JSON_VALUE(data, '$.resource'), 'null') as resource,
+                IFNULL(JSON_VALUE(data, '$.event'), 'null') as event,
+                IFNULL(JSON_VALUE(data, '$.environment'), 'null') as environment,
+                ARRAY [IFNULL(JSON_VALUE(data, '$.service[0]'), 'null')] as service,
+                IFNULL(JSON_VALUE(data, '$.severity'), 'null') as severity,
+                IFNULL(JSON_VALUE(data, '$.customer'), 'null') as customer,
+                IFNULL(JSON_VALUE(data, '$.text'), 'null') as text
+            from (
+                    select last_value(data) as data, source
+                    from TABLE(
+                    TUMBLE(TABLE cloud_events_filter, DESCRIPTOR(`timestamp`), INTERVAL '0.001' SECOND))
+                    GROUP BY window_start, window_end, source
+                )
+                where INSTR(source, 'com.industry-fusion.alerts') IS NOT NULL;
     tables:
         - alerts
         - alerts-filter
