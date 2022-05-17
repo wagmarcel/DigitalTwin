@@ -71,24 +71,27 @@ spec:
                   GROUP BY A.entityId, A.index, A.name, window_start, window_end) as B
               GROUP BY window_start, window_end, entityId, name
           ) GROUP BY window_start, window_end, id;
+
         - |-
             /* Forwards ngsild-updates from cloudevent table
             This is part of the core service */
             insert into ngsild_updates
-            select JSON_VALUE(data, '$.op') as op,
-                CAST(JSON_VALUE(data, '$.overwriteOrReplace') as BOOLEAN) as overwriteOrReplace ,
-                CAST(JSON_VALUE(data, '$.noForward') as BOOLEAN) as noForward ,
-                JSON_VALUE(data, '$.entities') as entities
+            select IFNULL(JSON_VALUE(data, '$.op'), 'null') as op,
+                IF(JSON_VALUE(data, '$.overwriteOrReplace') IS NULL, false, CAST(JSON_VALUE(data, '$.overwriteOrReplace') as BOOLEAN)) as overwriteOrReplace,
+                IF(JSON_VALUE(data, '$.noForward') IS NULL, false, CAST(JSON_VALUE(data, '$.noForward') as BOOLEAN)) as noForward,
+                IFNULL(JSON_VALUE(data, '$.entities'), 'null') as entities
             from (
                     select last_value(data) as data, source
                     from TABLE(
-                    TUMBLE(TABLE cloud_events_filter, DESCRIPTOR(`timestamp`), INTERVAL {{.Values.flink.cloudEventsUpdateWindow|squote}} SECOND))
+                    TUMBLE(TABLE cloud_events_filter, DESCRIPTOR(`timestamp`), INTERVAL '0.001' SECOND))
                     GROUP BY window_start, window_end, source
                 )
-            where INSTR(source, 'com.industry-fusion.ngsild-updates') IS NOT NULL and data IS NOT NULL;
+            where INSTR(source, 'com.industry-fusion.ngsild-updates') IS NOT NULL;
+
     tables:
         - alerts
         - alerts-filter
+        - alerts-bulk
         - attributes
         - ngsild-updates
         - cloud-events-filter

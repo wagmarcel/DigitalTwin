@@ -127,25 +127,27 @@ spec:
             /* validate property wasteClass of filter-cartridge object
             part of shacl validator */
             INSERT INTO alerts_bulk
-            SELECT idx AS resource,
+            SELECT idx AS resource, 
                 'Data validation of wasteClass' AS event,
                 'Development' AS environment,
                 ARRAY ['SHACL Validator'] AS service,
                 CASE WHEN typ IS NOT NULL AND (val is NULL OR nodeType <> '@id'
                     OR (val <> 'https://industry-fusion.com/types/v0.9/WC0' AND
                         val <> 'https://industry-fusion.com/types/v0.9/WC1' AND
-                        val <> 'https://industry-fusion.com/types/v0.9/WC2'))
+                        val <> 'https://industry-fusion.com/types/v0.9/WC2' AND
+                        val <> 'https://industry-fusion.com/types/v0.9/WC3'))
                     THEN 'warning'
                     ELSE 'ok' END AS severity,
                 'customer'  customer,
                 CASE WHEN typ IS NOT NULL AND (val is NULL OR nodeType <> '@id'
                     OR (val <> 'https://industry-fusion.com/types/v0.9/WC0' AND
                         val <> 'https://industry-fusion.com/types/v0.9/WC1' AND
-                        val <> 'https://industry-fusion.com/types/v0.9/WC2'))
+                        val <> 'https://industry-fusion.com/types/v0.9/WC2' AND
+                        val <> 'https://industry-fusion.com/types/v0.9/WC3'))
                     THEN 'Model validation for relationship https://industry-fusion.com/types/v0.9/state failed for ' || idx || '. Invalid value ' || IFNULL(val, 'NULL')
                     ELSE 'All ok' END as `text`
             FROM (
-                SELECT A.id as idx, A.`type` as typ, B.`https://uri.etsi.org/ngsi-ld/hasValue` as val, B.nodeType as nodeType FROM filter_cartridge_view AS A
+                SELECT A.id as idx, A.`type` as typ, B.`https://uri.etsi.org/ngsi-ld/hasValue` as val, B.nodeType as nodeType FROM filter_cartridge_view AS A 
                     LEFT JOIN attributes_view AS B ON A.`https://industry-fusion.com/types/v0.9/wasteClass` = B.id
             );
         - |-
@@ -239,7 +241,7 @@ spec:
                     '{ "op": "update", "overwriteOrReplace": "true", "entities": "[{ \"@context\": \"https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld\", \"https://industry-fusion.com/types/v0.9/usedUntil\": {\"type\": \"Property\", \"value\": \"' 
                     || CAST(current_timestamp AS STRING) || '\"}, \"id\": \"'
                 || filter_cartridge_id || '\"}]"}'
-                ELSE NULL END as data
+                ELSE '{}' END as data
             from
             (SELECT A.id as cutter_id,
                 F.id as filter_cartridge_id,    
@@ -264,7 +266,7 @@ spec:
                     '{ "op": "update", "overwriteOrReplace": "false", "entities": "[{ \"@context\": \"https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld\", \"https://industry-fusion.com/types/v0.9/usedFrom\": {\"type\": \"Property\", \"value\": \"' 
                     || CAST(current_timestamp AS STRING) || '\"}, \"id\": \"'
                 || filter_cartridge_id || '\"}]"}'
-                ELSE NULL END as data
+                ELSE '{}' END as data
             from
             (SELECT A.id as cutter_id,
                 F.id as filter_cartridge_id,    
@@ -292,7 +294,7 @@ spec:
                     '{ "op": "update", "overwriteOrReplace": "true", "entities": "[{ \"@context\": \"https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld\", \"https://industry-fusion.com/types/v0.9/wasteClass\": {\"type\": \"Property\", \"value\": {\"@id\": \"' 
                     || wcmap[mat2wcmap[material]] || '\"}}, \"id\": \"'
                 || filter_cartridge_id || '\"}]"}'
-                ELSE NULL END as data
+                ELSE '{}' END as data
             from
             (select *,
                 MAP['1.4301', 1, '1.4302', 1, '1.4303', 1, '1.4304', 1, '1.4305', 1, '1.3301', 2, '1.3302', 2, '1.3303', 2, '1.3304', 2, '1.3305', 2, '1.5301', 3, '1.5302', 3, '1.5303', 3, '1.5304', 3, '1.5305', 3] as mat2wcmap,
@@ -323,7 +325,7 @@ spec:
             /* Alert when wasteClass increases */
             insert into cloud_events
             select
-            cutter_id || '/com.industry-fusion.alerts.wasteClassChange' as source, '1.0' as specversion, 'com.industry-fusion.ngsild-updates.wasteClassChange' as `type`,
+            cutter_id || '/com.industry-fusion.alerts.wasteClassChange' as source, '1.0' as specversion, 'com.industry-fusion.alerts.wasteClassChange' as `type`,
                 CASE WHEN cutter_state = 'https://industry-fusion.com/types/v0.9/state_PREPARING'
                     AND mat2wcmap[material] > wctoordermap[wasteClass]
                     THEN 
