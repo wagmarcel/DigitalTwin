@@ -13,7 +13,11 @@ iff:operationSchedule rdfs:subClassOf iff:linkedEntity .
 iff:maintenanceInterval rdfs:subClassOf iff:linkedEntity .
 iff:state a rdfs:class .
 iff:state_OFF a iff:state .
-iff:state_ON a iff:state  .
+iff:state_ON a iff:state .
+iff:state_PREPARING a iff:state .
+iff:state_PROCESSING a iff:state .
+iff:state_CLEARING a iff:state .
+iff:state_COOLINGDOWN a iff:state .
 iff:state_ON rdfs:label "ON" .
 iff:state_OFF rdfs:label "OFF" .
 iff:WC0 rdfs:subClassOf iff:wasteClass .
