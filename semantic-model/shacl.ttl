@@ -13,12 +13,14 @@ iff:CutterShape
     sh:targetClass iff:cutter ;
     sh:property [
         sh:path <https://industry-fusion.com/types/v0.9/state> ;
+        sh:order 1 ;
         sh:nodeKind sh:BlankNode;
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:property [
             sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
-            sh:nodeKind sh:Literal;
+            sh:nodeKind sh:IRI;
+            sh:class iff:machineState;
             sh:minCount 1 ;
             sh:maxCount 1 ;
         ] ;
@@ -26,11 +28,11 @@ iff:CutterShape
             sh:path rdf:type ;
             sh:hasValue <https://uri.etsi.org/ngsi-ld/Property> ;
             sh:minCount 1 ;
-            sh:maxCount 1 ;
         ] ;
     ] ;
     sh:property [
         sh:path <https://industry-fusion.com/types/v0.9/hasFilter> ;
+        sh:order 2 ;
         sh:nodeKind sh:BlankNode;
         sh:minCount 1 ;
         sh:maxCount 1 ;
@@ -44,11 +46,11 @@ iff:CutterShape
             sh:path rdf:type ;
             sh:hasValue <https://uri.etsi.org/ngsi-ld/Relationship> ;
             sh:minCount 1 ;
-            sh:maxCount 1 ;
         ] ;
     ] ;
     sh:property [
         sh:path <https://industry-fusion.com/types/v0.9/hasWorkpiece> ;
+        sh:order 3 ;
         sh:nodeKind sh:BlankNode;
         sh:minCount 0 ;
         sh:maxCount 1 ;
@@ -62,7 +64,6 @@ iff:CutterShape
             sh:path rdf:type ;
             sh:hasValue <https://uri.etsi.org/ngsi-ld/Relationship> ;
             sh:minCount 1 ;
-            sh:maxCount 1 ;
         ] ;
     ] ;
     .
@@ -73,6 +74,7 @@ iff:WorkpieceShape
     sh:targetClass iff:workpiece ;
     sh:property [
         sh:path <https://industry-fusion.com/types/v0.9/material> ;
+        sh:order 1 ;
         sh:nodeKind sh:BlankNode;
         sh:minCount 1 ;
         sh:maxCount 1 ;
@@ -87,11 +89,11 @@ iff:WorkpieceShape
             sh:path rdf:type ;
             sh:hasValue <https://uri.etsi.org/ngsi-ld/Property> ;
             sh:minCount 1 ;
-            sh:maxCount 1 ;
         ] ;
     ] ;
     sh:property [
         sh:path <https://schema.org/depth> ;
+        sh:order 2 ;
         sh:nodeKind sh:BlankNode;
         sh:minCount 1 ;
         sh:maxCount 1 ;
@@ -104,7 +106,6 @@ iff:WorkpieceShape
             sh:path rdf:type ;
             sh:hasValue <https://uri.etsi.org/ngsi-ld/Property> ;
             sh:minCount 1 ;
-            sh:maxCount 1 ;
         ] ;
     ] ;
     .
@@ -114,13 +115,16 @@ iff:FilterShape
     a sh:NodeShape ;
     sh:targetClass iff:filter ;
     sh:property [
-        sh:ignoredProperties (rdf:type) ;
         sh:path <https://industry-fusion.com/types/v0.9/state> ;
+        sh:order 1 ;
         sh:nodeKind sh:BlankNode;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
         sh:property [
 
             sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
-            sh:nodeKind sh:Literal;
+            sh:nodeKind sh:IRI;
+            sh:class iff:machineState;
         ] ;
         sh:property [
             sh:path rdf:type ;
@@ -128,8 +132,8 @@ iff:FilterShape
         ] ;
     ] ;
     sh:property [
-        sh:ignoredProperties (rdf:type) ;
         sh:path <https://industry-fusion.com/types/v0.9/strength> ;
+        sh:order 2 ;
         sh:nodeKind sh:BlankNode;
         sh:property [
 
@@ -143,17 +147,18 @@ iff:FilterShape
     ] ;
     sh:property [
         sh:path <https://industry-fusion.com/types/v0.9/hasCartridge> ;
+        sh:order 3 ;
         sh:nodeKind sh:BlankNode;
+        sh:minCount 1 ;
+
         sh:property [
             sh:path <https://uri.etsi.org/ngsi-ld/hasObject> ;
             sh:class iff:filterCartridge ;
-            sh:maxCount 1 ;
         ] ;
         sh:property [
             sh:path rdf:type ;
             sh:hasValue <https://uri.etsi.org/ngsi-ld/Relationship> ;
             sh:minCount 1 ;
-            sh:maxCount 1 ;
         ] ;
     ] ;
     .
@@ -162,19 +167,27 @@ iff:FilterShape
 
 iff:StateValueShape
     a sh:NodeShape ;
-    sh:targetObjectsOf <https://industry-fusion.com/types/v0.9/state> ;
+    sh:targetClass iff:machine ;
     sh:sparql [
         
-        sh:message "State values are derived from state labels." ;
+        sh:message "State value {?value} are not a valid machineState for machine {$this} of type {?type}" ;
         sh:select """
         PREFIX iff: <https://industry-fusion.com/types/v0.9/>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        SELECT $this ?value 
+        SELECT $this ?value ?type
         where {
-            $this  <https://uri.etsi.org/ngsi-ld/hasValue> ?value .
+            ?this a iff:machine .
+            ?this  iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?value ] .
+            ?this a ?type .
+            OPTIONAL{?type rdfs:subClassOf ?basetype .}
+            OPTIONAL{?this a ?basetype .} 
+            ?x iff:stateValidFor ?basetype .
+            FILTER( ?type != <http://www.w3.org/2000/01/rdf-schema#Resource> )
+
             FILTER NOT EXISTS {
-                ?s rdfs:label ?value .
-                ?s a iff:state .
+
+                ?value iff:stateValidFor ?basetype .
+
             }
         }
         """ ;
@@ -195,7 +208,7 @@ SELECT $this ?v1 ?f ?v2
         $this  iff:state [<https://uri.etsi.org/ngsi-ld/hasValue> ?v1 ] .
         $this  iff:hasFilter [ <https://uri.etsi.org/ngsi-ld/hasObject> ?f ] .
         ?f  iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?v2 ] .
-        FILTER(?v1 = \"ON\" && ?v2 != \"ON\")
+        FILTER(?v1 = \"iff:state_PROCESSING\" && ?v2 != \"iff:state_ON\")
         
     }
         """ ;
@@ -218,7 +231,7 @@ SELECT $this ?v1 ?pc ?v2
         ?pc  rdf:type iff:cutter .
         ?pc iff:hasFilter [ <https://uri.etsi.org/ngsi-ld/hasObject> $this ] .
         ?pc  iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?v2 ] .
-        FILTER(?v1 = \"ON\" && ?v2 != \"ON\")
+        FILTER(?v1 = \"iff:state_ON\" && ?v2 != \"iff:state_ON\")
     }
         """ ;
     ] .
@@ -305,5 +318,5 @@ SELECT ?this ?value
 #        FILTER(?cutterstate = "OFF").
 #    }
 #        """ ;
-#    ] .
+#       ] .
 
