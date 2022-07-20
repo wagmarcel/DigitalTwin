@@ -28,10 +28,10 @@ iff:state_OFF rdfs:label "OFF" .
 iff:state_PREPARING rdfs:label "PREPARING" .
 iff:state_PROCESSING rdfs:label "PROCESSING" .
 iff:state_CLEARING rdfs:label "ON" .
-iff:WC0 rdfs:subClassOf iff:wasteClass .
-iff:WC1 rdfs:subClassOf iff:wasteClass .
-iff:WC2 rdfs:subClassOf iff:wasteClass .
-iff:WC3 rdfs:subClassOf iff:wasteClass .
+iff:WC0 a iff:WC .
+iff:WC1 a iff:WC .
+iff:WC2 a iff:WC .
+iff:WC3 a iff:WC .
 iff:WC3 iff:moreExpensiveThan iff:WC2 .
 iff:WC2 iff:moreExpensiveThan iff:WC1 .
 iff:WC1 iff:moreExpensiveThan iff:WC0 .
