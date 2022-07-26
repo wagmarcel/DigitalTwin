@@ -99,6 +99,7 @@ iff:WorkpieceShape
         sh:maxCount 1 ;
         sh:property [
             sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+            sh:nodeKind sh:Literal ;
             sh:minCount 1 ;
             sh:maxCount 1 ;
         ] ;
