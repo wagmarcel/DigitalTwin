@@ -235,7 +235,7 @@ class TestUpdates(aiounittest.AsyncTestCase):
         self.assertEqual(response, {'deployed': False, 'jobCreated': False})
 
     # pylint: disable=no-self-use, unused-argument, no-self-argument
-    def requestsget(url):
+    def requestsget(url, timeout):
         """mock get jobs"""
         result = Bunch()
         result.json = getjsn
@@ -269,7 +269,7 @@ class TestUpdates(aiounittest.AsyncTestCase):
         self.assertEqual(patchx["status"].get("state"), "RUNNING")
 
     # pylint: disable=no-self-use, no-self-argument
-    def requestsget_fail(url):
+    def requestsget_fail(url, timeout):
         """mock get jobs fail"""
         result = Bunch()
         result.json = getjsn_fail
@@ -303,7 +303,7 @@ class TestUpdates(aiounittest.AsyncTestCase):
         self.assertEqual(patchx["status"].get("state"), None)
 
     # pylint: disable=no-self-argument
-    def requestsget_good(url):
+    def requestsget_good(url, timeout):
         """mock get jobs"""
         result = Bunch()
         try:
@@ -410,7 +410,7 @@ class TestDelete(TestCase):
 class TestHelpers(TestCase):
     """Unit test class for helpers"""
     # pylint: disable=no-self-argument
-    def requestget(url):
+    def requestget(url, timeout):
         """mock get content"""
         assert url == 'url'
         result = Bunch()
@@ -444,7 +444,7 @@ class TestHelpers(TestCase):
         self.assertRegex(response, r"/tmp/[a-f0-9-]*\.jar")
 
     # pylint: disable=no-self-use, unused-argument, no-self-argument
-    def requestpost(url, files):
+    def requestpost(url, files, timeout):
         """mock successful post of job"""
         response = Bunch()
         response.status_code = 200
@@ -530,7 +530,7 @@ class TestHelpers(TestCase):
         THAT.assertDictEqual(tokens, {"user1": "token1", "user2": "token2"})
 
     # pylint: disable=no-self-use, unused-argument, no-self-argument
-    def request_post_run(url, json):
+    def request_post_run(url, json, timeout):
         """mock post to create job successfully"""
         def json_run():
             """mock json result of post"""
@@ -570,7 +570,7 @@ class TestHelpers(TestCase):
         self.assertEqual(response, 'jobid')
 
     # pylint: disable=no-self-use, no-self-argument
-    def request_get_overview(url):
+    def request_get_overview(url, timeout):
         """mock get overview path of flink"""
         def json_get():
             """mock return of 5 worker slots"""

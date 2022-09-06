@@ -1,5 +1,5 @@
-FROM python:3.8
-RUN pip install kubernetes kopf==1.32.1 oisp pycodestyle pylint coverage aiounittest
+FROM python:3.10
+RUN pip install kubernetes kopf==1.32.1 oisp pycodestyle pylint coverage aiounittest requests
 ADD test/requirements.txt /opt/test/
 RUN cd /opt/test && pip install -r requirements.txt
 ADD *.py /opt/
@@ -14,8 +14,8 @@ PYTHONPATH=/opt coverage run -a  /opt/test/test_flink_util.py && \
 PYTHONPATH=/opt coverage run -a  /opt/test/test_util.py
 RUN coverage report --omit "*/test*" -m --fail-under 80
 
-FROM python:3.8
-RUN pip install kubernetes kopf==1.32.1 oisp
+FROM python:3.10
+RUN pip install kubernetes kopf==1.32.1 oisp requests
 ADD *.py /opt/
 WORKDIR /opt
 RUN groupadd -r bsoperator && useradd -r -g bsoperator bsoperator
