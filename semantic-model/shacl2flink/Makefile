@@ -28,4 +28,4 @@ setup-dev: requirements-dev.txt
 
 test-sqlite:
 	@echo Test with sqlite
-	$(SQLITE3) $(SQLITEDB) < $(sqlite_scripts) 
+	cat $(sqlite_scripts) | $(SQLITE3) $(SQLITEDB) 
