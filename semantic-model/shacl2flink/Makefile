@@ -1,6 +1,6 @@
 SHACL:= ../kms/shacl.ttl
 KNOWLEDGE := ../kms/knowledge.ttl
-MODEL := ../kms/example-model.ttl
+MODEL := ../kms/model-example.jsonld
 PYTHON := python3
 LINTER := flake8
 PIP := pip
@@ -8,11 +8,14 @@ OUTPUTDIR := output
 SQLITEDB := $(OUTPUTDIR)/database.db
 SQLITE3 := sqlite3
 
-sqlite_scripts = $(wildcard $(OUTPUTDIR)/*.sqlite)
+sqlite_files = $(OUTPUTDIR)/core.sqlite $(OUTPUTDIR)/ngsild.sqlite $(OUTPUTDIR)/rdf.sqlite $(OUTPUTDIR)/ngsild-models.sqlite
 
 build: $(SHACL) $(KNOWLEDGE $(MODEL)
 	@echo Build tables
 	$(PYTHON) create_rdf_table.py $(KNOWLEDGE)
+	$(PYTHON) create_core_tables.py
+	$(PYTHON) create_ngsild_tables.py $(SHACL)
+	$(PYTHON) create_ngsild_models.py $(SHACL) $(KNOWLEDGE) $(MODEL)
 
 test: requirements-dev.txt
 	$(PYTHON) -m pytest --cov . --cov-fail-under=80
@@ -28,4 +31,4 @@ setup-dev: requirements-dev.txt
 
 test-sqlite:
 	@echo Test with sqlite
-	cat $(sqlite_scripts) | $(SQLITE3) $(SQLITEDB) 
+	cat $(sqlite_files) | $(SQLITE3) $(SQLITEDB) 
