@@ -1,7 +1,5 @@
-import os.path
 from unittest.mock import patch, call
 import create_core_tables
-import builtins
 
 
 @patch('create_rdf_table.ruamel.yaml')
@@ -23,9 +21,8 @@ def test_main(mock_utils, mock_configs, mock_create_table, mock_rdflib,
     mock_utils.create_yaml_view.return_value = "yamlview"
     mock_yaml.dump.return_value = "dump"
 
-
     with patch('builtins.open') as mocked_open:
         create_core_tables.main()
 
-        mocked_open.assert_has_calls([call("output/core.yaml", "w"), 
+        mocked_open.assert_has_calls([call("output/core.yaml", "w"),
                                       call("output/core.sqlite", 'w')])
