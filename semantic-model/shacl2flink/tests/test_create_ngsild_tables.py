@@ -3,12 +3,12 @@ import create_ngsild_tables
 import os
 
 
-@patch('create_rdf_table.ruamel.yaml')
-@patch('create_rdf_table.owlrl')
-@patch('create_rdf_table.rdflib')
-@patch('create_rdf_table.create_table')
-@patch('create_rdf_table.configs')
-@patch('create_rdf_table.utils')
+@patch('create_ngsild_tables.ruamel.yaml')
+@patch('create_ngsild_tables.owlrl')
+@patch('create_ngsild_tables.rdflib')
+@patch('create_ngsild_tables.create_table')
+@patch('create_ngsild_tables.configs')
+@patch('create_ngsild_tables.utils')
 def test_main(mock_utils, mock_configs, mock_create_table, mock_rdflib,
               mock_owlrl, mock_yaml, tmp_path):
     mock_configs.kafka_topic_ngsi_prefix = 'ngsild_prefix'
