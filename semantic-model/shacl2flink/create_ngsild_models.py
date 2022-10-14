@@ -7,11 +7,8 @@ import re
 import datetime
 import argparse
 from urllib.parse import urlparse
-import ruamel.yaml
 import lib.utils as utils
 import lib.configs as configs
-from ruamel.yaml.scalarstring import (DoubleQuotedScalarString as dq, 
-                                      SingleQuotedScalarString as sq)
 
 
 def parse_args(args=sys.argv[1:]):
@@ -99,10 +96,8 @@ def nullify(field):
 
 
 def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
-    yaml = ruamel.yaml.YAML()
     utils.create_output_folder(output_folder)
-    with open("output/ngsild-models.sqlite", "w") as sqlitef:
-        outfile = sqlitef
+    with open(os.path.join(output_folder, "ngsild-models.sqlite"), "w") as sqlitef:
         g = Graph()
         g.parse(shaclfile)
         model = Graph()
@@ -123,7 +118,7 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
         qres = model.query(attributes_query)
         entity_count = {}
         first = True
-        print(f'INSERT INTO `{configs.attributes_table_name}` VALUES', file = outfile)
+        print(f'INSERT INTO `{configs.attributes_table_name}` VALUES', file = sqlitef)
         for entityId, name, type, nodeType, valueType, hasValue, hasObject in qres:
             id = entityId.toPython() + "\\\\" + name.toPython()
             if id not in entity_count:
@@ -139,11 +134,11 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
             if first:
                 first = False
             else:
-                print(',', file = outfile)
+                print(',', file = sqlitef)
             print("('" + id + "', '" + entityId.toPython() + "', '" + name.toPython() +
                 "', '" + nodeType + "', " + valueType + ", " + str(entity_count[id]) + 
-                ", '" + type.toPython() +  "'," + hasValue  + ", " + hasObject + ", " + 'CURRENT_TIMESTAMP' +")", end = '', file = outfile)
-        print(";", file = outfile)
+                ", '" + type.toPython() +  "'," + hasValue  + ", " + hasObject + ", " + 'CURRENT_TIMESTAMP' +")", end = '', file = sqlitef)
+        print(";", file = sqlitef)
 
         # Create ngsild tables by sparql
         qres = model.query(ngsild_tables_query)
@@ -172,19 +167,19 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
 
         for id, table in tables.items():
             type = re.search('^.*\\\\(.*)$', id)[1]
-            print(f'INSERT INTO `{utils.strip_class(URIRef(type))}` VALUES', file = outfile)
+            print(f'INSERT INTO `{utils.strip_class(URIRef(type))}` VALUES', file = sqlitef)
             first = True
-            print("(", end = '', file = outfile)
+            print("(", end = '', file = sqlitef)
             for field in table:
                 if first:
                     first = False
                 else:
-                    print(", ", end = '', file = outfile)
+                    print(", ", end = '', file = sqlitef)
                 if isinstance(field, str) and not field == 'CURRENT_TIMESTAMP':
-                    print("'" + field + "'", end = '', file = outfile)
+                    print("'" + field + "'", end = '', file = sqlitef)
                 else:
-                    print(field, end = '', file = outfile)
-            print(");", file = outfile)
+                    print(field, end = '', file = sqlitef)
+            print(");", file = sqlitef)
 
 
 if __name__ == '__main__':

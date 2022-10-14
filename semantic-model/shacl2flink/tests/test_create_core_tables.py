@@ -2,14 +2,10 @@ from unittest.mock import patch, call
 import create_core_tables
 
 
-@patch('create_rdf_table.ruamel.yaml')
-@patch('create_rdf_table.owlrl')
-@patch('create_rdf_table.rdflib')
-@patch('create_rdf_table.create_table')
-@patch('create_rdf_table.configs')
-@patch('create_rdf_table.utils')
-def test_main(mock_utils, mock_configs, mock_create_table, mock_rdflib,
-              mock_owlrl, mock_yaml):
+@patch('create_core_tables.ruamel.yaml')
+@patch('create_core_tables.configs')
+@patch('create_core_tables.utils')
+def test_main(mock_utils, mock_configs, mock_yaml):
     mock_configs.kafka_topic_bulk_alerts = 'bulk_alerts'
     mock_configs.kafa_topic_listen_alerts = 'listen_alerts'
     mock_configs.kafka_topic_ngsild_updates = 'ngsild_updates'
