@@ -37,8 +37,6 @@ def parse_args(args=sys.argv[1:]):
 def main(shaclfile, output_folder='output'):
     yaml = ruamel.yaml.YAML()
     utils.create_output_folder(output_folder)
-    f = open("output/ngsild.yaml", "w")
-    sqlitef = open("output/ngsild.sqlite", "w")
     g = Graph()
     g.parse(shaclfile)
     sh = Namespace("http://www.w3.org/ns/shacl#")
