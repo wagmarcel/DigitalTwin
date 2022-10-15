@@ -67,5 +67,4 @@ def test_main(mock_utils, mock_configs, mock_graph, mock_nullify, tmp_path):
         )]])
     
     create_ngsild_models.main('kms/shacl.ttl', 'kms/knowledge.ttl', 'kms/model.jsonld', tmp_path)
-    print(os.listdir(tmp_path))
     assert os.path.exists(os.path.join(tmp_path, 'ngsild-models.sqlite')) is True
