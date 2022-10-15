@@ -1,6 +1,5 @@
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 import os
-from rdflib import Graph
 
 import create_ngsild_models
 
@@ -44,27 +43,12 @@ def test_main(mock_utils, mock_configs, mock_graph, mock_nullify, tmp_path):
     hasValue.toPython.return_value = 'hasValue'
     hasObject = MagicMock()
     hasObject.toPython.return_value = 'hasObject'
-    g.query = MagicMock(side_effect = [
-        [(entityId,
-        name,
-        type,
-        nodeType,
-        valueType,
-        
-        )],
-        [(entityId,
-        name,
-        type,
-        nodeType,
-        valueType,
-        hasValue,
-        hasObject
-        )],
-        [(entityId,
-        name,
-        type,
-        nodeType
-        )]])
-    
-    create_ngsild_models.main('kms/shacl.ttl', 'kms/knowledge.ttl', 'kms/model.jsonld', tmp_path)
-    assert os.path.exists(os.path.join(tmp_path, 'ngsild-models.sqlite')) is True
+    g.query = MagicMock(side_effect=[
+        [(entityId, name, type, nodeType, valueType)],
+        [(entityId, name, type, nodeType, valueType, hasValue, hasObject)],
+        [(entityId, name, type, nodeType)]])
+
+    create_ngsild_models.main('kms/shacl.ttl', 'kms/knowledge.ttl',
+                              'kms/model.jsonld', tmp_path)
+    assert os.path.exists(os.path.join(tmp_path, 'ngsild-models.sqlite'))\
+        is True

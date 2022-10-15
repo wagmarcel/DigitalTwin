@@ -1,4 +1,4 @@
-from unittest.mock import patch, call
+from unittest.mock import patch
 from rdflib import Namespace
 from rdflib.namespace import RDF
 import create_ngsild_tables
@@ -6,6 +6,7 @@ import os
 
 ex = Namespace("http://example.com#")
 sh = Namespace("http://www.w3.org/ns/shacl#")
+
 
 @patch('create_ngsild_tables.ruamel.yaml')
 @patch('create_ngsild_tables.Graph')
@@ -24,7 +25,7 @@ def test_main(mock_utils, mock_configs, mock_graph,
     g.__contains__.return_value = True
     g.triples.return_value = [(ex.test, RDF.type, sh.NodeShape)]
     g.value.return_value = [(ex.test, sh.targetClass, ex.test2)]
-    g.return_value =[(ex.test, sh.property, None)]
+    g.return_value = [(ex.test, sh.property, None)]
 
     create_ngsild_tables.main('kms/shacl.ttl', tmp_path)
 
