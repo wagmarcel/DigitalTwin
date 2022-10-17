@@ -7,8 +7,8 @@ ingressType: traefik # or nginx
 keycloak:
   adminName: admin
   externalAuthService:   # put here the *external* keycloak name, i.e. through ingress 
-    protocol: "http:"
-    domainname: keycloak.local
+    protocol: "https:"
+    domainname: test.streammyiot.com
     path: /auth
   internalAuthService: 
     name: keycloak-discovery
@@ -19,8 +19,8 @@ keycloak:
     realm: iff
     client: alerta-ui
     redirectUris:
-    - http://alerta.local/*
-    - https://alerta.local/*
+    - http://test.streammyiot.com/alerta/*
+    - https://test.streammyiot.com/alerta/*
     defaultClientScopes:
     - openid
     - profile
@@ -47,7 +47,7 @@ db:
 
 scorpio:
   tag: 3.0.0-SNAPSHOT
-  externalHostname: ngsild.local
+  externalHostname: test.streammyiot.com
   externalProtocol: "http:"
   internalHostname: gateway
   internalPort: 9090
