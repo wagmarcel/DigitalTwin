@@ -8,6 +8,7 @@ releases:
 - name: postgres
   labels:
     order: first
+    app: postgres
   chart: ./charts/postgres
   namespace: {{ .Values.namespace }}
   values:
