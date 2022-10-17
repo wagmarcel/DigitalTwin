@@ -27,6 +27,6 @@ spec:
             name: {{ .Values.keycloak.internalAuthService.name }}
             port:
               number: {{ .Values.keycloak.internalAuthService.port }}
-        path: /
+        path: /dt/keycloak
         pathType: ImplementationSpecific
 {{ end }}

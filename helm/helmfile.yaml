@@ -39,6 +39,7 @@ releases:
   namespace: {{ .Values.namespace }}
   values:
   - mainVersion: {{ .Values.mainVersion }}
+  - default.yaml
 - name: keycloak
   labels:
     order: first
