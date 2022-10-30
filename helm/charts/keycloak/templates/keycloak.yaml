@@ -20,5 +20,5 @@ spec:
   keycloakDeploymentSpec:
     experimental:
       env:
-      - name: DB_ADDRRR
-        value: {{ .Values.keycloak_db.stringData.POSTGRES_EXTERNAL_ADDRESS }}
+      #- name: DB_ADDRRR
+      #  value: {{ .Values.keycloak_db.stringData.POSTGRES_EXTERNAL_ADDRESS }}

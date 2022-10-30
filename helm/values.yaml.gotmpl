@@ -1,19 +1,21 @@
-mainVersion: 0.1
-mainRepo: ibn40
-namespace: iff
-pullSecretCredentials: regcred
+mainVersion: {{ .StateValues.mainVersion }}
+mainRepo: {{ .StateValues.mainRepo }}
+namespace: {{ .StateValues.namespace }}
+pullSecretCredentials: {{ .StateValues.pullSecretCredentials }}
 
+ingressType: {{ .StateValues.ingressType }}
 dbpassword: {{ .StateValues.dbpassword }}
 clusterSvcName: {{ .StateValues.db.teamId -}}-{{- .StateValues.db.clusterSvcPostfix }}
+clusterExternalSvcName: {{ .StateValues.db.teamId -}}-{{- .StateValues.db.clusterSvcPostfix }}.{{ .StateValues.namespace }}.svc.cluster.local
 
 db:
   teamId: {{ .StateValues.db.teamId }}
   clusterSvcPostfix: {{ .StateValues.db.clusterSvcPostfix }}
-  svcPort: 5432
+  svcPort: {{ .StateValues.db.svcPort }}
   pvSize: {{ .StateValues.db.pvSize }}
   podInstances: {{ .StateValues.db.podInstances }}
   alertaDb: monitoring
-  dbUser: ngb
+  dbUser: {{ .StateValues.db.dbUser }}
   scorpioDb: ngb
   secretPostfix: credentials.postgresql.acid.zalan.do
 
@@ -115,3 +117,42 @@ kafkaBridge:
     tokenRefreshInterval: 200
     listenTopic: "iff.ngsild-updates"
     listenTopicRetention: 86400000
+
+keycloak:
+  adminName: admin
+  externalAuthService: # put here the *external* keycloak name, i.e. through ingress
+     protocol: {{ .StateValues.keycloak.externalAuthService.protocol | quote }}
+     domainname: {{ .StateValues.keycloak.externalAuthService.domainname | quote }}
+     path: {{ .StateValues.keycloak.externalAuthService.path | quote }}
+  internalAuthService: 
+    name: keycloak-discovery
+    port: 8080
+    path: /auth
+  alerta:
+    clientSecret: keycloak-client-secret-alerta-ui
+    realm: iff
+    client: alerta-ui
+    redirectUris:
+    {{- range $elem := .StateValues.keycloak.alerta.redirectUris }}
+    - {{ $elem }}
+    {{- end }}
+    defaultClientScopes:
+    - openid
+    - profile
+    - email
+    - roles
+  scorpio:
+    realm: iff
+    client: scorpio
+  ngsildUpdates:
+    realm: iff
+    client: ngsild-updates
+    serviceRole: scorpio.Factory-Admin
+keycloak_db:
+  stringData:
+    POSTGRES_DATABASE: keycloakdb
+    POSTGRES_EXTERNAL_ADDRESS: {{ .StateValues.db.teamId -}}-{{- .StateValues.db.clusterSvcPostfix }}
+    POSTGRES_ADDR: {{ .StateValues.db.teamId -}}-{{- .StateValues.db.clusterSvcPostfix }}
+    POSTGRES_EXTERNAL_PORT: {{ .StateValues.db.svcPort | quote }}
+    POSTGRES_SUPERUSER: "true"
+    POSTGRES_USERNAME: {{ .StateValues.db.dbUser }}

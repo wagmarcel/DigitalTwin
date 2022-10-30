@@ -22,6 +22,7 @@ releases:
 - name: kafka
   labels:
     order: second
+    app: kafka
   chart: ./charts/kafka
   namespace: {{ .Values.namespace }}
   needs:
@@ -31,6 +32,7 @@ releases:
 - name: cert-manager
   labels:
     order: first
+    app: cert-manager
   chart: ./charts/cert-manager
   namespace: {{ .Values.namespace }}
   values:
@@ -38,6 +40,7 @@ releases:
 - name: keycloak-extensions-server
   labels:
     order: first
+    app: keycloak-extensions-server
   chart: ./charts/keycloak-extensions-server
   namespace: {{ .Values.namespace }}
   values:
@@ -45,6 +48,7 @@ releases:
 - name: keycloak
   labels:
     order: first
+    app: keycloak
   chart: ./charts/keycloak
   namespace: {{ .Values.namespace }}
   needs:
