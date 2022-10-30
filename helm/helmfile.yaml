@@ -59,6 +59,7 @@ releases:
 - name: alerta
   labels:
     order: second
+    app: alerta
   chart: ./charts/alerta
   namespace: {{ .Values.namespace }}
   values:
