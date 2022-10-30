@@ -80,6 +80,8 @@ releases:
   - keycloak
   - kafka
 - name: flink
+  labels:
+    app: flink
   chart: ./charts/flink
   namespace: {{ .Values.namespace }}
   values:
