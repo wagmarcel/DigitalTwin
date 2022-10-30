@@ -70,6 +70,7 @@ releases:
 - name: scorpio
   labels:
     order: second
+    app: scorpio
   chart: ./charts/scorpio
   namespace: {{ .Values.namespace }}
   values:
