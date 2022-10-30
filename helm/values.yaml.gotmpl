@@ -7,6 +7,8 @@ ingressType: {{ .StateValues.ingressType }}
 dbpassword: {{ .StateValues.dbpassword }}
 clusterSvcName: {{ .StateValues.db.teamId -}}-{{- .StateValues.db.clusterSvcPostfix }}
 clusterExternalSvcName: {{ .StateValues.db.teamId -}}-{{- .StateValues.db.clusterSvcPostfix }}.{{ .StateValues.namespace }}.svc.cluster.local
+minioAdminSecretKey: {{ .StateValues.minioAdminSecretKey }}
+minioUserSecretKey: {{ .StateValues.minioUserSecretKey }}
 
 db:
   teamId: {{ .StateValues.db.teamId }}

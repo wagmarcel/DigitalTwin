@@ -88,6 +88,7 @@ releases:
 - name: minio
   labels:
     order: first
+    app: minio
   chart: ./charts/minio
   namespace: {{ .Values.namespace }}
   values:
