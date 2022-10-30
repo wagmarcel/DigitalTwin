@@ -98,6 +98,8 @@ releases:
   values:
   - values.yaml.gotmpl
 - name: kafka-bridges
+  labels:
+    app: kafka-bridges
   chart: ./charts/kafka-bridges
   namespace: {{ .Values.namespace }}
   values:
@@ -107,6 +109,8 @@ releases:
   - keycloak
   - alerta
 - name: sql-rules
+  labels:
+    app: sql-rules
   chart: ./charts/sql-rules
   namespace: {{ .Values.namespace }}
   values:
