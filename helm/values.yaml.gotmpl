@@ -78,10 +78,13 @@ minio:
   mcImage: minio/mc:RELEASE.2022-02-07T09-25-34Z
 
 alerta:
-  alertaAdminUser: admin
+  adminUser: admin
   internalService: alerta
   internalPort: 8080
   internalProtocol: "http:"
+  # apiKey: {{ .StateValues.alertaApiKey }}
+  adminPassword: {{ .StateValues.alertaAdminPassword }}
+  adminKey: {{ .StateValues.alertaAdminKey }}
 
 kafka:
   name: my-cluster
