@@ -3,7 +3,7 @@ ingressType: traefik # traefik or nginx
 keycloak:
   adminName: admin
   externalAuthService:   # put here the *external* keycloak name, i.e. through ingress 
-    protocol: "https:"
+    protocol: "http:"
     domainname: keycloak.local
     path: /auth
   alerta:

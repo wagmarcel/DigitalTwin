@@ -22,6 +22,6 @@ spec:
             name: {{ .Values.ingress.serviceName }}
             port:
               number: {{ .Values.service.port }}
-        path: /alerta
+        path: /
         pathType: ImplementationSpecific
 {{ end }}

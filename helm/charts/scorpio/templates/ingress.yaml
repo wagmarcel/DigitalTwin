@@ -21,5 +21,5 @@ spec:
             name: {{ .Values.scorpio.internalHostname }}
             port:
               number: {{ .Values.scorpio.internalPort }}
-        path: /scorpio
+        path: /
         pathType: ImplementationSpecific

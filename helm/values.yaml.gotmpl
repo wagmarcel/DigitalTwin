@@ -23,8 +23,8 @@ db:
 
 scorpio:
   tag: 3.0.0-SNAPSHOT
-  externalHostname: test.streammyiot.com
-  externalProtocol: "http:"
+  externalHostname: {{ .StateValues.scorpio.externalHostname }}
+  externalProtocol: {{ .StateValues.scorpio.externalProtocol | quote }}
   internalHostname: gateway
   internalPort: 9090
   internalProtocol: "http:"
@@ -126,6 +126,7 @@ kafkaBridge:
 
 keycloak:
   adminName: admin
+  adminPassword: {{ .StateValues.keycloakpassword }}
   externalAuthService: # put here the *external* keycloak name, i.e. through ingress
      protocol: {{ .StateValues.keycloak.externalAuthService.protocol | quote }}
      domainname: {{ .StateValues.keycloak.externalAuthService.domainname | quote }}
