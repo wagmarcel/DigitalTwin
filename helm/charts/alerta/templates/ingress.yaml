@@ -14,6 +14,8 @@ metadata:
     kubernetes.io/ingress.class: {{ .Values.ingressType | quote }}
     {{- if and (ne .Values.scorpio.externalPath "/") (eq .Values.ingressType "traefik") }}
     traefik.ingress.kubernetes.io/router.middlewares: iff-remove-path-alerta@kubernetescrd
+    {{- else }}
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
     {{- end }}
   namespace: {{ .Release.Namespace }}
 spec:
@@ -30,7 +32,11 @@ spec:
             name: {{ .Values.ingress.serviceName }}
             port:
               number: {{ .Values.service.port }}
+        {{- if (eq .Values.ingressType "nginx") }}
+        path: {{ .Values.alerta.externalPath}}(.*)
+        {{- else }}
         path: {{ .Values.alerta.externalPath}}
+        {{- end }}
         pathType: ImplementationSpecific
 {{ end }}
 ---
