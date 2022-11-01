@@ -1,22 +1,24 @@
-{{- if .Values.ingress.enabled }}
-apiVersion: {{ .Values.ingress.apiVersion}}
+---
+{{- if and (ne .Values.ingressType "traefik") (ne .Values.ingressType "nginx") }}
+{{- fail "ingressType must either be \"traefik\" or \"nginx\"" }}
+{{- end }}
+{{- if not (regexMatch "/$" .Values.keycloak.externalAuthService.pathPrefix) }}
+{{- fail "keycloak.externalAuthService.pathPrefix does not end with /" }}
+{{- end}}
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ .Values.ingress.name }}
+  name: keycloak-ingress
   annotations:
     kubernetes.io/ingress.class: {{ .Values.ingressType | quote }}
-#    ingress.kubernetes.io/force-ssl-redirect: "true"
-#    ingress.kubernetes.io/ssl-redirect: "true"
-#    {{ if eq .Values.ingressType "traefik" }}
-#    traefik.ingress.kubernetes.io/service.serversscheme: https
-#    {{- else }}
-#    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
-#    {{ end }}
+    {{- if and (ne .Values.keycloak.externalAuthService.pathPrefix "/") (eq .Values.ingressType "traefik") }}
+    traefik.ingress.kubernetes.io/router.middlewares: iff-remove-path-keycloak@kubernetescrd
+    {{- end }}
   namespace: {{ .Release.Namespace }}
 spec:
   tls:
   - hosts:
-    - {{ .Values.ingress.hostname }}
+    - {{ .Values.keycloak.externalAuthService.domainname }}
     secretName: {{ .Values.certmanager.secret }}
   rules:
   - host: {{ .Values.keycloak.externalAuthService.domainname }}
@@ -27,6 +29,17 @@ spec:
             name: {{ .Values.keycloak.internalAuthService.name }}
             port:
               number: {{ .Values.keycloak.internalAuthService.port }}
-        path: /
+        path: {{ .Values.keycloak.externalAuthService.pathPrefix }}
         pathType: ImplementationSpecific
-{{ end }}
+---
+---
+{{- if and (ne .Values.keycloak.externalAuthService.pathPrefix "/") (eq .Values.ingressType "traefik") }}
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: remove-path-keycloak
+spec:
+  replacePathRegex:
+    regex: ^{{ .Values.keycloak.externalAuthService.pathPrefix }}(.*)
+    replacement: /$1
+{{- end }}

@@ -8,7 +8,8 @@ keycloak:
   externalAuthService:   # put here the *external* keycloak name, i.e. through ingress 
     protocol: "https:"
     domainname: keycloak.local
-    path: /auth
+    path: /auth # keycloak internal
+    pathPrefix: / # for ingress, must end with /
 
 db:
   pvSize: 1Gi

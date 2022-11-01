@@ -13,7 +13,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: {{ .Values.ingressType | quote }}
     {{- if and (ne .Values.scorpio.externalPath "/") (eq .Values.ingressType "traefik") }}
-    traefik.ingress.kubernetes.io/router.middlewares: iff-remove-path@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: iff-remove-path-alerta@kubernetescrd
     {{- end }}
   namespace: {{ .Release.Namespace }}
 spec:
@@ -38,7 +38,7 @@ spec:
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
-  name: remove-path
+  name: remove-path-alerta
 spec:
   replacePathRegex:
     regex: ^{{ .Values.alerta.externalPath }}(.*)

@@ -134,6 +134,7 @@ keycloak:
      protocol: {{ .StateValues.keycloak.externalAuthService.protocol | quote }}
      domainname: {{ .StateValues.keycloak.externalAuthService.domainname | quote }}
      path: {{ .StateValues.keycloak.externalAuthService.path | quote }}
+     pathPrefix: {{ .StateValues.keycloak.externalAuthService.pathPrefix | quote }}
   internalAuthService: 
     name: keycloak-discovery
     port: 8080

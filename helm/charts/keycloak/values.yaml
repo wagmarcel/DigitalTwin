@@ -120,12 +120,12 @@ keycloakAuthServer:
     ################################### ingress service #######################################################################
 ingress:
 ## Enable the ingress service
-  enabled: true
-  apiVersion: networking.k8s.io/v1
-  name: keycloak-ingress
-  hostname: keycloak.local
-  serviceName: keycloak
-  portName: 8443
+#  enabled: true
+#  apiVersion: networking.k8s.io/v1
+#  name: keycloak-ingress
+#  hostname: keycloak.local
+#  serviceName: keycloak
+#  portName: 8443
 
     ################################### keycloak-db-secret #######################################################################
 keycloak_db:
