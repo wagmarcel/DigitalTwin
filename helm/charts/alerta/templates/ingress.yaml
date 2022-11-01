@@ -17,6 +17,8 @@ metadata:
     {{- else }}
     nginx.ingress.kubernetes.io/rewrite-target: /$1
     {{- end }}
+    cert-manager.io/cluster-issuer: letsencrypt-self
+
   namespace: {{ .Release.Namespace }}
 spec:
   tls:
