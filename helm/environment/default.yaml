@@ -17,7 +17,7 @@ db:
 scorpio:
   externalHostname: ngsild.local
   externalProtocol: "http:"
-  externalPath: /
+  externalPath: / # note: must end with /
   heap_min:
     Xms: "-Xms64M"
     Xmx: "-Xmx64M"
