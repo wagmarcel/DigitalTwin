@@ -1,15 +1,14 @@
 ingressType: traefik # traefik or nginx
 
+alerta:
+  externalPath: / # note: must end with /
+  externalHostname: alerta.local
 keycloak:
   adminName: admin
   externalAuthService:   # put here the *external* keycloak name, i.e. through ingress 
     protocol: "http:"
     domainname: keycloak.local
     path: /auth
-  alerta:
-    redirectUris:
-    - http://alerta.local/*
-    - https://alerta.local/*
 
 db:
   pvSize: 1Gi
@@ -18,6 +17,7 @@ db:
 scorpio:
   externalHostname: ngsild.local
   externalProtocol: "http:"
+  externalPath: /
   heap_min:
     Xms: "-Xms64M"
     Xmx: "-Xmx64M"

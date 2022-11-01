@@ -25,6 +25,7 @@ scorpio:
   tag: 3.0.0-SNAPSHOT
   externalHostname: {{ .StateValues.scorpio.externalHostname }}
   externalProtocol: {{ .StateValues.scorpio.externalProtocol | quote }}
+  externalPath: {{ .StateValues.scorpio.externalPath }}
   internalHostname: gateway
   internalPort: 9090
   internalProtocol: "http:"
@@ -79,6 +80,8 @@ minio:
   mcImage: minio/mc:RELEASE.2022-02-07T09-25-34Z
 
 alerta:
+  externalHostname: {{ .StateValues.alerta.externalHostname }}
+  externalPath: {{ .StateValues.alerta.externalPath }}
   adminUser: admin
   internalService: alerta
   internalPort: 8080
@@ -140,9 +143,8 @@ keycloak:
     realm: iff
     client: alerta-ui
     redirectUris:
-    {{- range $elem := .StateValues.keycloak.alerta.redirectUris }}
-    - {{ $elem }}
-    {{- end }}
+    - http://{{ .StateValues.alerta.externalHostname }}{{ .StateValues.alerta.externalPath }}*
+    - https://{{ .StateValues.alerta.externalHostname }}{{ .StateValues.alerta.externalPath }}*
     defaultClientScopes:
     - openid
     - profile

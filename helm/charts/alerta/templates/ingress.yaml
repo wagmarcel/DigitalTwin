@@ -11,10 +11,10 @@ metadata:
 spec:
   tls:
   - hosts:
-    - {{ .Values.ingress.hostname }}
+    - {{ .Values.alerta.externalHostname }}
     secretName: {{ .Values.certmanager.secret }}
   rules:
-  - host: {{ .Values.ingress.hostname }}
+  - host: {{ .Values.alerta.externalHostname }}
     http:
       paths:
       - backend:
@@ -22,6 +22,6 @@ spec:
             name: {{ .Values.ingress.serviceName }}
             port:
               number: {{ .Values.service.port }}
-        path: /
+        path: {{ .Values.alerta.externalPath}}
         pathType: ImplementationSpecific
 {{ end }}
