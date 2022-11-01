@@ -31,7 +31,7 @@ spec:
             name: {{ .Values.keycloak.internalAuthService.name }}
             port:
               number: {{ .Values.keycloak.internalAuthService.port }}
-        {{- if (eq .Values.ingressType "nginx" }}
+        {{- if (eq .Values.ingressType "nginx") }}
         path: {{ .Values.keycloak.externalAuthService.pathPrefix }}(.*)
         {{- else }}
         path: {{ .Values.keycloak.externalAuthService.pathPrefix }}
