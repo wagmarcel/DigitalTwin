@@ -2,27 +2,19 @@
 {{- if and (ne .Values.ingressType "traefik") (ne .Values.ingressType "nginx") }}
 {{- fail "ingressType must either be \"traefik\" or \"nginx\"" }}
 {{- end }}
-{{- if not (regexMatch "/$" .Values.keycloak.externalAuthService.pathPrefix) }}
-{{- fail "keycloak.externalAuthService.pathPrefix does not end with /" }}
-{{- end}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: keycloak-ingress
   annotations:
     kubernetes.io/ingress.class: {{ .Values.ingressType | quote }}
-    {{- if and (ne .Values.keycloak.externalAuthService.pathPrefix "/") (eq .Values.ingressType "traefik") }}
-    traefik.ingress.kubernetes.io/router.middlewares: iff-remove-path-keycloak@kubernetescrd
-    {{- else }}
-    nginx.ingress.kubernetes.io/rewrite-target: /$1
-    {{- end }}
     cert-manager.io/cluster-issuer: {{ .Values.certmanager.issuer }}
   namespace: {{ .Release.Namespace }}
 spec:
   tls:
   - hosts:
     - {{ .Values.keycloak.externalAuthService.domainname }}
-    secretName: {{ .Values.certmanager.secret }}
+    secretName: {{ .Values.certmanager.secret }}-keycloak
   rules:
   - host: {{ .Values.keycloak.externalAuthService.domainname }}
     http:
@@ -32,21 +24,6 @@ spec:
             name: {{ .Values.keycloak.internalAuthService.name }}
             port:
               number: {{ .Values.keycloak.internalAuthService.port }}
-        {{- if (eq .Values.ingressType "nginx") }}
-        path: {{ .Values.keycloak.externalAuthService.pathPrefix }}(.*)
-        {{- else }}
-        path: {{ .Values.keycloak.externalAuthService.pathPrefix }}
-        {{- end }}
+        path: /
         pathType: ImplementationSpecific
 ---
----
-{{- if and (ne .Values.keycloak.externalAuthService.pathPrefix "/") (eq .Values.ingressType "traefik") }}
-apiVersion: traefik.containo.us/v1alpha1
-kind: Middleware
-metadata:
-  name: remove-path-keycloak
-spec:
-  replacePathRegex:
-    regex: ^{{ .Values.keycloak.externalAuthService.pathPrefix }}(.*)
-    replacement: /$1
-{{- end }}

@@ -23,7 +23,7 @@ spec:
   tls:
   - hosts:
     - {{ .Values.scorpio.externalHostname }}
-    secretName: {{ .Values.certmanager.secret }}
+    secretName: {{ .Values.certmanager.secret }}-scorpio
   rules:
   - host: {{ .Values.scorpio.externalHostname }}
     http:

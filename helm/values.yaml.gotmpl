@@ -9,6 +9,8 @@ clusterSvcName: {{ .StateValues.db.teamId -}}-{{- .StateValues.db.clusterSvcPost
 clusterExternalSvcName: {{ .StateValues.db.teamId -}}-{{- .StateValues.db.clusterSvcPostfix }}.{{ .StateValues.namespace }}.svc.cluster.local
 minioAdminSecretKey: {{ .StateValues.minioAdminSecretKey }}
 minioUserSecretKey: {{ .StateValues.minioUserSecretKey }}
+alertaClientSecret: {{ .StateValues.alertaClientSecret }}
+
 
 db:
   teamId: {{ .StateValues.db.teamId }}
@@ -52,8 +54,8 @@ scorpio:
       memory: 256Mi
 
 certmanager:
-  secret: selfsigned-cert-tls
-  issuer: letsencrypt-self
+  secret: {{ .StateValues.certmanager.secret }}
+  issuer: {{ .StateValues.certmanager.issuer }}
 
 flink:
   imageTag: 1.14.3
@@ -134,7 +136,6 @@ keycloak:
      protocol: {{ .StateValues.keycloak.externalAuthService.protocol | quote }}
      domainname: {{ .StateValues.keycloak.externalAuthService.domainname | quote }}
      path: {{ .StateValues.keycloak.externalAuthService.path | quote }}
-     pathPrefix: {{ .StateValues.keycloak.externalAuthService.pathPrefix | quote }}
   internalAuthService: 
     name: keycloak-discovery
     port: 8080

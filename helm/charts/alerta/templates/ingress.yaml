@@ -24,7 +24,7 @@ spec:
   tls:
   - hosts:
     - {{ .Values.alerta.externalHostname }}
-    secretName: {{ .Values.certmanager.secret }}
+    secretName: {{ .Values.certmanager.secret }}-alerta
   rules:
   - host: {{ .Values.alerta.externalHostname }}
     http:

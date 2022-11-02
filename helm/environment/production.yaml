@@ -2,21 +2,21 @@ ingressType: nginx # traefik or nginx
 
 alerta:
   externalPath: / # note: must end with /
-  externalHostname: alerta.local
+  externalHostname: alerta.test.streammyiot.com
 keycloak:
   adminName: admin
   externalAuthService:   # put here the *external* keycloak name, i.e. through ingress 
     protocol: "https:"
-    domainname: keycloak.local
-    path: /auth # keycloak internal
-    pathPrefix: / # for ingress, must end with /
+    domainname: keycloak.test.streammyiot.com
+    path: /auth/ # keycloak internal do not change
+    # pathPrefix: /keycloak-iff/ # for ingress, must end with /
 
 db:
   pvSize: 1Gi
   podInstances: 2
 
 scorpio:
-  externalHostname: ngsild.local
+  externalHostname: scorpio.test.streammyiot.com
   externalProtocol: "http:"
   externalPath: /
   heap_min:
@@ -42,8 +42,8 @@ scorpio:
       memory: 256Mi
 
 certmanager:
-  secret: selfsigned-cert-tls
-  issuer: letsencrypt-self
+  secret: prod-cert-tls
+  issuer: letsencrypt-prod
 
 flink:
   taskmanagers: 1
