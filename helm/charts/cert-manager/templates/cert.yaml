@@ -1,17 +1,19 @@
 ---
+{{- if not (regexMatch "self" .Values.certmanager.issuer) }}
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: my-selfsigned-ca
+  name: iff-cert
   namespace: {{ .Release.Namespace }}
 spec:
   isCA: true
-  commonName: my-selfsigned-ca
+  commonName: iff-cert
   secretName: {{ .Values.certmanager.secret }}
   privateKey:
     algorithm: ECDSA
     size: 256
   issuerRef:
-    name: letsencrypt-self
+    name: iff-cert
     kind: ClusterIssuer
     group: cert-manager.io
+{{- end }}
