@@ -7,7 +7,7 @@ keycloak:
   adminName: admin
   externalAuthService:   # put here the *external* keycloak name, i.e. through ingress 
     protocol: "https:"
-    domainname: keycloak.test.streammyiot.com
+    domainname: auth.test.streammyiot.com
     path: /auth/ # keycloak internal do not change
     # pathPrefix: /keycloak-iff/ # for ingress, must end with /
 
