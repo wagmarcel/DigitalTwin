@@ -183,8 +183,10 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                 table.append(id.toPython())
                 table.append(orig_class[id])
                 tables[combined_key] = table
-            tables[combined_key].append(id.toPython() + "\\\\" +
-                                        field.toPython())
+            combined_field = id.toPython() + "\\\\" + field.toPython()
+            if combined_field not in tables[combined_key]:
+                tables[combined_key].append(id.toPython() + "\\\\" +
+                                           field.toPython())
         for id, table in tables.items():
             table.append('CURRENT_TIMESTAMP')
 
