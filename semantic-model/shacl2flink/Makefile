@@ -7,6 +7,8 @@ PIP := pip
 OUTPUTDIR := output
 SQLITEDB := $(OUTPUTDIR)/database.db
 SQLITE3 := sqlite3
+KUBECTL := kubectl
+NAMESPACE := iff
 
 sqlite_files = $(OUTPUTDIR)/core.sqlite $(OUTPUTDIR)/ngsild.sqlite $(OUTPUTDIR)/rdf.sqlite $(OUTPUTDIR)/ngsild-models.sqlite $(OUTPUTDIR)/shacl-validation.sqlite
 
@@ -32,4 +34,11 @@ setup-dev: requirements-dev.txt
 
 test-sqlite:
 	@echo Test with sqlite
-	cat $(sqlite_files) | $(SQLITE3) $(SQLITEDB) 
+	cat $(sqlite_files) | $(SQLITE3) $(SQLITEDB)
+
+deploy-k8s:
+	@echo Deploy in k8s
+	$(KUBECTL) -n $(NAMESPACE) apply -f $(OUTPUTDIR)/core.yaml
+	$(KUBECTL) -n $(NAMESPACE) apply -f $(OUTPUTDIR)/ngsild.yaml
+	$(KUBECTL) -n $(NAMESPACE) apply -f $(OUTPUTDIR)/rdf.yaml
+	$(KUBECTL) -n $(NAMESPACE) apply -f $(OUTPUTDIR)/shacl-validation.yaml
