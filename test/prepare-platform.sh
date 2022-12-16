@@ -47,7 +47,7 @@ cd ../helm || exit 1
 wget https://github.com/roboll/helmfile/releases/download/v0.143.0/helmfile_linux_amd64
 chmod u+x helmfile_linux_amd64
 
-echo Install Java 11
+echo Install Java 17
 echo ---------------
 sudo apt update
 sudo apt install -yq default-jre maven
