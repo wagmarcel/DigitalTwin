@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+INGRESS=keycloak-ingress
 if [ -z "${SELF_HOSTED_RUNNER}" ]; then
     SUDO=sudo
 fi
@@ -24,7 +25,7 @@ kubectl -n kube-system get cm/coredns -o jsonpath=\{".data.Corefile"\} > /tmp/Co
 kubectl -n kube-system get cm/coredns -o jsonpath=\{".data.NodeHosts"\} > /tmp/NodeHosts
 
 while [ -z "$INGRESS_IP" ]; do
-    INGRESS_IP=$(kubectl -n iff get ingress/keycloak-iff-ingress -o jsonpath=\{".status.loadBalancer.ingress[0].ip"\})
+    INGRESS_IP=$(kubectl -n iff get ingress/${INGRESS} -o jsonpath=\{".status.loadBalancer.ingress[0].ip"\})
     echo waiting for ingress to provide IP-Address
     sleep 1
 done
