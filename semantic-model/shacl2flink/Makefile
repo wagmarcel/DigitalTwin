@@ -7,6 +7,7 @@ PIP := pip
 OUTPUTDIR := output
 SQLITEDB := $(OUTPUTDIR)/database.db
 SQLITE3 := sqlite3
+HELM_DIR := chart
 
 sqlite_files = $(OUTPUTDIR)/core.sqlite $(OUTPUTDIR)/ngsild.sqlite $(OUTPUTDIR)/rdf.sqlite $(OUTPUTDIR)/ngsild-models.sqlite $(OUTPUTDIR)/shacl-validation.sqlite
 
@@ -17,6 +18,12 @@ build: $(SHACL) $(KNOWLEDGE $(MODEL)
 	$(PYTHON) create_ngsild_tables.py $(SHACL)
 	$(PYTHON) create_ngsild_models.py $(SHACL) $(KNOWLEDGE) $(MODEL)
 	$(PYTHON) create_sql_checks_from_shacl.py $(SHACL) $(KNOWLEDGE)
+
+helm: build
+	mkdir -p ${HELM_DIR}
+	rm -rf ${HELM_DIR}/templates 
+	mv ${OUTPUTDIR} ${HELM_DIR}/templates
+	rm -f ${HELM_DIR}/templates/*.sqlite ${HELM_DIR}/templates/core.yaml
 
 test: requirements-dev.txt
 	$(PYTHON) -m pytest --cov . --cov-fail-under=80
@@ -32,4 +39,4 @@ setup-dev: requirements-dev.txt
 
 test-sqlite:
 	@echo Test with sqlite
-	cat $(sqlite_files) | $(SQLITE3) $(SQLITEDB) 
+	cat $(sqlite_files) | $(SQLITE3) $(SQLITEDB)

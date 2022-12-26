@@ -13,7 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import os
+
+HELM = os.getenv('IFF_HELM')
 helm = False
+if HELM is not None:
+    helm = True
 
 kafka_topic_bulk_alerts = "{{.Values.kafkaBridge.alerta.bulkTopic}}" if \
                           helm else "iff.alerts.bulk"
