@@ -2,6 +2,13 @@ PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX iff: <https://industry-fusion.com/types/v0.9/>
 
+### Test classes
+iff:cutter_test rdfs:subClassOf iff:machine_test ;
+    a iff:class .
+iff:plasmacutter_test rdfs:subClassOf iff:cutter_test ;
+    a iff:class .
+### End of Test Content
+
 iff:entity a iff:class ;
     a rdfs:class .
 iff:machine a iff:class ; 
