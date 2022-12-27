@@ -1,6 +1,6 @@
 apiVersion: v2
-name: shacl-rules
-description: A Helm chart for shacl-Rules
+name: shacl
+description: A Helm chart for shacl-rules
 
 # A chart can be either an 'application' or a 'library' chart.
 #
