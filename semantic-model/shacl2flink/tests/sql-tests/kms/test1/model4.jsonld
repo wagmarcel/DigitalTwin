@@ -51,7 +51,7 @@
         "https://schema.org/depth": {
           "type": "Property",
           "unitCode": "MMT",
-          "value": "250"
+          "value": "99"
         },
         "https://schema.org/height": {
           "type": "Property",

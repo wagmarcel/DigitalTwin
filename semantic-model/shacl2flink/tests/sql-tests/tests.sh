@@ -31,7 +31,7 @@ for testdir in $(ls $KMS); do
         sqlite3 ${DATABASE} < $OUTPUTDIR/core.sqlite
         sqlite3 ${DATABASE} < $OUTPUTDIR/ngsild.sqlite
         sqlite3 ${DATABASE} < $OUTPUTDIR/ngsild-models.sqlite
-        sqlite3 ${DATABASE} < $OUTPUTDIR/property-checks.sqlite
+        sqlite3 ${DATABASE} < $OUTPUTDIR/shacl-validation.sqlite
         echo "select resource, event, severity from alerts_bulk_view;" | sqlite3 -quote  -noheader ${DATABASE}| sort > ${OUTPUTDIR}/${MODEL}_${TESTOUT}
         diff ${OUTPUTDIR}/${MODEL}_${TESTOUT} ${MODEL}_${RESULT} || { echo "failed"; exit 1; }
         echo " ok"

@@ -65,25 +65,24 @@ where {
     VALUES ?e {ngsild:Property}
     FILTER(isIRI(?f))
     }
-    ?nodeshape sh:property [ sh:path ?b ] .
 }
 """
 
-ngsild_tables_query = """
-PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
-PREFIX sh: <http://www.w3.org/ns/shacl#>
-
-SELECT ?id ?type ?field ?ord
-where {
-    ?nodeshape a sh:NodeShape .
-    ?nodeshape sh:targetClass ?type .
-    ?id a ?type .
-    ?nodeshape sh:property [ sh:path ?field ; sh:order ?ord ] .
-    }
-    ORDER BY ?id ?ord
-"""
+#ngsild_tables_query = """
+#PREFIX iff: <https://industry-fusion.com/types/v0.9/>
+#PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+#PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
+#PREFIX sh: <http://www.w3.org/ns/shacl#>
+#
+#SELECT ?id ?type ?field ?ord
+#where {
+#    ?nodeshape a sh:NodeShape .
+#    ?nodeshape sh:targetClass ?type .
+#    ?id a ?type .
+#    ?nodeshape sh:property [ sh:path ?field ; sh:order ?ord ] .
+#    }
+#    ORDER BY ?id ?ord
+#"""
 
 ngsild_tables_query_noinference = """
 PREFIX iff: <https://industry-fusion.com/types/v0.9/>
@@ -91,7 +90,7 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 
-SELECT DISTINCT ?id ?type ?field ?ord ?shacltype
+SELECT DISTINCT ?id ?type ?field ?ord
 where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?shacltype .
@@ -102,6 +101,17 @@ where {
     ORDER BY ?id ?ord
 """
 
+types_list_query = """
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+
+SELECT DISTINCT ?type ?subtype
+where {
+    ?type rdfs:subClassOf* ?subtype .
+    ?shape sh:targetClass ?subtype .
+}
+"""
 
 def nullify(field):
     if field is None:
@@ -125,11 +135,12 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
 
         # Create attributes table by sparql
         # query first before inferencing
-        qres_noinf = model.query(ngsild_tables_query_noinference)
+        #qres_noinf = model.query(ngsild_tables_query_noinference)
+        types_list = model.query(types_list_query)
         # now infer types and do rest of the queries
-        owlrl.RDFSClosure.RDFS_Semantics(model, axioms=False,
-                                         daxioms=False,
-                                         rdfs=False).closure()
+        #owlrl.RDFSClosure.RDFS_Semantics(model, axioms=False,
+        #                                 daxioms=False,
+        #                                 rdfs=False).closure()
         qres = model.query(attributes_query)
         entity_count = {}
         first = True
@@ -162,18 +173,26 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
         print(";", file=sqlitef)
 
         # Create ngsild tables by sparql
-        qres = model.query(ngsild_tables_query)
+        qres = model.query(ngsild_tables_query_noinference)
         tables = {}
 
+        # create type table: {'plasmacutter': ['plasmacutter', 'cutter']}
+        type_table = {}
+        for type, subtype in types_list:
+            type_str = type.toPython()
+            if type_str not in type_table:
+                type_table[type_str] = []
+            type_table[type_str].append(subtype)
+        
         # orig_class contains the real, not inferenced type, e.g. plasmacutter
         # instead of machine, even though it is inserted in the machine table
-        orig_class = {}
-        for id, type, field, ord, shacltype in qres_noinf:
-            if id not in orig_class:
-                orig_class[id] = type
-            else:
-                if (type, RDFS.subClassOf, orig_class[id]) in model:
-                    orig_class[id] = type
+        #orig_class = {}
+        #for id, type, field, ord, shacltype in qres_noinf:
+        #    if id not in orig_class:
+        #        orig_class[id] = type
+        #    else:
+        #        if (type, RDFS.subClassOf, orig_class[id]) in model:
+        #            orig_class[id] = type
 
         # Now create the entity tables
         for id, type, field, ord in qres:
@@ -181,7 +200,7 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
             if combined_key not in tables:
                 table = []
                 table.append(id.toPython())
-                table.append(orig_class[id])
+                #table.append(orig_class[id])
                 tables[combined_key] = table
             tables[combined_key].append(id.toPython() + "\\\\" +
                                         field.toPython())
@@ -190,20 +209,21 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
 
         for id, table in tables.items():
             type = re.search('^.*\\\\(.*)$', id)[1]
-            print(f'INSERT INTO `{utils.strip_class(URIRef(type))}` VALUES',
-                  file=sqlitef)
-            first = True
-            print("(", end='', file=sqlitef)
-            for field in table:
-                if first:
-                    first = False
-                else:
-                    print(", ", end='', file=sqlitef)
-                if isinstance(field, str) and not field == 'CURRENT_TIMESTAMP':
-                    print("'" + field + "'", end='', file=sqlitef)
-                else:
-                    print(field, end='', file=sqlitef)
-            print(");", file=sqlitef)
+            for type_uri in type_table[type]:
+                print(f'INSERT INTO `{utils.strip_class(type_uri)}` VALUES',
+                    file=sqlitef)
+                first = True
+                print("(", end='', file=sqlitef)
+                for field in table:
+                    if first:
+                        first = False
+                    else:
+                        print(", ", end='', file=sqlitef)
+                    if isinstance(field, str) and not field == 'CURRENT_TIMESTAMP':
+                        print("'" + field + "'", end='', file=sqlitef)
+                    else:
+                        print(field, end='', file=sqlitef)
+                print(");", file=sqlitef)
 
 
 if __name__ == '__main__':
