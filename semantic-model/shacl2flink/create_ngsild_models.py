@@ -68,29 +68,13 @@ where {
 }
 """
 
-#ngsild_tables_query = """
-#PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-#PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-#PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
-#PREFIX sh: <http://www.w3.org/ns/shacl#>
-#
-#SELECT ?id ?type ?field ?ord
-#where {
-#    ?nodeshape a sh:NodeShape .
-#    ?nodeshape sh:targetClass ?type .
-#    ?id a ?type .
-#    ?nodeshape sh:property [ sh:path ?field ; sh:order ?ord ] .
-#    }
-#    ORDER BY ?id ?ord
-#"""
-
 ngsild_tables_query_noinference = """
 PREFIX iff: <https://industry-fusion.com/types/v0.9/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 
-SELECT DISTINCT ?id ?type ?field ?ord
+SELECT DISTINCT ?id ?type ?field ?ord ?shacltype
 where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?shacltype .
@@ -195,22 +179,27 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
         #            orig_class[id] = type
 
         # Now create the entity tables
-        for id, type, field, ord in qres:
-            combined_key = id.toPython() + '\\\\' + type.toPython()
-            if combined_key not in tables:
-                table = []
-                table.append(id.toPython())
-                #table.append(orig_class[id])
-                tables[combined_key] = table
-            tables[combined_key].append(id.toPython() + "\\\\" +
-                                        field.toPython())
-        for id, table in tables.items():
-            table.append('CURRENT_TIMESTAMP')
+        for id, type, field, ord, tabletype in qres:
+            #combined_key = id.toPython() + '\\\\' + type.toPython()
+            key = utils.strip_class(tabletype.toPython())
+            if key not in tables:
+                table = {}
 
-        for id, table in tables.items():
-            type = re.search('^.*\\\\(.*)$', id)[1]
-            for type_uri in type_table[type]:
-                print(f'INSERT INTO `{utils.strip_class(type_uri)}` VALUES',
+                tables[key] = table
+            idstr = id.toPython()
+            if idstr not in tables[key]:
+                tables[key][idstr] = []
+                tables[key][idstr].append(idstr)
+                tables[key][idstr].append(type.toPython())
+            tables[key][idstr].append(idstr + "\\\\" +
+                                        field.toPython())
+        for type, ids in tables.items():
+            for id, table in ids.items(): 
+                table.append('CURRENT_TIMESTAMP')
+
+        for type, ids in tables.items():
+            for id, table in ids.items():
+                print(f'INSERT INTO `{type}` VALUES',
                     file=sqlitef)
                 first = True
                 print("(", end='', file=sqlitef)
