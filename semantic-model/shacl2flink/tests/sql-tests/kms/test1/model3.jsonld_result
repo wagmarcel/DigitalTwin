@@ -1,4 +1,6 @@
 'urn:filter:1','DataTypeValidation(https://industry-fusion.com/types/v0.9/state[0])','ok'
+'urn:filter:1','MaxInclusiveValidation(https://industry-fusion.com/types/v0.9/strength[0])','ok'
+'urn:filter:1','MinInclusiveValidation(https://industry-fusion.com/types/v0.9/strength[0])','ok'
 'urn:filter:1','NodeTypeValidation(https://industry-fusion.com/types/v0.9/state[0])','ok'
 'urn:filter:1','NodeTypeValidation(https://industry-fusion.com/types/v0.9/strength[0])','ok'
 'urn:filter:1','PropertyClassCheck(https://industry-fusion.com/types/v0.9/hasCartridge[0])','warning'
