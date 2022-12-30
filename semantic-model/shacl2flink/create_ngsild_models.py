@@ -14,12 +14,9 @@
 # limitations under the License.
 #
 
-from rdflib import Graph, URIRef
-from rdflib.namespace import RDFS
-import owlrl
+from rdflib import Graph
 import os
 import sys
-import re
 import argparse
 import lib.utils as utils
 import lib.configs as configs
@@ -91,17 +88,6 @@ where {
     ORDER BY ?id ?ord
 """
 
-types_list_query = """
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX sh: <http://www.w3.org/ns/shacl#>
-
-SELECT DISTINCT ?type ?subtype
-where {
-    ?type rdfs:subClassOf* ?subtype .
-    ?shape sh:targetClass ?subtype .
-}
-"""
 
 def nullify(field):
     if field is None:
@@ -123,14 +109,6 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
         knowledge.parse(knowledgefile)
         model += g + knowledge
 
-        # Create attributes table by sparql
-        # query first before inferencing
-        #qres_noinf = model.query(ngsild_tables_query_noinference)
-        types_list = model.query(types_list_query)
-        # now infer types and do rest of the queries
-        #owlrl.RDFSClosure.RDFS_Semantics(model, axioms=False,
-        #                                 daxioms=False,
-        #                                 rdfs=False).closure()
         qres = model.query(attributes_query)
         entity_count = {}
         first = True
@@ -166,27 +144,8 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
         qres = model.query(ngsild_tables_query_noinference)
         tables = {}
 
-        # create type table: {'plasmacutter': ['plasmacutter', 'cutter']}
-        type_table = {}
-        for type, subtype in types_list:
-            type_str = type.toPython()
-            if type_str not in type_table:
-                type_table[type_str] = []
-            type_table[type_str].append(subtype)
-        
-        # orig_class contains the real, not inferenced type, e.g. plasmacutter
-        # instead of machine, even though it is inserted in the machine table
-        #orig_class = {}
-        #for id, type, field, ord, shacltype in qres_noinf:
-        #    if id not in orig_class:
-        #        orig_class[id] = type
-        #    else:
-        #        if (type, RDFS.subClassOf, orig_class[id]) in model:
-        #            orig_class[id] = type
-
         # Now create the entity tables
         for id, type, field, ord, tabletype in qres:
-            #combined_key = id.toPython() + '\\\\' + type.toPython()
             key = utils.strip_class(tabletype.toPython())
             if key not in tables:
                 table = {}
@@ -198,15 +157,15 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                 tables[key][idstr].append(idstr)
                 tables[key][idstr].append(type.toPython())
             tables[key][idstr].append(idstr + "\\\\" +
-                                        field.toPython())
+                                      field.toPython())
         for type, ids in tables.items():
-            for id, table in ids.items(): 
+            for id, table in ids.items():
                 table.append('CURRENT_TIMESTAMP')
 
         for type, ids in tables.items():
             for id, table in ids.items():
                 print(f'INSERT INTO `{type}` VALUES',
-                    file=sqlitef)
+                      file=sqlitef)
                 first = True
                 print("(", end='', file=sqlitef)
                 for field in table:
@@ -214,7 +173,8 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                         first = False
                     else:
                         print(", ", end='', file=sqlitef)
-                    if isinstance(field, str) and not field == 'CURRENT_TIMESTAMP':
+                    if isinstance(field, str) and not field ==\
+                            'CURRENT_TIMESTAMP':
                         print("'" + field + "'", end='', file=sqlitef)
                     else:
                         print(field, end='', file=sqlitef)

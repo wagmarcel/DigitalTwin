@@ -90,9 +90,10 @@ def main(shaclfile, output_folder='output'):
             yaml.dump(utils.create_yaml_view(table_name, table), f)
             print(utils.create_sql_view(table_name, table), file=sqlitef)
             print('---', file=f)
-            yaml.dump(utils.create_kafka_topic(f'{configs.kafka_topic_ngsi_prefix}.{utils.class_to_obj_name(table_name)}',
-                                               f'{configs.kafka_topic_ngsi_prefix}.{table_name}',
-                                               configs.kafka_topic_object_label,
+            yaml.dump(utils.create_kafka_topic(f'{configs.kafka_topic_ngsi_prefix}.\
+{utils.class_to_obj_name(table_name)}',
+                                               f'{configs.kafka_topic_ngsi_prefix}.\
+{table_name}', configs.kafka_topic_object_label,
                                                config), f)
 
 
