@@ -38,17 +38,22 @@ def parse_args(args=sys.argv[1:]):
 
 
 attributes_query = """
-PREFIX iff: <https://industry-fusion.com/types/v0.9/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
-SELECT (?a as ?entityId) (?b as ?name) (?e as ?type) (?d as ?nodeType) \
+SELECT (?a as ?entityId) (?b as ?name) (?e as ?type) (?d as ?nodeType)
 (datatype(?g) as ?valueType) (?f as ?hasValue) (?g as ?hasObject)
-#SELECT ?a ?b ?c ?d
 where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?class .
-    ?a a ?class .
+    ?nodeshape sh:property [ sh:path ?b ] .
+    ?a a ?subclass .
+    ?subclass rdfs:subClassOf* ?class .
+    FILTER NOT EXISTS {
+        ?class rdfs:subClassOf+ ?further .
+        ?subnodeshape sh:targetClass ?further .
+        ?subnodeshape sh:property [ sh:path ?b ] .
+    } .
     {?a ?b [ ngsild:hasObject ?g ] .
     VALUES ?d { '@id'} .
     VALUES ?e {ngsild:Relationship}
@@ -58,6 +63,7 @@ where {
     VALUES ?d {'@value'} .
     VALUES ?e {ngsild:Property}
     FILTER(!isIRI(?f))
+    ?nodeshape sh:property [ sh:path ?b ] .
     }
     UNION
     { ?a ?b [ ngsild:hasValue ?f ] .
