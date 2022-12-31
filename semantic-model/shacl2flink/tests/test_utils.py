@@ -159,7 +159,7 @@ def test_create_statementset():
 
 
 def test_create_kafka_topic():
-    result = utils.create_kafka_topic('name', ['kafka_topic_object_label',
+    result = utils.create_kafka_topic('name', 'topic_name', ['kafka_topic_object_label',
                                       'label'], 'config')
     assert result == {'apiVersion': 'kafka.strimzi.io/v1beta2',
                       'kind': 'KafkaTopic',
@@ -171,7 +171,8 @@ def test_create_kafka_topic():
                       'spec': {
                         'partitions': 1,
                         'replicas': 1,
-                        'config': 'config'
+                        'config': 'config',
+                        'topicName': 'topic_name'
                         }
                       }
 
