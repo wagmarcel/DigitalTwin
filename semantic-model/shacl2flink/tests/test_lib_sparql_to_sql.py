@@ -25,15 +25,27 @@ hasFilterURI = term.URIRef("https://industry-fusion.com/types/v0.9/hasFilter")
 hasValueURI = term.URIRef("https://uri.etsi.org/ngsi-ld/hasValue")
 target_class = term.URIRef("https://industry-fusion.com/v0.9/cutter")
 
+
 def test_create_ngsild_mappings(monkeypatch):
+    class Graph:
+        def query(self, sparql):
+            assert "?this rdfs:subClassOf <https://industry-fusion.com/v0.9/cutter> ." in sparql
+            assert "?thisshape sh:targetClass ?this .\n?thisshape sh:property [ sh:path \
+<https://industry-fusion.com/types/v0.9/hasFilter> ; sh:property [ sh:path \
+ngsild:hasObject;  sh:class ?f ] ] ." in sparql
+            assert "?v2shape sh:targetClass ?v2 .\n?v2shape sh:property [ sh:path \
+<https://industry-fusion.com/types/v0.9/state> ; ] ." in sparql
+            assert "?v1shape sh:targetClass ?v1 .\n?v1shape sh:property [ sh:path \
+<https://industry-fusion.com/types/v0.9/state> ; ] ." in sparql
+            assert "filter(?fshape = ?v2shape && ?thisshape = ?v1shape)" in sparql
+            return ['row']
     relationships = {
         "https://industry-fusion.com/types/v0.9/hasFilter": True        
     }
     properties = {
         "https://industry-fusion.com/types/v0.9/state": True
     }
-    g = MagicMock()
-    g.query.return_value = ['row']
+    g = Graph()
     monkeypatch.setattr(lib.sparql_to_sql, "properties", properties)
     monkeypatch.setattr(lib.sparql_to_sql, "g", g)
     monkeypatch.setattr(lib.sparql_to_sql, "relationships", relationships)
