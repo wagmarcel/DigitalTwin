@@ -9,10 +9,10 @@ from rdflib.plugins.sparql.parser import parseQuery
 from rdflib.plugins.sparql.algebra import translateQuery
 import owlrl
 import copy
-import utils  # noqa: E402
 
 file_dir = os.path.dirname(__file__)
 sys.path.append(file_dir)
+import utils  # noqa: E402
 
 
 class WrongSparqlStructure(Exception):
@@ -153,6 +153,7 @@ def create_varname(variable):
     e.g. ?var => var 
     """
     return variable.toPython()[1:]
+
 
 def get_rdf_join_condition(r, property_variables, entity_variables, selectvars):
     """
@@ -946,6 +947,26 @@ def process_ngsild_spo(ctx, local_ctx, s, p, o):
 
 
 def process_rdf_spo(ctx, local_ctx, s, p, o):
+    """Processes a subject, predicate, object triple and create sql term for it
+    
+    This processing assumes that the triple contains no ngsi-ld related term (such as hasObject, hasValue) and is a pure RDF triple
+    Note that there cannot be arbitrate RDF terms. In our framework, the RDF(knowledge) is immutable. Everything which
+    can change must be an NGSI-LD object(model). Therefore, for instance, there cannot be a term like:
+    <ngsild-id> <pred> <object>
+    because <pred> cannot be a defined NGSI-LD property/relationship (otherwise it would not be processed here)
+    A "generic" relationship between knowledge and model is impossible then (because it would be either a NGSI-LD defined relation or 
+    the immutable knowledge must reference id's of the (mutable) model which is not possible by definition)
+
+    Args:
+        ctx (dictionary): global context derived from RDFlib SPARQL parser
+        local_ctx (dictionary): local context only relevant for the BGP processing
+        s (RDFLib term): subject
+        p (RDFLib term): predicate
+        o (RDFLib term): object
+
+    Raises:
+        SparqlValidationFailed: Reports implementation limitations
+    """
     # must be  RDF query
     if debug > 1: print(f'Processing as RDF query: {s, p, o}', file = debugoutput) 
     if not isinstance(p, URIRef):
@@ -968,7 +989,7 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
         if p == RDF['type']:
             entity = local_ctx['bounds'].get(create_varname(s))    
             if entity is None:
-                raise SparqlValidationFailed("Can not bind object and subject of RDF term at once. Consider rearranging terms.")
+                raise SparqlValidationFailed(f'In triple {s, p, o}: Subject entity not bound but cannot bind object and subject of RDF term at same time. Please consider rearranging terms.')
             entity_table = entity.replace('.id','')
             entity_column = entity.replace('.id','.type')
             column = 'type'
@@ -997,7 +1018,7 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
                     # (1)
                     # variable is bound, so get it and link it with bound value
                     objvar = local_ctx['bounds'][create_varname(o)]
-                    where = merge_where_expression(where, f'{entity_column} = {objvar}')
+                    local_ctx['where'] = merge_where_expression(local_ctx['where'], f'{entity_column} = {objvar}')
                     return
             else:
                 # subject entity variable but object is no variable

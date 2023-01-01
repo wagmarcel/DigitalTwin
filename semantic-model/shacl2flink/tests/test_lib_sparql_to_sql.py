@@ -17,7 +17,7 @@
 from unittest.mock import MagicMock, patch
 import lib.sparql_to_sql
 from bunch import Bunch
-from rdflib import Namespace, term
+from rdflib import Namespace, term, RDF
 
 hasObjectURI = term.URIRef("https://uri.etsi.org/ngsi-ld/hasObject")
 stateURI = term.URIRef("https://industry-fusion.com/types/v0.9/state")
@@ -40,7 +40,7 @@ ngsild:hasObject;  sh:class ?f ] ] ." in sparql
             assert "filter(?fshape = ?v2shape && ?thisshape = ?v1shape)" in sparql
             return ['row']
     relationships = {
-        "https://industry-fusion.com/types/v0.9/hasFilter": True        
+        "https://industry-fusion.com/types/v0.9/hasFilter": True     
     }
     properties = {
         "https://industry-fusion.com/types/v0.9/state": True
@@ -49,7 +49,6 @@ ngsild:hasObject;  sh:class ?f ] ] ." in sparql
     monkeypatch.setattr(lib.sparql_to_sql, "properties", properties)
     monkeypatch.setattr(lib.sparql_to_sql, "g", g)
     monkeypatch.setattr(lib.sparql_to_sql, "relationships", relationships)
-    mock_ctx = MagicMock()
     mock_graph = MagicMock()
     ctx = {'namespace_manager': None, 
             'PV': None,
@@ -104,3 +103,92 @@ ngsild:hasObject;  sh:class ?f ] ] ." in sparql
         term.Variable('this'): True
     }
     assert row == 'row'
+
+
+@patch('lib.sparql_to_sql.get_random_string')
+@patch('lib.sparql_to_sql.create_varname')
+@patch('lib.sparql_to_sql.create_tablename')
+@patch('lib.sparql_to_sql.isentity')
+def test_process_rdf_spo_predicate_is_rdftype_object_is_iri(mock_isentity, mock_create_table_name, mock_create_varname, mock_get_random_string, monkeypatch):
+    relationships = {
+        "https://industry-fusion.com/types/v0.9/hasFilter": True
+    }
+    properties = {
+        "https://industry-fusion.com/types/v0.9/state": True
+    }
+    monkeypatch.setattr(lib.sparql_to_sql, "properties", properties)
+    monkeypatch.setattr(lib.sparql_to_sql, "relationships", relationships)
+    mock_create_table_name.return_value = 'testtable'
+    mock_isentity.return_value = True
+    mock_create_varname.return_value = 'f'
+    mock_get_random_string.return_value = ''
+    ctx = {
+        'namespace_manager': None,
+        'bounds': {'this': 'THISTABLE.id'},
+        'tables': {'THISTABLE': ['id']}
+    }
+    local_ctx = {
+        'bounds': {'this': 'THISTABLE.id', 'f': 'FILTER.id'},
+        'selvars': {},
+        'where': '',
+        'bgp_sql_expression': [],
+        'bgp_tables': {},
+        'property_variables': {},
+        'entity_variables': {},
+        'h': {},
+        'row': 'row'
+    }
+    s = term.Variable('f')
+    p = RDF['type']
+    o = term.URIRef('https://example.com/obj')
+    lib.sparql_to_sql.process_rdf_spo(ctx, local_ctx, s, p, o)
+    assert local_ctx['where'] == "FILTER.type = 'https://example.com/obj'"
+    assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'f': 'FILTER.id'}
+
+
+@patch('lib.sparql_to_sql.get_rdf_join_condition')
+@patch('lib.sparql_to_sql.get_random_string')
+@patch('lib.sparql_to_sql.create_tablename')
+@patch('lib.sparql_to_sql.isentity')
+def test_process_rdf_spo_predicate_is_rdf_type_object_is_variable(mock_isentity, mock_create_table_name, mock_get_random_string, mock_get_rdf_join_condiion, monkeypatch):
+    def create_varname(var):
+        if var == term.Variable('f'): return 'f'
+        if var == term.Variable('x'): return 'x'
+        
+    
+    relationships = {
+        "https://industry-fusion.com/types/v0.9/hasFilter": True
+    }
+    properties = {
+        "https://industry-fusion.com/types/v0.9/state": True
+    }
+    monkeypatch.setattr(lib.sparql_to_sql, "properties", properties)
+    monkeypatch.setattr(lib.sparql_to_sql, "relationships", relationships)
+    monkeypatch.setattr(lib.sparql_to_sql, "create_varname", create_varname)
+    mock_create_table_name.return_value = 'testtable'
+    mock_isentity.return_value = True
+    mock_create_varname = MagicMock(side_effect=['f', 'x'])
+    mock_get_random_string.return_value = ''
+    mock_get_rdf_join_condiion.return_value = 'condition'
+    ctx = {
+        'namespace_manager': None,
+        'bounds': {'this': 'THISTABLE.id'},
+        'tables': {'THISTABLE': ['id']}
+    }
+    local_ctx = {
+        'bounds': {'this': 'THISTABLE.id', 'f': 'FILTER.id', 'x': 'xtable.subject'},
+        'selvars': {},
+        'where': '',
+        'bgp_sql_expression': [],
+        'bgp_tables': {},
+        'property_variables': {},
+        'entity_variables': {},
+        'h': {},
+        'row': 'row'
+    }
+    s = term.Variable('f')
+    p = RDF['type']
+    o = term.Variable('x')
+    lib.sparql_to_sql.process_rdf_spo(ctx, local_ctx, s, p, o)
+    assert local_ctx['where'] == 'FILTER.type = xtable.subject'
+    assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'f': 'FILTER.id', 'x': 'xtable.subject'}
