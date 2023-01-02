@@ -881,6 +881,25 @@ def create_ngsild_mappings(ctx, sorted_graph):
 
 
 def process_ngsild_spo(ctx, local_ctx, s, p, o):
+    """Processes triple which relates to NGSI-LD objects
+    
+    Typical NGSI-LD reference in SPARQL looks like this:
+    ?id p [hasValue|hasObject ?var|iri|literal]
+    id is id of NGSI-LD object
+    p is predicate of NGSI-LD as defined in SHACL
+    hasValue|hasObject dependent on whether p describes a property or a relationship
+    var|uri either binds var to the pattern or a concrete literal|iri 
+
+    Args:
+        ctx (dictionary): RDFlib context from SPARQL parser
+        local_ctx (dictionary): local context only relevant for current BGP
+        s (RDFlib term): subject
+        p (RDFLib term): predicate
+        o (RDFLib term): object
+
+    Raises:
+        SparqlValidationFailed: limitation in SPARQL translation implementation
+    """
     
     if debug > 1: print(f'DEBUG: Processing as NGSILD {s, p, o}', file = debugoutput)
     # We got a triple <?var, p, []> where p is a shacle specified property
@@ -889,6 +908,8 @@ def process_ngsild_spo(ctx, local_ctx, s, p, o):
     ngsildvar =  list(local_ctx['h'].objects(subject = o))
     if len(ngsildtype) != 1 or len(ngsildvar) != 1:
         raise SparqlValidationFailed(f'No matching ngsiltype or ngsildvar found for variable {s.toPython()}')
+    if not isinstance(ngsildvar[0], Variable):
+        raise SparqlValidationFailed(f'Binding of {s} to concrete iri|literal not (yet) supported. Consider to use a variable and FILTER.')
     # Now we have 3 parts:
     # ?subject_var p [ hasValue|hasObject ?object_var]
     # subject_table, attribute_table, object_table
@@ -901,7 +922,7 @@ def process_ngsild_spo(ctx, local_ctx, s, p, o):
     if ngsildtype[0] == ngsild['hasValue']:
         #if subject_varname not in selectvars:
         #    selectvars[subject_varname] = f'{attribute_tablename}.`{ngsildtype[0].toPython()}`'
-        if ngsildvar[0] not in local_ctx['bounds']:
+        if create_varname(ngsildvar[0]) not in local_ctx['bounds']:
             local_ctx['selvars'][ngsildvar[0].toPython()[1:]] = f'`{attribute_tablename}`.`{ngsildtype[0]}`'
             local_ctx['bounds'][ngsildvar[0].toPython()[1:]] = f'`{attribute_tablename}`.`{ngsildtype[0]}`'
         join_condition = f'{attribute_tablename}.id = {subject_tablename}.`{p}`'
