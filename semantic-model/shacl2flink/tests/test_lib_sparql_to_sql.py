@@ -361,8 +361,8 @@ def test_process_ngsild_spo_hasValue(mock_isentity, mock_create_table_name, mock
     assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'f': 'FILTER.id', 'v1': 'V1TABLE.id'}
     assert local_ctx['selvars'] == {}
     assert local_ctx['bgp_sql_expression'] == [{'statement': 'attributes_view AS FSTATETABLE', 'join_condition': 'FSTATETABLE.id = FTABLE.`https://industry-fusion.com/types/v0.9/state`'}]
-    
-    
+
+
 @patch('lib.sparql_to_sql.get_random_string')
 @patch('lib.sparql_to_sql.create_varname')
 @patch('lib.sparql_to_sql.create_tablename')
@@ -443,3 +443,39 @@ def test_process_ngsild_spo_hasObject(mock_isentity, mock_create_table_name, moc
     assert local_ctx['bgp_sql_expression'] == [
         {'statement': 'attributes_view AS CHAS_FILTERTABLE', 'join_condition': 'CHAS_FILTERTABLE.id = CTABLE.`https://industry-fusion.com/types/v0.9/hasFilter`'},
         {'statement': 'ftable_view AS FTABLE', 'join_condition': 'FTABLE.id = CHAS_FILTERTABLE.`https://uri.etsi.org/ngsi-ld/hasObject`'}]
+
+
+@patch('lib.sparql_to_sql.copy')
+def test_sort_triples(mock_copy, monkeypatch):
+    def create_varname(var):
+        if var == term.Variable('f'): return 'f'
+        if var == term.Variable('this'): return 'this'
+    relationships = {
+        "https://industry-fusion.com/types/v0.9/hasFilter": True
+    }
+    properties = {
+        "https://industry-fusion.com/types/v0.9/state": True
+    }
+    monkeypatch.setattr(lib.sparql_to_sql, "properties", properties)
+    monkeypatch.setattr(lib.sparql_to_sql, "relationships", relationships)
+    monkeypatch.setattr(lib.sparql_to_sql, "create_varname", create_varname)
+    bounds = {'this': 'THISTABLE.id'}
+    triples = [
+        (term.Variable('f'), stateURI, term.BNode('2')),
+        (term.BNode('1'), hasObjectURI, term.Variable('f')),
+        (term.Variable('this'), hasFilterURI, term.BNode('1')),
+        ((term.BNode('2'), hasValueURI, term.Variable('v2')))
+        ]
+    mock_copy.deepcopy.return_value = bounds
+    graph = MagicMock()
+    graph.triples = MagicMock(side_effect=[
+        [(term.BNode('2'), hasValueURI, term.Variable('v2'))],
+        [(term.BNode('2'), hasValueURI, term.Variable('v2'))],
+        [(term.BNode('1'), hasObjectURI, term.Variable('f'))],
+        [(term.BNode('2'), hasValueURI, term.Variable('v2'))]
+        ])
+    result = lib.sparql_to_sql.sort_triples(bounds, triples, graph)
+    assert result[0] == (term.BNode('1'), hasObjectURI, term.Variable('f'))
+    assert result[1] == (term.Variable('this'), hasFilterURI, term.BNode('1'))
+    assert result[2] == (term.Variable('f'), stateURI, term.BNode('2'))
+    assert result[3] == ((term.BNode('2'), hasValueURI, term.Variable('v2')))

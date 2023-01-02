@@ -719,12 +719,17 @@ def isentity(ctx, variable):
 
 
 def sort_triples(bounds, triples, graph):
-    """
+    """Sort a BGP according to dependencies. Externally dependent triples come first
+    
     Sort triples with respect to already bound variables
     try to move triples without any bound variable to the end
+    
+    Args:
+    bounds (dictionary): already bound variables
+    triples (dictionary): triples to be sorted
+    graph (RDFlib Graph): graph containing the same triples as 'triples' but searchable with RDFlib
     """
     def select_candidates(bounds, triples, graph):
-        #result = []
         for s, p, o in triples:
             count = 0
             # look for nodes: (1) NGSI-LD node and (2) plain RDF (3) rest
@@ -739,6 +744,8 @@ def sort_triples(bounds, triples, graph):
                         elif isinstance(bo, Variable) and create_varname(bo) in bounds:
                             count += 1
                             bounds[create_varname(s)] = ''
+                        elif isinstance(bo, URIRef) or isinstance(bo, Literal):
+                            raise SparqlValidationFailed(f'Tried to bind {s} to Literal or IRI instead of Variable. Not implemented. Workaround to bind {s} to Variable and use FILTER.')
             elif not isinstance(s, BNode) or ( p != ngsild['hasValue'] and p != ngsild['hasObject'] ):
                 if isinstance(s, Variable) and create_varname(s) in bounds:
                     count += 1
@@ -763,7 +770,6 @@ def sort_triples(bounds, triples, graph):
             raise SparqlValidationFailed("Could not determine the right order of triples")
         result.append(candidate)
         triples.remove(candidate)
-        #iterations -= 1
         
     return result
 
@@ -1038,9 +1044,6 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
                     # (2)
                     # bind variable with type column of subject
                     # add variable to local table
-                    # if entity_table not in global_tables:
-                    #    global_tables[entity_table] = []
-                    #global_tables[entity_table].append(column)
                     local_ctx['selvars'][create_varname(o)] = entity_column
                     local_ctx['bounds'][create_varname(o)] = entity_column
                     return
@@ -1150,7 +1153,6 @@ def translate_BGP(ctx, bgp):
     bgp_join_conditions = []
     if len(local_ctx['bgp_sql_expression']) != 0:
         map_join_condition(local_ctx['bgp_sql_expression'], local_ctx['bgp_tables'], ctx['tables'])
-        #bgp_join_conditions = [bgp_sql_expression[0]['join_condition']]
         bgp_join_conditions = []
         if  local_ctx['where'] != '':
             bgp_join_conditions.append(local_ctx['where'])
