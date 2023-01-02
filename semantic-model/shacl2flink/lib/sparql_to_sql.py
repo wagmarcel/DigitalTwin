@@ -888,8 +888,18 @@ def process_ngsild_spo(ctx, local_ctx, s, p, o):
     id is id of NGSI-LD object
     p is predicate of NGSI-LD as defined in SHACL
     hasValue|hasObject dependent on whether p describes a property or a relationship
-    var|uri either binds var to the pattern or a concrete literal|iri 
-
+    var|uri either binds var to the pattern or a concrete literal|iri
+    
+    case 1: hasValue + ?var, ?id already bound
+    select idptable.hasValue from attribues as idptable where idptable.id = idtable.p 
+    case 2: hasObject + ?var, ?id already bound(known)
+    if ?id is bound and ?var is not bound and hasObject attribute is used:
+    The p-attribute is looked up in the attributes table and the ?var-id is looked up in the respective
+    type[?var] table. e.g. ?id p [hasObject ?var] => 
+        Select * from attributes as idptable join type[?var] as vartable where idptable.id = idtable.p and idptable.hasObject = vartable.id 
+    case 3: hasObject + ?var, ?id is not bound(known) but ?var is known
+        Select * from type[?id] as idtable join attributes as idptable where idtable.p = idptable.id  and idptable.hasObject = vartable.id
+    
     Args:
         ctx (dictionary): RDFlib context from SPARQL parser
         local_ctx (dictionary): local context only relevant for current BGP
@@ -920,8 +930,6 @@ def process_ngsild_spo(ctx, local_ctx, s, p, o):
     attribute_tablename = f'{subject_varname.upper()}{attribute_sqltable.upper()}TABLE'
     # In case of Properties, no additional tables are defined
     if ngsildtype[0] == ngsild['hasValue']:
-        #if subject_varname not in selectvars:
-        #    selectvars[subject_varname] = f'{attribute_tablename}.`{ngsildtype[0].toPython()}`'
         if create_varname(ngsildvar[0]) not in local_ctx['bounds']:
             local_ctx['selvars'][ngsildvar[0].toPython()[1:]] = f'`{attribute_tablename}`.`{ngsildtype[0]}`'
             local_ctx['bounds'][ngsildvar[0].toPython()[1:]] = f'`{attribute_tablename}`.`{ngsildtype[0]}`'
@@ -935,8 +943,8 @@ def process_ngsild_spo(ctx, local_ctx, s, p, o):
         # (2) object_var is already definied but no subject_var
         if ngsildtype[0] != ngsild['hasObject']:
             raise SparqlValidationFailed("Internal implementation error")
-        if type(ngsildvar[0]) != type(Variable(dummyvar)):
-            raise SparqlValidationFailed("Target variable not defined")
+        if not isinstance(ngsildvar[0], Variable):
+            raise SparqlValidationFailed(f'Binding {s} to non-variable {ngsildvar[0]} not supported. Consider using a variable and FILTER instead.')
         object_varname = f'{ngsildvar[0].toPython()}'[1:]
         object_sqltable = utils.camelcase_to_snake_case(utils.strip_class(local_ctx['row'][object_varname]))
         object_tablename = f'{object_varname.upper()}TABLE'
@@ -949,9 +957,9 @@ def process_ngsild_spo(ctx, local_ctx, s, p, o):
             local_ctx['bgp_sql_expression'].append({ 'statement': f'{sql_expression}', 'join_condition': f'{join_condition}'})
             local_ctx['bgp_sql_expression'].append({ 'statement': f'{object_sqltable}_view AS {object_tablename}', 'join_condition': f'{object_tablename}.id = {attribute_tablename}.`{ngsildtype[0].toPython()}`'})
             ctx['sql_tables'].append(object_sqltable)
-            if object_varname not in local_ctx['bounds']:
-                local_ctx['selvars'][object_varname] = f'{object_tablename}.`id`'
-                local_ctx['bounds'][object_varname] = f'{object_tablename}.`id`'
+            # if object_varname not in local_ctx['bounds']:
+            local_ctx['selvars'][object_varname] = f'{object_tablename}.`id`'
+            local_ctx['bounds'][object_varname] = f'{object_tablename}.`id`'
         else:
             # case (2)
             join_condition = f'{attribute_tablename}.`{ngsildtype[0].toPython()}` = {object_tablename}.id'
