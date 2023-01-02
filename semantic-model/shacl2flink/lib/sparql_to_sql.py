@@ -13,6 +13,7 @@ import copy
 file_dir = os.path.dirname(__file__)
 sys.path.append(file_dir)
 import utils  # noqa: E402
+import configs  # noqa: E402
 
 
 class WrongSparqlStructure(Exception):
@@ -1028,29 +1029,28 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
             raise SparqlValidationFailed("Cannot query generic RDF term with NGSI-LD entity subject.")
     else:
         # No special case. Check if subject is non bound and if non bound whether it can be bound
-        subject_join_bound = get_rdf_join_condition(s, property_variables, entity_variables, bounds)
+        subject_join_bound = get_rdf_join_condition(s, local_ctx['property_variables'], local_ctx['entity_variables'], local_ctx['bounds'])
         if subject_join_bound is None:
             if not isinstance(s, Variable):
                 raise SparqlValidationFailed("Could not resolve {s} and not a variable")
             # Variable not found, needs to be added
             subj_column = f'`{rdftable_name}`.`subject`'
-            selvars[create_varname(s)] = subj_column
-            bounds[create_varname(s)] = subj_column
+            local_ctx['selvars'][create_varname(s)] = subj_column
+            local_ctx['bounds'][create_varname(s)] = subj_column
             subject_join_bound = None    
         subject_join_condition = f'{rdftable_name}.subject = {subject_join_bound}' if subject_join_bound is not None else None
     predicate_join_condition = f'{rdftable_name}.predicate = \'{p.toPython()}\''
     # Process object join condition
     # object variables which are referencing ngsild-entities are forbidden
-    if isinstance(o, Variable) and o in entity_variables:
+    if isinstance(o, Variable) and o in local_ctx['entity_variables']:
         raise SparqlValidationFailed(f'Cannot bind NGSI-LD Entities to RDF objects.')
-    object_join_bound = get_rdf_join_condition(o, property_variables, entity_variables, bounds)
+    object_join_bound = get_rdf_join_condition(o, local_ctx['property_variables'], local_ctx['entity_variables'], local_ctx['bounds'])
     if object_join_bound is None:
         if not isinstance(o, Variable):
             raise SparqlValidationFailed("Could not resolve {o} not being a variable")
         # Variable not found, needs to be added
-        #obj_column = bounds[create_varname(s)]
-        selvars[create_varname(o)] = f'{rdftable_name}.object'
-        bounds[create_varname(o)] = f'{rdftable_name}.object'
+        local_ctx['selvars'][create_varname(o)] = f'{rdftable_name}.object'
+        local_ctx['bounds'][create_varname(o)] = f'{rdftable_name}.object'
         object_join_bound = None
     object_join_condition = f'{rdftable_name}.object = {object_join_bound}' if object_join_bound is not None else None
     join_condition = f'{predicate_join_condition}'
@@ -1059,8 +1059,8 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
         join_condition = f'{subject_join_condition} and {join_condition}'
     if object_join_condition is not None: join_condition += f' and {object_join_condition}' 
     sql_expression = f'{configs.rdf_table_name} AS {rdftable_name}'
-    bgp_tables[rdftable_name] = []
-    bgp_sql_expression.append( {'statement': f'{sql_expression}', 'join_condition': f'{join_condition}'})
+    local_ctx['bgp_tables'][rdftable_name] = []
+    local_ctx['bgp_sql_expression'].append( {'statement': f'{sql_expression}', 'join_condition': f'{join_condition}'})
     
                 
 def translate_BGP(ctx, bgp):
