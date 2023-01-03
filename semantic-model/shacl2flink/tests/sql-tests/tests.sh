@@ -4,14 +4,14 @@ TOOLDIR=$(cd ../..; echo $PWD)
 KMS=kms
 TESTOUT=testout
 RESULT=result
+testdirs=${@:-"$(ls $KMS)"}
 
-
-for testdir in $(ls $KMS); do
+for testdir in ${testdirs}; do
     KNOWLEDGE=knowledge.ttl
     SHACL=shacl.ttl
     pushd .
     cd $KMS/$testdir
-    mkdir -p $OUTPUTDIR 
+    mkdir -p $OUTPUTDIR
 
     for model in $(ls model*.jsonld); do
         MODEL=$model
@@ -36,6 +36,6 @@ for testdir in $(ls $KMS); do
         diff ${OUTPUTDIR}/${MODEL}_${TESTOUT} ${MODEL}_${RESULT} || { echo "failed"; exit 1; }
         echo " ok"
     done;
-    rm -rf $OUTPUTDIR
+    $DEBUG || rm -rf $OUTPUTDIR
     popd
 done;
