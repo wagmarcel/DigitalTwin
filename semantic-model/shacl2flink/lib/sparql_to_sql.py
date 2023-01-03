@@ -1051,8 +1051,9 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
             entity = local_ctx['bounds'].get(create_varname(s))    
             if entity is None:
                 raise SparqlValidationFailed(f'In triple {s, p, o}: Subject entity not bound but cannot bind object and subject of RDF term at same time. Please consider rearranging terms.')
-            entity_table = entity.replace('.id','')
-            entity_column = entity.replace('.id','.type')
+            entity = entity.replace('.`id`', '.id')  # Normalize cases when id is quoted
+            entity_table = entity.replace('.id', '')
+            entity_column = entity.replace('.id', '.type')
             column = 'type'
             global_tables = ctx['tables']
             if not entity_table in global_tables:
