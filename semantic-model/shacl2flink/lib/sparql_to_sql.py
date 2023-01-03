@@ -108,10 +108,11 @@ def translate_sparql(shaclfile, knowledgefile, sparql_query, target_class):
     h = Graph()
     h.parse(knowledgefile)
     g += h
-    rdfs = owlrl.RDFSClosure.RDFS_Semantics(g, axioms=True, daxioms=False, rdfs=True).closure()
-    sh = Namespace("http://www.w3.org/ns/shacl#")
-    ngsild = Namespace("https://uri.etsi.org/ngsi-ld/")
-    iff = Namespace("https://industry-fusion.com/types/v0.9/")
+    owlrl.RDFSClosure.RDFS_Semantics(g, axioms=True, daxioms=False,
+                                     rdfs=True).closure()
+    # sh = Namespace("http://www.w3.org/ns/shacl#")
+    # ngsild = Namespace("https://uri.etsi.org/ngsi-ld/")
+    # iff = Namespace("https://industry-fusion.com/types/v0.9/")
 
     qres = g.query(sparql_get_properties)
     for row in qres:
@@ -126,7 +127,8 @@ def translate_sparql(shaclfile, knowledgefile, sparql_query, target_class):
     ctx = translate_query(parsed_query, target_class)
     return ctx['target_sql'], ctx['sql_tables']
 
-def create_tablename(subject, predicate = '', namespace_manager = None):
+
+def create_tablename(subject, predicate='', namespace_manager=None):
     """
     Creates a sql tablename from an RDF Varialbe.
     e.g. ?var => VARTABLE
@@ -143,7 +145,8 @@ def create_tablename(subject, predicate = '', namespace_manager = None):
         subj = namespace_manager.compute_qname(subject)[2]
         subj = subj.upper()
     else:
-        raise SparqlValidationFailed(f'Could not convert subject {subject} to table-name')
+        raise SparqlValidationFailed(f'Could not convert subject {subject} to \
+table-name')
 
     return f'{subj}{pred}TABLE'
 
@@ -156,7 +159,8 @@ def create_varname(variable):
     return variable.toPython()[1:]
 
 
-def get_rdf_join_condition(r, property_variables, entity_variables, selectvars):
+def get_rdf_join_condition(r, property_variables, entity_variables,
+                           selectvars):
     """
     Create join condition for RDF-term
     e.g. ?table => table.id
@@ -171,20 +175,20 @@ def get_rdf_join_condition(r, property_variables, entity_variables, selectvars):
             if var in selectvars:
                 return selectvars[var]
             else:
-                raise SparqlValidationFailed(f'Could not resolve variable ?{var} at this point. You might want to rearrange the query to hint to translator.')
+                raise SparqlValidationFailed(f'Could not resolve variable \
+?{var} at this point. You might want to rearrange the query to hint to \
+translator.')
         elif r in entity_variables:
-            raise SparqlValidationFailed(f'Cannot bind enttiy variable {r} to plain RDF context')
-        #    if var in selectvars:
-        #        return f'{create_tablename(r)}.id'
-        elif var in selectvars: # plain RDF variable
+            raise SparqlValidationFailed(f'Cannot bind enttiy variable {r} to \
+plain RDF context')
+        elif var in selectvars:  # plain RDF variable
             return selectvars[var]
-        #else:
-        #    raise SparqlValidationFailed(f'Could not resolve varialbe {r}')
     elif isinstance(r, URIRef) or isinstance(r, Literal):
         return f'\'{r.toPython()}\''
     else:
-        raise SparqlValidationFailed(f'RDF term {r} must either be a Variable, IRI or Literal.')
-    
+        raise SparqlValidationFailed(f'RDF term {r} must either be a Variable, \
+IRI or Literal.')
+
 
 def create_bgp_context(bounds, join_conditions, sql_expression, tables):
     return {
@@ -194,43 +198,53 @@ def create_bgp_context(bounds, join_conditions, sql_expression, tables):
         'tables': tables
     }
 
+
 def translate_query(query, target_class):
     """
     Decomposes parsed SparQL object
     query: parsed sparql object
     """
     algebra = query.algebra
-    ctx = {'namespace_manager': query.prologue.namespace_manager, 
-            'PV': algebra.PV,
-            'pass': 0,
-            'target_used': False,
-            'table_id': 0,
-            'classes': {'this': target_class},
-            'sql_tables': [utils.camelcase_to_snake_case(utils.strip_class(target_class)), 'attributes'],
-            'bounds': {'this': 'THISTABLE.id'},
-            'tables': {'THISTABLE': ['id']},
-            'target_sql': '',
-            'target_where': '',
-            'target_modifiers': [],
-            'target_ctx': create_bgp_context({'this': 'THISTABLE.id'}, 
-                                                [],
-                                                [{'statement': f'{ utils.camelcase_to_snake_case(utils.strip_class(target_class))}_view as THISTABLE',
-                                                'join_condition': ''}], 
-                                                ['THISTABLE']
-                                            )
-    }
-    #ctx["tables"] = {'THISTABLE': ctx["target_ctx"]}
-    if debug: print("DEBUG: First Pass.", file=debugoutput)
+    ctx = {
+        'namespace_manager': query.prologue.namespace_manager,
+        'PV': algebra.PV,
+        'pass': 0,
+        'target_used': False,
+        'table_id': 0,
+        'classes': {'this': target_class},
+        'sql_tables': [utils.camelcase_to_snake_case(
+            utils.strip_class(target_class)), 'attributes'],
+        'bounds': {'this': 'THISTABLE.id'},
+        'tables': {'THISTABLE': ['id']},
+        'target_sql': '',
+        'target_where': '',
+        'target_modifiers': [],
+        'target_ctx': create_bgp_context({'this': 'THISTABLE.id'},
+                                         [],
+                                         [{'statement': f'\
+{utils.camelcase_to_snake_case(utils.strip_class(target_class))}_view as \
+THISTABLE',
+                                           'join_condition': ''
+                                           }],
+                                         ['THISTABLE']
+                                         )
+            }
+    if debug:
+        print("DEBUG: First Pass.", file=debugoutput)
     if algebra.name == 'SelectQuery':
         translate(ctx, algebra)
     else:
-        raise WrongSparqlStructure('Only SelectQueries are supported currently!')
-    
-    if debug: print("DEBUG: Second Pass.", file=debugoutput)
+        raise WrongSparqlStructure('Only SelectQueries are supported \
+currently!')
+
+    if debug:
+        print("DEBUG: Second Pass.", file=debugoutput)
     ctx['pass'] = 1
-    translate(ctx,algebra)
-    if debug: print('DEBUG: Result: ', ctx['target_sql'], file=debugoutput)
+    translate(ctx, algebra)
+    if debug:
+        print('DEBUG: Result: ', ctx['target_sql'], file=debugoutput)
     return ctx
+
 
 def translate(ctx, elem):
     """
@@ -244,8 +258,6 @@ def translate(ctx, elem):
     elif elem.name == 'Filter':
         if ctx['pass'] == 0:
             translate_filter(ctx, elem)
-        #else:
-            #return construct_sql(ctx, elem)
     elif elem.name == 'BGP':
         if ctx['pass'] == 0:
             translate_BGP(ctx, elem)
@@ -254,7 +266,8 @@ def translate(ctx, elem):
             if ctx['target_sql'] == '':
                 select = True
             if 'sql_expression' in elem['sql_context']:
-                result, where = merge_bgp_context(elem['sql_context']['sql_expression'], select)
+                result, where = merge_bgp_context(elem['sql_context']
+                                                  ['sql_expression'], select)
                 ctx['target_sql'] = ctx['target_sql'] + result
                 merge_where_context(ctx, where)
     elif elem.name == 'ConditionalAndExpression':
@@ -271,20 +284,25 @@ def translate(ctx, elem):
         ctx['target_modifiers'].append('Distinct')
         translate(ctx, elem.p)
     else:
-        raise WrongSparqlStructure(f'SparQL structure {elem.name} not supported!')
+        raise WrongSparqlStructure(f'SparQL structure {elem.name} not \
+supported!')
+
 
 def translate_select_query(ctx, query):
     """
     Decomposes SelectQuery object
     """
-    if debug > 2: print(f'SelectQuery: {query}', file=debugoutput)
+    if debug > 2:
+        print(f'SelectQuery: {query}', file=debugoutput)
     return translate(ctx, query.p)
+
 
 def translate_project(ctx, project):
     """
     Translate Project structure
     """
-    if debug > 2: print(f'DEBUG: Project: {project}', file=debugoutput)
+    if debug > 2:
+        print(f'DEBUG: Project: {project}', file=debugoutput)
     translate(ctx, project.p)
     if ctx['pass'] == 0:
         add_projection_vars_to_tables(ctx)
@@ -292,33 +310,33 @@ def translate_project(ctx, project):
         select_expression = ctx['target_sql']
         if select_expression == '':
             select_expression = construct_sql(ctx, project.p)
-        if not ctx['target_used'] and ctx['target_ctx'] != None:
+        if not ctx['target_used'] and ctx['target_ctx'] is not None:
             ctx['target_used'] = True
             # special case: first join condition
-            prefix, where = merge_bgp_context(ctx['target_ctx']['sql_expression'], True)
+            prefix, where = merge_bgp_context(ctx['target_ctx']
+                                              ['sql_expression'], True)
             if where != '':
-                raise WrongSparqlStructure("Where condition found but not used.")
+                raise WrongSparqlStructure("Where condition found but not \
+used.")
             select_expression = f'{prefix} JOIN {select_expression}'
-                #prefix = construct_sql(ctx, project.p)
-            #select_expression_pre = create_join_expressions(ctx, ctx['target_sql'], ctx['target_ctx'])
-            #select_expression = f'{select_expression_pre} JOIN {select_expression}'
         ctx['target_sql'] = select_expression
         wrap_sql_projection(ctx)
+
 
 def add_projection_vars_to_tables(ctx):
     bounds = ctx['bounds']
     for var in ctx['PV']:
         try:
             column = bounds[create_varname(var)]
-            column_no_bacticks =  column.replace('`', '')
-            table_name, column = re.findall('^([A-Z0-9_]+)\.(.*)$', column_no_bacticks)[0]
+            column_no_bacticks = column.replace('`', '')
+            table_name, column = re.findall(r'^([A-Z0-9_]+)\.(.*)$',
+                                            column_no_bacticks)[0]
             if table_name not in ctx['tables']:
                 ctx['tables'][table_name] = [f'{column}']
             else:
                 ctx['tables'][table_name].append(f'{column}')
-            #expression += f'`{column_no_bacticks}` AS `{create_varname(var)}` '
         except:
-            pass # variable cannot mapped to a table, ignore it
+            pass  # variable cannot mapped to a table, ignore it
 
 
 def wrap_sql_projection(ctx):
@@ -346,14 +364,16 @@ def wrap_sql_projection(ctx):
     target_sql = ctx['target_sql']
     target_where = ctx['target_where']
     ctx['target_sql'] = f'{expression} FROM {target_sql}'
-    ctx['target_sql'] = ctx['target_sql'] + f' WHERE {target_where}' if target_where != '' else ctx['target_sql']
+    ctx['target_sql'] = ctx['target_sql'] + f' WHERE {target_where}' if \
+        target_where != '' else ctx['target_sql']
 
 
 def translate_filter(ctx, filter):
     """
     Translates Filter object to SQL
     """
-    if debug  > 2: print(f'DEBUG: Filter: {filter}', file=debugoutput)
+    if debug > 2:
+        print(f'DEBUG: Filter: {filter}', file=debugoutput)
     translate(ctx, filter.p)
     if ctx['pass'] == 0:
         where = translate(ctx, filter.expr)
@@ -366,16 +386,14 @@ def translate_filter(ctx, filter):
             else:
                 where = condition
         filter['sql_context']['where'] = where
-    #else:
-    #    filter['sql_context'] = filter.p['sql_context']
-    #return translate_filter_to_sql(query, where)
 
 
 def translate_notexists(ctx, notexists):
     """
     Translates a FILTER NOT EXISTS expression
     """
-    if debug  > 2: print(f'DEBUG: FILTER NOT EXISTS: {notexists}', file=debugoutput)
+    if debug > 2:
+        print(f'DEBUG: FILTER NOT EXISTS: {notexists}', file=debugoutput)
     ctx_copy = copy_context(ctx)
     translate(ctx_copy, notexists.graph)
     ctx_copy['pass'] = 1
@@ -388,12 +406,15 @@ def translate_notexists(ctx, notexists):
 
 def remap_join_constraint_to_where(ctx):
     """
-    Workaround for Flink - currently correlated variables in on condition are not working in not-exists subqueries
-    Therefore they are remapped to "where" conditions. This will make the query more inefficient but hopefully it 
-    can be reomved once FLINK fixed the issue. This method only works so far for rdf tables.
+    Workaround for Flink - currently correlated variables in on condition are
+    not working in not-exists subqueries
+    Therefore they are remapped to "where" conditions. This will make the
+    query more inefficient but hopefully it
+    can be reomved once FLINK fixed the issue. This method only works so far
+    for rdf tables.
     """
-    pattern1 = '(\S*.subject = \S*) and'
-    pattern2 = 'and (\S*.object = \S*)'
+    pattern1 = r'(\S*.subject = \S*) and'
+    pattern2 = r'and (\S*.object = \S*)'
     toreplace = ctx['target_sql']
     match1 = re.findall(pattern1, toreplace)
     match2 = re.findall(pattern2, toreplace)
@@ -412,6 +433,7 @@ def remap_join_constraint_to_where(ctx):
     for match in match2:
         ctx['target_where'] = ctx['target_where'] + f' and {match}'
 
+
 def merge_contexts(ctx, ctx_copy):
     """
     merge global table from ctx_copy into ctx
@@ -428,6 +450,7 @@ def merge_contexts(ctx, ctx_copy):
                 if column not in target_table:
                     target_table.append(column)
 
+
 def copy_context(ctx):
     ctx_copy = copy.deepcopy(ctx)
     ctx_copy['target_sql'] = ''
@@ -436,36 +459,31 @@ def copy_context(ctx):
     ctx_copy['sql_tables'] = ctx['sql_tables']
     return ctx_copy
 
+
 def translate_join(ctx, join):
-    if debug  > 2: print(f'DEBUG: JOIN: {join}', file=debugoutput)
+    if debug > 2:
+        print(f'DEBUG: JOIN: {join}', file=debugoutput)
     if ctx['pass'] == 0:
         translate(ctx, join.p1)
         translate(ctx, join.p2)
     if ctx['pass'] == 1:
         translate(ctx, join.p1)
-        # result1 = ''
-        # if 'sql_expression' in join.p1['sql_context'] and join.p1['sql_context']['sql_expression'] == '':
         if ctx['target_sql'] != '':
             ctx['target_sql'] = ctx['target_sql'] + ' JOIN '
-        # result2 = construct_sql(ctx, join.p2)
 
-        # ctx['target_sql'] = f'{result1} JOIN {result2} ON {join_'
         translate(ctx, join.p2)
         # join condition - assume that it is not a hierarchical JOIN
         join_condition = ''
         try:
             join_condition = join.p2['sql_context']['join_condition']
         except:
-            WrongSparqlStructure('Assumption of "left depth" structure violated. No hiearchical right join elements allowed')
+            WrongSparqlStructure('Assumption of "left depth" structure \
+violated. No hiearchical right join elements allowed')
         if ctx['target_sql'] != '' and join_condition != '':
             ctx['target_sql'] = ctx['target_sql'] + f' ON {join_condition}'
-        #if not ctx['target_used']:
-        #    ctx['target_used'] = True
-        #    select_expression = create_select_expression(ctx, ctx['target_ctx'])
-        #    res = create_join_expressions(ctx, select_expression, result)
-        #    print ('join 2nd pass',  res)
 
-    return 
+    return
+
 
 def create_join_expressions(ctx, bgp_context):
     """
@@ -478,25 +496,16 @@ def create_join_expressions(ctx, bgp_context):
         merge_where_context(ctx, bgp_context['where'])
 
     join_name = f'J{ctx["table_id"]}'
-    
-    
-    #expression = f'SELECT {columns} FROM'
-    #expression = f' ({join_expr}) as {join_name}' if join_expr != '' else ''
-    #ctx['table_id'] += 1
-    #globalize_join_condition(bgp_context['sql_expression'], bgp_context['tables'], ctx['tables'], join_name)
+
     merge, where_add = merge_bgp_context(bgp_context['sql_expression'])
     expression = merge
     where = merge_where_context(ctx, where_add)
-     
+
     for condition in bgp_context['join_conditions']:
-        #condition = globalize_condition(condition, bgp_context['tables'], ctx['tables'], join_name)
         if where != '':
             where += f' and {condition}'
         else:
             where = condition
-    # where = globalize_condition(where, bgp_context['tables'], ctx['tables'], join_name)
-    # merge_where_context(ctx, where)
-    #expression += f' WHERE {ctx["where"]}' if where != '' else ''
     return expression
 
 
@@ -506,13 +515,12 @@ def construct_sql(ctx, elem):
     """
     if not elem['sql_context']:
         return ''
-    #select_expression = ''
 
     select_expression = create_join_expressions(ctx, elem['sql_context'])
     return select_expression
 
 
-def merge_bgp_context(bgp_context, select = False):
+def merge_bgp_context(bgp_context, select=False):
     """
     Iterate through bgp_context and create statement out of it
     Normally, it is created for a join but if select is True, it is creating
@@ -535,25 +543,34 @@ def merge_bgp_context(bgp_context, select = False):
 
 
 def merge_where_context(ctx, where_add):
-    ctx['target_where'] = merge_where_expression(ctx['target_where'], where_add)
+    ctx['target_where'] = merge_where_expression(ctx['target_where'],
+                                                 where_add)
     return ctx['target_where']
 
+
 def merge_where_expression(where1, where2):
-    if where1 == '' and where2 == '': return ''
-    elif where1 == '': return where2
-    elif where2 == '': return where1
-    else: return f'{where1} and {where2}'
+    if where1 == '' and where2 == '':
+        return ''
+    elif where1 == '':
+        return where2
+    elif where2 == '':
+        return where1
+    else:
+        return f'{where1} and {where2}'
+
 
 def translate_and_expression(ctx, expr):
     """
     Translates AND expression to SQL
     """
-    if debug  > 2: print(f'DEBUG: ConditionalAndExpression: {expr}', file=debugoutput)
+    if debug > 2:
+        print(f'DEBUG: ConditionalAndExpression: {expr}', file=debugoutput)
     result = translate(ctx, expr.expr)
     for otherexpr in expr.other:
         result += ' and '
         result += translate(ctx, otherexpr)
     return result
+
 
 def translate_relational_expression(ctx, elem):
     """
@@ -563,7 +580,7 @@ def translate_relational_expression(ctx, elem):
 
     if isinstance(elem.expr, Variable):
         expr = bounds[create_varname(elem.expr)]
-    elif isinstance(elem.expr, Literal) or isinstance(eleem.expr, URIRef):
+    elif isinstance(elem.expr, Literal) or isinstance(elem.expr, URIRef):
         expr = f'\'{elem.expr.toPython()}\''
     else:
         raise WrongSparqlStructure(f'Expression {elem.expr} not supported!')
@@ -574,24 +591,26 @@ def translate_relational_expression(ctx, elem):
         other = f'\'{elem.other.toPython()}\''
     else:
         raise WrongSparqlStructure(f'Expression {elem.other} not supported!')
-    
+
     op = elem.op
-    if elem.op == '!=': op = '<>'
+    if elem.op == '!=':
+        op = '<>'
 
     return f'{expr} {op} {other}'
 
+
 def translate_filter_to_sql(query, where):
-    
+
     return f'{query} WHERE {where}'
 
 
 def create_global_columns(ctx, bgp_context):
     columns = ''
     tables = bgp_context['tables']
-    
+
     first = True
     for table in tables:
-        ctx['tables'][table] = list(set(ctx['tables'][table])) # deduplicate
+        ctx['tables'][table] = list(set(ctx['tables'][table]))  # deduplicate
 
         for column in ctx['tables'][table]:
             if first:
@@ -600,6 +619,7 @@ def create_global_columns(ctx, bgp_context):
                 columns += ','
             columns += f'{table}.`{column}` AS `{table}.{column}`'
     return columns
+
 
 def create_select_expression(ctx, bgp_context):
     """
@@ -622,21 +642,20 @@ def create_select_expression(ctx, bgp_context):
                 join_cond = sql_expresion['join_condition']
             table_term += ' JOIN ' + sql_expresion['statement']
             if join_cond != '':
-                table_term += f' ON {join_cond}' 
+                table_term += f' ON {join_cond}'
 
-        #exp = sql_expresion['statement']
     expression += f' FROM {table_term}'
     if where != '':
-        expression += f'WHERE {where}' # TODO: Globalize where conditino
+        expression += f'WHERE {where}'  # TODO: Globalize where conditino
     return expression
+
 
 def get_table_name_from_full(full_name):
     """
     Contains full name e.g "table.column"
     and translates to "table"
     """
-    return re.search('^([A-Z0-9_]+)\.', )
-    
+    return re.search(r'^([A-Z0-9_]+)\.', )
 
 
 def map_join_condition(sql_expressions, local_tables, global_tables):
@@ -646,13 +665,13 @@ def map_join_condition(sql_expressions, local_tables, global_tables):
     for expression in sql_expressions:
         to_match = expression['join_condition']
         num_matches = to_match.count('=')
-        pattern = '[\s]*([^\s]+)[\s]*=[\s]*([^\s]+)[\s]*[and]*'*num_matches
+        pattern = r'[\s]*([^\s]+)[\s]*=[\s]*([^\s]+)[\s]*[and]*'*num_matches
         match = re.findall(pattern, to_match)
         for var in match[0]:
             try:
-                table_name, column = re.findall('^([A-Z0-9_]+)\.(.*)$', var)[0]
+                table_name, column = re.findall(r'^([A-Z0-9_]+)\.(.*)$', var)[0]
                 if table_name not in local_tables:
-                    column_no_backticks = column.replace('`','')
+                    column_no_backticks = column.replace('`', '')
                     if table_name not in global_tables:
                         global_tables[table_name] = column_no_backticks
                     else:
@@ -660,7 +679,9 @@ def map_join_condition(sql_expressions, local_tables, global_tables):
             except: # no column variable
                 pass
 
-def globalize_join_condition(sql_expressions, local_tables, global_tables, join_table_name):
+
+def globalize_join_condition(sql_expressions, local_tables, global_tables,
+                             join_table_name):
     """
     Map all non-local conditions to global table list for later reference
     It searches ONLY for equality conditions e.g. a = b
@@ -669,108 +690,112 @@ def globalize_join_condition(sql_expressions, local_tables, global_tables, join_
     e.g. MYTABLE.`id` => J1.`MYTABLE.id`
     """
     for expression in sql_expressions:
-        expression['join_condition'] = globalize_condition(expression['join_condition'], local_tables, global_tables, join_table_name) 
-        #to_match = expression['join_condition']
-        #new_condition = ''
-        #num_matches = to_match.count('=')
-        #pattern = '[\s]*([^\s]+)[\s]*=[\s]*([^\s]+)[\s]*[and]*'*num_matches
-        #match = re.findall(pattern, to_match)
-        #for var in match[0]:
-        #    try:
-        #        table_name, column = re.findall('^`?([A-Z0-9_]+)`?\.`?(.*)`?$', var)[0]
-        #        if table_name not in local_tables:
-        #            column_no_backticks = column.replace('`','')
-        #            expression['join_condition'] = re.sub( var, f'{join_table_name}.`{table_name}.{column_no_backticks}`', expression['join_condition'])
-        #    except:
-        #        pass
+        expression['join_condition'] = globalize_condition(
+            expression['join_condition'], local_tables, global_tables,
+            join_table_name)
 
-def globalize_condition(expression, local_tables, global_tables, join_table_name):
+
+def globalize_condition(expression, local_tables, global_tables,
+                        join_table_name):
     if expression == '':
         return expression
     to_match = expression
-    new_condition = ''
+    # new_condition = ''
     num_matches = to_match.count('=')
     num_matches += to_match.count('<>')
     num_matches += to_match.count('>=')
     num_matches += to_match.count('<=')
-    pattern = '[\s]*([^\s]+)[\s]*[<>=]+[\s]*([^\s]+)[\s]*[and]*'*num_matches
+    pattern = r'[\s]*([^\s]+)[\s]*[<>=]+[\s]*([^\s]+)[\s]*[and]*'*num_matches
     match = re.findall(pattern, to_match)
     # deduplicate match[0]
     columns = list(set(match[0]))
     for var in columns:
         try:
-            table_name, column = re.findall('^`?([A-Z0-9_]+)`?\.`?(.*)`?$', var)[0]
+            table_name, column = re.findall(r'^`?([A-Z0-9_]+)`?\.`?(.*)`?$',
+                                            var)[0]
             if table_name not in local_tables:
-                column_no_backticks = column.replace('`','')
-                expression = re.sub( var, f'{join_table_name}.`{table_name}.{column_no_backticks}`', expression)
+                column_no_backticks = column.replace('`', '')
+                expression = re.sub(var, f'{join_table_name}.`{table_name}.\
+                                    {column_no_backticks}`', expression)
         except:
             pass
     return expression
 
+
 def isentity(ctx, variable):
-    if create_varname(variable) in ctx['bounds']: 
+    if create_varname(variable) in ctx['bounds']:
         table = ctx['bounds'][create_varname(variable)]
     else:
         return False
-    if re.search('\.id$', table):
+    if re.search(r'\.id$', table):
         return True
     else:
         return False
 
 
 def sort_triples(bounds, triples, graph):
-    """Sort a BGP according to dependencies. Externally dependent triples come first
-    
+    """Sort a BGP according to dependencies. Externally dependent triples come
+    first
+
     Sort triples with respect to already bound variables
     try to move triples without any bound variable to the end
-    
+
     Args:
     bounds (dictionary): already bound variables
     triples (dictionary): triples to be sorted
-    graph (RDFlib Graph): graph containing the same triples as 'triples' but searchable with RDFlib
+    graph (RDFlib Graph): graph containing the same triples as 'triples' but
+    searchable with RDFlib
     """
     def select_candidates(bounds, triples, graph):
         for s, p, o in triples:
             count = 0
             # look for nodes: (1) NGSI-LD node and (2) plain RDF (3) rest
-            if isinstance(s, Variable) and (p.toPython() in relationships or p.toPython() in properties):
+            if isinstance(s, Variable) and (p.toPython() in relationships or
+                                            p.toPython() in properties):
                 if isinstance(o, BNode):
                     blanktriples = graph.triples((o, None, None))
                     for (bs, bp, bo) in blanktriples:
                         # (1)
                         if create_varname(s) in bounds:
-                            count += 1 
-                            if isinstance(bo, Variable): bounds[create_varname(bo)] = ''
-                        elif isinstance(bo, Variable) and create_varname(bo) in bounds:
+                            count += 1
+                            if isinstance(bo, Variable):
+                                bounds[create_varname(bo)] = ''
+                        elif isinstance(bo, Variable) and create_varname(bo)\
+                                in bounds:
                             count += 1
                             bounds[create_varname(s)] = ''
                         elif isinstance(bo, URIRef) or isinstance(bo, Literal):
-                            raise SparqlValidationFailed(f'Tried to bind {s} to Literal or IRI instead of Variable. Not implemented. Workaround to bind {s} to Variable and use FILTER.')
-            elif not isinstance(s, BNode) or ( p != ngsild['hasValue'] and p != ngsild['hasObject'] ):
+                            raise SparqlValidationFailed(f'Tried to bind {s}\
+to Literal or IRI instead of Variable. Not implemented. Workaround to bind {s}\
+to Variable and use FILTER.')
+            elif not isinstance(s, BNode) or (p != ngsild['hasValue'] and p !=
+                                              ngsild['hasObject']):
                 if isinstance(s, Variable) and create_varname(s) in bounds:
                     count += 1
-                    if isinstance(o, Variable): bounds[create_varname(o)] = ''
+                    if isinstance(o, Variable):
+                        bounds[create_varname(o)] = ''
                 elif isinstance(o, Variable) and create_varname(o) in bounds:
-                    count += 1 
-                    if isinstance(s, Variable): bounds[create_varname(s)] = ''
+                    count += 1
+                    if isinstance(s, Variable):
+                        bounds[create_varname(s)] = ''
             elif isinstance(s, BNode):
                 # (3)
                 count = 1
             else:
                 raise SparqlValidationFailed("Could not reorder BGP triples.")
             if count > 0:
-                return(s, p, o)
+                return (s, p, o)
 
-    bounds = copy.deepcopy(bounds) # do not change the "real" bounds
+    bounds = copy.deepcopy(bounds)  # do not change the "real" bounds
     result = []
-    #iterations = len(triples) * len(triples)
     while len(triples) > 0:
         candidate = select_candidates(bounds, triples, graph)
         if candidate is None:
-            raise SparqlValidationFailed("Could not determine the right order of triples")
+            raise SparqlValidationFailed("Could not determine the right order\
+of triples")
         result.append(candidate)
         triples.remove(candidate)
-        
+
     return result
 
 def get_random_string(num):

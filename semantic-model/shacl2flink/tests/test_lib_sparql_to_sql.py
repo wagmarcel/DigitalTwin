@@ -17,19 +17,21 @@
 from unittest.mock import MagicMock, patch
 import lib.sparql_to_sql
 from bunch import Bunch
-from rdflib import Namespace, term, RDF
+from rdflib import Namespace, term, RDF, Graph as rGraph
 
 hasObjectURI = term.URIRef("https://uri.etsi.org/ngsi-ld/hasObject")
 stateURI = term.URIRef("https://industry-fusion.com/types/v0.9/state")
 hasFilterURI = term.URIRef("https://industry-fusion.com/types/v0.9/hasFilter")
 hasValueURI = term.URIRef("https://uri.etsi.org/ngsi-ld/hasValue")
-target_class = term.URIRef("https://industry-fusion.com/v0.9/cutter")
+target_class = term.URIRef("https://industry-fusion.com/types/v0.9/cutter")
+target_class_filter = term.URIRef("https://industry-fusion.com/types/v0.9/filter")
 cutter = term.URIRef("cutter")
+
 
 def test_create_ngsild_mappings(monkeypatch):
     class Graph:
         def query(self, sparql):
-            assert "?this rdfs:subClassOf <https://industry-fusion.com/v0.9/cutter> ." in sparql
+            assert "?this rdfs:subClassOf <https://industry-fusion.com/types/v0.9/cutter> ." in sparql
             assert "?thisshape sh:targetClass ?this .\n?thisshape sh:property [ sh:path \
 <https://industry-fusion.com/types/v0.9/hasFilter> ; sh:property [ sh:path \
 ngsild:hasObject;  sh:class ?f ] ] ." in sparql
@@ -37,7 +39,8 @@ ngsild:hasObject;  sh:class ?f ] ] ." in sparql
 <https://industry-fusion.com/types/v0.9/state> ; ] ." in sparql
             assert "?v1shape sh:targetClass ?v1 .\n?v1shape sh:property [ sh:path \
 <https://industry-fusion.com/types/v0.9/state> ; ] ." in sparql
-            assert "filter(?fshape = ?v2shape && ?thisshape = ?v1shape)" in sparql
+            assert "?thisshape = ?v1shape" in sparql
+            assert "?fshape = ?v2shape" in sparql
             return ['row']
     relationships = {
         "https://industry-fusion.com/types/v0.9/hasFilter": True     
@@ -71,35 +74,85 @@ ngsild:hasObject;  sh:class ?f ] ] ." in sparql
             }
     }
     
-    mock_graph.__iter__.return_value =  [(term.BNode('1'), hasObjectURI, term.Variable('f')),
-                                     (term.Variable('f'), stateURI, term.BNode('2')),
-                                     (term.Variable('this'), hasFilterURI, term.BNode('1')),
-                                     (term.Variable('this'), stateURI, term.BNode('3')),
-                                     (term.BNode('2'), hasValueURI, term.Variable('v2')),
-                                     (term.BNode('3'), hasValueURI, term.Variable('v1'))]
-    mock_graph.triples = MagicMock(side_effect=[
-        [(term.Variable('f'), stateURI, term.BNode('2'))],
-         [(term.Variable('this'), hasFilterURI, term.BNode('1')),
-          (term.Variable('this'), stateURI, term.BNode('3'))],
-         [(term.BNode('2'), hasValueURI, term.Variable('v2'))],
-         [(term.BNode('3'), hasValueURI, term.Variable('v1'))]
-    ])
-    mock_graph.value = MagicMock(side_effect=[
-        None, term.Variable('f'), None
-    ])
-    mock_graph.predicates = MagicMock(side_effect=[
-        [stateURI], [stateURI]
-    ])
-    mock_graph.subjects = MagicMock(side_effect=[
-        [term.Variable('f')], [term.Variable('this')]
-    ])
-    property_variables, entity_variables, row = lib.sparql_to_sql.create_ngsild_mappings(ctx, mock_graph)
+    graph = rGraph()
+    graph.add((term.BNode('1'), hasObjectURI, term.Variable('f')))
+    graph.add((term.Variable('f'), stateURI, term.BNode('2')))
+    graph.add((term.Variable('this'), hasFilterURI, term.BNode('1')))
+    graph.add((term.Variable('this'), stateURI, term.BNode('3')))
+    graph.add((term.BNode('2'), hasValueURI, term.Variable('v2')))
+    graph.add((term.BNode('3'), hasValueURI, term.Variable('v1')))
+
+    property_variables, entity_variables, row = lib.sparql_to_sql.create_ngsild_mappings(ctx, graph)
     assert property_variables == {
         term.Variable('v2'): True,
         term.Variable('v1'): True
     }
     assert entity_variables == {
         term.Variable('f'): True,
+        term.Variable('this'): True
+    }
+    assert row == 'row'
+
+
+def test_create_ngsild_mappings_reverse(monkeypatch):
+    class Graph:
+        def query(self, sparql):
+            assert "?this rdfs:subClassOf <https://industry-fusion.com/types/v0.9/filter> ." in sparql
+            assert "pcshape sh:property [ sh:path <https://industry-fusion.com/types/v0.9/hasFilter> ; sh:property [ sh:path ngsild:hasObject;  sh:class ?this ] ]" in sparql
+            assert "?v2shape sh:targetClass ?v2 .\n?v2shape sh:property [ sh:path \
+<https://industry-fusion.com/types/v0.9/state> ; ] ." in sparql
+            assert "?v1shape sh:targetClass ?v1 .\n?v1shape sh:property [ sh:path \
+<https://industry-fusion.com/types/v0.9/state> ; ] ." in sparql
+            assert "?thisshape = ?v1shape" in sparql 
+            assert "?pcshape = ?v2shape" in sparql
+            return ['row']
+
+    relationships = {
+        "https://industry-fusion.com/types/v0.9/hasFilter": True     
+    }
+    properties = {
+        "https://industry-fusion.com/types/v0.9/state": True
+    }
+    g = Graph()
+    monkeypatch.setattr(lib.sparql_to_sql, "properties", properties)
+    monkeypatch.setattr(lib.sparql_to_sql, "g", g)
+    monkeypatch.setattr(lib.sparql_to_sql, "relationships", relationships)
+    ctx = {'namespace_manager': None, 
+            'PV': None,
+            'pass': 0,
+            'target_used': False,
+            'table_id': 0,
+            'classes': {'this': target_class_filter},
+            'sql_tables': ['cutter', 'attributes'],
+            'bounds': {'this': 'THISTABLE.id'},
+            'tables': {'THISTABLE': ['id']},
+            'target_sql': '',
+            'target_where': '',
+            'target_modifiers': [],
+            'target_ctx': {
+                'bounds': {'this': 'THISTABLE.id'}, 
+                'join_conditions': [],
+                'sql_expression': [{'statement': f'cutter_view as THISTABLE',
+                                                'join_condition': ''}], 
+                'tables': ['THISTABLE']
+            }
+    }
+
+    graph = rGraph()
+    graph.add((term.Variable('this'), stateURI, term.BNode('1')))
+    graph.add((term.Variable('pc'), hasFilterURI, term.BNode('2')))
+    graph.add((term.BNode('2'), hasObjectURI, term.Variable('this')))
+    graph.add((term.Variable('pc'), stateURI, term.BNode('3')))
+    graph.add((term.BNode('1'), hasValueURI, term.Variable('v1')))
+    graph.add((term.BNode('3'), hasValueURI, term.Variable('v2')))
+
+    property_variables, entity_variables, row = lib.sparql_to_sql.create_ngsild_mappings(ctx, graph)
+    assert property_variables == {
+        term.Variable('v2'): True,
+        term.Variable('v1'): True
+    }
+    assert entity_variables == {
+        term.Variable('pc'): True,
         term.Variable('this'): True
     }
     assert row == 'row'
