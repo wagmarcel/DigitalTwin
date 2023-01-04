@@ -1,0 +1,7 @@
+'urn:plasmacutter:1','DataTypeValidation(https://industry-fusion.com/types/v0.9/state[0])','ok'
+'urn:plasmacutter:1','NodeTypeValidation(https://industry-fusion.com/types/v0.9/state[0])','ok'
+'urn:plasmacutter:1','PropertyClassCheck(https://industry-fusion.com/types/v0.9/hasFilter[0])','warning'
+'urn:plasmacutter:1','PropertyClassCheck(https://industry-fusion.com/types/v0.9/hasWorkpiece[0])','warning'
+'urn:plasmacutter:1','PropertyCountCheck(https://industry-fusion.com/types/v0.9/hasFilter)','warning'
+'urn:plasmacutter:1','PropertyCountCheck(https://industry-fusion.com/types/v0.9/hasWorkpiece)','ok'
+'urn:plasmacutter:1','Sparqlcheck(StateOnCutter)','ok'

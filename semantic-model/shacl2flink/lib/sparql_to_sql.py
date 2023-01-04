@@ -110,10 +110,6 @@ def translate_sparql(shaclfile, knowledgefile, sparql_query, target_class):
     g += h
     owlrl.RDFSClosure.RDFS_Semantics(g, axioms=True, daxioms=False,
                                      rdfs=True).closure()
-    # sh = Namespace("http://www.w3.org/ns/shacl#")
-    # ngsild = Namespace("https://uri.etsi.org/ngsi-ld/")
-    # iff = Namespace("https://industry-fusion.com/types/v0.9/")
-
     qres = g.query(sparql_get_properties)
     for row in qres:
         if row.property is not None:
@@ -123,6 +119,7 @@ def translate_sparql(shaclfile, knowledgefile, sparql_query, target_class):
     for row in qres:
         if row.relationship is not None:
             relationships[row.relationship.toPython()] = True
+
     parsed_query = translateQuery(parseQuery(sparql_query))
     ctx = translate_query(parsed_query, target_class)
     return ctx['target_sql'], ctx['sql_tables']
@@ -212,13 +209,18 @@ def translate_query(query, target_class):
         'target_used': False,
         'table_id': 0,
         'classes': {'this': target_class},
-        'sql_tables': [utils.camelcase_to_snake_case(
-            utils.strip_class(target_class)), 'attributes'],
-        'bounds': {'this': 'THISTABLE.id'},
-        'tables': {'THISTABLE': ['id']},
+        #'classes': {},
+        #'sql_tables': [utils.camelcase_to_snake_case(
+        #    utils.strip_class(target_class)), 'attributes'],
+        'sql_tables': ['attributes'],
+        #'bounds': {'this': 'THISTABLE.id'},
+        'bounds': {},
+        #'tables': {'THISTABLE': ['id']},
+        'tables': {},
         'target_sql': '',
         'target_where': '',
         'target_modifiers': [],
+        'add_triples': [(Variable('this'), RDF['type'], target_class)],
         'target_ctx': create_bgp_context({'this': 'THISTABLE.id'},
                                          [],
                                          [{'statement': f'\
@@ -236,11 +238,7 @@ THISTABLE',
     else:
         raise WrongSparqlStructure('Only SelectQueries are supported \
 currently!')
-
-    if debug:
-        print("DEBUG: Second Pass.", file=debugoutput)
-    ctx['pass'] = 1
-    translate(ctx, algebra)
+    ctx['target_sql'] = algebra['target_sql']
     if debug:
         print('DEBUG: Result: ', ctx['target_sql'], file=debugoutput)
     return ctx
@@ -256,20 +254,20 @@ def translate(ctx, elem):
         result = translate_project(ctx, elem)
         return result
     elif elem.name == 'Filter':
-        if ctx['pass'] == 0:
-            translate_filter(ctx, elem)
+        #if ctx['pass'] == 0:
+        translate_filter(ctx, elem)
     elif elem.name == 'BGP':
-        if ctx['pass'] == 0:
-            translate_BGP(ctx, elem)
-        else:
-            select = False
-            if ctx['target_sql'] == '':
-                select = True
-            if 'sql_expression' in elem['sql_context']:
-                result, where = merge_bgp_context(elem['sql_context']
-                                                  ['sql_expression'], select)
-                ctx['target_sql'] = ctx['target_sql'] + result
-                merge_where_context(ctx, where)
+        #if ctx['pass'] == 0:
+        translate_BGP(ctx, elem)
+        #else:
+            #select = False
+            #if ctx['target_sql'] == '':
+            #    select = True
+            #if 'sql_expression' in elem['sql_context']:
+            #    result, where = merge_bgp_context(elem['sql_context']
+            #                                      ['sql_expression'], select)
+            #    ctx['target_sql'] = ctx['target_sql'] + result
+            #    merge_where_context(ctx, where)
     elif elem.name == 'ConditionalAndExpression':
         result = translate_and_expression(ctx, elem)
         return result
@@ -283,6 +281,8 @@ def translate(ctx, elem):
     elif elem.name == 'Distinct':
         ctx['target_modifiers'].append('Distinct')
         translate(ctx, elem.p)
+    elif elem.name == 'LeftJoin':
+        return translate_left_join(ctx, elem)
     else:
         raise WrongSparqlStructure(f'SparQL structure {elem.name} not \
 supported!')
@@ -294,7 +294,10 @@ def translate_select_query(ctx, query):
     """
     if debug > 2:
         print(f'SelectQuery: {query}', file=debugoutput)
-    return translate(ctx, query.p)
+    translate(ctx, query.p)
+    query['target_sql'] = query.p['target_sql']
+    #query['where'] = query.p['where']
+    return
 
 
 def translate_project(ctx, project):
@@ -304,23 +307,25 @@ def translate_project(ctx, project):
     if debug > 2:
         print(f'DEBUG: Project: {project}', file=debugoutput)
     translate(ctx, project.p)
-    if ctx['pass'] == 0:
-        add_projection_vars_to_tables(ctx)
-    if ctx['pass'] == 1:
-        select_expression = ctx['target_sql']
-        if select_expression == '':
-            select_expression = construct_sql(ctx, project.p)
-        if not ctx['target_used'] and ctx['target_ctx'] is not None:
-            ctx['target_used'] = True
-            # special case: first join condition
-            prefix, where = merge_bgp_context(ctx['target_ctx']
-                                              ['sql_expression'], True)
-            if where != '':
-                raise WrongSparqlStructure("Where condition found but not \
-used.")
-            select_expression = f'{prefix} JOIN {select_expression}'
-        ctx['target_sql'] = select_expression
-        wrap_sql_projection(ctx)
+    project['target_sql'] = project.p['target_sql']
+    project['where'] = project.p['where']
+    #if ctx['pass'] == 0:
+    add_projection_vars_to_tables(ctx)
+    #if ctx['pass'] == 1:
+    #select_expression = ctx['target_sql']
+    #if select_expression == '':
+    #    select_expression = construct_sql(ctx, project.p)
+    #if not ctx['target_used'] and ctx['target_ctx'] is not None:
+    #    ctx['target_used'] = True
+    #    # special case: first join condition
+    #    prefix, where = merge_bgp_context(ctx['target_ctx']
+    #                                        ['sql_expression'], True)
+    #    if where != '':
+    #        raise WrongSparqlStructure("Where condition found but not \
+    # used.")
+    #    select_expression = f'{prefix} JOIN {select_expression}'
+    #    ctx['target_sql'] = select_expression
+    wrap_sql_projection(ctx, project)
 
 
 def add_projection_vars_to_tables(ctx):
@@ -339,7 +344,7 @@ def add_projection_vars_to_tables(ctx):
             pass  # variable cannot mapped to a table, ignore it
 
 
-def wrap_sql_projection(ctx):
+def wrap_sql_projection(ctx, node):
     bounds = ctx['bounds']
     expression = 'SELECT '
     if 'Distinct' in ctx['target_modifiers']:
@@ -361,11 +366,11 @@ def wrap_sql_projection(ctx):
             # variable could not be bound, bind it with NULL
             expression += f'NULL AS `{create_varname(var)}`'
 
-    target_sql = ctx['target_sql']
-    target_where = ctx['target_where']
-    ctx['target_sql'] = f'{expression} FROM {target_sql}'
-    ctx['target_sql'] = ctx['target_sql'] + f' WHERE {target_where}' if \
-        target_where != '' else ctx['target_sql']
+    target_sql = node['target_sql']
+    target_where = node['where']
+    node['target_sql'] = f'{expression} FROM {target_sql}'
+    node['target_sql'] = node['target_sql'] + f' WHERE {target_where}' if \
+        target_where != '' else node['target_sql']
 
 
 def translate_filter(ctx, filter):
@@ -376,16 +381,15 @@ def translate_filter(ctx, filter):
         print(f'DEBUG: Filter: {filter}', file=debugoutput)
     translate(ctx, filter.p)
     if ctx['pass'] == 0:
-        where = translate(ctx, filter.expr)
-        filter['sql_context'] = filter.p['sql_context']
+        where1 = translate(ctx, filter.expr)
+        where2 = filter.p['where']
+        filter['target_sql'] = filter.p['target_sql']
         # merge join condition
-
-        for condition in filter.p['sql_context']['join_conditions']:
-            if where != '':
-                where += f' and {condition}'
-            else:
-                where = condition
-        filter['sql_context']['where'] = where
+        if where1 == '':
+            raise SparqlValidationFailed('Error: Filter does not provide condition.')
+        if where2 != '':
+            where1 += f' and {where2}'
+        filter['where'] = where1
 
 
 def translate_notexists(ctx, notexists):
@@ -396,17 +400,19 @@ def translate_notexists(ctx, notexists):
         print(f'DEBUG: FILTER NOT EXISTS: {notexists}', file=debugoutput)
     ctx_copy = copy_context(ctx)
     translate(ctx_copy, notexists.graph)
-    ctx_copy['pass'] = 1
-    translate(ctx_copy, notexists.graph)
-    remap_join_constraint_to_where(ctx_copy)
-    wrap_sql_projection(ctx_copy)
+    #ctx_copy['pass'] = 1
+    #translate(ctx_copy, notexists.graph)
+    notexists['target_sql'] = notexists.graph['target_sql']
+    notexists['where'] = notexists.graph['where']
+    remap_join_constraint_to_where(notexists)
+    wrap_sql_projection(ctx_copy, notexists)
     merge_contexts(ctx, ctx_copy)
-    return f'NOT EXISTS ({ctx_copy["target_sql"]})'
+    return f'NOT EXISTS ({notexists["target_sql"]})'
 
 
-def remap_join_constraint_to_where(ctx):
+def remap_join_constraint_to_where(node):
     """
-    Workaround for Flink - currently correlated variables in on condition are
+    Workaround for Flink - currently correlated variables in "on" condition are
     not working in not-exists subqueries
     Therefore they are remapped to "where" conditions. This will make the
     query more inefficient but hopefully it
@@ -415,23 +421,23 @@ def remap_join_constraint_to_where(ctx):
     """
     pattern1 = r'(\S*.subject = \S*) and'
     pattern2 = r'and (\S*.object = \S*)'
-    toreplace = ctx['target_sql']
+    toreplace = node['target_sql']
     match1 = re.findall(pattern1, toreplace)
     match2 = re.findall(pattern2, toreplace)
     toreplace = re.sub(pattern1, '', toreplace)
     toreplace = re.sub(pattern2, '', toreplace)
-    ctx['target_sql'] = toreplace
+    node['target_sql'] = toreplace
     first = False
-    if ctx['target_where'] == '':
+    if node['where'] == '':
         first = True
     for match in match1:
         if first:
-            ctx['target_where'] = ctx['target_where'] + f'{match}'
-            first = False    
-        else: 
-            ctx['target_where'] = ctx['target_where'] + f' and {match}'
+            node['where'] = node['where'] + f'{match}'
+            first = False
+        else:
+            node['where'] = node['where'] + f' and {match}'
     for match in match2:
-        ctx['target_where'] = ctx['target_where'] + f' and {match}'
+        node['where'] = node['where'] + f' and {match}'
 
 
 def merge_contexts(ctx, ctx_copy):
@@ -466,22 +472,61 @@ def translate_join(ctx, join):
     if ctx['pass'] == 0:
         translate(ctx, join.p1)
         translate(ctx, join.p2)
-    if ctx['pass'] == 1:
+    expr1 = join.p1['target_sql']
+    expr2 = join.p2['target_sql']
+    where1 = join.p1['where']
+    where2 = join.p2['where']
+    where = ''
+
+    if where2 == '':
+        raise WrongSparqlStructure('Could not join. Emtpy join condition not allowed for left joins.')
+    if expr2 != '' and expr1 != '':
+        join['target_sql'] = f' {expr1} JOIN {expr2}'
+        where = where1
+        join['target_sql'] = join['target_sql'] + f' ON {where2}'
+    elif expr2 != '' and expr1 == '':
+        join['target_sql'] = expr2
+    else:
+        join['target_sql'] = expr2
+
+    if where == '':
+        if where1:
+            join['where'] = f'({where1} and {where2})'
+        else:
+            join['where'] = where2
+    join['where'] = where
+    return
+
+
+def translate_left_join(ctx, join):
+    if debug > 2:
+        print(f'DEBUG: LEFT JOIN: {join}', file=debugoutput)
+    if ctx['pass'] == 0:
         translate(ctx, join.p1)
-        if ctx['target_sql'] != '':
-            ctx['target_sql'] = ctx['target_sql'] + ' JOIN '
-
         translate(ctx, join.p2)
-        # join condition - assume that it is not a hierarchical JOIN
-        join_condition = ''
-        try:
-            join_condition = join.p2['sql_context']['join_condition']
-        except:
-            WrongSparqlStructure('Assumption of "left depth" structure \
-violated. No hiearchical right join elements allowed')
-        if ctx['target_sql'] != '' and join_condition != '':
-            ctx['target_sql'] = ctx['target_sql'] + f' ON {join_condition}'
-
+    expr1 = join.p1['target_sql']
+    expr2 = join.p2['target_sql']
+    where1 = join.p1['where']
+    where2 = join.p2['where']
+    if expr1 == '':
+        raise WrongSparqlStructure('Could not left join. Empty join.p1 expression is not allowed. Consider rearranging BGPs.')
+    if where2 == '':
+        raise WrongSparqlStructure('Could not left join. Emtpy join condition not allowed for left joins.')
+    # There might be a case that there is no sql expression. Example:
+    # The BGP {?var1 <p> ?var2} creates only a condition but not table
+    # if ?var1 and ?vars are already bound.
+    # case 1: with expr2 and where2
+    # case 2: without expression but where2
+    if expr2 != '':  #  case 1
+        join['target_sql'] = f' {expr1} LEFT JOIN {expr2}'
+        join['where'] = where1
+        join['target_sql'] = join['target_sql'] + f' ON {where2}'
+    else:  # case 2
+        join['target_sql'] = expr1
+        if where1:
+            join['where'] = f'(({where1} and {where2}) or {where1})'
+        else:
+            join['where'] = where2
     return
 
 
@@ -749,7 +794,7 @@ def sort_triples(bounds, triples, graph):
     def select_candidates(bounds, triples, graph):
         for s, p, o in triples:
             count = 0
-            # look for nodes: (1) NGSI-LD node and (2) plain RDF (3) rest
+            # look for nodes: (1) NGSI-LD node and (2) plain RDF (3) RDF type definition (3) rest
             if isinstance(s, Variable) and (p.toPython() in relationships or
                                             p.toPython() in properties):
                 if isinstance(o, BNode):
@@ -768,8 +813,20 @@ def sort_triples(bounds, triples, graph):
                             raise SparqlValidationFailed(f'Tried to bind {s}\
 to Literal or IRI instead of Variable. Not implemented. Workaround to bind {s}\
 to Variable and use FILTER.')
+            elif isinstance(s, Variable) and p == RDF['type']:
+                # (3)
+                # definition means s is variable and p is <a>
+                # when ?o is IRI then add ?s
+                # when ?o is varible and ?s is bound, then define ?o
+                if isinstance(o, URIRef):
+                    count += 1
+                    if create_varname(s) not in bounds:
+                        bounds[create_varname(s)] = ''
+                elif isinstance(o, Variable) and create_varname(s) in bounds:
+                    count += 1
+                    bounds[create_varname(o)] = ''
             elif not isinstance(s, BNode) or (p != ngsild['hasValue'] and p !=
-                                              ngsild['hasObject']):
+                                              ngsild['hasObject'] and p != RDF['type']):  # (2)
                 if isinstance(s, Variable) and create_varname(s) in bounds:
                     count += 1
                     if isinstance(o, Variable):
@@ -779,7 +836,7 @@ to Variable and use FILTER.')
                     if isinstance(s, Variable):
                         bounds[create_varname(s)] = ''
             elif isinstance(s, BNode):
-                # (3)
+                #  (4)
                 count = 1
             else:
                 raise SparqlValidationFailed("Could not reorder BGP triples.")
@@ -834,7 +891,7 @@ def create_ngsild_mappings(ctx, sorted_graph):
 
     property_variables = {}
     entity_variables = {}
-    for s,p,o in sorted_graph:
+    for s, p, o in sorted_graph:
         if p == ngsild['hasValue']:
             if isinstance(o, Variable):
                 property_variables[o] = True
@@ -852,10 +909,10 @@ def create_ngsild_mappings(ctx, sorted_graph):
     # that varialbles have a meaningful target.
     # It is okay to have ambiguities but if there is no result an exception is thrown, because this query
     # cannot lead to a result at all.
-    if property_variables or entity_variables: 
+    if property_variables or entity_variables:
 
         sparqlvalidationquery = ''
-        equivalence =  []
+        equivalence = []
         variables = []
         for key, value in ctx['classes'].items():
             sparqlvalidationquery += f'?{key} rdfs:subClassOf <{value.toPython()}> .\n'
@@ -1049,40 +1106,50 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
     if isinstance(s, Variable) and (s in local_ctx['entity_variables'] or isentity(ctx, s)):
         if p == RDF['type']:
             entity = local_ctx['bounds'].get(create_varname(s))    
-            if entity is None:
-                raise SparqlValidationFailed(f'In triple {s, p, o}: Subject entity not bound but cannot bind object and subject of RDF term at same time. Please consider rearranging terms.')
-            entity = entity.replace('.`id`', '.id')  # Normalize cases when id is quoted
-            entity_table = entity.replace('.id', '')
-            entity_column = entity.replace('.id', '.type')
-            column = 'type'
-            global_tables = ctx['tables']
-            if not entity_table in global_tables:
-                global_tables[entity_table] = []    
-            global_tables[entity_table].append('type')
-            if isinstance(o, Variable):
-                #object_is_type = True
-                #subject_join_condition = None
-                # OK let's process the special case here
-                # Two cases: (1) object variable is bound (2) object variable unknown
-                
-                object_join_bound = get_rdf_join_condition(o, local_ctx['property_variables'], local_ctx['entity_variables'], local_ctx['bounds'])
-                if object_join_bound is None:
-                    # (2)
-                    # bind variable with type column of subject
-                    # add variable to local table
-                    local_ctx['selvars'][create_varname(o)] = entity_column
-                    local_ctx['bounds'][create_varname(o)] = entity_column
-                    return
-                else:
-                    # (1)
-                    # variable is bound, so get it and link it with bound value
-                    objvar = local_ctx['bounds'][create_varname(o)]
-                    local_ctx['where'] = merge_where_expression(local_ctx['where'], f'{entity_column} = {objvar}')
-                    return
+            if entity is None  and isinstance(o, URIRef):  # create entity table based on type definition
+                subject_tablename = f'{s.toPython().upper()}TABLE'[1:]
+                subject_varname = f'{s.toPython()}'[1:]
+                subject_sqltable = utils.camelcase_to_snake_case(utils.strip_class(local_ctx['row'][subject_varname]))
+                local_ctx['bgp_sql_expression'].append({ 'statement': f'{subject_sqltable}_view AS {subject_tablename}', 'join_condition': f'{subject_tablename}.type = {o.toPython()}'})
+                ctx['sql_tables'].append(subject_sqltable)
+                # if object_varname not in local_ctx['bounds']:
+                local_ctx['selvars'][subject_varname] = f'{subject_tablename}.`id`'
+                local_ctx['bounds'][subject_varname] = f'{subject_tablename}.`id`'
+                local_ctx['bgp_tables'][subject_tablename] = []
+                return 
             else:
-                # subject entity variable but object is no variable
-                local_ctx['where'] = merge_where_expression(local_ctx['where'], f'{entity_column} = \'{o}\'')
-                return
+                entity = entity.replace('.`id`', '.id')  # Normalize cases when id is quoted
+                entity_table = entity.replace('.id', '')
+                entity_column = entity.replace('.id', '.type')
+                column = 'type'
+                global_tables = ctx['tables']
+                if not entity_table in global_tables:
+                    global_tables[entity_table] = []    
+                global_tables[entity_table].append('type')
+                if isinstance(o, Variable):
+                    #object_is_type = True
+                    #subject_join_condition = None
+                    # OK let's process the special case here
+                    # Two cases: (1) object variable is bound (2) object variable unknown
+                    
+                    object_join_bound = get_rdf_join_condition(o, local_ctx['property_variables'], local_ctx['entity_variables'], local_ctx['bounds'])
+                    if object_join_bound is None:
+                        # (2)
+                        # bind variable with type column of subject
+                        # add variable to local table
+                        local_ctx['selvars'][create_varname(o)] = entity_column
+                        local_ctx['bounds'][create_varname(o)] = entity_column
+                        return
+                    else:
+                        # (1)
+                        # variable is bound, so get it and link it with bound value
+                        objvar = local_ctx['bounds'][create_varname(o)]
+                        local_ctx['where'] = merge_where_expression(local_ctx['where'], f'{entity_column} = {objvar}')
+                        return
+                else:
+                    # subject entity variable but object is no variable
+                    local_ctx['where'] = merge_where_expression(local_ctx['where'], f'{entity_column} = \'{o}\'')
+                    return
         else:
             raise SparqlValidationFailed("Cannot query generic RDF term with NGSI-LD entity subject.")
     else:
@@ -1139,9 +1206,17 @@ def translate_BGP(ctx, bgp):
     # Assumes a 'Basic Graph Pattern'
     if not bgp.name == 'BGP':
         raise WrongSparqlStructure('No BGP!')
+    # Add triples one time
+    add_triples = ctx['add_triples']
+    for triple in add_triples:
+        bgp.triples.append(triple)
+    ctx['add_triples'] = []
+    
     # Translate set of triples into Graph for later processing
     if len(bgp.triples) == 0:
         bgp['sql_context'] = {}
+        bgp['where'] = ''
+        bgp['target_sql'] = ''
         return
     h = Graph()
     for s, p, o in bgp.triples:
@@ -1187,3 +1262,8 @@ def translate_BGP(ctx, bgp):
     for table, value in local_ctx['bgp_tables'].items():
         if table not in tables: tables[table] = []
         tables[table] += value
+    if local_ctx['bgp_sql_expression']:
+        bgp['target_sql'], bgp['where'] = merge_bgp_context(local_ctx['bgp_sql_expression'], True)
+    else:
+        bgp['target_sql'] = ''
+        bgp['where'] = local_ctx['where']

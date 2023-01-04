@@ -13,20 +13,18 @@ for testdir in ${testdirs}; do
     cd $KMS/$testdir
     mkdir -p $OUTPUTDIR
 
+    python3 $TOOLDIR/create_rdf_table.py ${KNOWLEDGE}
+    python3 $TOOLDIR/create_core_tables.py
+    python3 $TOOLDIR/create_sql_checks_from_shacl.py ${SHACL} ${KNOWLEDGE}
+
     for model in $(ls model*.jsonld); do
         MODEL=$model
         DATABASE=$OUTPUTDIR/database.db
         rm -f ${DATABASE}
         echo -n "Test with model ${MODEL} in dir ${testdir} ..."
-        #echo create sqlite scripts for model $model
-        #echo ------------------------------------------------
-        python3 $TOOLDIR/create_rdf_table.py ${KNOWLEDGE}
-        python3 $TOOLDIR/create_core_tables.py
         python3 $TOOLDIR/create_ngsild_models.py  ${SHACL} ${KNOWLEDGE} ${MODEL}
         python3 $TOOLDIR/create_ngsild_tables.py ${SHACL}
-        python3 $TOOLDIR/create_sql_checks_from_shacl.py ${SHACL} ${KNOWLEDGE}
-        #echo applying sqlite scripts
-        #echo -----------------------
+        # Test logic
         sqlite3 ${DATABASE} < $OUTPUTDIR/rdf.sqlite
         sqlite3 ${DATABASE} < $OUTPUTDIR/core.sqlite
         sqlite3 ${DATABASE} < $OUTPUTDIR/ngsild.sqlite
@@ -36,6 +34,6 @@ for testdir in ${testdirs}; do
         diff ${OUTPUTDIR}/${MODEL}_${TESTOUT} ${MODEL}_${RESULT} || { echo "failed"; exit 1; }
         echo " ok"
     done;
-    $DEBUG || rm -rf $OUTPUTDIR
+    [ "$DEBUG" = "true" ] || rm -rf $OUTPUTDIR
     popd
 done;
