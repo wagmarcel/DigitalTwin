@@ -273,7 +273,7 @@ PREFIX schema: <https://schema.org/>
 SELECT ?this ?value
     where {
         $this  iff:strength [ <https://uri.etsi.org/ngsi-ld/hasValue> ?strength ] .
-        ?pc  a iff:plasmacutter .
+        ?pc  a iff:cutter .
         ?pc iff:hasFilter [ <https://uri.etsi.org/ngsi-ld/hasObject> $this ] .
         ?pc  iff:hasWorkpiece [ <https://uri.etsi.org/ngsi-ld/hasObject> ?wp ] .
         ?wp schema:depth [ <https://uri.etsi.org/ngsi-ld/hasValue> ?depth ] .
