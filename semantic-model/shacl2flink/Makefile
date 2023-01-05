@@ -48,3 +48,6 @@ test-sqlite:
 test-kms:
 	@echo Test different kms setups
 	cd tests/sql-tests && bash tests.sh
+
+clean:
+	@rm -rf $(OUTPUTDIR)
