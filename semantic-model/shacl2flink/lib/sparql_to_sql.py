@@ -4,7 +4,7 @@ import os
 import re
 import random
 from rdflib import Graph, Namespace, URIRef, Variable, BNode, Literal
-from rdflib.namespace import RDF, RDFS
+from rdflib.namespace import RDF, RDFS, XSD
 from rdflib.plugins.sparql.parser import parseQuery
 from rdflib.plugins.sparql.algebra import translateQuery
 import owlrl
@@ -254,20 +254,9 @@ def translate(ctx, elem):
         result = translate_project(ctx, elem)
         return result
     elif elem.name == 'Filter':
-        #if ctx['pass'] == 0:
         translate_filter(ctx, elem)
     elif elem.name == 'BGP':
-        #if ctx['pass'] == 0:
         translate_BGP(ctx, elem)
-        #else:
-            #select = False
-            #if ctx['target_sql'] == '':
-            #    select = True
-            #if 'sql_expression' in elem['sql_context']:
-            #    result, where = merge_bgp_context(elem['sql_context']
-            #                                      ['sql_expression'], select)
-            #    ctx['target_sql'] = ctx['target_sql'] + result
-            #    merge_where_context(ctx, where)
     elif elem.name == 'ConditionalAndExpression':
         result = translate_and_expression(ctx, elem)
         return result
@@ -283,9 +272,61 @@ def translate(ctx, elem):
         translate(ctx, elem.p)
     elif elem.name == 'LeftJoin':
         return translate_left_join(ctx, elem)
+    elif elem.name == 'Extend':
+        return translate_extend(ctx, elem)
+    elif elem.name == 'Builtin_IF':
+        return translate_builtin_if(ctx, elem)
+    elif elem.name == 'Function':
+        return translate_function(ctx, elem)
     else:
         raise WrongSparqlStructure(f'SparQL structure {elem.name} not \
 supported!')
+
+
+def translate_function(ctx, function):
+    if debug > 2:
+        print(f'function: {function}', file=debugoutput)
+    bounds = ctx['bounds']
+    iri = function.iri
+    expr = function.expr
+    result = ''
+    if iri in XSD:  # CAST
+        if len(expr) != 1:
+            raise WrongSparqlStructure(f'XSD function with too many parameters')
+        cast = 'notfound'
+        var = bounds[create_varname(expr[0])]
+        if iri == iri == XSD['integer']:
+            cast = 'INTEGER'
+        elif iri == iri == XSD['float']:
+            cast = 'FLOAT'
+        result = f'CAST({var} as {cast})'
+    return result
+
+
+def translate_builtin_if(ctx, builtin_if):
+    if debug > 2:
+        print(f'Builtin_IF: {builtin_if}', file=debugoutput)
+    condition = translate(ctx, builtin_if.arg1)
+    if isinstance(builtin_if.arg2, URIRef) or isinstance(builtin_if.arg2, Literal):
+        ifyes = builtin_if.arg2.toPython()
+    else:
+        ifyes = translate(ctx, builtin_if.arg2)
+    if isinstance(builtin_if.arg3, URIRef) or isinstance(builtin_if.arg3, Literal):
+        ifnot = builtin_if.arg3.toPython()
+    else:
+        ifnot = translate(ctx, builtin_if.arg3)
+    expression = f'IF({condition}, {ifyes}, {ifnot})'
+    return expression
+
+
+def translate_extend(ctx, extend):
+    if debug > 2:
+        print(f'Extend: {extend}', file=debugoutput)
+    translate(ctx, extend.p)
+    expression = translate(ctx, extend.expr)
+    ctx['bounds'][create_varname(extend.var)] = expression
+    extend['target_sql'] = extend.p['target_sql']
+    extend['where'] = extend.p['where']
 
 
 def translate_select_query(ctx, query):
@@ -296,7 +337,6 @@ def translate_select_query(ctx, query):
         print(f'SelectQuery: {query}', file=debugoutput)
     translate(ctx, query.p)
     query['target_sql'] = query.p['target_sql']
-    #query['where'] = query.p['where']
     return
 
 
@@ -309,22 +349,7 @@ def translate_project(ctx, project):
     translate(ctx, project.p)
     project['target_sql'] = project.p['target_sql']
     project['where'] = project.p['where']
-    #if ctx['pass'] == 0:
     add_projection_vars_to_tables(ctx)
-    #if ctx['pass'] == 1:
-    #select_expression = ctx['target_sql']
-    #if select_expression == '':
-    #    select_expression = construct_sql(ctx, project.p)
-    #if not ctx['target_used'] and ctx['target_ctx'] is not None:
-    #    ctx['target_used'] = True
-    #    # special case: first join condition
-    #    prefix, where = merge_bgp_context(ctx['target_ctx']
-    #                                        ['sql_expression'], True)
-    #    if where != '':
-    #        raise WrongSparqlStructure("Where condition found but not \
-    # used.")
-    #    select_expression = f'{prefix} JOIN {select_expression}'
-    #    ctx['target_sql'] = select_expression
     wrap_sql_projection(ctx, project)
 
 
@@ -380,16 +405,15 @@ def translate_filter(ctx, filter):
     if debug > 2:
         print(f'DEBUG: Filter: {filter}', file=debugoutput)
     translate(ctx, filter.p)
-    if ctx['pass'] == 0:
-        where1 = translate(ctx, filter.expr)
-        where2 = filter.p['where']
-        filter['target_sql'] = filter.p['target_sql']
-        # merge join condition
-        if where1 == '':
-            raise SparqlValidationFailed('Error: Filter does not provide condition.')
-        if where2 != '':
-            where1 += f' and {where2}'
-        filter['where'] = where1
+    where1 = translate(ctx, filter.expr)
+    where2 = filter.p['where']
+    filter['target_sql'] = filter.p['target_sql']
+    # merge join condition
+    if where1 == '':
+        raise SparqlValidationFailed('Error: Filter does not provide condition.')
+    if where2 != '':
+        where1 += f' and {where2}'
+    filter['where'] = where1
 
 
 def translate_notexists(ctx, notexists):
@@ -627,8 +651,8 @@ def translate_relational_expression(ctx, elem):
         expr = bounds[create_varname(elem.expr)]
     elif isinstance(elem.expr, Literal) or isinstance(elem.expr, URIRef):
         expr = f'\'{elem.expr.toPython()}\''
-    else:
-        raise WrongSparqlStructure(f'Expression {elem.expr} not supported!')
+    else:  # Neither Variable, nor Literal, nor IRI - hope it is further translatable
+        expr = translate(ctx, elem.expr)
 
     if isinstance(elem.other, Variable):
         other = bounds[create_varname(elem.expr)]
@@ -640,6 +664,14 @@ def translate_relational_expression(ctx, elem):
     op = elem.op
     if elem.op == '!=':
         op = '<>'
+    elif elem.op == '>':
+        op = '>'
+    elif elem.op == '<':
+        op = '<'
+    elif elem.op == '>=':
+        op = '>='
+    elif elem.op == '<=':
+        op = '<='
 
     return f'{expr} {op} {other}'
 
