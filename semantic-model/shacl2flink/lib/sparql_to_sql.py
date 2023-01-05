@@ -1117,7 +1117,7 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
                 local_ctx['bgp_tables'][subject_tablename] = []
                 join_condition = f"{rdftable_name}.predicate = '" + RDFS['subClassOf'].toPython() + \
                     f"' and {rdftable_name}.subject = {subject_tablename}.`type` and {rdftable_name}.object = '{o.toPython()}'"
-                statement = f"RDF as {rdftable_name}"
+                statement = f"{configs.rdf_table_name} as {rdftable_name}"
                 local_ctx['bgp_sql_expression'].append({ 'statement': statement, 'join_condition': join_condition})
                 return 
             else:
@@ -1189,7 +1189,6 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
     sql_expression = f'{configs.rdf_table_name} AS {rdftable_name}'
     local_ctx['bgp_tables'][rdftable_name] = []
     local_ctx['bgp_sql_expression'].append( {'statement': f'{sql_expression}', 'join_condition': f'{join_condition}'})
-    
                 
 def translate_BGP(ctx, bgp):
     """Translates a Basic Graph Pattern into SQL term

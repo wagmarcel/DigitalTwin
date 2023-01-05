@@ -140,6 +140,7 @@ def translate(shaclfile, knowledgefile):
     for table in tables:
         views.append(f'{table}-view')
     tables.append(alerts_bulk_table_object)
+    tables.append(configs.rdf_table_name)
     return sqlite, (statementsets, tables, views)
         #sql_command_sqlite += ";"
         #sql_command_yaml += ";"

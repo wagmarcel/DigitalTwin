@@ -41,13 +41,13 @@ def main(shaclfile, knowledgefile, output_folder='output'):
     sqlite, (statementsets, tables, views) = \
         translate_properties(shaclfile, knowledgefile)
 
-    tables = list(set(tables))
-    views = list(set(views))
+    #tables = list(set(tables))
+    #views = list(set(views))
     
     sqlite2, (statementsets2, tables2, views2) = \
         translate_sparql(shaclfile, knowledgefile)
-    tables += list(set(tables2))
-    views += list(set(views2))
+    tables = list(set(tables2).union(set(tables)))  # deduplication
+    views = list(set(views2).union(set(views)))  # deduplication
 
     with open(os.path.join(output_folder, "shacl-validation.yaml"), "w") as f:
         yaml.dump(utils.create_statementset('shacl-validation', tables, views,
