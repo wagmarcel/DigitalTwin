@@ -6,7 +6,7 @@
     "https://industry-fusion.com/types/v0.9/state": {
       "type": "Property",
       "value": {
-        "@id": "https://industry-fusion.com/types/v0.9/state_OFF"
+        "@id": "https://industry-fusion.com/types/v0.9/state_ON"
       }
     },
     "https://industry-fusion.com/types/v0.9/hasWorkpiece": {
@@ -26,7 +26,7 @@
       {
         "type": "Property",
         "value": {
-          "@id": "https://industry-fusion.com/types/v0.9/state_OFF"
+          "@id": "https://industry-fusion.com/types/v0.9/state_ON"
         }
       },
       {
@@ -38,7 +38,7 @@
     ],
     "https://industry-fusion.com/types/v0.9/strength": {
       "type": "Property",
-      "value": "0.5"
+      "value": "0.9"
     },
     "https://industry-fusion.com/types/v0.9/hasCartridge": {
       "type": "Relationship",
@@ -59,7 +59,7 @@
     "https://schema.org/depth": {
       "type": "Property",
       "unitCode": "MMT",
-      "value": "250"
+      "value": "550"
     },
     "https://schema.org/height": {
       "type": "Property",
@@ -108,7 +108,7 @@
     },
     "https://industry-fusion.com/types/v0.9/strength": {
       "type": "Property",
-      "value": "0.5"
+      "value": "0.1"
     },
     "https://industry-fusion.com/types/v0.9/hasCartridge": {
       "type": "Relationship",
