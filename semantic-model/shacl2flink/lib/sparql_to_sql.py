@@ -4,7 +4,7 @@ import os
 import re
 import random
 from rdflib import Graph, Namespace, URIRef, Variable, BNode, Literal
-from rdflib.namespace import RDF
+from rdflib.namespace import RDF, RDFS
 from rdflib.plugins.sparql.parser import parseQuery
 from rdflib.plugins.sparql.algebra import translateQuery
 import owlrl
@@ -491,9 +491,9 @@ def translate_join(ctx, join):
 
     if where == '':
         if where1:
-            join['where'] = f'({where1} and {where2})'
+            where = f'({where1} and {where2})'
         else:
-            join['where'] = where2
+            where = where2
     join['where'] = where
     return
 
@@ -1110,12 +1110,15 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
                 subject_tablename = f'{s.toPython().upper()}TABLE'[1:]
                 subject_varname = f'{s.toPython()}'[1:]
                 subject_sqltable = utils.camelcase_to_snake_case(utils.strip_class(local_ctx['row'][subject_varname]))
-                local_ctx['bgp_sql_expression'].append({ 'statement': f'{subject_sqltable}_view AS {subject_tablename}', 'join_condition': f'{subject_tablename}.type = {o.toPython()}'})
+                local_ctx['bgp_sql_expression'].append({ 'statement': f'{subject_sqltable}_view AS {subject_tablename}', 'join_condition': ''})
                 ctx['sql_tables'].append(subject_sqltable)
-                # if object_varname not in local_ctx['bounds']:
                 local_ctx['selvars'][subject_varname] = f'{subject_tablename}.`id`'
                 local_ctx['bounds'][subject_varname] = f'{subject_tablename}.`id`'
                 local_ctx['bgp_tables'][subject_tablename] = []
+                join_condition = f"{rdftable_name}.predicate = '" + RDFS['subClassOf'].toPython() + \
+                    f"' and {rdftable_name}.subject = {subject_tablename}.`type` and {rdftable_name}.object = '{o.toPython()}'"
+                statement = f"RDF as {rdftable_name}"
+                local_ctx['bgp_sql_expression'].append({ 'statement': statement, 'join_condition': join_condition})
                 return 
             else:
                 entity = entity.replace('.`id`', '.id')  # Normalize cases when id is quoted
