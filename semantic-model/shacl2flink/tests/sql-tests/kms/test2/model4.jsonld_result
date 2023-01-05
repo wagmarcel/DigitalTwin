@@ -5,6 +5,7 @@
 'urn:filter:1','NodeTypeValidation(https://industry-fusion.com/types/v0.9/strength[0])','ok'
 'urn:filter:1','PropertyClassCheck(https://industry-fusion.com/types/v0.9/hasCartridge[0])','warning'
 'urn:filter:1','PropertyCountCheck(https://industry-fusion.com/types/v0.9/hasCartridge)','ok'
+'urn:filter:1','Sparqlcheck(FilterStrength)','ok'
 'urn:filter:1','Sparqlcheck(StateOnFilter)','ok'
 'urn:filter:1','Sparqlcheck(StateValueShape)','ok'
 'urn:plasmacutter:1','DataTypeValidation(https://industry-fusion.com/types/v0.9/state[0])','ok'
