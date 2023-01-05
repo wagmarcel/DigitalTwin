@@ -6,6 +6,7 @@
 'urn:filter:1','PropertyClassCheck(https://industry-fusion.com/types/v0.9/hasCartridge[0])','warning'
 'urn:filter:1','PropertyCountCheck(https://industry-fusion.com/types/v0.9/hasCartridge)','ok'
 'urn:filter:1','Sparqlcheck(StateOnFilter)','warning'
+'urn:filter:1','Sparqlcheck(StateValueShape)','ok'
 'urn:plasmacutter:1','DataTypeValidation(https://industry-fusion.com/types/v0.9/state[0])','ok'
 'urn:plasmacutter:1','NodeTypeValidation(https://industry-fusion.com/types/v0.9/state[0])','ok'
 'urn:plasmacutter:1','PropertyClassCheck(https://industry-fusion.com/types/v0.9/hasFilter[0])','ok'
@@ -13,3 +14,4 @@
 'urn:plasmacutter:1','PropertyCountCheck(https://industry-fusion.com/types/v0.9/hasFilter)','ok'
 'urn:plasmacutter:1','PropertyCountCheck(https://industry-fusion.com/types/v0.9/hasWorkpiece)','ok'
 'urn:plasmacutter:1','Sparqlcheck(StateOnCutter)','ok'
+'urn:plasmacutter:1','Sparqlcheck(StateValueShape)','ok'
