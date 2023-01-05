@@ -308,14 +308,14 @@ def translate_builtin_if(ctx, builtin_if):
         print(f'Builtin_IF: {builtin_if}', file=debugoutput)
     condition = translate(ctx, builtin_if.arg1)
     if isinstance(builtin_if.arg2, URIRef) or isinstance(builtin_if.arg2, Literal):
-        ifyes = builtin_if.arg2.toPython()
+        ifyes = f'\'{builtin_if.arg2.toPython()}\''
     else:
         ifyes = translate(ctx, builtin_if.arg2)
     if isinstance(builtin_if.arg3, URIRef) or isinstance(builtin_if.arg3, Literal):
-        ifnot = builtin_if.arg3.toPython()
+        ifnot = f'\'{builtin_if.arg3.toPython()}\''
     else:
         ifnot = translate(ctx, builtin_if.arg3)
-    expression = f'IF({condition}, {ifyes}, {ifnot})'
+    expression = f'CASE WHEN {condition} THEN {ifyes} ELSE {ifnot} END'
     return expression
 
 
