@@ -103,18 +103,18 @@ sql_check_relationship_base = """
 
 sql_check_relationship_property_class = """
             SELECT this AS resource,
-                'PropertyClassCheck({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
+                'ClassConstraintComponent({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
                 'Development' AS environment,
                 {% if sqlite %}
                 '[SHACL Validator]' AS service,
                 {% else %}
                 ARRAY ['SHACL Validator'] AS service,
                 {% endif %}
-                CASE WHEN typ is NOT NULL AND entity is NULL THEN '{{severity}}'
+                CASE WHEN typ IS NOT NULL AND link IS NOT NULL AND entity IS NULL THEN '{{severity}}'
                     ELSE 'ok' END AS severity,
                 'customer'  customer,
 
-                CASE WHEN typ is NOT NULL AND entity is NULL
+                CASE WHEN typ IS NOT NULL AND link IS NOT NULL AND entity IS NULL
                         THEN 'Model validation for relationship {{property_path}} failed for '|| this || '. Relationship not linked to existing entity of type {{property_class}}.'
                     ELSE 'All ok' END as `text`
                 {%- if sqlite %}
@@ -125,7 +125,7 @@ sql_check_relationship_property_class = """
 
 sql_check_relationship_property_count = """
             SELECT this AS resource,
-                'PropertyCountCheck({{property_path}})' AS event,
+                'CountConstraintComponent({{property_path}})' AS event,
                 'Development' AS environment,
                 {% if sqlite %}
                 '[SHACL Validator]' AS service,
@@ -169,7 +169,7 @@ WITH A1 AS (SELECT A.id as this,
 
 sql_check_property_count = """
 SELECT this AS resource,
-    'PropertyCountCheck({{property_path}})' AS event,
+    'CountConstraintComponent({{property_path}})' AS event,
     'Development' AS environment,
     {%- if sqlite %}
     '[SHACL Validator]' AS service,
@@ -192,7 +192,7 @@ FROM A1 group by this, typ
 
 sql_check_property_iri_class = """
 SELECT this AS resource,
-    'DataTypeValidation({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
+    'DatatypeConstraintComponent({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
     'Development' AS environment,
     {%- if sqlite %}
     '[SHACL Validator]' AS service,
@@ -214,7 +214,7 @@ FROM A1
 
 sql_check_property_nodeType = """
 SELECT this AS resource,
- 'NodeTypeValidation({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
+ 'NodeKindConstraintComponent({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -236,7 +236,7 @@ FROM A1
 
 sql_check_property_minmax = """
 SELECT this AS resource,
- '{{minmaxname}}Validation({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
+ '{{minmaxname}}ConstraintComponent({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -260,7 +260,7 @@ FROM A1
 
 sql_check_string_length = """
 SELECT this AS resource,
- '{{minmaxname}}Validation({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
+ '{{minmaxname}}ConstraintComponent({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -282,7 +282,7 @@ FROM A1
 
 sql_check_literal_pattern = """
 SELECT this AS resource,
- '{{validationname}}Validation({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
+ '{{validationname}}ConstraintComponent({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,

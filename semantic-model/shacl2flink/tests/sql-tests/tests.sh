@@ -3,8 +3,10 @@ OUTPUTDIR=output
 TOOLDIR=$(cd ../..; echo $PWD)
 KMS=kms
 TESTOUT=testout
+SHACLOUT=shaclout
 RESULT=result
 testdirs=${@:-"$(ls $KMS)"}
+
 
 for testdir in ${testdirs}; do
     KNOWLEDGE=knowledge.ttl
@@ -32,6 +34,8 @@ for testdir in ${testdirs}; do
         sqlite3 ${DATABASE} < $OUTPUTDIR/shacl-validation.sqlite
         echo "select resource, event, severity from alerts_bulk_view;" | sqlite3 -quote  -noheader ${DATABASE}| sort > ${OUTPUTDIR}/${MODEL}_${TESTOUT}
         diff ${OUTPUTDIR}/${MODEL}_${TESTOUT} ${MODEL}_${RESULT} || { echo "failed"; exit 1; }
+        # Compare it with pyshacl results
+        pyshacl -s ${SHACL} -df json-ld ${MODEL} -e ${KNOWLEDGE} > ${OUTPUTDIR}/${MODEL}_${SHACLOUT}
         echo " ok"
     done;
     [ "$DEBUG" = "true" ] || rm -rf $OUTPUTDIR

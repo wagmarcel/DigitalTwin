@@ -128,7 +128,6 @@ iff:WorkpieceShape
         sh:property [
             sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
             sh:nodeKind sh:Literal ;
-            sh:datatype xsd:decimal ;
             sh:maxInclusive 100.0 ;
             sh:minExclusive 0.0 ;
             sh:minCount 1 ;
@@ -173,7 +172,6 @@ iff:FilterShape
 
             sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
             sh:nodeKind sh:Literal;
-            sh:datatype xsd:decimal ;
             sh:minInclusive 0.0 ;
             sh:maxInclusive 1.0 ;
             sh:minCount 1 ;
@@ -233,7 +231,6 @@ iff:FilterCartridgeShape
 
             sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
             sh:nodeKind sh:Literal ;
-            sh:datatype xsd:dateTime ;
             sh:minCount 1 ;
             sh:maxCount 1 ;
         ] ;
@@ -251,7 +248,6 @@ iff:FilterCartridgeShape
         sh:property [
             sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
             sh:nodeKind sh:Literal ;
-            sh:datatype xsd:dateTime ;
             sh:minCount 1 ;
             sh:maxCount 1 ;
         ] ;
