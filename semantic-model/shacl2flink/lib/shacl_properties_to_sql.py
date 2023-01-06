@@ -166,6 +166,30 @@ WITH A1 AS (SELECT A.id as this,
             {%- endif %}
             )
 """  # noqa: E501
+
+sql_check_property_count = """
+SELECT this AS resource,
+    'PropertyCount({{property_path}})' AS event,
+    'Development' AS environment,
+    {%- if sqlite %}
+    '[SHACL Validator]' AS service,
+    {%- else %}
+    ARRAY ['SHACL Validator'] AS service,
+    {%- endif %}
+    CASE WHEN typ IS NOT NULL AND ({%- if maxcount %} count(attr_typ) > {{maxcount}} {%- endif %} {%- if mincount and maxcount %} OR {%- endif %} {%- if mincount %} count(attr_typ) < {{mincount}} {%- endif %})
+        THEN '{{severity}}'
+        ELSE 'ok' END AS severity,
+    'customer'  customer,
+    CASE WHEN typ IS NOT NULL AND ({%- if maxcount %} count(attr_typ) > {{maxcount}} {%- endif %} {%- if mincount and maxcount %} OR {%- endif %} {%- if mincount %} count(attr_typ) < {{mincount}} {%- endif %})
+        THEN 'Model validation for Property {{property_path}} failed for ' || this || '.  Found ' || CAST(count(attr_typ) AS STRING) || ' relationships instead of
+                            [{%- if mincount %}{{mincount}}{%- else %} 0 {%- endif %},{%if maxcount %}{{maxcount}}]{%- else %}[ {%- endif %}!'
+        ELSE 'All ok' END as `text`
+        {% if sqlite %}
+        ,CURRENT_TIMESTAMP
+        {% endif %}
+FROM A1 group by this, typ
+"""  # noqa: E501
+
 sql_check_property_iri_class = """
 SELECT this AS resource,
     'DataTypeValidation({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
@@ -187,6 +211,7 @@ SELECT this AS resource,
         {% endif %}
 FROM A1
 """  # noqa: E501
+
 sql_check_property_nodeType = """
 SELECT this AS resource,
  'NodeTypeValidation({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
@@ -295,8 +320,8 @@ def translate(shaclefile, knowledgefile):
     g.parse(shaclefile)
     h.parse(knowledgefile)
     g += h
-    owlrl.RDFSClosure.RDFS_Semantics(g, axioms=False, daxioms=False,
-                                     rdfs=False).closure()
+    #owlrl.RDFSClosure.RDFS_Semantics(g, axioms=False, daxioms=False,
+    #                                 rdfs=False).closure()
     sh = Namespace("http://www.w3.org/ns/shacl#")
     tables = [alerts_bulk_table_object, configs.attributes_table_obj_name,
               configs.rdf_table_obj_name]
@@ -614,6 +639,25 @@ def translate(shaclefile, knowledgefile):
             print(f'WARNING: Property path {property_path} of Nodeshape \
                   {nodeshape} is neither IRI nor Literal')
             continue
+        if mincount > 0 or maxcount:
+            sql_command_yaml += "\nUNION ALL"
+            sql_command_sqlite += "\nUNION ALL"
+            sql_command_yaml += Template(sql_check_property_count).render(
+                target_class=target_class,
+                property_path=property_path,
+                mincount=mincount,
+                maxcount=maxcount,
+                severity=severitycode,
+                sqlite=False
+            )
+            sql_command_sqlite += \
+                Template(sql_check_property_count).render(
+                            target_class=target_class,
+                            property_path=property_path,
+                            mincount=mincount,
+                            maxcount=maxcount,
+                            severity=severitycode,
+                            sqlite=True)
         if min_length is not None:
             sql_command_yaml += "\nUNION ALL"
             sql_command_sqlite += "\nUNION ALL"
