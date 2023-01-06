@@ -44,6 +44,7 @@ setup-dev: requirements-dev.txt
 test-sqlite:
 	@echo Test with sqlite
 	cat $(sqlite_files) | $(SQLITE3) $(SQLITEDB)
+	echo 'select * from alerts_bulk;'| sqlite3 ${SQLITEDB}
 
 test-kms:
 	@echo Test different kms setups
