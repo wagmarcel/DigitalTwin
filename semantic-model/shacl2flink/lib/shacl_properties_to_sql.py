@@ -169,7 +169,7 @@ WITH A1 AS (SELECT A.id as this,
 
 sql_check_property_count = """
 SELECT this AS resource,
-    'PropertyCount({{property_path}})' AS event,
+    'PropertyCountCheck({{property_path}})' AS event,
     'Development' AS environment,
     {%- if sqlite %}
     '[SHACL Validator]' AS service,
