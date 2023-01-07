@@ -16,7 +16,7 @@
 
 from unittest.mock import patch
 import os
-
+import pytest
 import create_sql_checks_from_shacl
 
 
@@ -33,7 +33,7 @@ def test_main(mock_utils, mock_yaml, mock_translate_properties, mock_translate_s
     mock_translate_properties.return_value = 'sqlite', ('statementsets',
                                                         ['tables'], ['views'])
     mock_translate_sparql.return_value = 'sqlite', ('statementsets',
-                                                        ['tables'], ['views'])
+                                                    ['tables'], ['views'])
 
     create_sql_checks_from_shacl.main('kms/shacl.ttl', 'kms/knowledge.ttl',
                                       tmp_path)
@@ -41,3 +41,4 @@ def test_main(mock_utils, mock_yaml, mock_translate_properties, mock_translate_s
         is True
     assert os.path.exists(os.path.join(tmp_path, 'shacl-validation.yaml'))\
         is True
+

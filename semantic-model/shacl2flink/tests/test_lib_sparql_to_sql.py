@@ -53,25 +53,19 @@ ngsild:hasObject;  sh:class ?f ] ] ." in sparql
     monkeypatch.setattr(lib.sparql_to_sql, "g", g)
     monkeypatch.setattr(lib.sparql_to_sql, "relationships", relationships)
     mock_graph = MagicMock()
-    ctx = {'namespace_manager': None, 
-            'PV': None,
-            'pass': 0,
-            'target_used': False,
-            'table_id': 0,
-            'classes': {'this': target_class},
-            'sql_tables': ['cutter', 'attributes'],
-            'bounds': {'this': 'THISTABLE.id'},
-            'tables': {'THISTABLE': ['id']},
-            'target_sql': '',
-            'target_where': '',
-            'target_modifiers': [],
-            'target_ctx': {
-                'bounds': {'this': 'THISTABLE.id'}, 
-                'join_conditions': [],
-                'sql_expression': [{'statement': f'cutter_view as THISTABLE',
-                                                'join_condition': ''}], 
-                'tables': ['THISTABLE']
-            }
+    ctx = {
+        'namespace_manager': None,
+        'PV': None,
+        'pass': 0,
+        'target_used': False,
+        'table_id': 0,
+        'classes': {'this': target_class},
+        'sql_tables': ['cutter', 'attributes'],
+        'bounds': {'this': 'THISTABLE.id'},
+        'tables': {'THISTABLE': ['id']},
+        'target_sql': '',
+        'target_where': '',
+        'target_modifiers': []
     }
     
     graph = rGraph()
@@ -117,25 +111,19 @@ def test_create_ngsild_mappings_reverse(monkeypatch):
     monkeypatch.setattr(lib.sparql_to_sql, "properties", properties)
     monkeypatch.setattr(lib.sparql_to_sql, "g", g)
     monkeypatch.setattr(lib.sparql_to_sql, "relationships", relationships)
-    ctx = {'namespace_manager': None, 
-            'PV': None,
-            'pass': 0,
-            'target_used': False,
-            'table_id': 0,
-            'classes': {'this': target_class_filter},
-            'sql_tables': ['cutter', 'attributes'],
-            'bounds': {'this': 'THISTABLE.id'},
-            'tables': {'THISTABLE': ['id']},
-            'target_sql': '',
-            'target_where': '',
-            'target_modifiers': [],
-            'target_ctx': {
-                'bounds': {'this': 'THISTABLE.id'}, 
-                'join_conditions': [],
-                'sql_expression': [{'statement': f'cutter_view as THISTABLE',
-                                                'join_condition': ''}], 
-                'tables': ['THISTABLE']
-            }
+    ctx = {
+        'namespace_manager': None,
+        'PV': None,
+        'pass': 0,
+        'target_used': False,
+        'table_id': 0,
+        'classes': {'this': target_class_filter},
+        'sql_tables': ['cutter', 'attributes'],
+        'bounds': {'this': 'THISTABLE.id'},
+        'tables': {'THISTABLE': ['id']},
+        'target_sql': '',
+        'target_where': '',
+        'target_modifiers': []
     }
 
     graph = rGraph()
@@ -427,7 +415,7 @@ def test_process_ngsild_spo_hasValue(mock_isentity, mock_create_table_name, mock
     assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'v1': '`FSTATETABLE`.`https://uri.etsi.org/ngsi-ld/hasValue`'}
     assert local_ctx['selvars'] == {'v1': '`FSTATETABLE`.`https://uri.etsi.org/ngsi-ld/hasValue`'}
     assert local_ctx['bgp_sql_expression'] == [{'statement': 'attributes_view AS FSTATETABLE', 'join_condition': 'FSTATETABLE.id = FTABLE.`https://industry-fusion.com/types/v0.9/state`'}]
-    
+
     # Test with bound v1
     mock_create_varname.return_value = 'v1'
 
@@ -482,7 +470,7 @@ def test_process_ngsild_spo_hasObject(mock_isentity, mock_create_table_name, moc
         'namespace_manager': None,
         'bounds': {'this': 'THISTABLE.id'},
         'tables': {'THISTABLE': ['id']},
-         'sql_tables': []
+        'sql_tables': []
     }
     # test with unbound v1
     local_ctx = {
@@ -506,7 +494,7 @@ def test_process_ngsild_spo_hasObject(mock_isentity, mock_create_table_name, moc
     assert local_ctx['bgp_sql_expression'] == [
         {'statement': 'attributes_view AS FHAS_FILTERTABLE', 'join_condition': 'FHAS_FILTERTABLE.id = FTABLE.`https://industry-fusion.com/types/v0.9/hasFilter`'},
         {'statement': 'ftable_view AS FTABLE', 'join_condition': 'FTABLE.id = FHAS_FILTERTABLE.`https://uri.etsi.org/ngsi-ld/hasObject`'}]
-    
+
     # Test with bound v1
     mock_create_varname.return_value = 'v1'
 

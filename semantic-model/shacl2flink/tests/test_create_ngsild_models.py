@@ -62,7 +62,7 @@ def test_main(mock_utils, mock_configs, mock_graph, mock_nullify, tmp_path):
     g.query = MagicMock(side_effect=[
         [(entityId, name, type, nodeType, valueType, hasValue, hasObject)],
         [(entityId, type, name, 1, type)]
-        ])
+    ])
 
     create_ngsild_models.main('kms/shacl.ttl', 'kms/knowledge.ttl',
                               'kms/model.jsonld', tmp_path)
