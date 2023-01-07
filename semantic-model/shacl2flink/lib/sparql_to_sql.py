@@ -37,13 +37,13 @@ PREFIX iff: <https://industry-fusion.com/types/v0.9/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
-SELECT 
+SELECT
     ?targetclass ?property
 where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?targetclass .
-    ?nodeshape sh:property [ 
-        sh:path ?property ; 
+    ?nodeshape sh:property [
+        sh:path ?property ;
         sh:property [
             sh:path ngsild:hasValue ;
         ] ;
@@ -58,13 +58,13 @@ PREFIX iff: <https://industry-fusion.com/types/v0.9/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
-SELECT 
+SELECT
     ?targetclass ?relationship
 where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?targetclass .
-    ?nodeshape sh:property [ 
-        sh:path ?relationship ; 
+    ?nodeshape sh:property [
+        sh:path ?relationship ;
         sh:property [
             sh:path ngsild:hasObject ;
         ] ;
@@ -109,7 +109,7 @@ def translate_sparql(shaclfile, knowledgefile, sparql_query, target_class):
     h.parse(knowledgefile)
     g += h
     owlrl.RDFSClosure.RDFS_Semantics(g, axioms=True, daxioms=False,
-                                    rdfs=True).closure()
+                                     rdfs=True).closure()
     qres = g.query(sparql_get_properties)
     for row in qres:
         if row.property is not None:
@@ -151,7 +151,7 @@ table-name')
 def create_varname(variable):
     """
     creates a plain varname from RDF varialbe
-    e.g. ?var => var 
+    e.g. ?var => var
     """
     return variable.toPython()[1:]
 
@@ -278,7 +278,7 @@ def translate_function(ctx, function):
     result = ''
     if iri in XSD:  # CAST
         if len(expr) != 1:
-            raise WrongSparqlStructure(f'XSD function with too many parameters')
+            raise WrongSparqlStructure('XSD function with too many parameters')
         cast = 'notfound'
         var = bounds[create_varname(expr[0])]
         if iri == iri == XSD['integer']:
@@ -516,7 +516,8 @@ def translate_left_join(ctx, join):
     where1 = join.p1['where']
     where2 = join.p2['where']
     if expr1 == '':
-        raise WrongSparqlStructure('Could not left join. Empty join.p1 expression is not allowed. Consider rearranging BGPs.')
+        raise WrongSparqlStructure('Could not left join. Empty join.p1 expression is not allowed. \
+Consider rearranging BGPs.')
     if where2 == '':
         raise WrongSparqlStructure('Could not left join. Emtpy join condition not allowed for left joins.')
     # There might be a case that there is no sql expression. Example:
@@ -524,7 +525,7 @@ def translate_left_join(ctx, join):
     # if ?var1 and ?vars are already bound.
     # case 1: with expr2 and where2
     # case 2: without expression but where2
-    if expr2 != '':  #  case 1
+    if expr2 != '':  # case 1
         join['target_sql'] = f' {expr1} LEFT JOIN {expr2}'
         join['where'] = where1
         join['target_sql'] = join['target_sql'] + f' ON {where2}'
@@ -642,7 +643,7 @@ def map_join_condition(sql_expressions, local_tables, global_tables):
     for expression in sql_expressions:
         to_match = expression['join_condition']
         num_matches = to_match.count('=')
-        pattern = r'[\s]*([^\s]+)[\s]*=[\s]*([^\s]+)[\s]*[and]*'*num_matches
+        pattern = r'[\s]*([^\s]+)[\s]*=[\s]*([^\s]+)[\s]*[and]*' * num_matches
         match = re.findall(pattern, to_match)
         for var in match[0]:
             try:
@@ -653,7 +654,7 @@ def map_join_condition(sql_expressions, local_tables, global_tables):
                         global_tables[table_name] = column_no_backticks
                     else:
                         global_tables[table_name].append(column_no_backticks)
-            except: # no column variable
+            except:  # no column variable
                 pass
 
 
@@ -745,6 +746,7 @@ of triples")
 
     return result
 
+
 def get_random_string(num):
     return ''.join(random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') for _ in range(num))
 
@@ -774,10 +776,10 @@ def create_ngsild_mappings(ctx, sorted_graph):
     Args:
         ctx (dictionary): sparql context containing metadata and results
         sorted_graph (dictionary): triples from bgp with defined order
-    Returns: 
+    Returns:
         Touple of Property_variables, entity_variables, row dictionaries containing the respective
         predicates and mapping
-    """
+    """  # noqa E501
 
     property_variables = {}
     entity_variables = {}
@@ -813,14 +815,15 @@ def create_ngsild_mappings(ctx, sorted_graph):
             for s, p, o in sorted_graph.triples((entity, None, None)):
                 property_class = sorted_graph.value(o, ngsild['hasObject'])
                 if property_class is not None:
-                    sparqlvalidationquery += f'?{s}shape sh:property [ sh:path <{p}> ; sh:property [ sh:path ngsild:hasObject;  sh:class ?{property_class} ] ] .\n'
+                    sparqlvalidationquery += f'?{s}shape sh:property [ sh:path <{p}> ; sh:property \
+[ sh:path ngsild:hasObject;  sh:class ?{property_class} ] ] .\n'
         for property in property_variables:
             variables.append(property)
             sparqlvalidationquery += f'?{property}shape sh:targetClass ?{property} .\n'
             for s, p, o in sorted_graph.triples((None, ngsild['hasValue'], property)):
-                for p in sorted_graph.predicates(object = s):
+                for p in sorted_graph.predicates(object=s):
                     sparqlvalidationquery += f'?{property}shape sh:property [ sh:path <{p}> ; ] .\n'
-                    for subj in sorted_graph.subjects(predicate = p, object = s):
+                    for subj in sorted_graph.subjects(predicate=p, object=s):
                         if isinstance(subj, Variable):
                             equivalence.append(f'{subj.toPython()}shape = ?{property}shape')
         query = basequery
@@ -839,19 +842,22 @@ def create_ngsild_mappings(ctx, sorted_graph):
             query += ')\n}'
         else:
             query += '}'
-    
+
         # Now execute the validation query
-        # For the time being only unique resolutions of classes are allowed. TODO: Implement multi class resolutions
-        if debug > 2: print(f'DEBUG: Validation Query: {query}', file=debugoutput)
+        # For the time being only unique resolutions of classes are allowed.
+        # TODO: Implement multi class resolutions
+        if debug > 2:
+            print(f'DEBUG: Validation Query: {query}', file=debugoutput)
         qres = g.query(query)
-        if debug > 2: print(f'DEBUG: Result of Validation Query: {list(qres)}', file=debugoutput)
+        if debug > 2:
+            print(f'DEBUG: Result of Validation Query: {list(qres)}', file=debugoutput)
         if len(qres) != 1:
-            raise SparqlValidationFailed("Validation of BGP failed. It either contradicts what is defined in SHACL or is too ambigue!")
+            raise SparqlValidationFailed("Validation of BGP failed. It either contradicts what is defined in \
+SHACL or is too ambigue!")
     else:
         # no ngsi-ld variables found, so do not try to infer the types
         qres = []
 
-    where = ''
     row = None
     for r in qres:
         row = r
@@ -860,24 +866,24 @@ def create_ngsild_mappings(ctx, sorted_graph):
 
 def process_ngsild_spo(ctx, local_ctx, s, p, o):
     """Processes triple which relates to NGSI-LD objects
-    
+
     Typical NGSI-LD reference in SPARQL looks like this:
     ?id p [hasValue|hasObject ?var|iri|literal]
     id is id of NGSI-LD object
     p is predicate of NGSI-LD as defined in SHACL
     hasValue|hasObject dependent on whether p describes a property or a relationship
     var|uri either binds var to the pattern or a concrete literal|iri
-    
+
     case 1: hasValue + ?var, ?id already bound
-    select idptable.hasValue from attribues as idptable where idptable.id = idtable.p 
+    select idptable.hasValue from attribues as idptable where idptable.id = idtable.p
     case 2: hasObject + ?var, ?id already bound(known)
     if ?id is bound and ?var is not bound and hasObject attribute is used:
     The p-attribute is looked up in the attributes table and the ?var-id is looked up in the respective
-    type[?var] table. e.g. ?id p [hasObject ?var] => 
-        Select * from attributes as idptable join type[?var] as vartable where idptable.id = idtable.p and idptable.hasObject = vartable.id 
+    type[?var] table. e.g. ?id p [hasObject ?var] =>
+        Select * from attributes as idptable join type[?var] as vartable where idptable.id = idtable.p and idptable.hasObject = vartable.id
     case 3: hasObject + ?var, ?id is not bound(known) but ?var is known
         Select * from type[?id] as idtable join attributes as idptable where idtable.p = idptable.id  and idptable.hasObject = vartable.id
-    
+
     Args:
         ctx (dictionary): RDFlib context from SPARQL parser
         local_ctx (dictionary): local context only relevant for current BGP
@@ -887,17 +893,19 @@ def process_ngsild_spo(ctx, local_ctx, s, p, o):
 
     Raises:
         SparqlValidationFailed: limitation in SPARQL translation implementation
-    """
-    
-    if debug > 1: print(f'DEBUG: Processing as NGSILD {s, p, o}', file = debugoutput)
+    """ # noqa E501
+
+    if debug > 1:
+        print(f'DEBUG: Processing as NGSILD {s, p, o}', file=debugoutput)
     # We got a triple <?var, p, []> where p is a shacle specified property
     # Now we need the ngsild part to determine if it is a relationship or not
-    ngsildtype = list(local_ctx['h'].predicates(subject = o))
-    ngsildvar =  list(local_ctx['h'].objects(subject = o))
+    ngsildtype = list(local_ctx['h'].predicates(subject=o))
+    ngsildvar = list(local_ctx['h'].objects(subject=o))
     if len(ngsildtype) != 1 or len(ngsildvar) != 1:
         raise SparqlValidationFailed(f'No matching ngsiltype or ngsildvar found for variable {s.toPython()}')
     if not isinstance(ngsildvar[0], Variable):
-        raise SparqlValidationFailed(f'Binding of {s} to concrete iri|literal not (yet) supported. Consider to use a variable and FILTER.')
+        raise SparqlValidationFailed(f'Binding of {s} to concrete iri|literal not (yet) supported. \
+Consider to use a variable and FILTER.')
     # Now we have 3 parts:
     # ?subject_var p [ hasValue|hasObject ?object_var]
     # subject_table, attribute_table, object_table
@@ -914,7 +922,8 @@ def process_ngsild_spo(ctx, local_ctx, s, p, o):
         join_condition = f'{attribute_tablename}.id = {subject_tablename}.`{p}`'
         sql_expression = f'attributes_view AS {attribute_tablename}'
         local_ctx['bgp_tables'][attribute_tablename] = []
-        local_ctx['bgp_sql_expression'].append({'statement': f'{sql_expression}', 'join_condition': f'{join_condition}'})
+        local_ctx['bgp_sql_expression'].append({'statement': f'{sql_expression}',
+                                                'join_condition': f'{join_condition}'})
     else:
         # In case of Relationships there are two cases:
         # (1) object_var is not defined
@@ -922,18 +931,22 @@ def process_ngsild_spo(ctx, local_ctx, s, p, o):
         if ngsildtype[0] != ngsild['hasObject']:
             raise SparqlValidationFailed("Internal implementation error")
         if not isinstance(ngsildvar[0], Variable):
-            raise SparqlValidationFailed(f'Binding {s} to non-variable {ngsildvar[0]} not supported. Consider using a variable and FILTER instead.')
+            raise SparqlValidationFailed(f'Binding {s} to non-variable {ngsildvar[0]} not supported. \
+Consider using a variable and FILTER instead.')
         object_varname = f'{ngsildvar[0].toPython()}'[1:]
         object_sqltable = utils.camelcase_to_snake_case(utils.strip_class(local_ctx['row'][object_varname]))
         object_tablename = f'{object_varname.upper()}TABLE'
-        if not object_varname in local_ctx['bounds']:
+        if object_varname not in local_ctx['bounds']:
             # case (1)
             join_condition = f'{attribute_tablename}.id = {subject_tablename}.`{p}`'
             sql_expression = f'attributes_view AS {attribute_tablename}'
             local_ctx['bgp_tables'][attribute_tablename] = []
             local_ctx['bgp_tables'][object_tablename] = []
-            local_ctx['bgp_sql_expression'].append({ 'statement': f'{sql_expression}', 'join_condition': f'{join_condition}'})
-            local_ctx['bgp_sql_expression'].append({ 'statement': f'{object_sqltable}_view AS {object_tablename}', 'join_condition': f'{object_tablename}.id = {attribute_tablename}.`{ngsildtype[0].toPython()}`'})
+            local_ctx['bgp_sql_expression'].append({'statement': f'{sql_expression}',
+                                                    'join_condition': f'{join_condition}'})
+            local_ctx['bgp_sql_expression'].append({'statement': f'{object_sqltable}_view AS {object_tablename}',
+                                                    'join_condition': f'{object_tablename}.id = \
+{attribute_tablename}.`{ngsildtype[0].toPython()}`'})
             ctx['sql_tables'].append(object_sqltable)
             # if object_varname not in local_ctx['bounds']:
             local_ctx['selvars'][object_varname] = f'{object_tablename}.`id`'
@@ -942,13 +955,15 @@ def process_ngsild_spo(ctx, local_ctx, s, p, o):
             # case (2)
             join_condition = f'{attribute_tablename}.`{ngsildtype[0].toPython()}` = {object_tablename}.id'
             sql_expression = f'attributes_view AS {attribute_tablename}'
-            local_ctx['bgp_sql_expression'].append( { 'statement': f'{sql_expression}', 'join_condition': f'{join_condition}'})
+            local_ctx['bgp_sql_expression'].append({'statement': f'{sql_expression}',
+                                                    'join_condition': f'{join_condition}'})
             join_condition = f'{attribute_tablename}.id = {subject_tablename}.`{p}`'
             sql_expression = f'{subject_sqltable}_view AS {subject_tablename}'
             ctx['sql_tables'].append(subject_sqltable)
             local_ctx['bgp_tables'][attribute_tablename] = []
             local_ctx['bgp_tables'][subject_tablename] = []
-            local_ctx['bgp_sql_expression'].append({ 'statement': f'{sql_expression}', 'join_condition': f'{join_condition}'}) 
+            local_ctx['bgp_sql_expression'].append({'statement': f'{sql_expression}',
+                                                   'join_condition': f'{join_condition}'})
             if subject_varname not in local_ctx['bounds']:
                 local_ctx['selvars'][subject_varname] = f'`{subject_tablename}`.`id`'
                 local_ctx['bounds'][subject_varname] = f'`{subject_tablename}`.`id`'
@@ -962,7 +977,7 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
     can change must be an NGSI-LD object(model). Therefore, for instance, there cannot be a term like:
     <ngsild-id> <pred> <object>
     because <pred> cannot be a defined NGSI-LD property/relationship (otherwise it would not be processed here)
-    A "generic" relationship between knowledge and model is impossible then (because it would be either a NGSI-LD defined relation or 
+    A "generic" relationship between knowledge and model is impossible then (because it would be either a NGSI-LD defined relation or
     the immutable knowledge must reference id's of the (mutable) model which is not possible by definition)
 
     Args:
@@ -974,9 +989,10 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
 
     Raises:
         SparqlValidationFailed: Reports implementation limitations
-    """
+    """ # noqa E501
     # must be  RDF query
-    if debug > 1: print(f'Processing as RDF query: {s, p, o}', file = debugoutput) 
+    if debug > 1:
+        print(f'Processing as RDF query: {s, p, o}', file=debugoutput)
     if not isinstance(p, URIRef):
         raise SparqlValidationFailed("NON IRI RDF-predicate not (yet) supported.")
     # predicate must be static for now
@@ -991,41 +1007,40 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
     # e.g. ?var a ?type
     # e.g. ?var a <iri>/Literal
     # relationship between NGSI-LD Entity subject and RDF term is otherwise forbidden
-    object_is_type = False
     subject_join_condition = None
     if isinstance(s, Variable) and (s in local_ctx['entity_variables'] or isentity(ctx, s)):
         if p == RDF['type']:
-            entity = local_ctx['bounds'].get(create_varname(s))    
-            if entity is None  and isinstance(o, URIRef):  # create entity table based on type definition
+            entity = local_ctx['bounds'].get(create_varname(s))
+            if entity is None and isinstance(o, URIRef):  # create entity table based on type definition
                 subject_tablename = f'{s.toPython().upper()}TABLE'[1:]
                 subject_varname = f'{s.toPython()}'[1:]
                 subject_sqltable = utils.camelcase_to_snake_case(utils.strip_class(local_ctx['row'][subject_varname]))
-                local_ctx['bgp_sql_expression'].append({ 'statement': f'{subject_sqltable}_view AS {subject_tablename}', 'join_condition': ''})
+                local_ctx['bgp_sql_expression'].append({'statement': f'{subject_sqltable}_view AS {subject_tablename}',
+                                                        'join_condition': ''})
                 ctx['sql_tables'].append(subject_sqltable)
                 local_ctx['selvars'][subject_varname] = f'{subject_tablename}.`id`'
                 local_ctx['bounds'][subject_varname] = f'{subject_tablename}.`id`'
                 local_ctx['bgp_tables'][subject_tablename] = []
                 join_condition = f"{rdftable_name}.predicate = '" + RDFS['subClassOf'].toPython() + \
-                    f"' and {rdftable_name}.subject = {subject_tablename}.`type` and {rdftable_name}.object = '{o.toPython()}'"
+                    f"' and {rdftable_name}.subject = {subject_tablename}.`type` and \
+{rdftable_name}.object = '{o.toPython()}'"
                 statement = f"{configs.rdf_table_name} as {rdftable_name}"
-                local_ctx['bgp_sql_expression'].append({ 'statement': statement, 'join_condition': join_condition})
-                return 
+                local_ctx['bgp_sql_expression'].append({'statement': statement, 'join_condition': join_condition})
+                return
             else:
                 entity = entity.replace('.`id`', '.id')  # Normalize cases when id is quoted
                 entity_table = entity.replace('.id', '')
                 entity_column = entity.replace('.id', '.type')
-                column = 'type'
                 global_tables = ctx['tables']
-                if not entity_table in global_tables:
-                    global_tables[entity_table] = []    
+                if entity_table not in global_tables:
+                    global_tables[entity_table] = []
                 global_tables[entity_table].append('type')
                 if isinstance(o, Variable):
-                    #object_is_type = True
-                    #subject_join_condition = None
                     # OK let's process the special case here
                     # Two cases: (1) object variable is bound (2) object variable unknown
-                    
-                    object_join_bound = get_rdf_join_condition(o, local_ctx['property_variables'], local_ctx['entity_variables'], local_ctx['bounds'])
+
+                    object_join_bound = get_rdf_join_condition(o, local_ctx['property_variables'],
+                                                               local_ctx['entity_variables'], local_ctx['bounds'])
                     if object_join_bound is None:
                         # (2)
                         # bind variable with type column of subject
@@ -1047,7 +1062,8 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
             raise SparqlValidationFailed("Cannot query generic RDF term with NGSI-LD entity subject.")
     else:
         # No special case. Check if subject is non bound and if non bound whether it can be bound
-        subject_join_bound = get_rdf_join_condition(s, local_ctx['property_variables'], local_ctx['entity_variables'], local_ctx['bounds'])
+        subject_join_bound = get_rdf_join_condition(s, local_ctx['property_variables'],
+                                                    local_ctx['entity_variables'], local_ctx['bounds'])
         if subject_join_bound is None:
             if not isinstance(s, Variable):
                 raise SparqlValidationFailed("Could not resolve {s} and not a variable")
@@ -1055,14 +1071,16 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
             subj_column = f'`{rdftable_name}`.`subject`'
             local_ctx['selvars'][create_varname(s)] = subj_column
             local_ctx['bounds'][create_varname(s)] = subj_column
-            subject_join_bound = None    
-        subject_join_condition = f'{rdftable_name}.subject = {subject_join_bound}' if subject_join_bound is not None else None
+            subject_join_bound = None
+        subject_join_condition = f'{rdftable_name}.subject = {subject_join_bound}'\
+            if subject_join_bound is not None else None
     predicate_join_condition = f'{rdftable_name}.predicate = \'{p.toPython()}\''
     # Process object join condition
     # object variables which are referencing ngsild-entities are forbidden
     if isinstance(o, Variable) and o in local_ctx['entity_variables']:
-        raise SparqlValidationFailed(f'Cannot bind NGSI-LD Entities to RDF objects.')
-    object_join_bound = get_rdf_join_condition(o, local_ctx['property_variables'], local_ctx['entity_variables'], local_ctx['bounds'])
+        raise SparqlValidationFailed('Cannot bind NGSI-LD Entities to RDF objects.')
+    object_join_bound = get_rdf_join_condition(o, local_ctx['property_variables'],
+                                               local_ctx['entity_variables'], local_ctx['bounds'])
     if object_join_bound is None:
         if not isinstance(o, Variable):
             raise SparqlValidationFailed("Could not resolve {o} not being a variable")
@@ -1075,14 +1093,16 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
     # if we found join condition for subject and object, add them
     if subject_join_condition is not None:
         join_condition = f'{subject_join_condition} and {join_condition}'
-    if object_join_condition is not None: join_condition += f' and {object_join_condition}' 
+    if object_join_condition is not None:
+        join_condition += f' and {object_join_condition}'
     sql_expression = f'{configs.rdf_table_name} AS {rdftable_name}'
     local_ctx['bgp_tables'][rdftable_name] = []
-    local_ctx['bgp_sql_expression'].append( {'statement': f'{sql_expression}', 'join_condition': f'{join_condition}'})
-                
+    local_ctx['bgp_sql_expression'].append({'statement': f'{sql_expression}', 'join_condition': f'{join_condition}'})
+
+
 def translate_BGP(ctx, bgp):
     """Translates a Basic Graph Pattern into SQL term
-    
+
     Assumption is that the model data is provided in NGSI-LD tables and Knowlege data as triples in
     a RDF table
 
@@ -1094,7 +1114,8 @@ def translate_BGP(ctx, bgp):
         WrongSparqlStructure: Problems with SPARQL metadata, or features which are not implemented
         SparqlValidationFailed: Problems with SPARQL parsing, dependencies
     """
-    if debug  > 2: print(f'DEBUG: BGP: {bgp}', file=debugoutput)
+    if debug > 2:
+        print(f'DEBUG: BGP: {bgp}', file=debugoutput)
     # Assumes a 'Basic Graph Pattern'
     if not bgp.name == 'BGP':
         raise WrongSparqlStructure('No BGP!')
@@ -1103,7 +1124,7 @@ def translate_BGP(ctx, bgp):
     for triple in add_triples:
         bgp.triples.append(triple)
     ctx['add_triples'] = []
-    
+
     # Translate set of triples into Graph for later processing
     if len(bgp.triples) == 0:
         bgp['sql_context'] = {}
@@ -1117,7 +1138,7 @@ def translate_BGP(ctx, bgp):
     property_variables, entity_variables, row = create_ngsild_mappings(ctx, h)
 
     # before translating, sort the bgp order to allow easier binds
-    bgp.triples = sort_triples(ctx['bounds'],bgp.triples, h)
+    bgp.triples = sort_triples(ctx['bounds'], bgp.triples, h)
 
     local_ctx = {}
     local_ctx['bounds'] = ctx["bounds"]
@@ -1129,30 +1150,32 @@ def translate_BGP(ctx, bgp):
     local_ctx['entity_variables'] = entity_variables
     local_ctx['h'] = h
     local_ctx['row'] = row
-    
+
     for s, p, o in bgp.triples:
         # If there are properties or relationships, assume it is a NGSI-LD matter
         if (p.toPython() in properties or p.toPython() in relationships) and isinstance(o, BNode):
             if isinstance(s, Variable):
                 process_ngsild_spo(ctx, local_ctx, s, p, o)
-        elif p != ngsild['hasValue'] and p != ngsild['hasObject']: 
+        elif p != ngsild['hasValue'] and p != ngsild['hasObject']:
             # must be  RDF query
             process_rdf_spo(ctx, local_ctx, s, p, o)
-           
-        else:
-            if debug > 1: print(f'DEBUG: Ignoring: {s, p, o}', file = debugoutput)
 
+        else:
+            if debug > 1:
+                print(f'DEBUG: Ignoring: {s, p, o}', file=debugoutput)
 
     bgp_join_conditions = []
     if len(local_ctx['bgp_sql_expression']) != 0:
         map_join_condition(local_ctx['bgp_sql_expression'], local_ctx['bgp_tables'], ctx['tables'])
         bgp_join_conditions = []
-        if  local_ctx['where'] != '':
+        if local_ctx['where'] != '':
             bgp_join_conditions.append(local_ctx['where'])
-    bgp['sql_context'] = create_bgp_context(local_ctx['selvars'], bgp_join_conditions, local_ctx['bgp_sql_expression'], local_ctx['bgp_tables'])
+    bgp['sql_context'] = create_bgp_context(local_ctx['selvars'], bgp_join_conditions,
+                                            local_ctx['bgp_sql_expression'], local_ctx['bgp_tables'])
     tables = ctx['tables']
     for table, value in local_ctx['bgp_tables'].items():
-        if table not in tables: tables[table] = []
+        if table not in tables:
+            tables[table] = []
         tables[table] += value
     if local_ctx['bgp_sql_expression']:
         bgp['target_sql'], bgp['where'] = merge_bgp_context(local_ctx['bgp_sql_expression'], True)
