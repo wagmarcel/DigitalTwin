@@ -4,7 +4,7 @@ import owlrl
 import os
 import sys
 from urllib.parse import urlparse
-#import yaml
+import re
 import ruamel.yaml 
 from ruamel.yaml.scalarstring import (DoubleQuotedScalarString as dq, 
                                       SingleQuotedScalarString as sq)
@@ -16,7 +16,6 @@ sys.path.append(file_dir)
 import configs
 import utils
 from sparql_to_sql import translate_sparql
-
 
 
 alerts_bulk_table = configs.alerts_bulk_table_name
@@ -68,13 +67,17 @@ sql_check_sparql_base = """
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
             
-            FROM (SELECT A.this as this_left, B.this as this FROM (SELECT id as this from {{targetclass}}_view) as A LEFT JOIN ({{sql_expression}}) as B ON A.this = B.this)
+            FROM (SELECT A.this as this_left, B.this as this, * FROM (SELECT id as this from {{targetclass}}_view) as A LEFT JOIN ({{sql_expression}}) as B ON A.this = B.this)
 """
 
 
 def strip_class(klass):
         a = urlparse(klass)
-        return os.path.basename(a.path)    
+        return os.path.basename(a.path)
+
+
+def add_variables_to_message(message):
+    return re.sub(r"\{([\?\$])(\w*)\}", r"' || IFNULL(`\2`, 'NULL') || '", message)
 
 
 def translate(shaclfile, knowledgefile):
@@ -104,7 +107,6 @@ def translate(shaclfile, knowledgefile):
     # Get all NGSI-LD Relationship
     qres = g.query(sparql_get_all_sparql_nodes)
     for row in qres:
-        #print(row)
         target_class = row.targetclass
         message = row.message.toPython() if row.message else None
         select = row.select.toPython() if row.select else None
@@ -116,7 +118,7 @@ def translate(shaclfile, knowledgefile):
                 alerts_bulk_table = alerts_bulk_table,
                 sql_expression = sql_expression,
                 targetclass = targetclass,
-                message = message,
+                message=add_variables_to_message(message),
                 nodeshape = nodeshape,
                 severity = severitylabel,
                 sqlite = False
@@ -125,7 +127,7 @@ def translate(shaclfile, knowledgefile):
                 alerts_bulk_table = alerts_bulk_table,
                 sql_expression = sql_expression,
                 targetclass = targetclass,
-                message = message,
+                message=add_variables_to_message(message),
                 nodeshape = nodeshape,
                 severity = severitylabel,
                 sqlite = True

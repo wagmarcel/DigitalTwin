@@ -109,7 +109,7 @@ def translate_sparql(shaclfile, knowledgefile, sparql_query, target_class):
     h.parse(knowledgefile)
     g += h
     owlrl.RDFSClosure.RDFS_Semantics(g, axioms=True, daxioms=False,
-                                     rdfs=True).closure()
+                                    rdfs=True).closure()
     qres = g.query(sparql_get_properties)
     for row in qres:
         if row.property is not None:
