@@ -30,7 +30,7 @@
         },
         "https://industry-fusion.com/types/v0.9/strength": {
         "type": "Property",
-        "value": "0.9"
+        "value": 0.9
         },
         "https://industry-fusion.com/types/v0.9/hasCartridge": {
         "type": "Relationship",
@@ -51,7 +51,7 @@
       "https://schema.org/depth": {
         "type": "Property",
         "unitCode": "MMT",
-        "value": "500"
+        "value": 500
       },
       "https://schema.org/height": {
         "type": "Property",

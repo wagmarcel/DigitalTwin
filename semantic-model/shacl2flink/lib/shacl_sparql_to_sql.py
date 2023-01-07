@@ -50,7 +50,7 @@ sql_check_sparql_base = """
             INSERT {% if sqlite %}OR REPlACE{% endif %} INTO {{alerts_bulk_table}}
             SELECT  
             this_left AS resource,
-                'Sparqlcheck({{nodeshape}})' AS event,
+                'SPARQLConstraintComponent({{nodeshape}})' AS event,
                 'Development' AS environment,
                 {% if sqlite %}
                 '[SHACL Validator]' AS service,

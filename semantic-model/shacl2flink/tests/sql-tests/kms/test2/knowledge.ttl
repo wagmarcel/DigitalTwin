@@ -8,8 +8,6 @@ iff:machine a iff:class ;
     a rdfs:class .
 iff:filter rdfs:subClassOf iff:machine ;
     a iff:class .
-iff:filterCartridge rdfs:subClassOf iff:machine ;
-    a iff:class .
 iff:plasmacutter rdfs:subClassOf iff:cutter ;
     a iff:class .
 iff:lasercutter rdfs:subClassOf iff:cutter;
