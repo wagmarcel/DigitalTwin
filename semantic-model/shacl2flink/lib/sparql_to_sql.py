@@ -215,17 +215,8 @@ def translate_query(query, target_class):
         'target_sql': '',
         'target_where': '',
         'target_modifiers': [],
-        'add_triples': [(Variable('this'), RDF['type'], target_class)],
-        'target_ctx': create_bgp_context({'this': 'THISTABLE.id'},
-                                         [],
-                                         [{'statement': f'\
-{utils.camelcase_to_snake_case(utils.strip_class(target_class))}_view as \
-THISTABLE',
-                                           'join_condition': ''
-                                           }],
-                                         ['THISTABLE']
-                                         )
-            }
+        'add_triples': [(Variable('this'), RDF['type'], target_class)]
+    }
     if debug:
         print("DEBUG: First Pass.", file=debugoutput)
     if algebra.name == 'SelectQuery':
@@ -419,8 +410,6 @@ def translate_notexists(ctx, notexists):
         print(f'DEBUG: FILTER NOT EXISTS: {notexists}', file=debugoutput)
     ctx_copy = copy_context(ctx)
     translate(ctx_copy, notexists.graph)
-    #ctx_copy['pass'] = 1
-    #translate(ctx_copy, notexists.graph)
     notexists['target_sql'] = notexists.graph['target_sql']
     notexists['where'] = notexists.graph['where']
     remap_join_constraint_to_where(notexists)
@@ -479,7 +468,6 @@ def merge_contexts(ctx, ctx_copy):
 def copy_context(ctx):
     ctx_copy = copy.deepcopy(ctx)
     ctx_copy['target_sql'] = ''
-    ctx_copy['target_ctx'] = None
     ctx_copy['target_modifiers'] = []
     ctx_copy['sql_tables'] = ctx['sql_tables']
     return ctx_copy
@@ -549,41 +537,6 @@ def translate_left_join(ctx, join):
     return
 
 
-def create_join_expressions(ctx, bgp_context):
-    """
-    join two expressions:
-    select_expr: an expression which is already a valid sql select expression
-    bgp_context: bgp_context expression
-    """
-    where = ''
-    if 'where' in bgp_context:
-        merge_where_context(ctx, bgp_context['where'])
-
-    join_name = f'J{ctx["table_id"]}'
-
-    merge, where_add = merge_bgp_context(bgp_context['sql_expression'])
-    expression = merge
-    where = merge_where_context(ctx, where_add)
-
-    for condition in bgp_context['join_conditions']:
-        if where != '':
-            where += f' and {condition}'
-        else:
-            where = condition
-    return expression
-
-
-def construct_sql(ctx, elem):
-    """
-    constructs SQL Query from nodes with BGP_Context
-    """
-    if not elem['sql_context']:
-        return ''
-
-    select_expression = create_join_expressions(ctx, elem['sql_context'])
-    return select_expression
-
-
 def merge_bgp_context(bgp_context, select=False):
     """
     Iterate through bgp_context and create statement out of it
@@ -604,12 +557,6 @@ def merge_bgp_context(bgp_context, select=False):
         else:
             expression += f' JOIN {expr["statement"]} ON {expr["join_condition"]}'
     return expression, where
-
-
-def merge_where_context(ctx, where_add):
-    ctx['target_where'] = merge_where_expression(ctx['target_where'],
-                                                 where_add)
-    return ctx['target_where']
 
 
 def merge_where_expression(where1, where2):
@@ -671,11 +618,6 @@ def translate_relational_expression(ctx, elem):
     return f'{expr} {op} {other}'
 
 
-def translate_filter_to_sql(query, where):
-
-    return f'{query} WHERE {where}'
-
-
 def create_global_columns(ctx, bgp_context):
     columns = ''
     tables = bgp_context['tables']
@@ -691,43 +633,6 @@ def create_global_columns(ctx, bgp_context):
                 columns += ','
             columns += f'{table}.`{column}` AS `{table}.{column}`'
     return columns
-
-
-def create_select_expression(ctx, bgp_context):
-    """
-    """
-    sql_expressions = bgp_context['sql_expression']
-    expression = 'SELECT '
-    expression += create_global_columns(ctx, bgp_context)
-    first = True
-    where = ''
-    table_term = ''
-    for sql_expresion in sql_expressions:
-        if first:
-            first = False
-            if 'join_condition' in sql_expresion:
-                where = sql_expresion['join_condition']
-            table_term += sql_expresion['statement']
-        else:
-            join_cond = ''
-            if 'join_condition' in sql_expresion:
-                join_cond = sql_expresion['join_condition']
-            table_term += ' JOIN ' + sql_expresion['statement']
-            if join_cond != '':
-                table_term += f' ON {join_cond}'
-
-    expression += f' FROM {table_term}'
-    if where != '':
-        expression += f'WHERE {where}'  # TODO: Globalize where conditino
-    return expression
-
-
-def get_table_name_from_full(full_name):
-    """
-    Contains full name e.g "table.column"
-    and translates to "table"
-    """
-    return re.search(r'^([A-Z0-9_]+)\.', )
 
 
 def map_join_condition(sql_expressions, local_tables, global_tables):
@@ -750,48 +655,6 @@ def map_join_condition(sql_expressions, local_tables, global_tables):
                         global_tables[table_name].append(column_no_backticks)
             except: # no column variable
                 pass
-
-
-def globalize_join_condition(sql_expressions, local_tables, global_tables,
-                             join_table_name):
-    """
-    Map all non-local conditions to global table list for later reference
-    It searches ONLY for equality conditions e.g. a = b
-    (Other conditions are currently not supported by Streaming SQL)
-    Transformation looks like follows:
-    e.g. MYTABLE.`id` => J1.`MYTABLE.id`
-    """
-    for expression in sql_expressions:
-        expression['join_condition'] = globalize_condition(
-            expression['join_condition'], local_tables, global_tables,
-            join_table_name)
-
-
-def globalize_condition(expression, local_tables, global_tables,
-                        join_table_name):
-    if expression == '':
-        return expression
-    to_match = expression
-    # new_condition = ''
-    num_matches = to_match.count('=')
-    num_matches += to_match.count('<>')
-    num_matches += to_match.count('>=')
-    num_matches += to_match.count('<=')
-    pattern = r'[\s]*([^\s]+)[\s]*[<>=]+[\s]*([^\s]+)[\s]*[and]*'*num_matches
-    match = re.findall(pattern, to_match)
-    # deduplicate match[0]
-    columns = list(set(match[0]))
-    for var in columns:
-        try:
-            table_name, column = re.findall(r'^`?([A-Z0-9_]+)`?\.`?(.*)`?$',
-                                            var)[0]
-            if table_name not in local_tables:
-                column_no_backticks = column.replace('`', '')
-                expression = re.sub(var, f'{join_table_name}.`{table_name}.\
-                                    {column_no_backticks}`', expression)
-        except:
-            pass
-    return expression
 
 
 def isentity(ctx, variable):
