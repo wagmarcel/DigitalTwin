@@ -28,7 +28,7 @@ kafka_topic_ngsild_updates = "{{.Values.kafkaBridge.ngsildUpdates.\
 listenTopic}}" if helm else "ff.ngsild-updates"
 kafka_topic_attributes = "{{.Values.kafkaBridge.debezium.\
 attributesTopic}}" if helm else \
-                        "iff.ngsild.attributes"
+                         "iff.ngsild.attributes"
 kafka_topic_ngsi_prefix = "{{.Values.kafkaBridge.debezium.\
 entityTopicPrefix}}" if helm else \
                           "iff.ngsild.entities"

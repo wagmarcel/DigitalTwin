@@ -209,13 +209,8 @@ def translate_query(query, target_class):
         'target_used': False,
         'table_id': 0,
         'classes': {'this': target_class},
-        #'classes': {},
-        #'sql_tables': [utils.camelcase_to_snake_case(
-        #    utils.strip_class(target_class)), 'attributes'],
         'sql_tables': ['attributes'],
-        #'bounds': {'this': 'THISTABLE.id'},
         'bounds': {},
-        #'tables': {'THISTABLE': ['id']},
         'tables': {},
         'target_sql': '',
         'target_where': '',
