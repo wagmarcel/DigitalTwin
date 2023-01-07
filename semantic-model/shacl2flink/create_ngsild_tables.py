@@ -76,10 +76,10 @@ def main(shaclfile, output_folder='output'):
                      'scan.startup.mode': 'earliest-offset'
                      }
             value = {
-                        'format': 'json',
-                        'json.fail-on-missing-field': False,
-                        'json.ignore-parse-errors': True
-                    }
+                'format': 'json',
+                'json.fail-on-missing-field': False,
+                'json.ignore-parse-errors': True
+            }
             print('---', file=f)
             yaml.dump(utils.create_yaml_table(table_name, connector, table,
                                               primary_key, kafka, value), f)

@@ -76,10 +76,13 @@ def main(knowledgefile, output_folder='output'):
     spec_name = configs.rdf_table_name
     table = create_table()
     connector = 'upsert-kafka'
-    kafka = {'topic': configs.rdf_topic,
-             'properties': {
-                'bootstrap.servers': configs.kafka_bootstrap},
-             'key.format': 'json'}
+    kafka = {
+        'topic': configs.rdf_topic,
+        'properties': {
+            'bootstrap.servers': configs.kafka_bootstrap
+        },
+        'key.format': 'json'
+    }
     value = {'format': 'json',
              'json.fail-on-missing-field': False,
              'json.ignore-parse-errors': True}
