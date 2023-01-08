@@ -17,7 +17,8 @@
 from unittest.mock import MagicMock, patch
 import lib.sparql_to_sql
 from bunch import Bunch
-from rdflib import Namespace, term, RDF, Graph as rGraph
+from rdflib import Namespace, term, RDF, Graph as rGraph, XSD
+import pytest
 
 hasObjectURI = term.URIRef("https://uri.etsi.org/ngsi-ld/hasObject")
 stateURI = term.URIRef("https://industry-fusion.com/types/v0.9/state")
@@ -562,3 +563,107 @@ def test_sort_triples(mock_copy, monkeypatch):
     assert result[1] == (term.Variable('this'), hasFilterURI, term.BNode('1'))
     assert result[2] == (term.Variable('f'), stateURI, term.BNode('2'))
     assert result[3] == ((term.BNode('2'), hasValueURI, term.Variable('v2')))
+
+
+def test_create_tablename():
+    class Namespace_manager:
+        def compute_qname(self, uri):
+            return ['n', '', uri.toPython()]
+
+    namespace_manager = Namespace_manager()
+    result = lib.sparql_to_sql.create_tablename(term.Variable('variable'))
+    assert result == 'VARIABLETABLE'
+    result = lib.sparql_to_sql.create_tablename(term.Variable('variable'), term.URIRef('predicate'), namespace_manager)
+    assert result == 'VARIABLEPREDICATETABLE'
+    result = lib.sparql_to_sql.create_tablename(term.URIRef('subject'), term.URIRef('predicate'), namespace_manager)
+    assert result == 'SUBJECTPREDICATETABLE'
+
+
+def test_get_rdf_join_condition(monkeypatch):
+    def create_varname(var):
+        return var.toPython()[1:]
+
+    monkeypatch.setattr(lib.sparql_to_sql, "create_varname", create_varname)
+
+    property_variables = {
+        term.Variable('v2'): True,
+        term.Variable('v1'): True
+    }
+    entity_variables = {
+        term.Variable('f'): True,
+        term.Variable('this'): True
+    }
+    selectvars = {
+        'v1': 'v1.id',
+    }
+    r = term.URIRef('test')
+    result = lib.sparql_to_sql.get_rdf_join_condition(r, property_variables, entity_variables, selectvars)
+    assert result == "'test'"
+    r = term.Variable('v1')
+    result = lib.sparql_to_sql.get_rdf_join_condition(r, property_variables, entity_variables, selectvars)
+    assert result == 'v1.id'
+
+
+@patch('lib.sparql_to_sql.translate')
+def test_translate_query(mock_translate):
+    query = MagicMock()
+    algebra = MagicMock()
+    algebra.name = 'SelectQuery'
+    query.algebra = algebra
+    algebra['target_sql'] = 'target_sql'
+    target_class = 'class'
+    result = lib.sparql_to_sql.translate_query(query, target_class)
+    assert result['classes'] == {'this': target_class}
+    assert mock_translate.called
+
+
+@patch('lib.sparql_to_sql.translate_function')
+def test_translate(mock_translate_function):
+    elem = MagicMock()
+    elem.name = 'test'
+    ctx = MagicMock()
+    with pytest.raises(lib.sparql_to_sql.WrongSparqlStructure):
+        lib.sparql_to_sql.translate(ctx, elem)
+
+    elem.name = 'Function'
+    lib.sparql_to_sql.translate(ctx, elem)
+    assert mock_translate_function.called
+
+
+def test_translate_function(monkeypatch):
+    def create_varname(var):
+        return var.toPython()[1:]
+    hash = {
+        'bounds': {
+            'var': 'vartest' 
+        }
+    }
+    monkeypatch.setattr(lib.sparql_to_sql, "create_varname", create_varname)
+
+    ctx = MagicMock()
+    ctx.__getitem__.side_effect = hash.__getitem__
+    function = MagicMock()
+    function.iri = term.URIRef('http://www.w3.org/2001/XMLSchema#float')
+    function.expr = [term.Variable('var')]
+    result = lib.sparql_to_sql.translate_function(ctx, function)
+    assert result == 'CAST(vartest as FLOAT)'
+
+
+@patch('lib.sparql_to_sql.translate')
+def test_translate_builtin_if(mock_translate, monkeypatch):
+    ctx = MagicMock()
+    mock_translate.return_value = 'condition'
+    builtin_if = MagicMock()
+    builtin_if.arg2 = term.URIRef('arg2')
+    builtin_if.arg3 = term.URIRef('arg3')
+    result = lib.sparql_to_sql.translate_builtin_if(ctx, builtin_if)
+    assert result == "CASE WHEN condition THEN 'arg2' ELSE 'arg3' END"
+    assert mock_translate.called
+
+
+def test_translate_BGP():
+    ctx = MagicMock()
+    bgp = MagicMock()
+    bgp.name = 'BGP'
+    lib.sparql_to_sql.translate_BGP(ctx, bgp)
+    assert ctx == 'hello'

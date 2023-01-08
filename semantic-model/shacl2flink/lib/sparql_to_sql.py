@@ -161,6 +161,7 @@ def get_rdf_join_condition(r, property_variables, entity_variables,
     """
     Create join condition for RDF-term
     e.g. ?table => table.id
+    
     r: RDF term
     property_variables: List of variables containing property values
     entity_variables: List of variables containing entity references
