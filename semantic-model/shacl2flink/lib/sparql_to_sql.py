@@ -206,7 +206,6 @@ def translate_query(query, target_class):
     ctx = {
         'namespace_manager': query.prologue.namespace_manager,
         'PV': algebra.PV,
-        'pass': 0,
         'target_used': False,
         'table_id': 0,
         'classes': {'this': target_class},
@@ -477,9 +476,8 @@ def copy_context(ctx):
 def translate_join(ctx, join):
     if debug > 2:
         print(f'DEBUG: JOIN: {join}', file=debugoutput)
-    if ctx['pass'] == 0:
-        translate(ctx, join.p1)
-        translate(ctx, join.p2)
+    translate(ctx, join.p1)
+    translate(ctx, join.p2)
     expr1 = join.p1['target_sql']
     expr2 = join.p2['target_sql']
     where1 = join.p1['where']
@@ -492,8 +490,8 @@ def translate_join(ctx, join):
         join['target_sql'] = f' {expr1} JOIN {expr2}'
         where = where1
         join['target_sql'] = join['target_sql'] + f' ON {where2}'
-    elif expr2 != '' and expr1 == '':
-        join['target_sql'] = expr2
+    #elif expr2 != '' and expr1 == '':
+    #    join['target_sql'] = expr2
     else:
         join['target_sql'] = expr2
 
@@ -509,9 +507,8 @@ def translate_join(ctx, join):
 def translate_left_join(ctx, join):
     if debug > 2:
         print(f'DEBUG: LEFT JOIN: {join}', file=debugoutput)
-    if ctx['pass'] == 0:
-        translate(ctx, join.p1)
-        translate(ctx, join.p2)
+    translate(ctx, join.p1)
+    translate(ctx, join.p2)
     expr1 = join.p1['target_sql']
     expr2 = join.p2['target_sql']
     where1 = join.p1['where']

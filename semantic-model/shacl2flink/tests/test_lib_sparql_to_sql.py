@@ -635,7 +635,7 @@ def test_translate_function(monkeypatch):
         return var.toPython()[1:]
     hash = {
         'bounds': {
-            'var': 'vartest' 
+            'var': 'vartest'
         }
     }
     monkeypatch.setattr(lib.sparql_to_sql, "create_varname", create_varname)
@@ -661,9 +661,115 @@ def test_translate_builtin_if(mock_translate, monkeypatch):
     assert mock_translate.called
 
 
-def test_translate_BGP():
+@patch('lib.sparql_to_sql.create_bgp_context')
+@patch('lib.sparql_to_sql.process_ngsild_spo')
+@patch('lib.sparql_to_sql.process_rdf_spo')
+@patch('lib.sparql_to_sql.sort_triples')
+@patch('lib.sparql_to_sql.create_ngsild_mappings')
+def test_translate_BGP(mock_create_ngsild_mappings, mock_sort_triples, mock_process_rdf_spo, mock_process_ngsild_spo, mock_create_bgp_context):
     ctx = MagicMock()
     bgp = MagicMock()
     bgp.name = 'BGP'
+    hash = {
+        'add_triples': [],
+        'bounds': {},
+        'tables': ['tables']
+    }    
+    bgp.triples = []
+    ctx.__getitem__.side_effect = hash.__getitem__
+
     lib.sparql_to_sql.translate_BGP(ctx, bgp)
-    assert ctx == 'hello'
+    assert not mock_create_ngsild_mappings.called
+
+    mock_create_ngsild_mappings.return_value = ({}, {}, {})
+    bgp.triples = [(term.Variable('this'), term.URIRef('hasValue'), term.Literal('test'))]
+    mock_sort_triples.return_value = bgp.triples
+    lib.sparql_to_sql.translate_BGP(ctx, bgp)
+    assert mock_sort_triples.called
+    assert mock_process_rdf_spo.called
+    assert mock_create_ngsild_mappings.called
+    assert not mock_process_ngsild_spo.called
+    assert mock_create_bgp_context.called
+
+
+@patch('lib.sparql_to_sql.translate')
+def test_translate_relational_expression(monkeypatch):
+    def create_varname(var):
+        return var.toPython()[1:]
+    hash = {
+        'bounds': {
+            'var': 'vartest'
+        }
+    }
+    monkeypatch.setattr(lib.sparql_to_sql, "create_varname", create_varname)
+
+    ctx = MagicMock()
+    ctx.__getitem__.side_effect = hash.__getitem__
+    elem = MagicMock()
+    elem.other = term.URIRef('testuri')
+    elem.expr = term.Literal('literal')
+    elem.op = '<='
+    result = lib.sparql_to_sql.translate_relational_expression(ctx, elem)
+    assert result == "'literal' <= 'testuri'"
+
+
+@patch('lib.sparql_to_sql.translate')
+def test_translate_left_join(mock_translate):
+
+    hash1 = {
+        'target_sql': 'target_sql1',
+        'where': 'where1'
+    }
+    hash2 = {
+        'target_sql': 'target_sql2',
+        'where': 'where2'
+    }
+    ctx = MagicMock()
+    join = Bunch()
+    join['target_sql'] = ''
+    join.p1 = hash1
+    join.p2 = hash2
+    lib.sparql_to_sql.translate_left_join(ctx, join)
+    assert join['target_sql'] == ' target_sql1 LEFT JOIN target_sql2 ON where2'
+    assert join['where'] == 'where1'
+    assert mock_translate.call_count == 2
+    hash2 = {
+        'target_sql': '',
+        'where': 'where2'
+    }
+    join.p2 = hash2
+    lib.sparql_to_sql.translate_left_join(ctx, join)
+    assert join['target_sql'] == 'target_sql1'
+    assert join['where'] == '((where1 and where2) or where1)'
+    assert mock_translate.call_count == 4
+
+
+@patch('lib.sparql_to_sql.translate')
+def test_translate_join(mock_translate):
+
+    hash1 = {
+        'target_sql': 'target_sql1',
+        'where': 'where1'
+    }
+    hash2 = {
+        'target_sql': 'target_sql2',
+        'where': 'where2'
+    }
+    ctx = MagicMock()
+    join = Bunch()
+    join['target_sql'] = ''
+    join.p1 = hash1
+    join.p2 = hash2
+    lib.sparql_to_sql.translate_join(ctx, join)
+    assert join['target_sql'] == ' target_sql1 JOIN target_sql2 ON where2'
+    assert join['where'] == 'where1'
+    assert mock_translate.call_count == 2
+    hash2 = {
+        'target_sql': '',
+        'where': 'where2'
+    }
+    join.p2 = hash2
+    lib.sparql_to_sql.translate_join(ctx, join)
+    assert join['target_sql'] == ''
+    assert join['where'] == '(where1 and where2)'
+    assert mock_translate.call_count == 4
