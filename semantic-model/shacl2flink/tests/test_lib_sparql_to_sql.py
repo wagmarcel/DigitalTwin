@@ -398,7 +398,7 @@ def test_process_rdf_spo_subject_is_entity_and_predicate_is_type(mock_isentity, 
     mock_create_varname.return_value = 'f'
     mock_get_random_string.return_value = ''
     mock_get_rdf_join_condition.return_value = 'condition'
-    
+
     ctx = {
         'namespace_manager': None,
         'bounds': {'this': 'THISTABLE.id'},
@@ -931,3 +931,22 @@ def test_add_projection_vars_to_tables(mock_create_varname):
     }
     lib.sparql_to_sql.add_projection_vars_to_tables(ctx)
     assert ctx['tables']['TABLE'] == ['id']
+
+
+@patch('lib.sparql_to_sql.translate')
+def test_translate_filter(mock_translate):
+    filter = Bunch()
+    p = {
+        'where': 'where',
+        'target_sql': 'target_sql'
+    }
+    p['where'] = 'where'
+    filter.p = p
+    filter.expr = 'expr'
+    ctx = MagicMock()
+    hash = {}
+    mock_translate.return_value = 'wherex'
+    #filter.__getitem__ = hash.__getitem__
+    lib.sparql_to_sql.translate_filter(ctx, filter)
+    assert mock_translate.called
+    assert filter['where'] == 'wherex and where'
