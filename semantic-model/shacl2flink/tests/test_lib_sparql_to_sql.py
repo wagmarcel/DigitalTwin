@@ -329,6 +329,56 @@ def test_process_rdf_spo_subject_is_no_entity(mock_isentity, mock_create_table_n
     assert local_ctx['selvars'] == {'f': 'testtable.object'}
 
 
+@patch('lib.sparql_to_sql.utils')
+@patch('lib.sparql_to_sql.get_rdf_join_condition')
+@patch('lib.sparql_to_sql.get_random_string')
+@patch('lib.sparql_to_sql.create_varname')
+@patch('lib.sparql_to_sql.create_tablename')
+@patch('lib.sparql_to_sql.isentity')
+def test_process_rdf_spo_subject_is_no_entity_and_predicate_is_type(mock_isentity, mock_create_table_name, mock_create_varname, mock_get_random_string, mock_get_rdf_join_condition, mock_utils, monkeypatch):
+    relationships = {
+        "https://industry-fusion.com/types/v0.9/hasFilter": True
+    }
+    properties = {
+        "https://industry-fusion.com/types/v0.9/state": True
+    }
+    monkeypatch.setattr(lib.sparql_to_sql, "properties", properties)
+    monkeypatch.setattr(lib.sparql_to_sql, "relationships", relationships)
+    mock_create_table_name.return_value = 'testtable'
+    mock_isentity.return_value = True
+    mock_create_varname.return_value = 'f'
+    mock_get_random_string.return_value = ''
+    mock_get_rdf_join_condition.return_value = 'condition'
+    mock_utils.camelcase_to_snake_case.return_value = 'camelcase_to_snake_case'
+    ctx = {
+        'namespace_manager': None,
+        'bounds': {'this': 'THISTABLE.id'},
+        'tables': {'THISTABLE': ['id']},
+        'sql_tables': []
+    }
+    local_ctx = {
+        'bounds': {'this': 'THISTABLE.id'},
+        'selvars': {},
+        'where': '',
+        'bgp_sql_expression': [],
+        'bgp_tables': {},
+        'property_variables': {},
+        'entity_variables': {},
+        'h': {},
+        'row': {'f': 'f'}
+    }
+    s = term.Variable('f')
+    p = RDF['type']
+    o = term.URIRef('https://example.com/obj')
+    lib.sparql_to_sql.process_rdf_spo(ctx, local_ctx, s, p, o)
+    assert local_ctx['bgp_sql_expression'] == [{'statement': 'camelcase_to_snake_case_view AS FTABLE',
+                                                'join_condition': ''},
+                                               {'statement': 'rdf as testtable',
+                                                'join_condition': "testtable.predicate = 'http://www.w3.org/2000/01/rdf-schema#subClassOf' and testtable.subject = FTABLE.`type` and testtable.object = 'https://example.com/obj'"}]
+    assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'f': 'FTABLE.`id`'}
+    assert local_ctx['bgp_tables'] == {'FTABLE': []}
+
+
 @patch('lib.sparql_to_sql.get_rdf_join_condition')
 @patch('lib.sparql_to_sql.get_random_string')
 @patch('lib.sparql_to_sql.create_varname')
@@ -348,6 +398,7 @@ def test_process_rdf_spo_subject_is_entity_and_predicate_is_type(mock_isentity, 
     mock_create_varname.return_value = 'f'
     mock_get_random_string.return_value = ''
     mock_get_rdf_join_condition.return_value = 'condition'
+    
     ctx = {
         'namespace_manager': None,
         'bounds': {'this': 'THISTABLE.id'},
@@ -503,7 +554,7 @@ def test_process_ngsild_spo_hasObject(mock_isentity, mock_create_table_name, moc
         'namespace_manager': None,
         'bounds': {'this': 'THISTABLE.id'},
         'tables': {'THISTABLE': ['id']},
-         'sql_tables': []
+        'sql_tables': []
     }
     local_ctx = {
         'bounds': {'this': 'THISTABLE.id', 'c': 'CUTTER.id'},
@@ -519,7 +570,7 @@ def test_process_ngsild_spo_hasObject(mock_isentity, mock_create_table_name, moc
     s = term.Variable('c')
     p = hasFilterURI
     o = term.URIRef('https://example.com/obj')
-    
+
     lib.sparql_to_sql.process_ngsild_spo(ctx, local_ctx, s, p, o)
     assert local_ctx['bgp_tables'] == {'CHAS_FILTERTABLE': [], 'FTABLE': []}
     assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'c': 'CUTTER.id', 'f': 'FTABLE.`id`'}
