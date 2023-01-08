@@ -881,4 +881,53 @@ def test_wrap_sql_projection(mock_create_varname):
     lib.sparql_to_sql.wrap_sql_projection(ctx, node)
     assert node == {'where': 'where', 'target_sql': 'SELECT bound AS `var`  FROM target_sql WHERE where'}
 
-    
+
+@patch('lib.sparql_to_sql.translateQuery')
+@patch('lib.sparql_to_sql.parseQuery')
+@patch('lib.sparql_to_sql.translate_query')
+@patch('lib.sparql_to_sql.owlrl')
+@patch('lib.sparql_to_sql.Graph')
+def test_translate_sparql(mock_graph, mock_owrl, mock_translate_query, mock_parseQuery, mock_translateQuery, monkeypatch):
+
+    g = MagicMock()
+    monkeypatch.setattr(lib.sparql_to_sql, "g", g)
+    shaclfile = MagicMock()
+    knowledgefile = MagicMock()
+    sparql_query = ''
+    target_class = 'class'
+    ctx = {
+        'target_sql': 'target_sql',
+        'sql_tables': 'sql_tables'
+    }
+    mock_translate_query.return_value = ctx
+    row1 = Bunch()
+    row2 = Bunch()
+    row1.property = term.URIRef('property')
+    row1.relationship = term.URIRef('relationship')
+    row2.property = term.URIRef('property2')
+    row2.relationship = term.URIRef('relationship2')
+    g.__iadd__.return_value.query = MagicMock(side_effect=[[row1], [row2]])
+    relationships = {
+        "https://industry-fusion.com/types/v0.9/hasFilter": True
+    }
+    properties = {
+        "https://industry-fusion.com/types/v0.9/state": True
+    }
+    monkeypatch.setattr(lib.sparql_to_sql, "properties", properties)
+    monkeypatch.setattr(lib.sparql_to_sql, "relationships", relationships)
+    result = lib.sparql_to_sql.translate_sparql(shaclfile, knowledgefile, sparql_query, target_class)
+    assert result == ('target_sql', 'sql_tables')
+    assert mock_translate_query.called
+    assert mock_translateQuery.called
+    assert mock_parseQuery.called
+
+@patch('lib.sparql_to_sql.create_varname')
+def test_add_projection_vars_to_tables(mock_create_varname):
+    mock_create_varname.return_value = 'var'
+    ctx = {
+        'bounds': {'var': 'TABLE.`id`'},
+        'PV': ['var'],
+        'tables': {}
+    }
+    lib.sparql_to_sql.add_projection_vars_to_tables(ctx)
+    assert ctx['tables']['TABLE'] == ['id']
