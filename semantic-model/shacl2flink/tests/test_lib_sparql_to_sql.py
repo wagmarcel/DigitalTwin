@@ -374,7 +374,7 @@ def test_process_rdf_spo_subject_is_no_entity_and_predicate_is_type(mock_isentit
     assert local_ctx['bgp_sql_expression'] == [{'statement': 'camelcase_to_snake_case_view AS FTABLE',
                                                 'join_condition': ''},
                                                {'statement': 'rdf as testtable',
-                                                'join_condition': "testtable.predicate = 'http://www.w3.org/2000/01/rdf-schema#subClassOf' and testtable.subject = FTABLE.`type` and testtable.object = 'https://example.com/obj'"}]
+                                                'join_condition': "testtable.subject = FTABLE.`type` and testtable.predicate = 'http://www.w3.org/2000/01/rdf-schema#subClassOf' and testtable.object = 'https://example.com/obj'"}]
     assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'f': 'FTABLE.`id`'}
     assert local_ctx['bgp_tables'] == {'FTABLE': []}
 
@@ -824,3 +824,61 @@ def test_translate_join(mock_translate):
     assert join['target_sql'] == ''
     assert join['where'] == '(where1 and where2)'
     assert mock_translate.call_count == 4
+
+
+def test_remap_join_constraint_to_where():
+
+    node = {
+        'where': 'where',
+        'target_sql': 'target_sql'
+    }
+    lib.sparql_to_sql.remap_join_constraint_to_where(node)
+    assert node == {'where': 'where', 'target_sql': 'target_sql'}
+
+    node = {
+        'where': 'A = B',
+        'target_sql': 'A.subject = s and A.predicate = p and A.object = o'
+    }
+    lib.sparql_to_sql.remap_join_constraint_to_where(node)
+    assert node['where'] == 'A = B and A.subject = s and A.object = o'
+    assert node['target_sql'] == ' A.predicate = p '
+    node = {
+        'where': '',
+        'target_sql': 'A.subject = s and A.predicate = p and A.object = o'
+    }
+    lib.sparql_to_sql.remap_join_constraint_to_where(node)
+    assert node['where'] == 'A.subject = s and A.object = o'
+    assert node['target_sql'] == ' A.predicate = p '
+
+
+def test_map_join_condition():
+
+    sql_expressions = [
+        {'join_condition': 'select * from table1 join table2 on TABLE1.id = TABLE2.id'}
+    ]
+    local_tables = {
+        'TABLE1': []
+    }
+    global_tables = {}
+    lib.sparql_to_sql.map_join_condition(sql_expressions, local_tables, global_tables)
+    assert global_tables == {'TABLE2': 'id'}
+
+
+@patch('lib.sparql_to_sql.create_varname')
+def test_wrap_sql_projection(mock_create_varname):
+    ctx = {
+        'bounds': {
+            'var': 'bound'
+        },
+        'target_modifiers': [],
+        'PV': ['varx']
+    }
+    node = {
+        'where': 'where',
+        'target_sql': 'target_sql'
+    }
+    mock_create_varname.return_value = 'var'
+    lib.sparql_to_sql.wrap_sql_projection(ctx, node)
+    assert node == {'where': 'where', 'target_sql': 'SELECT bound AS `var`  FROM target_sql WHERE where'}
+
+    

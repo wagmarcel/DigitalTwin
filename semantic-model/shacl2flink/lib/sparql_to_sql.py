@@ -617,26 +617,12 @@ def translate_relational_expression(ctx, elem):
     return f'{expr} {op} {other}'
 
 
-def create_global_columns(ctx, bgp_context):
-    columns = ''
-    tables = bgp_context['tables']
-
-    first = True
-    for table in tables:
-        ctx['tables'][table] = list(set(ctx['tables'][table]))  # deduplicate
-
-        for column in ctx['tables'][table]:
-            if first:
-                first = False
-            else:
-                columns += ','
-            columns += f'{table}.`{column}` AS `{table}.{column}`'
-    return columns
-
-
 def map_join_condition(sql_expressions, local_tables, global_tables):
     """
     Map all non-local conditions to global table list for later reference
+    local_tables: map of tables and their referenced fields for local BGP
+    gloabl_tables: map of tabels and their reference fields globally
+    NOTE: Tables are upper case
     """
     for expression in sql_expressions:
         to_match = expression['join_condition']
@@ -1019,9 +1005,10 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
                 local_ctx['selvars'][subject_varname] = f'{subject_tablename}.`id`'
                 local_ctx['bounds'][subject_varname] = f'{subject_tablename}.`id`'
                 local_ctx['bgp_tables'][subject_tablename] = []
-                join_condition = f"{rdftable_name}.predicate = '" + RDFS['subClassOf'].toPython() + \
-                    f"' and {rdftable_name}.subject = {subject_tablename}.`type` and \
-{rdftable_name}.object = '{o.toPython()}'"
+                predicate_join_condition = f"{rdftable_name}.predicate = '" + RDFS['subClassOf'].toPython() + "'"
+                object_join_condition = f"{rdftable_name}.object = '{o.toPython()}'"
+                subject_join_condition = f"{rdftable_name}.subject = {subject_tablename}.`type`"
+                join_condition = f"{subject_join_condition} and {predicate_join_condition} and {object_join_condition}"
                 statement = f"{configs.rdf_table_name} as {rdftable_name}"
                 local_ctx['bgp_sql_expression'].append({'statement': statement, 'join_condition': join_condition})
                 return
