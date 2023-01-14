@@ -344,7 +344,7 @@ iff:StateOnFilter
     a sh:NodeShape ;
     sh:targetClass iff:filter ;
     sh:sparql [
-        a sh:SPARQLConstraints;
+        a sh:SPARQLConstraints ;
         sh:message "Filter running without running assigned machine" ;
         sh:select """
 PREFIX iff: <https://industry-fusion.com/types/v0.9/>
@@ -362,29 +362,56 @@ SELECT $this ?v1 ?pc ?v2
     ] .
 
 
-iff:multiply # seems not to work - check future development
-	a sh:SPARQLFunction ;
-	rdfs:comment "Multiplies its two arguments $op1 and $op2." ;
-	sh:parameter [
-		sh:path iff:op1 ;
-		sh:datatype xsd:integer ;
-		sh:description "The first operand" ;
+
+iff:ChangeWasteClassRulesShape
+	a sh:NodeShape ;
+	sh:targetClass iff:filterCartridge ;
+	sh:rule [
+		a sh:SPARQLRule ;
+		sh:construct """
+            PREFIX iff: <https://industry-fusion.com/types/v0.9/>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			CONSTRUCT {
+				?bn <https://uri.etsi.org/ngsi-ld/hasValue> ?wc .
+			}
+			WHERE {
+				?filter iff:hasCartridge [ <https://uri.etsi.org/ngsi-ld/hasObject> $this ] .
+                $this iff:wasteClass ?bn .
+                ?cutter iff:hasFilter [ <https://uri.etsi.org/ngsi-ld/hasObject> ?filter ] .
+                ?cutter iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?filter_state ] .
+                ?filter iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?cutter_state ] .
+                ?cutter iff:hasWorkpiece [ <https://uri.etsi.org/ngsi-ld/hasObject> ?workpiece ] .
+                ?workpiece iff:material [ <https://uri.etsi.org/ngsi-ld/hasValue> ?materialnr ] .
+                ?wc iff:containsMaterialNumber [ rdfs:member ?materialnr ] .
+                FILTER(?filter_state = iff:state_ON && ?cutter_state = iff:state_ON)
+			}
+			""" ;
+	] .
+
+
+
+iff:TimestampCartridgeFromRulesShape
+	a sh:NodeShape ;
+	sh:targetClass iff:filterCartridge ;
+	sh:rule [
+		a sh:SPARQLRule ;
+		sh:construct """
+			CONSTRUCT {
+				?bn <https://uri.etsi.org/ngsi-ld/hasValue> ?timestamp .
+			}
+			WHERE {
+				$this  iff:inUseFrom ?bn.
+                $this iff:wasteClass [ <https://uri.etsi.org/ngsi-ld/hasValue> ?wc ]
+                FILTER(wc != iff:WC0)
+                FILTER NOT EXISTS {
+				    $bn  <https://uri.etsi.org/ngsi-ld/hasValue> ?oldertimestamp .
+				}
+			}
+			""" ;
+		sh:condition ex:RectangleShape ;    # Rule only applies to Rectangles that conform to ex:RectangleShape
 	] ;
-	sh:parameter [
-		sh:path iff:op2 ;
-		sh:datatype xsd:integer ;
-		sh:description "The second operand" ;
-	] ;
-	sh:returnType xsd:integer ;
-	sh:select """
-		SELECT ($op1 * $op2 AS ?result)
-		WHERE {
-		}
-		""" .
-
-
-
-
+.    
 #iff:WasteClassIncrease
 #    a sh:NodeShapes ;
 #    sh:targetClass iff:cutter ;
