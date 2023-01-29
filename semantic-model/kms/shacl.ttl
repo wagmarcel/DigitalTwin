@@ -373,14 +373,13 @@ iff:ChangeWasteClassRulesShape
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 			CONSTRUCT {
-				?bn <https://uri.etsi.org/ngsi-ld/hasValue> ?wc .
+				$this iff:wasteClass [ <https://uri.etsi.org/ngsi-ld/hasValue> ?wc ] .
 			}
 			WHERE {
-				?filter iff:hasCartridge [ <https://uri.etsi.org/ngsi-ld/hasObject> $this ] .
-                $this iff:wasteClass ?bn .
+		?filter iff:hasCartridge [ <https://uri.etsi.org/ngsi-ld/hasObject> $this ] .
                 ?cutter iff:hasFilter [ <https://uri.etsi.org/ngsi-ld/hasObject> ?filter ] .
-                ?cutter iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?filter_state ] .
-                ?filter iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?cutter_state ] .
+                ?cutter iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?cutter_state ] .
+                ?filter iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?filter_state ] .
                 ?cutter iff:hasWorkpiece [ <https://uri.etsi.org/ngsi-ld/hasObject> ?workpiece ] .
                 ?workpiece iff:material [ <https://uri.etsi.org/ngsi-ld/hasValue> ?materialnr ] .
                 ?wc iff:containsMaterialNumber [ rdfs:member ?materialnr ] .
@@ -391,27 +390,33 @@ iff:ChangeWasteClassRulesShape
 
 
 
-iff:TimestampCartridgeFromRulesShape
-	a sh:NodeShape ;
-	sh:targetClass iff:filterCartridge ;
-	sh:rule [
-		a sh:SPARQLRule ;
-		sh:construct """
-			CONSTRUCT {
-				?bn <https://uri.etsi.org/ngsi-ld/hasValue> ?timestamp .
-			}
-			WHERE {
-				$this  iff:inUseFrom ?bn.
-                $this iff:wasteClass [ <https://uri.etsi.org/ngsi-ld/hasValue> ?wc ]
-                FILTER(wc != iff:WC0)
-                FILTER NOT EXISTS {
-				    $bn  <https://uri.etsi.org/ngsi-ld/hasValue> ?oldertimestamp .
-				}
-			}
-			""" ;
-		sh:condition ex:RectangleShape ;    # Rule only applies to Rectangles that conform to ex:RectangleShape
-	] ;
-.    
+#iff:TimestampCartridgeFromRulesShape
+#	a sh:NodeShape ;
+#	sh:targetClass iff:filterCartridge ;
+#	sh:rule [
+#		a sh:SPARQLRule ;
+#		sh:construct """
+ #               PREFIX iff: <https://industry-fusion.com/types/v0.9/>
+#                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+#                PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+#			CONSTRUCT {
+#				$this iff:inUseFrom [ <https://uri.etsi.org/ngsi-ld/hasValue> ?ts ] .
+#			}
+#			WHERE {
+#				
+ #                               $this iff:wasteClass [ <https://uri.etsi.org/ngsi-ld/hasValue> ?wc ] .
+#                                bind(now() as ?ts)
+#                                FILTER(?wc != iff:WC0)
+#                                FILTER NOT EXISTS {
+#				    $this  iff:inUseFrom [ <https://uri.etsi.org/ngsi-ld/hasValue> ?oldertimestamp ] .
+#				}
+#                             
+#			}
+#			""" ;
+#	] ;
+#.
+
+
 #iff:WasteClassIncrease
 #    a sh:NodeShapes ;
 #    sh:targetClass iff:cutter ;

@@ -59,8 +59,8 @@ def create_statementset(graph):
             statementset += ",\n"
         else:
             first = False
-        statementset += "(" + "'" + s.toPython() + "', '" + p.toPython() + \
-                        "', '" + o.toPython() + "', " + \
+        statementset += "(" + "'" + utils.format_node_type(s) + "', '" + utils.format_node_type(p) + \
+                        "', '" + utils.format_node_type(o) + "', " + \
                         str(hash_counter[hex_dig]) + ")"
     statementset += ";"
     return statementset

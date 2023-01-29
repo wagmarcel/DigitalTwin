@@ -50,15 +50,15 @@ def main(shaclfile, knowledgefile, output_folder='output'):
         
 
         
-    tables = list(set(tables2).union(set(tables)))  # deduplication
-    views = list(set(views2).union(set(views)))  # deduplication
+    tables = list(set(tables2).union(set(tables)).union(set(tables3)))  # deduplication
+    views = list(set(views2).union(set(views)).union(set(views3)))  # deduplication
 
     with open(os.path.join(output_folder, "shacl-validation.yaml"), "w") as f:
         yaml.dump(utils.create_statementset('shacl-validation', tables, views,
                                             statementsets + statementsets2), f)
     with open(os.path.join(output_folder, "shacl-validation.sqlite"), "w") \
             as sqlitef:
-        print(sqlite + sqlite2, file=sqlitef)
+        print(sqlite + sqlite2 + sqlite3, file=sqlitef)
 
 
 if __name__ == '__main__':

@@ -16,6 +16,7 @@
 
 import os
 import re
+import rdflib
 from urllib.parse import urlparse
 from enum import Enum
 
@@ -241,3 +242,20 @@ def create_output_folder(path='output'):
         os.mkdir(path)
     except FileExistsError:
         pass
+
+
+def format_node_type(node):
+    """
+    formats node dependent on node-type
+    IRI: iri => '<iri>'
+    Literal: literal => '"literal"'
+    BNodde: id => '_:id' 
+    """
+    if isinstance(node, rdflib.URIRef):
+        return f'<{node.toPython()}>'
+    elif isinstance(node, rdflib.Literal):
+        return f'"{node.toPython()}"'
+    elif isinstance(node, rdflib.BNode):
+        return f'_:{node.toPython()}'
+    else:
+        raise ValueError('Node is not IRI, Literal, BNode')
