@@ -488,8 +488,8 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
                 local_ctx['selvars'][subject_varname] = f'{subject_tablename}.`id`'
                 local_ctx['bounds'][subject_varname] = f'{subject_tablename}.`id`'
                 local_ctx['bgp_tables'][subject_tablename] = []
-                predicate_join_condition = f"{rdftable_name}.predicate = '" + RDFS['subClassOf'].toPython() + "'"
-                object_join_condition = f"{rdftable_name}.object = '{o.toPython()}'"
+                predicate_join_condition = f"{rdftable_name}.predicate = '<" + RDFS['subClassOf'].toPython() + ">'"
+                object_join_condition = f"{rdftable_name}.object = '<{o.toPython()}>'"
                 subject_join_condition = f"{rdftable_name}.subject = {subject_tablename}.`type`"
                 join_condition = f"{subject_join_condition} and {predicate_join_condition} and {object_join_condition}"
                 statement = f"{configs.rdf_table_name} as {rdftable_name}"
