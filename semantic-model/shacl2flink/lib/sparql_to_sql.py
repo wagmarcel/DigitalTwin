@@ -616,31 +616,6 @@ def translate_relational_expression(ctx, elem):
     return f'{expr} {op} {other}'
 
 
-def map_join_condition(sql_expressions, local_tables, global_tables):
-    """
-    Map all non-local conditions to global table list for later reference
-    local_tables: map of tables and their referenced fields for local BGP
-    gloabl_tables: map of tabels and their reference fields globally
-    NOTE: Tables are upper case
-    """
-    for expression in sql_expressions:
-        to_match = expression['join_condition']
-        num_matches = to_match.count('=')
-        pattern = r'[\s]*([^\s]+)[\s]*=[\s]*([^\s]+)[\s]*[and]*' * num_matches
-        match = re.findall(pattern, to_match)
-        for var in match[0]:
-            try:
-                table_name, column = re.findall(r'^([A-Z0-9_]+)\.(.*)$', var)[0]
-                if table_name not in local_tables:
-                    column_no_backticks = column.replace('`', '')
-                    if table_name not in global_tables:
-                        global_tables[table_name] = column_no_backticks
-                    else:
-                        global_tables[table_name].append(column_no_backticks)
-            except:  # no column variable
-                pass
-
-
 def translate_BGP(ctx, bgp):
     """Translates a Basic Graph Pattern into SQL term
 
@@ -668,7 +643,7 @@ def translate_BGP(ctx, bgp):
 
     # Translate set of triples into Graph for later processing
     if len(bgp.triples) == 0:
-        bgp['sql_context'] = {}
+  #      bgp['sql_context'] = {}
         bgp['where'] = ''
         bgp['target_sql'] = ''
         return
@@ -683,7 +658,7 @@ def translate_BGP(ctx, bgp):
 
     local_ctx = {}
     local_ctx['bounds'] = ctx["bounds"]
-    local_ctx['selvars'] = {}
+    #local_ctx['selvars'] = {}
     local_ctx['where'] = ''
     local_ctx['bgp_sql_expression'] = []
     local_ctx['bgp_tables'] = {}
@@ -707,12 +682,12 @@ def translate_BGP(ctx, bgp):
 
     bgp_join_conditions = []
     if len(local_ctx['bgp_sql_expression']) != 0:
-        map_join_condition(local_ctx['bgp_sql_expression'], local_ctx['bgp_tables'], ctx['tables'])
+        #map_join_condition(local_ctx['bgp_sql_expression'], local_ctx['bgp_tables'], ctx['tables'])
         bgp_join_conditions = []
         if local_ctx['where'] != '':
             bgp_join_conditions.append(local_ctx['where'])
-    bgp['sql_context'] = create_bgp_context(local_ctx['selvars'], bgp_join_conditions,
-                                            local_ctx['bgp_sql_expression'], local_ctx['bgp_tables'])
+    #bgp['sql_context'] = create_bgp_context(local_ctx['selvars'], bgp_join_conditions,
+    #                                        local_ctx['bgp_sql_expression'], local_ctx['bgp_tables'])
     tables = ctx['tables']
     for table, value in local_ctx['bgp_tables'].items():
         if table not in tables:
