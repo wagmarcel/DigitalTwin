@@ -252,10 +252,10 @@ def format_node_type(node):
     BNodde: id => '_:id' 
     """
     if isinstance(node, rdflib.URIRef):
-        return f'<{node.toPython()}>'
+        return f'{node.toPython()}'
     elif isinstance(node, rdflib.Literal):
-        return f'"{node.toPython()}"'
+        return f'{node.toPython()}'
     elif isinstance(node, rdflib.BNode):
-        return f'_:{node.toPython()}'
+        return f'{node.toPython()}'
     else:
         raise ValueError('Node is not IRI, Literal, BNode')
