@@ -137,12 +137,9 @@ def translate_query(query, target_class):
         'properties': properties,
         'g': g,
         'PV': algebra.PV,
-        'target_used': False,
-        'table_id': 0,
         'classes': {'this': target_class},
         'sql_tables': ['attributes'],
         'bounds': {},
-        'tables': {},
         'target_sql': '',
         'target_where': '',
         'target_modifiers': [],
@@ -291,7 +288,6 @@ def translate_project(ctx, project):
     project['where'] = project.p['where']
     # if this is part of a construct query, ctx['PV'] is None, so do not wrap
     if ctx['PV'] is not None:
-        #add_projection_vars_to_tables(ctx)
         wrap_sql_projection(ctx, project)
 
 
@@ -399,7 +395,6 @@ def translate_notexists(ctx, notexists):
     ctx_copy['PV'] = notexists['_vars']
     remap_join_constraint_to_where(notexists)
     wrap_sql_projection(ctx_copy, notexists)
-    #merge_contexts(ctx, ctx_copy)
     return f'NOT EXISTS ({notexists["target_sql"]})'
 
 
@@ -601,7 +596,6 @@ def translate_BGP(ctx, bgp):
 
     # Translate set of triples into Graph for later processing
     if len(bgp.triples) == 0:
-  #      bgp['sql_context'] = {}
         bgp['where'] = ''
         bgp['target_sql'] = ''
         return
@@ -616,7 +610,6 @@ def translate_BGP(ctx, bgp):
 
     local_ctx = {}
     local_ctx['bounds'] = ctx["bounds"]
-    #local_ctx['selvars'] = {}
     local_ctx['where'] = ''
     local_ctx['bgp_sql_expression'] = []
     local_ctx['bgp_tables'] = {}
@@ -640,17 +633,9 @@ def translate_BGP(ctx, bgp):
 
     bgp_join_conditions = []
     if len(local_ctx['bgp_sql_expression']) != 0:
-        #map_join_condition(local_ctx['bgp_sql_expression'], local_ctx['bgp_tables'], ctx['tables'])
         bgp_join_conditions = []
         if local_ctx['where'] != '':
             bgp_join_conditions.append(local_ctx['where'])
-    #bgp['sql_context'] = create_bgp_context(local_ctx['selvars'], bgp_join_conditions,
-    #                                        local_ctx['bgp_sql_expression'], local_ctx['bgp_tables'])
-    #tables = ctx['tables']
-    #for table, value in local_ctx['bgp_tables'].items():
-    #    if table not in tables:
-    #        tables[table] = []
-    #    tables[table] += value
     if local_ctx['bgp_sql_expression']:
         bgp['target_sql'], bgp['where'] = merge_bgp_context(local_ctx['bgp_sql_expression'], True)
     else:

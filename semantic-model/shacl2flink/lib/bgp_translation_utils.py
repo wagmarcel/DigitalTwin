@@ -499,10 +499,6 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
                 entity = entity.replace('.`id`', '.id')  # Normalize cases when id is quoted
                 entity_table = entity.replace('.id', '')
                 entity_column = entity.replace('.id', '.type')
-                global_tables = ctx['tables']
-                if entity_table not in global_tables:
-                    global_tables[entity_table] = []
-                global_tables[entity_table].append('type')
                 if isinstance(o, Variable):
                     # OK let's process the special case here
                     # Two cases: (1) object variable is bound (2) object variable unknown
