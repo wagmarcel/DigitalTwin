@@ -125,15 +125,6 @@ def translate_sparql(shaclfile, knowledgefile, sparql_query, target_class):
     return ctx['target_sql'], ctx['sql_tables']
 
 
-def create_bgp_context(bounds, join_conditions, sql_expression, tables):
-    return {
-        'bounds': bounds,
-        'join_conditions': join_conditions,
-        'sql_expression': sql_expression,
-        'tables': tables
-    }
-
-
 def translate_query(query, target_class):
     """
     Decomposes parsed SparQL object
@@ -300,24 +291,8 @@ def translate_project(ctx, project):
     project['where'] = project.p['where']
     # if this is part of a construct query, ctx['PV'] is None, so do not wrap
     if ctx['PV'] is not None:
-        add_projection_vars_to_tables(ctx)
+        #add_projection_vars_to_tables(ctx)
         wrap_sql_projection(ctx, project)
-
-
-def add_projection_vars_to_tables(ctx):
-    bounds = ctx['bounds']
-    for var in ctx['PV']:
-        try:
-            column = bounds[bgp_translation_utils.create_varname(var)]
-            column_no_bacticks = column.replace('`', '')
-            table_name, column = re.findall(r'^([A-Z0-9_]+)\.(.*)$',
-                                            column_no_bacticks)[0]
-            if table_name not in ctx['tables']:
-                ctx['tables'][table_name] = [f'{column}']
-            else:
-                ctx['tables'][table_name].append(f'{column}')
-        except:
-            pass  # variable cannot mapped to a table, ignore it
 
 
 def wrap_sql_construct(ctx, node):
@@ -424,7 +399,7 @@ def translate_notexists(ctx, notexists):
     ctx_copy['PV'] = notexists['_vars']
     remap_join_constraint_to_where(notexists)
     wrap_sql_projection(ctx_copy, notexists)
-    merge_contexts(ctx, ctx_copy)
+    #merge_contexts(ctx, ctx_copy)
     return f'NOT EXISTS ({notexists["target_sql"]})'
 
 
@@ -456,23 +431,6 @@ def remap_join_constraint_to_where(node):
             node['where'] = node['where'] + f' and {match}'
     for match in match2:
         node['where'] = node['where'] + f' and {match}'
-
-
-def merge_contexts(ctx, ctx_copy):
-    """
-    merge global table from ctx_copy into ctx
-    ONLY if table in ctx exists, merge it from ctx_copy
-    """
-    src_tables = ctx_copy['tables']
-    target_tables = ctx['tables']
-
-    for table in src_tables:
-        if table in target_tables:
-            target_table = target_tables[table]
-            src_table = src_tables[table]
-            for column in src_table:
-                if column not in target_table:
-                    target_table.append(column)
 
 
 def copy_context(ctx):
@@ -688,11 +646,11 @@ def translate_BGP(ctx, bgp):
             bgp_join_conditions.append(local_ctx['where'])
     #bgp['sql_context'] = create_bgp_context(local_ctx['selvars'], bgp_join_conditions,
     #                                        local_ctx['bgp_sql_expression'], local_ctx['bgp_tables'])
-    tables = ctx['tables']
-    for table, value in local_ctx['bgp_tables'].items():
-        if table not in tables:
-            tables[table] = []
-        tables[table] += value
+    #tables = ctx['tables']
+    #for table, value in local_ctx['bgp_tables'].items():
+    #    if table not in tables:
+    #        tables[table] = []
+    #    tables[table] += value
     if local_ctx['bgp_sql_expression']:
         bgp['target_sql'], bgp['where'] = merge_bgp_context(local_ctx['bgp_sql_expression'], True)
     else:
