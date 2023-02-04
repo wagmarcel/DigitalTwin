@@ -46,6 +46,17 @@ import utils  # noqa: E402
 import configs  # noqa: E402
 
 
+def merge_vartypes(ctx, property_variables, entity_variables):
+    if 'property_variables' not in ctx:
+        ctx['property_variables'] = property_variables
+    else:
+        ctx['property_variables'] = {**(ctx['property_variables']), **property_variables}
+    if 'entity_variables' not in ctx:
+        ctx['entity_variables'] = entity_variables
+    else:
+        ctx['entity_variables'] = {**(ctx['entity_variables']), **entity_variables}
+
+
 def create_varname(variable):
     """
     creates a plain varname from RDF varialbe
@@ -114,7 +125,10 @@ def get_rdf_join_condition(r, property_variables, entity_variables,
         var = create_varname(r)
         if r in property_variables:
             if var in selectvars:
-                return selectvars[var]
+                if property_variables[r] == True:
+                    return "'<' ||" + selectvars[var] + "|| '>'"
+                else:
+                    return "'\"' ||" + selectvars[var] + "|| '\"'"
             else:
                 raise SparqlValidationFailed(f'Could not resolve variable \
 ?{var} at this point. You might want to rearrange the query to hint to \
@@ -258,7 +272,15 @@ def create_ngsild_mappings(ctx, sorted_graph):
     for s, p, o in sorted_graph:
         if p == ngsild['hasValue']:
             if isinstance(o, Variable):
-                property_variables[o] = True
+                # It is a property, but is it Literal or IRI?
+                isIri = None 
+                for _, prop_p, _ in sorted_graph.triples((None, None, s)):
+                    prop_plain = prop_p.toPython()
+                    if prop_plain in ctx['properties'] and isIri is None:
+                        isIri = ctx['properties'][prop_plain]
+                    else:
+                        raise WrongSparqlStructure('Unexpected property structure found.')
+                property_variables[o] = isIri
         if p == ngsild['hasObject']:
             if isinstance(o, Variable):
                 entity_variables[o] = True
@@ -474,7 +496,7 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
     # e.g. ?var a <iri>/Literal
     # relationship between NGSI-LD Entity subject and RDF term is otherwise forbidden
     subject_join_condition = None
-    if isinstance(s, Variable) and (s in local_ctx['entity_variables'] or isentity(ctx, s)):
+    if isinstance(s, Variable) and (s in ctx['entity_variables'] or isentity(ctx, s)):
         # special case p == rdf-type
         if p == RDF['type']:
             entity = local_ctx['bounds'].get(create_varname(s))
@@ -488,9 +510,9 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
                 #local_ctx['selvars'][subject_varname] = f'{subject_tablename}.`id`'
                 local_ctx['bounds'][subject_varname] = f'{subject_tablename}.`id`'
                 local_ctx['bgp_tables'][subject_tablename] = []
-                predicate_join_condition = f"{rdftable_name}.predicate = '" + RDFS['subClassOf'].toPython() + "'"
-                object_join_condition = f"{rdftable_name}.object = '{o.toPython()}'"
-                subject_join_condition = f"{rdftable_name}.subject = {subject_tablename}.`type`"
+                predicate_join_condition = f"{rdftable_name}.predicate = '<" + RDFS['subClassOf'].toPython() + ">'"
+                object_join_condition = f"{rdftable_name}.object = '<{o.toPython()}>'"
+                subject_join_condition = f"{rdftable_name}.subject = '<' || {subject_tablename}.`type` || '>'"
                 join_condition = f"{subject_join_condition} and {predicate_join_condition} and {object_join_condition}"
                 statement = f"{configs.rdf_table_name} as {rdftable_name}"
                 local_ctx['bgp_sql_expression'].append({'statement': statement, 'join_condition': join_condition})
@@ -503,14 +525,15 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
                     # OK let's process the special case here
                     # Two cases: (1) object variable is bound (2) object variable unknown
 
-                    object_join_bound = get_rdf_join_condition(o, local_ctx['property_variables'],
-                                                               local_ctx['entity_variables'], local_ctx['bounds'])
+                    object_join_bound = get_rdf_join_condition(o, ctx['property_variables'],
+                                                               ctx['entity_variables'], local_ctx['bounds'])
                     if object_join_bound is None:
                         # (2)
                         # bind variable with type column of subject
                         # add variable to local table
                         #local_ctx['selvars'][create_varname(o)] = entity_column
                         local_ctx['bounds'][create_varname(o)] = entity_column
+                        ctx['property_variables'][o] = True  # Treat it as property IRI (even though it is from an entity)
                         return
                     else:
                         # (1)
@@ -527,8 +550,8 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
             raise SparqlValidationFailed("Cannot query generic RDF term with NGSI-LD entity subject.")
     else:
         # No special case. Check if subject is non bound and if non bound whether it can be bound
-        subject_join_bound = get_rdf_join_condition(s, local_ctx['property_variables'],
-                                                    local_ctx['entity_variables'], local_ctx['bounds'])
+        subject_join_bound = get_rdf_join_condition(s, ctx['property_variables'],
+                                                    ctx['entity_variables'], local_ctx['bounds'])
         if subject_join_bound is None:
             if not isinstance(s, Variable):
                 raise SparqlValidationFailed("Could not resolve {s} and not a variable")
@@ -542,12 +565,12 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
     predicate_join_condition = f'{rdftable_name}.predicate = \'{utils.format_node_type(p)}\''
     # Process object join condition
     # object variables which are referencing ngsild-entities are forbidden
-    if isinstance(o, Variable) and o in local_ctx['entity_variables']:
+    if isinstance(o, Variable) and o in ctx['entity_variables']:
         raise SparqlValidationFailed('Cannot bind NGSI-LD Entities to RDF objects.')
     # two cases: (1) object is either variable or Literal/IRI (2) object is Blank Node
     if not isinstance(o, BNode):  # (1)
-        object_join_bound = get_rdf_join_condition(o, local_ctx['property_variables'],
-                                                   local_ctx['entity_variables'], local_ctx['bounds'])
+        object_join_bound = get_rdf_join_condition(o, ctx['property_variables'],
+                                                   ctx['entity_variables'], local_ctx['bounds'])
         if object_join_bound is None:
             if not isinstance(o, Variable):
                 raise SparqlValidationFailed("Could not resolve {o} not being a variable")
@@ -585,8 +608,8 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
             bo_rdftable_name = create_tablename(bo, bp, ctx['namespace_manager']) + get_random_string(10)
             bo_predicate_join_condition = f'{bo_rdftable_name}.predicate = \'{utils.format_node_type(bp)}\' and \
                 {rdftable_name}.object = {bo_rdftable_name}.subject'
-            object_join_bound = get_rdf_join_condition(bo, local_ctx['property_variables'],
-                                                       local_ctx['entity_variables'], local_ctx['bounds'])
+            object_join_bound = get_rdf_join_condition(bo, ctx['property_variables'],
+                                                       ctx['entity_variables'], local_ctx['bounds'])
             if object_join_bound is None:
                 if not isinstance(bo, Variable):
                     raise SparqlValidationFailed("Could not resolve {bo} not being a variable")

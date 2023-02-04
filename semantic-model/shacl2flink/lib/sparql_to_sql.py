@@ -45,17 +45,25 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 SELECT
-    ?targetclass ?property
+    ?targetclass ?property ((?nodekind = sh:IRI) as ?kind) 
 where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?targetclass .
     ?nodeshape sh:property [
         sh:path ?property ;
         sh:property [
+            sh:nodeKind ?nodekind ;
             sh:path ngsild:hasValue ;
         ] ;
-
     ] .
+    OPTIONAL{ 
+    ?nodeshape sh:property [
+        sh:property [
+            sh:nodeKind ?nodekind ;
+            sh:path ngsild:hasValue ;
+        ] ;
+    ] ;
+        }
 }
 
 """
@@ -113,7 +121,7 @@ def translate_sparql(shaclfile, knowledgefile, sparql_query, target_class):
     qres = g.query(sparql_get_properties)
     for row in qres:
         if row.property is not None:
-            properties[row.property.toPython()] = True
+            properties[row.property.toPython()] = row.kind.toPython() if row.kind is not None else False
 
     qres = g.query(sparql_get_relationships)
     for row in qres:
@@ -608,13 +616,14 @@ def translate_BGP(ctx, bgp):
     # before translating, sort the bgp order to allow easier binds
     bgp.triples = bgp_translation_utils.sort_triples(ctx, ctx['bounds'], bgp.triples, h)
 
+    bgp_translation_utils.merge_vartypes(ctx, property_variables, entity_variables)
     local_ctx = {}
     local_ctx['bounds'] = ctx["bounds"]
     local_ctx['where'] = ''
     local_ctx['bgp_sql_expression'] = []
     local_ctx['bgp_tables'] = {}
-    local_ctx['property_variables'] = property_variables
-    local_ctx['entity_variables'] = entity_variables
+    #local_ctx['property_variables'] = property_variables
+    #local_ctx['entity_variables'] = entity_variables
     local_ctx['h'] = h
     local_ctx['row'] = row
 
