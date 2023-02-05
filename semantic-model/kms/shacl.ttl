@@ -351,7 +351,7 @@ iff:ChangeWasteClassRulesShape
                 ?workpiece iff:material [ <https://uri.etsi.org/ngsi-ld/hasValue> ?materialnr ] .
                 $this iff:wasteClass [ <https://uri.etsi.org/ngsi-ld/hasValue> ?cur_wasteclass ] .
                 ?wc iff:containsMaterialNumber [ rdfs:member ?materialnr ] .
-                FILTER(?filter_state = iff:state_ON && ?cutter_state = iff:state_ON)
+                FILTER(?filter_state = iff:state_ON && ?cutter_state = iff:state_PROCESSING)
                 FILTER NOT EXISTS {
                         ?cur_wasteclass iff:higherHazardLevel ?wc .
                 }
@@ -376,9 +376,12 @@ iff:TimestampCartridgeFromRulesShape
 			}
 			WHERE {
 				
-                                $this iff:wasteClass [ <https://uri.etsi.org/ngsi-ld/hasValue> ?wc ] .
+                                ?filter iff:hasCartridge [ <https://uri.etsi.org/ngsi-ld/hasObject> $this ] .
+                                ?cutter iff:hasFilter [ <https://uri.etsi.org/ngsi-ld/hasObject> ?filter ] .
+                                ?cutter iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?cstate ] .
+                                ?filter iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?fstate ] .
                                 bind(now() as ?ts)
-                                FILTER(?wc != iff:WC0)
+                                FILTER(?cstate = iff:state_PROCESSING && ?fstate = iff:state_ON)
                                 FILTER NOT EXISTS {
 				    $this  iff:inUseFrom [ <https://uri.etsi.org/ngsi-ld/hasValue> ?oldertimestamp ] .
 				}
@@ -402,13 +405,13 @@ iff:TimestampCartridgeUntilRulesShape
 			}
 			WHERE {
 				
-                                $this iff:wasteClass [ <https://uri.etsi.org/ngsi-ld/hasValue> ?wc ] .
+                                #$this iff:wasteClass [ <https://uri.etsi.org/ngsi-ld/hasValue> ?wc ] .
                                 ?filter iff:hasCartridge [ <https://uri.etsi.org/ngsi-ld/hasObject> $this ] .
                                 ?cutter iff:hasFilter [ <https://uri.etsi.org/ngsi-ld/hasObject> ?filter ] .
                                 ?cutter iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?cstate ] .
                                 ?filter iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?fstate ] .
                                 bind(now() as ?ts)
-                                FILTER(?cstate = iff:state_PROCESSING && ?cstate = iff:state_ON)
+                                FILTER(?cstate = iff:state_PROCESSING && ?fstate = iff:state_ON)
 			}
 			""" ;
 	] ;

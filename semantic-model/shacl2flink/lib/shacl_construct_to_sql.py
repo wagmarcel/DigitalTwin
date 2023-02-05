@@ -125,6 +125,7 @@ def translate(shaclfile, knowledgefile):
         
         sql_command_sqlite += ";"
         sql_command_yaml += ";"
+        sql_command_sqlite = '\n' + sql_command_sqlite
         sqlite += sql_command_sqlite
         statementsets.append(sql_command_yaml)
     
