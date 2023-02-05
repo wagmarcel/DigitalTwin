@@ -95,7 +95,7 @@ relationships = {}
 g = Graph()
 
 
-def translate_sparql(shaclfile, knowledgefile, sparql_query, target_class):
+def translate_sparql(shaclfile, knowledgefile, sparql_query, target_class, lg):
     """
     Translates shaclfile + knowledgefile into SQL instructions
 
@@ -112,12 +112,13 @@ def translate_sparql(shaclfile, knowledgefile, sparql_query, target_class):
     global g
     global properties
     global relationships
-    g.parse(shaclfile)
-    h = Graph()
-    h.parse(knowledgefile)
-    g += h
-    owlrl.RDFSClosure.RDFS_Semantics(g, axioms=True, daxioms=False,
-                                     rdfs=True).closure()
+    g = lg
+    #g.parse(shaclfile)
+    #h = Graph()
+    #h.parse(knowledgefile)
+    #g += h
+    #owlrl.RDFSClosure.RDFS_Semantics(g, axioms=True, daxioms=False,
+    #                                 rdfs=True).closure()
     qres = g.query(sparql_get_properties)
     for row in qres:
         if row.property is not None:
@@ -278,9 +279,14 @@ def translate_construct_query(ctx, query):
     """
     if debug > 2:
         print(f'ConstructQuery: {query}', file=debugoutput)
+    h = Graph()
+    for s, p, o in query.template:
+        h.add((s, p, o))
+    property_variables, entity_variables, _ = bgp_translation_utils.create_ngsild_mappings(ctx, h)
     translate(ctx, query.p)
     query['target_sql'] = query.p['target_sql']
     query['where'] = query.p['where']
+    bgp_translation_utils.merge_vartypes(ctx, property_variables, entity_variables)
     wrap_sql_construct(ctx, query)
     return
 
@@ -301,28 +307,45 @@ def translate_project(ctx, project):
 
 def wrap_sql_construct(ctx, node):
     # For the time being, only wrap properties, no relationships
-    (entityId_var, name, attribute_type, value_varname, nodetype) = get_attribute_column(ctx, node)
+    (entityId_var, name, attribute_type, value_var, nodetype) = get_attribute_column(ctx, node)
+    entityId_varname = entityId_var.toPython()[1:]
+    value_varname = value_var.toPython()[1:]
+    
     bounds = ctx['bounds']
-    #construct_query = "INSERT into attributes\n SELECT "
-    construct_query = "SELECT "
-    construct_query += f'{bounds[entityId_var]} || \'\\\\\' || \'{name}\',\n'  # id
-    construct_query += f'\'{bounds[entityId_var]}\',\n'  # entityId
+    construct_query = "INSERT into attributes\n"
+    construct_query += "SELECT "
+    construct_query += f'{bounds[entityId_varname]} || \'\\\\\' || \'{name}\',\n'  # id
+    construct_query += f'\'{bounds[entityId_varname]}\',\n'  # entityId
     construct_query += f'\'{name}\',\n'  # name
     construct_query += f'\'{nodetype}\',\n'  # nodeType
     construct_query += 'NULL,\n'  # valueType
     construct_query += '0,\n'  # index
-    construct_query += f'\'{bounds[value_varname]}\',\n'  # value
+    construct_query += f'\'{attribute_type}\',\n'
+    construct_query += f"{get_bound_trim_string(ctx, value_var)},\n"  # value
     construct_query += 'NULL\n'  # object
+    construct_query += ',CURRENT_TIMESTAMP\n'  # ts
     construct_query += 'FROM ' + node['target_sql']
     construct_query += ' WHERE ' + node['where']
     node['target_sql'] = construct_query
 
 
+def get_bound_trim_string(ctx, boundsvar):
+    bounds = ctx['bounds']
+    boundsvarname = boundsvar.toPython()[1:]
+    if boundsvarname in bounds and boundsvar in ctx['property_variables']:
+        if ctx['property_variables'][boundsvar]:
+            return f"ltrim(rtrim({bounds[boundsvarname]}, '>'), '<')"
+        else:
+            return f"trim({bounds[boundsvarname]}, '\"')"
+    else:
+        raise bgp_translation_utils.WrongSparqlStructure('Trying to trim non-bound variable')
+
+
 def get_attribute_column(ctx, node):
     entityId_var = None
     name = None
-    attribute_type = bgp_translation_utils.ngsild['Property']
-    value_varname = None
+   
+    value_var = None
     nodetype = '@value'
     bnode = None
     for (s, p, o) in node['template']:
@@ -330,17 +353,18 @@ def get_attribute_column(ctx, node):
             if entityId_var is not None:
                 raise bgp_translation_utils.WrongSparqlStructure('Construction of more than one attributes \
 not yet implemented!')
-            entityId_var = f'{s.toPython()}'[1:]
+            entityId_var = s
             name = p
             bnode = o
         if p.toPython() in relationships:
             raise bgp_translation_utils.WrongSparqlStructure('Construction of relationship not yet implemented')
     for (s, p, o) in node['template']:
         if s == bnode:
-            value_varname = f'{o.toPython()}'[1:]
-    if entityId_var is None or name is None or value_varname is None:
+            value_var = o
+    if entityId_var is None or name is None or value_var is None:
         raise bgp_translation_utils.WrongSparqlStructure('No attribute constructed in construct query!')
-    return (entityId_var, name.toPython(), attribute_type.toPython(), value_varname, nodetype)
+    attribute_type = bgp_translation_utils.ngsild['Property'] if value_var in ctx['property_variables'] else bgp_translation_utils.ngsild['Relationship']
+    return (entityId_var, name.toPython(), attribute_type.toPython(), value_var, nodetype)
 
 
 def wrap_sql_projection(ctx, node):

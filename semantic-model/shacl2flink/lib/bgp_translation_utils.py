@@ -229,7 +229,6 @@ to Variable and use FILTER.')
 of triples")
         result.append(candidate)
         triples.remove(candidate)
-
     return result
 
 
@@ -266,7 +265,6 @@ def create_ngsild_mappings(ctx, sorted_graph):
         Touple of Property_variables, entity_variables, row dictionaries containing the respective
         predicates and mapping
     """  # noqa E501
-
     property_variables = {}
     entity_variables = {}
     for s, p, o in sorted_graph:
@@ -344,10 +342,10 @@ def create_ngsild_mappings(ctx, sorted_graph):
         if len(qres) != 1:
             raise SparqlValidationFailed("Validation of BGP failed. It either contradicts what is defined in \
 SHACL or is too ambigue!")
+
     else:
         # no ngsi-ld variables found, so do not try to infer the types
         qres = []
-
     row = None
     for r in qres:
         row = r

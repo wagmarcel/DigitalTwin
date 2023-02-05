@@ -113,7 +113,7 @@ def translate(shaclfile, knowledgefile):
     g.parse(shaclfile)
     h.parse(knowledgefile)
     g += h
-    owlrl.RDFSClosure.RDFS_Semantics(g, axioms=False, daxioms=False, rdfs=False).closure()
+    owlrl.RDFSClosure.RDFS_Semantics(g, axioms=True, daxioms=False, rdfs=True).closure()
     tables = []
     statementsets = []
     sqlite = ''
@@ -126,7 +126,7 @@ def translate(shaclfile, knowledgefile):
         nodeshape = strip_class(row.nodeshape.toPython()) if row.nodeshape else None
         targetclass = utils.class_to_obj_name(strip_class(row.targetclass.toPython())) if row.targetclass else None
         severitylabel = row.severitylabel.toPython() if row.severitylabel is not None else 'warning'
-        sql_expression, tables = translate_sparql(shaclfile, knowledgefile, select, target_class)
+        sql_expression, tables = translate_sparql(shaclfile, knowledgefile, select, target_class, g)
         sql_command_yaml = Template(sql_check_sparql_base).render(
             alerts_bulk_table=alerts_bulk_table,
             sql_expression=sql_expression,

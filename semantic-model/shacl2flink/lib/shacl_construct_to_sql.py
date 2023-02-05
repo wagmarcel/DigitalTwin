@@ -105,7 +105,7 @@ def translate(shaclfile, knowledgefile):
     g.parse(shaclfile)
     h.parse(knowledgefile)
     g += h
-    owlrl.RDFSClosure.RDFS_Semantics(g, axioms=False, daxioms=False, rdfs=False).closure()
+    owlrl.RDFSClosure.RDFS_Semantics(g, axioms=True, daxioms=False, rdfs=True).closure()
     tables = [alerts_bulk_table_object, configs.attributes_table_obj_name, configs.rdf_table_obj_name]
     views = [configs.attributes_view_obj_name]
     statementsets = []
@@ -118,7 +118,7 @@ def translate(shaclfile, knowledgefile):
         construct = row.construct.toPython() if row.construct else None
         nodeshape = strip_class(row.nodeshape.toPython()) if row.nodeshape else None
         targetclass = utils.class_to_obj_name(strip_class(row.targetclass.toPython())) if row.targetclass else None
-        sql_expression, tables = translate_sparql(shaclfile, knowledgefile, construct, target_class)
+        sql_expression, tables = translate_sparql(shaclfile, knowledgefile, construct, target_class, g)
         
         sql_command_yaml = sql_expression
         sql_command_sqlite = sql_expression
