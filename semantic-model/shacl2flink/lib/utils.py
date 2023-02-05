@@ -42,6 +42,11 @@ def camelcase_to_snake_case(name):
     return name
 
 
+def snake_case_to_kebab_case(name):
+    name = name.replace('_', '-')
+    return name
+
+
 def class_to_obj_name(name):
     obj_name = camelcase_to_snake_case(name)
     return obj_name.replace("_", "-")
@@ -259,3 +264,19 @@ def format_node_type(node):
         return f'_:{node.toPython()}'
     else:
         raise ValueError('Node is not IRI, Literal, BNode')
+
+def process_sql_dialect(expression, isSqlite):
+    result_expression = expression
+    if isSqlite:
+        result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI\((.*)\)', r"ltrim(rtrim(\1, '>'), '<')", result_expression)
+        result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL\((.*)\)', r"trim(\1, '\"')", result_expression)
+        result_expression = result_expression.replace('SQL_DIALECT_CURRENT_TIMESTAMP', 'datetime()')
+        result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES', 'INSERT OR REPLACE INTO attributes')
+        result_expression = result_expression.replace('SQL_DIALECT_SQLITE_TIMESTAMP', 'CURRENT_TIMESTAMP')
+    else:
+        result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI\((.*)\)', r"REGEXP_REPLACE(CAST(\1 as STRING), '>|<', '')", result_expression)
+        result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL\((.*)\)', r"REGEXP_REPLACE(CAST(\1 as STRING), '\"', '')", result_expression)
+        result_expression = result_expression.replace('SQL_DIALECT_CURRENT_TIMESTAMP', 'CURRENT_TIMESTAMP')
+        result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES', 'INSERT into attributes_insert')
+        result_expression = result_expression.replace(',SQL_DIALECT_SQLITE_TIMESTAMP', '')
+    return result_expression

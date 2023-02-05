@@ -233,7 +233,7 @@ def translate_function(ctx, function):
 def translate_builtin_now(ctx, builtin_now):
     if debug > 2:
         print(f'Builtin_NOW: {builtin_now}', file=debugoutput)
-    return 'datetime()'
+    return 'SQL_DIALECT_CURRENT_TIMESTAMP'
 
 
 def translate_builtin_if(ctx, builtin_if):
@@ -312,18 +312,18 @@ def wrap_sql_construct(ctx, node):
     value_varname = value_var.toPython()[1:]
     
     bounds = ctx['bounds']
-    construct_query = "INSERT into attributes\n"
+    construct_query = "SQL_DIALECT_INSERT_ATTRIBUTES\n"
     construct_query += "SELECT "
     construct_query += f'{bounds[entityId_varname]} || \'\\\\\' || \'{name}\',\n'  # id
     construct_query += f'\'{bounds[entityId_varname]}\',\n'  # entityId
     construct_query += f'\'{name}\',\n'  # name
     construct_query += f'\'{nodetype}\',\n'  # nodeType
-    construct_query += 'NULL,\n'  # valueType
+    construct_query += 'CAST(NULL as STRING),\n'  # valueType
     construct_query += '0,\n'  # index
     construct_query += f'\'{attribute_type}\',\n'
     construct_query += f"{get_bound_trim_string(ctx, value_var)},\n"  # value
-    construct_query += 'NULL\n'  # object
-    construct_query += ',CURRENT_TIMESTAMP\n'  # ts
+    construct_query += 'CAST(NULL as STRING)\n'  # object
+    construct_query += ',SQL_DIALECT_SQLITE_TIMESTAMP\n'  # ts
     construct_query += 'FROM ' + node['target_sql']
     construct_query += ' WHERE ' + node['where']
     node['target_sql'] = construct_query
@@ -334,9 +334,9 @@ def get_bound_trim_string(ctx, boundsvar):
     boundsvarname = boundsvar.toPython()[1:]
     if boundsvarname in bounds and boundsvar in ctx['property_variables']:
         if ctx['property_variables'][boundsvar]:
-            return f"ltrim(rtrim({bounds[boundsvarname]}, '>'), '<')"
+            return f"SQL_DIALECT_STRIP_IRI({bounds[boundsvarname]})"
         else:
-            return f"trim({bounds[boundsvarname]}, '\"')"
+            return f"SQL_DIALECT_STRIP_LITERAL({bounds[boundsvarname]})"
     else:
         raise bgp_translation_utils.WrongSparqlStructure('Trying to trim non-bound variable')
 

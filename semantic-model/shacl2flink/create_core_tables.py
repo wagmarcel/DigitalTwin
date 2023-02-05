@@ -161,7 +161,6 @@ def main():
         'json.fail-on-missing-field': False,
         'json.ignore-parse-errors': True
     }
-
     print('---', file=f)
     yaml.dump(utils.create_yaml_table(table_name, connector, table,
                                       primary_key, kafka, value), f)
@@ -171,6 +170,35 @@ def main():
     yaml.dump(utils.create_yaml_view(table_name, table, ['id', 'index']), f)
     print(utils.create_sql_view(table_name, table, ['id', 'index']),
           file=sqlitef)
+    # attributes upsert-table
+    table_name = "attributes-insert"
+    spec_name = "attributes_insert"
+    connector = 'upsert-kafka'
+    table = [{'id': 'STRING'},
+             {'entityId': 'STRING'},
+             {'name': 'STRING'},
+             {'nodeType': 'STRING'},
+             {'valueType': 'STRING'},
+             {'index': 'INTEGER'},
+             {'type': 'STRING'},
+             {'https://uri.etsi.org/ngsi-ld/hasValue': 'STRING'},
+             {'https://uri.etsi.org/ngsi-ld/hasObject': 'STRING'}]
+    kafka = {
+        'topic': kafka_topic_listen_alerts,
+        'properties': {'bootstrap.servers': kafka_bootstrap},
+        'key.format': 'json'
+    }
+    value = {
+        'format': 'json',
+        'json.fail-on-missing-field': False,
+        'json.ignore-parse-errors': True
+    }
+    primary_key = ['id', 'index']
+
+    print('---', file=f)
+    yaml.dump(utils.create_yaml_table(spec_name, connector, table,
+                                      primary_key, kafka, value), f)
+
 
 
 if __name__ == '__main__':

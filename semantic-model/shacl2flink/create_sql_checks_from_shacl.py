@@ -55,7 +55,7 @@ def main(shaclfile, knowledgefile, output_folder='output'):
 
     with open(os.path.join(output_folder, "shacl-validation.yaml"), "w") as f:
         yaml.dump(utils.create_statementset('shacl-validation', tables, views,
-                                            statementsets + statementsets2), f)
+                                            statementsets + statementsets2 + statementsets3), f)
     with open(os.path.join(output_folder, "shacl-validation.sqlite"), "w") \
             as sqlitef:
         print(sqlite + sqlite2 + sqlite3, file=sqlitef)

@@ -106,8 +106,8 @@ def translate(shaclfile, knowledgefile):
     h.parse(knowledgefile)
     g += h
     owlrl.RDFSClosure.RDFS_Semantics(g, axioms=True, daxioms=False, rdfs=True).closure()
-    tables = [alerts_bulk_table_object, configs.attributes_table_obj_name, configs.rdf_table_obj_name]
-    views = [configs.attributes_view_obj_name]
+    tables_all = []
+    views = []
     statementsets = []
     sqlite = ''
     # Get all NGSI-LD Relationship
@@ -120,19 +120,25 @@ def translate(shaclfile, knowledgefile):
         targetclass = utils.class_to_obj_name(strip_class(row.targetclass.toPython())) if row.targetclass else None
         sql_expression, tables = translate_sparql(shaclfile, knowledgefile, construct, target_class, g)
         
-        sql_command_yaml = sql_expression
-        sql_command_sqlite = sql_expression
+        sql_command_yaml = utils.process_sql_dialect(sql_expression, False)
+        sql_command_sqlite = utils.process_sql_dialect(sql_expression, True)
         
         sql_command_sqlite += ";"
         sql_command_yaml += ";"
         sql_command_sqlite = '\n' + sql_command_sqlite
         sqlite += sql_command_sqlite
         statementsets.append(sql_command_yaml)
+        tables_all += map(utils.snake_case_to_kebab_case, tables)
     
     views = []
-    tables = list(set(tables))
+    tables = list(set(tables_all))
     for table in tables:
-        views.append(f'{table}-view')
+        if table != configs.rdf_table_obj_name:
+            views.append(f'{table}-view')
     tables.append(alerts_bulk_table_object)
     tables.append(configs.rdf_table_name)
+    tables.append(configs.attributes_table_obj_name)
     return sqlite, (statementsets, tables, views)
+
+
+        
