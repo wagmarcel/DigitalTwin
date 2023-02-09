@@ -268,14 +268,14 @@ def format_node_type(node):
 def process_sql_dialect(expression, isSqlite):
     result_expression = expression
     if isSqlite:
-        result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI\((.*)\)', r"ltrim(rtrim(\1, '>'), '<')", result_expression)
-        result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL\((.*)\)', r"trim(\1, '\"')", result_expression)
+        result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI\(([^\(\)]*)\)', r"ltrim(rtrim(\1, '>'), '<')", result_expression)
+        result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL\(([^\(\)]*)\)', r"trim(\1, '\"')", result_expression)
         result_expression = result_expression.replace('SQL_DIALECT_CURRENT_TIMESTAMP', 'datetime()')
         result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES', 'INSERT OR REPLACE INTO attributes')
         result_expression = result_expression.replace('SQL_DIALECT_SQLITE_TIMESTAMP', 'CURRENT_TIMESTAMP')
     else:
-        result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI\((.*)\)', r"REGEXP_REPLACE(CAST(\1 as STRING), '>|<', '')", result_expression)
-        result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL\((.*)\)', r"REGEXP_REPLACE(CAST(\1 as STRING), '\"', '')", result_expression)
+        result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI\(([^\(\)]*)\)', r"REGEXP_REPLACE(CAST(\1 as STRING), '>|<', '')", result_expression)
+        result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL\(([^\(\)]*)\)', r"REGEXP_REPLACE(CAST(\1 as STRING), '\"', '')", result_expression)
         result_expression = result_expression.replace('SQL_DIALECT_CURRENT_TIMESTAMP', 'CURRENT_TIMESTAMP')
         result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES', 'INSERT into attributes_insert')
         result_expression = result_expression.replace(',SQL_DIALECT_SQLITE_TIMESTAMP', '')

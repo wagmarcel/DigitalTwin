@@ -17,7 +17,7 @@ from sparql_to_sql import translate_sparql  # noqa: E402
 yaml = ruamel.yaml.YAML()
 alerts_bulk_table = configs.alerts_bulk_table_name
 alerts_bulk_table_object = configs.alerts_bulk_table_object_name
-
+attributes_insert_table_obj_name = configs.attributes_insert_table_obj_name
 sparql_get_all_rule_nodes = """
 PREFIX iff: <https://industry-fusion.com/types/v0.9/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -138,6 +138,7 @@ def translate(shaclfile, knowledgefile):
     tables.append(alerts_bulk_table_object)
     tables.append(configs.rdf_table_name)
     tables.append(configs.attributes_table_obj_name)
+    tables.append(attributes_insert_table_obj_name)
     return sqlite, (statementsets, tables, views)
 
 

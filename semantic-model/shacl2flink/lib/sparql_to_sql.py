@@ -307,17 +307,17 @@ def translate_project(ctx, project):
 
 def wrap_sql_construct(ctx, node):
     # For the time being, only wrap properties, no relationships
-    (entityId_var, name, attribute_type, value_var, nodetype) = get_attribute_column(ctx, node)
+    (entityId_var, name, attribute_type, value_var, node_type) = get_attribute_column(ctx, node)
     entityId_varname = entityId_var.toPython()[1:]
     value_varname = value_var.toPython()[1:]
     
     bounds = ctx['bounds']
     construct_query = "SQL_DIALECT_INSERT_ATTRIBUTES\n"
     construct_query += "SELECT "
-    construct_query += f'{bounds[entityId_varname]} || \'\\\\\' || \'{name}\',\n'  # id
-    construct_query += f'\'{bounds[entityId_varname]}\',\n'  # entityId
+    construct_query += f'{bounds[entityId_varname]} || \'\\\' || \'{name}\',\n'  # id
+    construct_query += f'{bounds[entityId_varname]},\n'  # entityId
     construct_query += f'\'{name}\',\n'  # name
-    construct_query += f'\'{nodetype}\',\n'  # nodeType
+    construct_query += f'\'{node_type}\',\n'  # nodeType
     construct_query += 'CAST(NULL as STRING),\n'  # valueType
     construct_query += '0,\n'  # index
     construct_query += f'\'{attribute_type}\',\n'
