@@ -159,7 +159,7 @@ def translate_query(query, target_class):
     if algebra.name == 'SelectQuery' or algebra.name == 'ConstructQuery':
         translate(ctx, algebra)
     else:
-        raise bgp_translation_utils.WrongSparqlStructure('Only SelectQueries are supported \
+        raise utils.WrongSparqlStructure('Only SelectQueries are supported \
 currently!')
     ctx['target_sql'] = algebra['target_sql']
     if debug:
@@ -206,7 +206,7 @@ def translate(ctx, elem):
     elif elem.name == 'Function':
         return translate_function(ctx, elem)
     else:
-        raise bgp_translation_utils.WrongSparqlStructure(f'SparQL structure {elem.name} not \
+        raise utils.WrongSparqlStructure(f'SparQL structure {elem.name} not \
 supported!')
 
 
@@ -219,9 +219,9 @@ def translate_function(ctx, function):
     result = ''
     if iri in XSD:  # CAST
         if len(expr) != 1:
-            raise bgp_translation_utils.WrongSparqlStructure('XSD function with too many parameters')
+            raise utils.WrongSparqlStructure('XSD function with too many parameters')
         cast = 'notfound'
-        var = bounds[bgp_translation_utils.create_varname(expr[0])]
+        var = bounds[utils.create_varname(expr[0])]
         if iri == iri == XSD['integer']:
             cast = 'INTEGER'
         elif iri == iri == XSD['float']:
@@ -257,7 +257,7 @@ def translate_extend(ctx, extend):
         print(f'Extend: {extend}', file=debugoutput)
     translate(ctx, extend.p)
     expression = translate(ctx, extend.expr)
-    ctx['bounds'][bgp_translation_utils.create_varname(extend.var)] = expression
+    ctx['bounds'][utils.create_varname(extend.var)] = expression
     extend['target_sql'] = extend.p['target_sql']
     extend['where'] = extend.p['where']
 
@@ -338,7 +338,7 @@ def get_bound_trim_string(ctx, boundsvar):
         else:
             return f"SQL_DIALECT_STRIP_LITERAL({bounds[boundsvarname]})"
     else:
-        raise bgp_translation_utils.WrongSparqlStructure('Trying to trim non-bound variable')
+        raise utils.WrongSparqlStructure('Trying to trim non-bound variable')
 
 
 def get_attribute_column(ctx, node):
@@ -351,18 +351,18 @@ def get_attribute_column(ctx, node):
     for (s, p, o) in node['template']:
         if p.toPython() in properties:
             if entityId_var is not None:
-                raise bgp_translation_utils.WrongSparqlStructure('Construction of more than one attributes \
+                raise utils.WrongSparqlStructure('Construction of more than one attributes \
 not yet implemented!')
             entityId_var = s
             name = p
             bnode = o
         if p.toPython() in relationships:
-            raise bgp_translation_utils.WrongSparqlStructure('Construction of relationship not yet implemented')
+            raise utils.WrongSparqlStructure('Construction of relationship not yet implemented')
     for (s, p, o) in node['template']:
         if s == bnode:
             value_var = o
     if entityId_var is None or name is None or value_var is None:
-        raise bgp_translation_utils.WrongSparqlStructure('No attribute constructed in construct query!')
+        raise utils.WrongSparqlStructure('No attribute constructed in construct query!')
     attribute_type = bgp_translation_utils.ngsild['Property'] if value_var in ctx['property_variables'] else bgp_translation_utils.ngsild['Relationship']
     return (entityId_var, name.toPython(), attribute_type.toPython(), value_var, nodetype)
 
@@ -373,7 +373,7 @@ def wrap_sql_projection(ctx, node):
     if 'Distinct' in ctx['target_modifiers']:
         expression += 'DISTINCT '
     if len(ctx['PV']) == 0:
-        raise bgp_translation_utils.SparqlValidationFailed("No Projection variables given.")
+        raise utils.SparqlValidationFailed("No Projection variables given.")
 
     first = True
     for var in ctx['PV']:
@@ -382,12 +382,12 @@ def wrap_sql_projection(ctx, node):
         else:
             expression += ', '
         try:
-            column = bounds[bgp_translation_utils.create_varname(var)]
+            column = bounds[utils.create_varname(var)]
             # column_no_bacticks =  column.replace('`', '')
-            expression += f'{column} AS `{bgp_translation_utils.create_varname(var)}` '
+            expression += f'{column} AS `{utils.create_varname(var)}` '
         except:
             # variable could not be bound, bind it with NULL
-            expression += f'NULL AS `{bgp_translation_utils.create_varname(var)}`'
+            expression += f'NULL AS `{utils.create_varname(var)}`'
 
     target_sql = node['target_sql']
     target_where = node['where']
@@ -408,7 +408,7 @@ def translate_filter(ctx, filter):
     filter['target_sql'] = filter.p['target_sql']
     # merge join condition
     if where1 == '':
-        raise bgp_translation_utils.SparqlValidationFailed('Error: Filter does not provide condition.')
+        raise utils.SparqlValidationFailed('Error: Filter does not provide condition.')
     if where2 != '':
         where1 += f' and {where2}'
     filter['where'] = where1
@@ -480,7 +480,7 @@ def translate_join(ctx, join):
     where = ''
 
     if where2 == '':
-        raise bgp_translation_utils.WrongSparqlStructure('Could not join. Emtpy join condition not allowed \
+        raise utils.WrongSparqlStructure('Could not join. Emtpy join condition not allowed \
 for left joins.')
     if expr2 != '' and expr1 != '':
         join['target_sql'] = f' {expr1} JOIN {expr2}'
@@ -508,10 +508,10 @@ def translate_left_join(ctx, join):
     where1 = join.p1['where']
     where2 = join.p2['where']
     if expr1 == '':
-        raise bgp_translation_utils.WrongSparqlStructure('Could not left join. Empty join.p1 expression is not \
+        raise utils.WrongSparqlStructure('Could not left join. Empty join.p1 expression is not \
 allowed. Consider rearranging BGPs.')
     if where2 == '':
-        raise bgp_translation_utils.WrongSparqlStructure('Could not left join. Emtpy join condition not allowed \
+        raise utils.WrongSparqlStructure('Could not left join. Emtpy join condition not allowed \
 for left joins.')
     # There might be a case that there is no sql expression. Example:
     # The BGP {?var1 <p> ?var2} creates only a condition but not table
@@ -573,18 +573,18 @@ def translate_relational_expression(ctx, elem):
     bounds = ctx['bounds']
 
     if isinstance(elem.expr, Variable):
-        expr = bounds[bgp_translation_utils.create_varname(elem.expr)]
+        expr = bounds[utils.create_varname(elem.expr)]
     elif isinstance(elem.expr, Literal) or isinstance(elem.expr, URIRef):
         expr = f'\'{elem.expr.toPython()}\''
     else:  # Neither Variable, nor Literal, nor IRI - hope it is further translatable
         expr = translate(ctx, elem.expr)
 
     if isinstance(elem.other, Variable):
-        other = bounds[bgp_translation_utils.create_varname(elem.expr)]
+        other = bounds[utils.create_varname(elem.other)]
     elif isinstance(elem.other, Literal) or isinstance(elem.other, URIRef):
         other = f'\'{elem.other.toPython()}\''
     else:
-        raise bgp_translation_utils.WrongSparqlStructure(f'Expression {elem.other} not supported!')
+        raise utils.WrongSparqlStructure(f'Expression {elem.other} not supported!')
 
     op = elem.op
     if elem.op == '!=':
@@ -619,7 +619,7 @@ def translate_BGP(ctx, bgp):
         print(f'DEBUG: BGP: {bgp}', file=debugoutput)
     # Assumes a 'Basic Graph Pattern'
     if not bgp.name == 'BGP':
-        raise bgp_translation_utils.WrongSparqlStructure('No BGP!')
+        raise utils.WrongSparqlStructure('No BGP!')
     # Add triples one time
     add_triples = ctx['add_triples']
     for triple in add_triples:

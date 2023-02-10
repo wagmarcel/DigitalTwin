@@ -21,6 +21,14 @@ from urllib.parse import urlparse
 from enum import Enum
 
 
+class WrongSparqlStructure(Exception):
+    pass
+
+
+class SparqlValidationFailed(Exception):
+    pass
+
+
 class SQL_DIALECT(Enum):
     SQL = 0
     SQLITE = 1
@@ -30,6 +38,14 @@ class DnsNameNotCompliant(Exception):
     """
     Exception for non compliant DNS name
     """
+
+
+def create_varname(variable):
+    """
+    creates a plain varname from RDF varialbe
+    e.g. ?var => var
+    """
+    return variable.toPython()[1:]
 
 
 def check_dns_name(name):
@@ -280,3 +296,35 @@ def process_sql_dialect(expression, isSqlite):
         result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES', 'INSERT into attributes_insert')
         result_expression = result_expression.replace(',SQL_DIALECT_SQLITE_TIMESTAMP', '')
     return result_expression
+
+
+def wrap_ngsild_variable(ctx, var):
+    """
+    Wrap NGSI_LD variables into RDF
+    e.g. if var is literal => '"' || bounds[var] || '"'
+    if var is IRI => '<' || bounds[var] || '>'
+
+    ctx: context containing property_variables, entity_variables, bounds
+    var: variable
+    """
+    if not isinstance(var, Variable):
+        raise TypeError("NGSI-LD Wrapping of non-variables is not allowed.")
+    bounds = ctx['bounds']
+    property_variables = ctx['property_variables']
+    entity_variables = ctx['entity_variables']
+    varname = create_varname(var)
+    if var in property_variables:
+        if var in bounds:
+            if property_variables[var] == True:
+                return "'<' ||" + bounds[varname] + "|| '>'"
+            else:
+                return """'"' ||""" + bounds[varname] + """|| '"'"""
+        else:
+            raise SparqlValidationFailed(f'Could not resolve variable \
+?{varname} at this point. You might want to rearrange the query to hint to \
+translator.')
+    elif var in entity_variables:
+        raise SparqlValidationFailed(f'Cannot bind enttiy variable {varname} to \
+plain RDF context')
+    elif varname in bounds:  # plain RDF variable
+        return bounds[var]

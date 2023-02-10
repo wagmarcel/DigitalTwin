@@ -22,14 +22,6 @@ from rdflib.namespace import RDF, RDFS
 import copy
 
 
-class WrongSparqlStructure(Exception):
-    pass
-
-
-class SparqlValidationFailed(Exception):
-    pass
-
-
 basequery = """
 PREFIX iff: <https://industry-fusion.com/types/v0.9/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -57,17 +49,9 @@ def merge_vartypes(ctx, property_variables, entity_variables):
         ctx['entity_variables'] = {**(ctx['entity_variables']), **entity_variables}
 
 
-def create_varname(variable):
-    """
-    creates a plain varname from RDF varialbe
-    e.g. ?var => var
-    """
-    return variable.toPython()[1:]
-
-
 def isentity(ctx, variable):
-    if create_varname(variable) in ctx['bounds']:
-        table = ctx['bounds'][create_varname(variable)]
+    if utils.create_varname(variable) in ctx['bounds']:
+        table = ctx['bounds'][utils.create_varname(variable)]
     else:
         return False
     if re.search(r'\.id$', table):
@@ -93,7 +77,7 @@ def create_tablename(subject, predicate='', namespace_manager=None):
         subj = namespace_manager.compute_qname(subject)[2]
         subj = subj.upper()
     else:
-        raise SparqlValidationFailed(f'Could not convert subject {subject} to \
+        raise utils.SparqlValidationFailed(f'Could not convert subject {subject} to \
 table-name')
 
     return f'{subj}{pred}TABLE'
@@ -122,26 +106,26 @@ def get_rdf_join_condition(r, property_variables, entity_variables,
     selectvars: mapping of resolved variables
     """
     if isinstance(r, Variable):
-        var = create_varname(r)
+        var = utils.create_varname(r)
         if r in property_variables:
             if var in selectvars:
                 if property_variables[r] == True:
                     return "'<' ||" + selectvars[var] + "|| '>'"
                 else:
-                    return "'\"' ||" + selectvars[var] + "|| '\"'"
+                    return """'"' ||""" + selectvars[var] + """|| '"'"""
             else:
-                raise SparqlValidationFailed(f'Could not resolve variable \
+                raise utils.SparqlValidationFailed(f'Could not resolve variable \
 ?{var} at this point. You might want to rearrange the query to hint to \
 translator.')
         elif r in entity_variables:
-            raise SparqlValidationFailed(f'Cannot bind enttiy variable {r} to \
+            raise utils.SparqlValidationFailed(f'Cannot bind enttiy variable {r} to \
 plain RDF context')
         elif var in selectvars:  # plain RDF variable
             return selectvars[var]
     elif isinstance(r, URIRef) or isinstance(r, Literal):
         return f'\'{utils.format_node_type(r)}\''
     else:
-        raise SparqlValidationFailed(f'RDF term {r} must either be a Variable, \
+        raise utils.SparqlValidationFailed(f'RDF term {r} must either be a Variable, \
 IRI or Literal.')
 
 
@@ -168,16 +152,16 @@ def sort_triples(ctx, bounds, triples, graph):
                     blanktriples = graph.triples((o, None, None))
                     for (bs, bp, bo) in blanktriples:
                         # (1)
-                        if create_varname(s) in bounds:
+                        if utils.create_varname(s) in bounds:
                             count += 1
                             if isinstance(bo, Variable):
-                                bounds[create_varname(bo)] = ''
-                        elif isinstance(bo, Variable) and create_varname(bo)\
+                                bounds[utils.create_varname(bo)] = ''
+                        elif isinstance(bo, Variable) and utils.create_varname(bo)\
                                 in bounds:
                             count += 1
-                            bounds[create_varname(s)] = ''
+                            bounds[utils.create_varname(s)] = ''
                         elif isinstance(bo, URIRef) or isinstance(bo, Literal):
-                            raise SparqlValidationFailed(f'Tried to bind {s}\
+                            raise utils.SparqlValidationFailed(f'Tried to bind {s}\
 to Literal or IRI instead of Variable. Not implemented. Workaround to bind {s}\
 to Variable and use FILTER.')
             elif isinstance(s, Variable) and p == RDF['type']:
@@ -187,36 +171,36 @@ to Variable and use FILTER.')
                 # when ?o is varible and ?s is bound, then define ?o
                 if isinstance(o, URIRef):
                     count += 1
-                    if create_varname(s) not in bounds:
-                        bounds[create_varname(s)] = ''
-                elif isinstance(o, Variable) and create_varname(s) in bounds:
+                    if utils.create_varname(s) not in bounds:
+                        bounds[utils.create_varname(s)] = ''
+                elif isinstance(o, Variable) and utils.create_varname(s) in bounds:
                     count += 1
-                    bounds[create_varname(o)] = ''
+                    bounds[utils.create_varname(o)] = ''
             elif not isinstance(s, BNode) or (p != ngsild['hasValue'] and p !=
                                               ngsild['hasObject'] and p != RDF['type']):  # (2)
-                if isinstance(s, Variable) and create_varname(s) in bounds and not isinstance(o, BNode):
+                if isinstance(s, Variable) and utils.create_varname(s) in bounds and not isinstance(o, BNode):
                     count += 1
                     if isinstance(o, Variable):
-                        bounds[create_varname(o)] = ''
-                elif isinstance(o, Variable) and create_varname(o) in bounds:
+                        bounds[utils.create_varname(o)] = ''
+                elif isinstance(o, Variable) and utils.create_varname(o) in bounds:
                     count += 1
                     if isinstance(s, Variable):
-                        bounds[create_varname(s)] = ''
+                        bounds[utils.create_varname(s)] = ''
                 elif isinstance(o, BNode):  # rdf with blank nodes
                     blanktriples = graph.triples((o, None, None))
                     for (bs, bp, bo) in blanktriples:
-                        if create_varname(s) in bounds:
+                        if utils.create_varname(s) in bounds:
                             count += 1
                             if isinstance(bo, Variable):
-                                bounds[create_varname(bo)]
-                        elif isinstance(bo, Variable) and create_varname(bo) in bounds:
+                                bounds[utils.create_varname(bo)]
+                        elif isinstance(bo, Variable) and utils.create_varname(bo) in bounds:
                             count += 1
-                            bounds[create_varname(s)] = ''
+                            bounds[utils.create_varname(s)] = ''
             elif isinstance(s, BNode):
                 #  (4)
                 count = 1
             else:
-                raise SparqlValidationFailed("Could not reorder BGP triples.")
+                raise utils.SparqlValidationFailed("Could not reorder BGP triples.")
             if count > 0:
                 return (s, p, o)
 
@@ -225,7 +209,7 @@ to Variable and use FILTER.')
     while len(triples) > 0:
         candidate = select_candidates(bounds, triples, graph)
         if candidate is None:
-            raise SparqlValidationFailed("Could not determine the right order \
+            raise utils.SparqlValidationFailed("Could not determine the right order \
 of triples")
         result.append(candidate)
         triples.remove(candidate)
@@ -277,7 +261,7 @@ def create_ngsild_mappings(ctx, sorted_graph):
                     if prop_plain in ctx['properties'] and isIri is None:
                         isIri = ctx['properties'][prop_plain]
                     else:
-                        raise WrongSparqlStructure('Unexpected property structure found.')
+                        raise utils.WrongSparqlStructure('Unexpected property structure found.')
                 property_variables[o] = isIri
         if p == ngsild['hasObject']:
             if isinstance(o, Variable):
@@ -340,7 +324,7 @@ def create_ngsild_mappings(ctx, sorted_graph):
         # TODO: Implement multi class resolutions
         qres = ctx['g'].query(query)
         if len(qres) != 1:
-            raise SparqlValidationFailed("Validation of BGP failed. It either contradicts what is defined in \
+            raise utils.utils.SparqlValidationFailed("Validation of BGP failed. It either contradicts what is defined in \
 SHACL or is too ambigue!")
 
     else:
@@ -380,7 +364,7 @@ def process_ngsild_spo(ctx, local_ctx, s, p, o):
         o (RDFLib term): object
 
     Raises:
-        SparqlValidationFailed: limitation in SPARQL translation implementation
+        utils.SparqlValidationFailed: limitation in SPARQL translation implementation
     """ # noqa E501
 
     # We got a triple <?var, p, []> where p is a shacle specified property
@@ -388,9 +372,9 @@ def process_ngsild_spo(ctx, local_ctx, s, p, o):
     ngsildtype = list(local_ctx['h'].predicates(subject=o))
     ngsildvar = list(local_ctx['h'].objects(subject=o))
     if len(ngsildtype) != 1 or len(ngsildvar) != 1:
-        raise SparqlValidationFailed(f'No matching ngsiltype or ngsildvar found for variable {s.toPython()}')
+        raise utils.SparqlValidationFailed(f'No matching ngsiltype or ngsildvar found for variable {s.toPython()}')
     if not isinstance(ngsildvar[0], Variable):
-        raise SparqlValidationFailed(f'Binding of {s} to concrete iri|literal not (yet) supported. \
+        raise utils.SparqlValidationFailed(f'Binding of {s} to concrete iri|literal not (yet) supported. \
 Consider to use a variable and FILTER.')
     # Now we have 3 parts:
     # ?subject_var p [ hasValue|hasObject ?object_var]
@@ -402,7 +386,7 @@ Consider to use a variable and FILTER.')
     attribute_tablename = f'{subject_varname.upper()}{attribute_sqltable.upper()}TABLE'
     # In case of Properties, no additional tables are defined
     if ngsildtype[0] == ngsild['hasValue']:
-        if create_varname(ngsildvar[0]) not in local_ctx['bounds']:
+        if utils.create_varname(ngsildvar[0]) not in local_ctx['bounds']:
         #    local_ctx['selvars'][ngsildvar[0].toPython()[1:]] = f'`{attribute_tablename}`.`{ngsildtype[0]}`'
             local_ctx['bounds'][ngsildvar[0].toPython()[1:]] = f'`{attribute_tablename}`.`{ngsildtype[0]}`'
         join_condition = f'{attribute_tablename}.id = {subject_tablename}.`{p}`'
@@ -415,9 +399,9 @@ Consider to use a variable and FILTER.')
         # (1) object_var is not defined
         # (2) object_var is already definied but no subject_var
         if ngsildtype[0] != ngsild['hasObject']:
-            raise SparqlValidationFailed("Internal implementation error")
+            raise utils.SparqlValidationFailed("Internal implementation error")
         if not isinstance(ngsildvar[0], Variable):
-            raise SparqlValidationFailed(f'Binding {s} to non-variable {ngsildvar[0]} not supported. \
+            raise utils.SparqlValidationFailed(f'Binding {s} to non-variable {ngsildvar[0]} not supported. \
 Consider using a variable and FILTER instead.')
         object_varname = f'{ngsildvar[0].toPython()}'[1:]
         object_sqltable = utils.camelcase_to_snake_case(utils.strip_class(local_ctx['row'][object_varname]))
@@ -474,11 +458,11 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
         o (RDFLib term): object
 
     Raises:
-        SparqlValidationFailed: Reports implementation limitations
+        utils.SparqlValidationFailed: Reports implementation limitations
     """ # noqa E501
     # must be  RDF query
     if not isinstance(p, URIRef):
-        raise SparqlValidationFailed("NON IRI RDF-predicate not (yet) supported.")
+        raise utils.SparqlValidationFailed("NON IRI RDF-predicate not (yet) supported.")
     if isinstance(s, BNode):  # Blank node subject, e.g. ([], p, o) is handled by respective (s, p2, []) nodes
         return
     # predicate must be static for now
@@ -497,7 +481,7 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
     if isinstance(s, Variable) and (s in ctx['entity_variables'] or isentity(ctx, s)):
         # special case p == rdf-type
         if p == RDF['type']:
-            entity = local_ctx['bounds'].get(create_varname(s))
+            entity = local_ctx['bounds'].get(utils.create_varname(s))
             if entity is None and isinstance(o, URIRef):  # create entity table based on type definition
                 subject_tablename = f'{s.toPython().upper()}TABLE'[1:]
                 subject_varname = f'{s.toPython()}'[1:]
@@ -530,13 +514,13 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
                         # bind variable with type column of subject
                         # add variable to local table
                         #local_ctx['selvars'][create_varname(o)] = entity_column
-                        local_ctx['bounds'][create_varname(o)] = entity_column
+                        local_ctx['bounds'][utils.create_varname(o)] = entity_column
                         ctx['property_variables'][o] = True  # Treat it as property IRI (even though it is from an entity)
                         return
                     else:
                         # (1)
                         # variable is bound, so get it and link it with bound value
-                        objvar = local_ctx['bounds'][create_varname(o)]
+                        objvar = local_ctx['bounds'][utils.create_varname(o)]
                         local_ctx['where'] = merge_where_expression(local_ctx['where'], f'{entity_column} = {objvar}')
                         return
                 else:
@@ -545,18 +529,18 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
                                                                 f'{entity_column} = \'{utils.format_node_type(o)}\'')
                     return
         else:
-            raise SparqlValidationFailed("Cannot query generic RDF term with NGSI-LD entity subject.")
+            raise utils.SparqlValidationFailed("Cannot query generic RDF term with NGSI-LD entity subject.")
     else:
         # No special case. Check if subject is non bound and if non bound whether it can be bound
         subject_join_bound = get_rdf_join_condition(s, ctx['property_variables'],
                                                     ctx['entity_variables'], local_ctx['bounds'])
         if subject_join_bound is None:
             if not isinstance(s, Variable):
-                raise SparqlValidationFailed("Could not resolve {s} and not a variable")
+                raise utils.SparqlValidationFailed("Could not resolve {s} and not a variable")
             # Variable not found, needs to be added
             subj_column = f'`{rdftable_name}`.`subject`'
-            #local_ctx['selvars'][create_varname(s)] = subj_column
-            local_ctx['bounds'][create_varname(s)] = subj_column
+            #local_ctx['selvars'][utils.create_varname(s)] = subj_column
+            local_ctx['bounds'][utils.create_varname(s)] = subj_column
             subject_join_bound = None
         subject_join_condition = f'{rdftable_name}.subject = {subject_join_bound}'\
             if subject_join_bound is not None else None
@@ -564,17 +548,17 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
     # Process object join condition
     # object variables which are referencing ngsild-entities are forbidden
     if isinstance(o, Variable) and o in ctx['entity_variables']:
-        raise SparqlValidationFailed('Cannot bind NGSI-LD Entities to RDF objects.')
+        raise utils.SparqlValidationFailed('Cannot bind NGSI-LD Entities to RDF objects.')
     # two cases: (1) object is either variable or Literal/IRI (2) object is Blank Node
     if not isinstance(o, BNode):  # (1)
         object_join_bound = get_rdf_join_condition(o, ctx['property_variables'],
                                                    ctx['entity_variables'], local_ctx['bounds'])
         if object_join_bound is None:
             if not isinstance(o, Variable):
-                raise SparqlValidationFailed("Could not resolve {o} not being a variable")
+                raise utils.SparqlValidationFailed("Could not resolve {o} not being a variable")
             # Variable not found, needs to be added
             #local_ctx['selvars'][create_varname(o)] = f'{rdftable_name}.object'
-            local_ctx['bounds'][create_varname(o)] = f'{rdftable_name}.object'
+            local_ctx['bounds'][utils.create_varname(o)] = f'{rdftable_name}.object'
             object_join_bound = None
         object_join_condition = f'{rdftable_name}.object = {object_join_bound}' \
             if object_join_bound is not None else None
@@ -610,10 +594,10 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
                                                        ctx['entity_variables'], local_ctx['bounds'])
             if object_join_bound is None:
                 if not isinstance(bo, Variable):
-                    raise SparqlValidationFailed("Could not resolve {bo} not being a variable")
+                    raise utils.SparqlValidationFailed("Could not resolve {bo} not being a variable")
                 # Variable not found, needs to be added
                 #local_ctx['selvars'][create_varname(bo)] = f'{bo_rdftable_name}.object'
-                local_ctx['bounds'][create_varname(bo)] = f'{bo_rdftable_name}.object'
+                local_ctx['bounds'][utils.create_varname(bo)] = f'{bo_rdftable_name}.object'
                 object_join_bound = None
             object_join_condition = f'{bo_rdftable_name}.object = {object_join_bound}' \
                 if object_join_bound is not None else None
