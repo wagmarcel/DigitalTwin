@@ -273,11 +273,14 @@ def format_node_type(node):
     BNodde: id => '_:id' 
     """
     if isinstance(node, rdflib.URIRef):
-        return f'<{node.toPython()}>'
+        return f"\'<{node.toPython()}>\'"
     elif isinstance(node, rdflib.Literal):
-        return f'"{node.toPython()}"'
+        if node.datatype == rdflib.XSD.decimal or node.datatype == rdflib.XSD.double or node.datatype == rdflib.XSD.float or node.datatype == rdflib.XSD.integer:
+            return node.toPython()
+        else:
+            return f'\'"{node.toPython()}"\''
     elif isinstance(node, rdflib.BNode):
-        return f'_:{node.toPython()}'
+        return f'\'_:{node.toPython()}\''
     else:
         raise ValueError('Node is not IRI, Literal, BNode')
 
@@ -307,24 +310,23 @@ def wrap_ngsild_variable(ctx, var):
     ctx: context containing property_variables, entity_variables, bounds
     var: variable
     """
-    if not isinstance(var, Variable):
+    if not isinstance(var, rdflib.Variable):
         raise TypeError("NGSI-LD Wrapping of non-variables is not allowed.")
     bounds = ctx['bounds']
     property_variables = ctx['property_variables']
     entity_variables = ctx['entity_variables']
     varname = create_varname(var)
     if var in property_variables:
-        if var in bounds:
+        if varname in bounds:
             if property_variables[var] == True:
-                return "'<' ||" + bounds[varname] + "|| '>'"
+                return "'<' || " + bounds[varname] + " || '>'"
             else:
-                return """'"' ||""" + bounds[varname] + """|| '"'"""
+                return "'\"' || " + bounds[varname] + " || '\"'"
         else:
             raise SparqlValidationFailed(f'Could not resolve variable \
-?{varname} at this point. You might want to rearrange the query to hint to \
-translator.')
+?{varname}.')
     elif var in entity_variables:
         raise SparqlValidationFailed(f'Cannot bind enttiy variable {varname} to \
 plain RDF context')
     elif varname in bounds:  # plain RDF variable
-        return bounds[var]
+        return bounds[varname]

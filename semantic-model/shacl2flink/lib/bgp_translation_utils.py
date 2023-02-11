@@ -123,7 +123,7 @@ plain RDF context')
         elif var in selectvars:  # plain RDF variable
             return selectvars[var]
     elif isinstance(r, URIRef) or isinstance(r, Literal):
-        return f'\'{utils.format_node_type(r)}\''
+        return f'{utils.format_node_type(r)}'
     else:
         raise utils.SparqlValidationFailed(f'RDF term {r} must either be a Variable, \
 IRI or Literal.')
@@ -526,7 +526,7 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
                 else:
                     # subject entity variable but object is no variable
                     local_ctx['where'] = merge_where_expression(local_ctx['where'],
-                                                                f'{entity_column} = \'{utils.format_node_type(o)}\'')
+                                                                f'{entity_column} = {utils.format_node_type(o)}')
                     return
         else:
             raise utils.SparqlValidationFailed("Cannot query generic RDF term with NGSI-LD entity subject.")
@@ -544,7 +544,7 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
             subject_join_bound = None
         subject_join_condition = f'{rdftable_name}.subject = {subject_join_bound}'\
             if subject_join_bound is not None else None
-    predicate_join_condition = f'{rdftable_name}.predicate = \'{utils.format_node_type(p)}\''
+    predicate_join_condition = f'{rdftable_name}.predicate = {utils.format_node_type(p)}'
     # Process object join condition
     # object variables which are referencing ngsild-entities are forbidden
     if isinstance(o, Variable) and o in ctx['entity_variables']:
@@ -588,7 +588,7 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
 
         for (bs, bp, bo) in local_ctx['h'].triples((o, None, None)):
             bo_rdftable_name = create_tablename(bo, bp, ctx['namespace_manager']) + get_random_string(10)
-            bo_predicate_join_condition = f'{bo_rdftable_name}.predicate = \'{utils.format_node_type(bp)}\' and \
+            bo_predicate_join_condition = f'{bo_rdftable_name}.predicate = {utils.format_node_type(bp)} and \
                 {rdftable_name}.object = {bo_rdftable_name}.subject'
             object_join_bound = get_rdf_join_condition(bo, ctx['property_variables'],
                                                        ctx['entity_variables'], local_ctx['bounds'])

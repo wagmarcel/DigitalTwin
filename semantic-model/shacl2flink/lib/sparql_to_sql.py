@@ -241,11 +241,11 @@ def translate_builtin_if(ctx, builtin_if):
         print(f'Builtin_IF: {builtin_if}', file=debugoutput)
     condition = translate(ctx, builtin_if.arg1)
     if isinstance(builtin_if.arg2, URIRef) or isinstance(builtin_if.arg2, Literal):
-        ifyes = f'\'{builtin_if.arg2.toPython()}\''
+        ifyes = utils.format_node_type(builtin_if.arg2)
     else:
         ifyes = translate(ctx, builtin_if.arg2)
     if isinstance(builtin_if.arg3, URIRef) or isinstance(builtin_if.arg3, Literal):
-        ifnot = f'\'{builtin_if.arg3.toPython()}\''
+        ifnot = utils.format_node_type(builtin_if.arg3)
     else:
         ifnot = translate(ctx, builtin_if.arg3)
     expression = f'CASE WHEN {condition} THEN {ifyes} ELSE {ifnot} END'
@@ -573,16 +573,16 @@ def translate_relational_expression(ctx, elem):
     bounds = ctx['bounds']
 
     if isinstance(elem.expr, Variable):
-        expr = bounds[utils.create_varname(elem.expr)]
+        expr = utils.wrap_ngsild_variable(ctx, elem.expr)
     elif isinstance(elem.expr, Literal) or isinstance(elem.expr, URIRef):
-        expr = f'\'{elem.expr.toPython()}\''
+        expr = utils.format_node_type(elem.expr)
     else:  # Neither Variable, nor Literal, nor IRI - hope it is further translatable
         expr = translate(ctx, elem.expr)
 
     if isinstance(elem.other, Variable):
-        other = bounds[utils.create_varname(elem.other)]
+        other = utils.wrap_ngsild_variable(ctx, elem.other)
     elif isinstance(elem.other, Literal) or isinstance(elem.other, URIRef):
-        other = f'\'{elem.other.toPython()}\''
+        other = utils.format_node_type(elem.other)
     else:
         raise utils.WrongSparqlStructure(f'Expression {elem.other} not supported!')
 

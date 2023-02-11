@@ -351,7 +351,7 @@ iff:ChangeWasteClassRulesShape
                 ?workpiece iff:material [ <https://uri.etsi.org/ngsi-ld/hasValue> ?materialnr ] .
                 $this iff:wasteClass [ <https://uri.etsi.org/ngsi-ld/hasValue> ?cur_wasteclass ] .
                 ?wc iff:containsMaterialNumber [ rdfs:member ?materialnr ] .
-                FILTER(?filter_state = iff:state_ON && ?cutter_state = iff:state_PROCESSING)
+                FILTER(?filter_state = iff:state_ON && ?cutter_state = iff:state_PROCESSING && ?cur_wasteclass != ?wc)
                 FILTER NOT EXISTS {
                         ?cur_wasteclass iff:higherHazardLevel ?wc .
                 }
@@ -445,7 +445,7 @@ SELECT ?this ?value
                     IF(xsd:float(?strength) < 0.5, \"Filter strength too low, should be at least 0.5\", \"ok\")
                 )
             ) as ?value) .
-        FILTER(?pcstate = \"https://industry-fusion.com/types/v0.9/state_ON\" && ?filterstate = \"https://industry-fusion.com/types/v0.9/state_ON\" && ?value != \"ok\") .
+        FILTER(?pcstate = <https://industry-fusion.com/types/v0.9/state_ON> && ?filterstate = <https://industry-fusion.com/types/v0.9/state_ON> && ?value != \"ok\") .
     }
         """ ;
     ] .
