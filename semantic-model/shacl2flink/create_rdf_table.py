@@ -92,8 +92,9 @@ def main(knowledgefile, output_folder='output'):
     statementsets = []
     g = rdflib.Graph()
     g.parse(knowledgefile)
-    owlrl.RDFSClosure.RDFS_Semantics(g, axioms=True, daxioms=False,
-                                     rdfs=False).closure()
+    owlrl.OWLRLExtras.OWLRL_Extension(g, axioms=True, daxioms=True, rdfs=True).closure()
+    #owlrl.RDFSClosure.RDFS_Semantics(g, axioms=True, daxioms=False,
+    #                                 rdfs=False).closure()
 
     statementset = create_statementset(g)
     sqlstatements = f'INSERT OR REPLACE INTO `{spec_name}` VALUES\n' + \

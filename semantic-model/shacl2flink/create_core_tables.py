@@ -204,7 +204,6 @@ def main():
     print('---', file=f)
     yaml.dump(utils.create_yaml_table(spec_name, connector, table,
                                       primary_key, kafka, value), f)
-    print('---', file=f)
     yaml.dump(utils.create_kafka_topic(f'{configs.kafka_topic_ngsi_prefix}.\
 {utils.class_to_obj_name(table_name)}',
                                                f'{configs.kafka_topic_ngsi_prefix}.\
@@ -241,6 +240,8 @@ def main():
     print('---', file=f)
     yaml.dump(utils.create_yaml_table(spec_name, connector, table,
                                       primary_key, kafka, value), f)
-
+    print(utils.create_sql_table(spec_name, table, primary_key,
+                                 utils.SQL_DIALECT.SQLITE), file=sqlitef)
+    print('---', file=f)
 if __name__ == '__main__':
     main()

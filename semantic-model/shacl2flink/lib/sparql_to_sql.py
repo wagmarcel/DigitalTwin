@@ -256,7 +256,10 @@ def translate_extend(ctx, extend):
     if debug > 2:
         print(f'Extend: {extend}', file=debugoutput)
     translate(ctx, extend.p)
-    expression = translate(ctx, extend.expr)
+    if isinstance(extend.expr, Literal) or isinstance(extend.expr, URIRef):
+        expression = utils.format_node_type(extend.expr)
+    else:
+        expression = translate(ctx, extend.expr)
     ctx['bounds'][utils.create_varname(extend.var)] = expression
     extend['target_sql'] = extend.p['target_sql']
     extend['where'] = extend.p['where']
