@@ -56,6 +56,9 @@ def create_statementset(graph):
     hash_counter = {}
     num = 0
     for s, p, o in graph.triples((None, None, None)):
+        #if isinstance(s, rdflib.Literal):
+        #    continue
+        index = math.floor(num / max_per_set)
         hash_object = hashlib.sha256(f'{s}{p}'.encode('utf-8'))
         hex_dig = hash_object.hexdigest()
         if hex_dig not in hash_counter:
@@ -63,10 +66,10 @@ def create_statementset(graph):
         else:
             hash_counter[hex_dig] += 1
         if not (num/max_per_set).is_integer():
-            statementsets[math.floor(num / max_per_set)] += ",\n"
+            statementsets[index] += ",\n"
         else:
             pass
-        statementsets[math.floor(num / max_per_set)] += "(" + utils.format_node_type(s) + ", " + utils.format_node_type(p) + \
+        statementsets[index] += "(" + utils.format_node_type(s) + ", " + utils.format_node_type(p) + \
                         ", " + utils.format_node_type(o) + ", " + \
                         str(hash_counter[hex_dig]) + ")"
         num += 1
@@ -103,8 +106,9 @@ def main(knowledgefile, output_folder='output'):
     owlrl.OWLRLExtras.OWLRL_Extension(g, axioms=True, daxioms=True, rdfs=True).closure()
 
     statementsets = create_statementset(g)
+    sqlstatements = ''
     for statementset in statementsets:
-        sqlstatements = f'INSERT OR REPLACE INTO `{spec_name}` VALUES\n' + \
+        sqlstatements += f'INSERT OR REPLACE INTO `{spec_name}` VALUES\n' + \
                     statementset
     statementsets = list(map(lambda statementset: f'INSERT INTO `{spec_name}` VALUES\n' + \
                    statementset, statementsets))
