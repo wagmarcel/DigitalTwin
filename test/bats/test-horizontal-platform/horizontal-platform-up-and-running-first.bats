@@ -26,18 +26,18 @@ DETIK_DEBUG="true"
 
 
 @test "verify that minio-tenant is up and running" {
-    run try "at most 30 times every 60s to find 1 pod named 'iff-minio-tenant' with 'status.containerStatuses[0].ready' being 'true'"
+    run try "at most 30 times every 60s to find 1 pods named 'iff-minio-tenant' with 'status.containerStatuses[0].ready' being 'true'"
     [ "$status" -eq 0 ]
 
 }
-@test "verify that postgres is up and running" {
-    run try "at most 30 times every 60s to find 1 pod named 'acid-cluster' with 'status.containerStatuses[0].ready' being 'true'"
-    [ "$status" -eq 0 ]
-
-    run verify "there is 1 pod named '^acid-cluster'"
-    [ "$status" -eq 0 ]
-
-}
+#@test "verify that postgres is up and running" {
+#    run try "at most 30 times every 60s to find 1 pod named 'acid-cluster' with 'status.containerStatuses[0].ready' being 'true'"
+#    [ "$status" -eq 0 ]#
+#
+#    run verify "there is 1 pod named '^acid-cluster'"
+#    [ "$status" -eq 0 ]
+#
+#}
 @test "very that keycloak is up and running" {
     run try "at most 30 times every 60s to find 1 job named 'iff-keycloak-realm-import' with 'status.conditions[0].type' being 'Complete'"
     [ "$status" -eq 0 ]

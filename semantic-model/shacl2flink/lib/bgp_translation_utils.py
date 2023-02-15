@@ -109,7 +109,7 @@ def get_rdf_join_condition(r, property_variables, entity_variables,
         var = utils.create_varname(r)
         if r in property_variables:
             if var in selectvars:
-                if property_variables[r] == True:
+                if property_variables[r]:
                     return "'<' ||" + selectvars[var] + "|| '>'"
                 else:
                     return """'"' ||""" + selectvars[var] + """|| '"'"""
@@ -255,7 +255,7 @@ def create_ngsild_mappings(ctx, sorted_graph):
         if p == ngsild['hasValue']:
             if isinstance(o, Variable):
                 # It is a property, but is it Literal or IRI?
-                isIri = None 
+                isIri = None
                 for _, prop_p, _ in sorted_graph.triples((None, None, s)):
                     prop_plain = prop_p.toPython()
                     if prop_plain in ctx['properties'] and isIri is None:
@@ -324,9 +324,8 @@ def create_ngsild_mappings(ctx, sorted_graph):
         # TODO: Implement multi class resolutions
         qres = ctx['g'].query(query)
         if len(qres) != 1:
-            raise utils.utils.SparqlValidationFailed("Validation of BGP failed. It either contradicts what is defined in \
-SHACL or is too ambigue!")
-
+            raise utils.utils.SparqlValidationFailed("Validation of BGP failed. It either contradicts what is defined \
+                in SHACL or is too ambigue!")
     else:
         # no ngsi-ld variables found, so do not try to infer the types
         qres = []
@@ -387,7 +386,6 @@ Consider to use a variable and FILTER.')
     # In case of Properties, no additional tables are defined
     if ngsildtype[0] == ngsild['hasValue']:
         if utils.create_varname(ngsildvar[0]) not in local_ctx['bounds']:
-        #    local_ctx['selvars'][ngsildvar[0].toPython()[1:]] = f'`{attribute_tablename}`.`{ngsildtype[0]}`'
             local_ctx['bounds'][ngsildvar[0].toPython()[1:]] = f'`{attribute_tablename}`.`{ngsildtype[0]}`'
         join_condition = f'{attribute_tablename}.id = {subject_tablename}.`{p}`'
         sql_expression = f'attributes_view AS {attribute_tablename}'
@@ -418,8 +416,6 @@ Consider using a variable and FILTER instead.')
                                                     'join_condition': f'{object_tablename}.id = \
 {attribute_tablename}.`{ngsildtype[0].toPython()}`'})
             ctx['sql_tables'].append(object_sqltable)
-            # if object_varname not in local_ctx['bounds']:
-            #local_ctx['selvars'][object_varname] = f'{object_tablename}.`id`'
             local_ctx['bounds'][object_varname] = f'{object_tablename}.`id`'
         else:
             # case (2)
@@ -435,7 +431,6 @@ Consider using a variable and FILTER instead.')
             local_ctx['bgp_sql_expression'].append({'statement': f'{sql_expression}',
                                                    'join_condition': f'{join_condition}'})
             if subject_varname not in local_ctx['bounds']:
-                #local_ctx['selvars'][subject_varname] = f'`{subject_tablename}`.`id`'
                 local_ctx['bounds'][subject_varname] = f'`{subject_tablename}`.`id`'
 
 
@@ -489,7 +484,6 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
                 local_ctx['bgp_sql_expression'].append({'statement': f'{subject_sqltable}_view AS {subject_tablename}',
                                                         'join_condition': ''})
                 ctx['sql_tables'].append(subject_sqltable)
-                #local_ctx['selvars'][subject_varname] = f'{subject_tablename}.`id`'
                 local_ctx['bounds'][subject_varname] = f'{subject_tablename}.`id`'
                 local_ctx['bgp_tables'][subject_tablename] = []
                 predicate_join_condition = f"{rdftable_name}.predicate = '<" + RDFS['subClassOf'].toPython() + ">'"
@@ -501,7 +495,7 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
                 return
             else:
                 entity = entity.replace('.`id`', '.id')  # Normalize cases when id is quoted
-                entity_table = entity.replace('.id', '')
+                # entity_table = entity.replace('.id', '')
                 entity_column = entity.replace('.id', '.type')
                 if isinstance(o, Variable):
                     # OK let's process the special case here
@@ -513,9 +507,9 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
                         # (2)
                         # bind variable with type column of subject
                         # add variable to local table
-                        #local_ctx['selvars'][create_varname(o)] = entity_column
                         local_ctx['bounds'][utils.create_varname(o)] = entity_column
-                        ctx['property_variables'][o] = True  # Treat it as property IRI (even though it is from an entity)
+                        ctx['property_variables'][o] = True  # Treat it as property
+                        # IRI (even though it is from an entity)
                         return
                     else:
                         # (1)
@@ -539,7 +533,6 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
                 raise utils.SparqlValidationFailed("Could not resolve {s} and not a variable")
             # Variable not found, needs to be added
             subj_column = f'`{rdftable_name}`.`subject`'
-            #local_ctx['selvars'][utils.create_varname(s)] = subj_column
             local_ctx['bounds'][utils.create_varname(s)] = subj_column
             subject_join_bound = None
         subject_join_condition = f'{rdftable_name}.subject = {subject_join_bound}'\
@@ -557,7 +550,6 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
             if not isinstance(o, Variable):
                 raise utils.SparqlValidationFailed("Could not resolve {o} not being a variable")
             # Variable not found, needs to be added
-            #local_ctx['selvars'][create_varname(o)] = f'{rdftable_name}.object'
             local_ctx['bounds'][utils.create_varname(o)] = f'{rdftable_name}.object'
             object_join_bound = None
         object_join_condition = f'{rdftable_name}.object = {object_join_bound}' \
@@ -596,7 +588,6 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
                 if not isinstance(bo, Variable):
                     raise utils.SparqlValidationFailed("Could not resolve {bo} not being a variable")
                 # Variable not found, needs to be added
-                #local_ctx['selvars'][create_varname(bo)] = f'{bo_rdftable_name}.object'
                 local_ctx['bounds'][utils.create_varname(bo)] = f'{bo_rdftable_name}.object'
                 object_join_bound = None
             object_join_condition = f'{bo_rdftable_name}.object = {object_join_bound}' \

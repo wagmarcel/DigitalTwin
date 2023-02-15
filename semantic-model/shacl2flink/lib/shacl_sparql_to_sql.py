@@ -152,7 +152,7 @@ def translate(shaclfile, knowledgefile):
         sql_command_yaml += ";"
         sqlite += sql_command_sqlite
         statementsets.append(sql_command_yaml)
-        tables_all += map(utils.snake_case_to_kebab_case, tables) 
+        tables_all += map(utils.snake_case_to_kebab_case, tables)
 
     views = []
     tables = list(set(tables_all))

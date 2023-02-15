@@ -21,13 +21,11 @@ from rdflib import Graph, Namespace, URIRef, Variable, BNode, Literal
 from rdflib.namespace import RDF, XSD
 from rdflib.plugins.sparql.parser import parseQuery
 from rdflib.plugins.sparql.algebra import translateQuery
-import owlrl
 import copy
 
 file_dir = os.path.dirname(__file__)
 sys.path.append(file_dir)
 import utils  # noqa: E402
-import configs  # noqa: E402
 import bgp_translation_utils  # noqa: E402
 
 
@@ -45,7 +43,7 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 SELECT
-    ?targetclass ?property ((?nodekind = sh:IRI) as ?kind) 
+    ?targetclass ?property ((?nodekind = sh:IRI) as ?kind)
 where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?targetclass .
@@ -56,7 +54,7 @@ where {
             sh:path ngsild:hasValue ;
         ] ;
     ] .
-    OPTIONAL{ 
+    OPTIONAL{
     ?nodeshape sh:property [
         sh:property [
             sh:nodeKind ?nodekind ;
@@ -113,12 +111,6 @@ def translate_sparql(shaclfile, knowledgefile, sparql_query, target_class, lg):
     global properties
     global relationships
     g = lg
-    #g.parse(shaclfile)
-    #h = Graph()
-    #h.parse(knowledgefile)
-    #g += h
-    #owlrl.RDFSClosure.RDFS_Semantics(g, axioms=True, daxioms=False,
-    #                                 rdfs=True).closure()
     qres = g.query(sparql_get_properties)
     for row in qres:
         if row.property is not None:
@@ -312,8 +304,7 @@ def wrap_sql_construct(ctx, node):
     # For the time being, only wrap properties, no relationships
     (entityId_var, name, attribute_type, value_var, node_type) = get_attribute_column(ctx, node)
     entityId_varname = entityId_var.toPython()[1:]
-    value_varname = value_var.toPython()[1:]
-    
+
     bounds = ctx['bounds']
     construct_query = "SQL_DIALECT_INSERT_ATTRIBUTES\n"
     construct_query += "SELECT "
@@ -347,7 +338,7 @@ def get_bound_trim_string(ctx, boundsvar):
 def get_attribute_column(ctx, node):
     entityId_var = None
     name = None
-   
+
     value_var = None
     nodetype = '@value'
     bnode = None
@@ -366,7 +357,8 @@ not yet implemented!')
             value_var = o
     if entityId_var is None or name is None or value_var is None:
         raise utils.WrongSparqlStructure('No attribute constructed in construct query!')
-    attribute_type = bgp_translation_utils.ngsild['Property'] if value_var in ctx['property_variables'] else bgp_translation_utils.ngsild['Relationship']
+    attribute_type = bgp_translation_utils.ngsild['Property'] if value_var in ctx['property_variables'] else \
+        bgp_translation_utils.ngsild['Relationship']
     return (entityId_var, name.toPython(), attribute_type.toPython(), value_var, nodetype)
 
 
@@ -573,7 +565,6 @@ def translate_relational_expression(ctx, elem):
     """
     Translates RelationalExpression to SQL
     """
-    bounds = ctx['bounds']
 
     if isinstance(elem.expr, Variable):
         expr = utils.wrap_ngsild_variable(ctx, elem.expr)
@@ -649,8 +640,6 @@ def translate_BGP(ctx, bgp):
     local_ctx['where'] = ''
     local_ctx['bgp_sql_expression'] = []
     local_ctx['bgp_tables'] = {}
-    #local_ctx['property_variables'] = property_variables
-    #local_ctx['entity_variables'] = entity_variables
     local_ctx['h'] = h
     local_ctx['row'] = row
 

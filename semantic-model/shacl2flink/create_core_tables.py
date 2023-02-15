@@ -188,7 +188,7 @@ def main():
              {'type': 'STRING'},
              {'https://uri.etsi.org/ngsi-ld/hasValue': 'STRING'},
              {'https://uri.etsi.org/ngsi-ld/hasObject': 'STRING'}
-            ]
+             ]
     kafka = {
         'topic': kafka_topic_attributes_insert,
         'properties': {'bootstrap.servers': kafka_bootstrap},
@@ -205,10 +205,8 @@ def main():
     yaml.dump(utils.create_yaml_table(spec_name, connector, table,
                                       primary_key, kafka, value), f)
     yaml.dump(utils.create_kafka_topic(f'{configs.kafka_topic_ngsi_prefix}.\
-{utils.class_to_obj_name(table_name)}',
-                                               f'{configs.kafka_topic_ngsi_prefix}.\
-{spec_name}', configs.kafka_topic_object_label,
-                                               config), f)
+        {utils.class_to_obj_name(table_name)}', f'{configs.kafka_topic_ngsi_prefix}.\
+        {spec_name}', configs.kafka_topic_object_label, config), f)
 
     # attributes_insert plain table to copy data
     table_name = "attributes-insert-filter"
@@ -243,5 +241,7 @@ def main():
     print(utils.create_sql_table(spec_name, table, primary_key,
                                  utils.SQL_DIALECT.SQLITE), file=sqlitef)
     print('---', file=f)
+
+
 if __name__ == '__main__':
     main()

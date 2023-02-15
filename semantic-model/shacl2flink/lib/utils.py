@@ -270,12 +270,13 @@ def format_node_type(node):
     formats node dependent on node-type
     IRI: iri => '<iri>'
     Literal: literal => '"literal"'
-    BNodde: id => '_:id' 
+    BNodde: id => '_:id'
     """
     if isinstance(node, rdflib.URIRef):
         return f"\'<{node.toPython()}>\'"
     elif isinstance(node, rdflib.Literal):
-        if node.datatype == rdflib.XSD.decimal or node.datatype == rdflib.XSD.double or node.datatype == rdflib.XSD.float or node.datatype == rdflib.XSD.integer:
+        if node.datatype == rdflib.XSD.decimal or node.datatype == rdflib.XSD.double or\
+                node.datatype == rdflib.XSD.float or node.datatype == rdflib.XSD.integer:
             return node.toPython()
         else:
             return f'\'"{node.toPython()}"\''
@@ -284,17 +285,23 @@ def format_node_type(node):
     else:
         raise ValueError('Node is not IRI, Literal, BNode')
 
+
 def process_sql_dialect(expression, isSqlite):
     result_expression = expression
     if isSqlite:
-        result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI\(([^\(\)]*)\)', r"ltrim(rtrim(\1, '>'), '<')", result_expression)
-        result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL\(([^\(\)]*)\)', r"trim(\1, '\"')", result_expression)
+        result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI\(([^\(\)]*)\)',
+                                   r"ltrim(rtrim(\1, '>'), '<')", result_expression)
+        result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL\(([^\(\)]*)\)', r"trim(\1, '\"')",
+                                   result_expression)
         result_expression = result_expression.replace('SQL_DIALECT_CURRENT_TIMESTAMP', 'datetime()')
-        result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES', 'INSERT OR REPLACE INTO attributes_insert_filter')
+        result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES',
+                                                      'INSERT OR REPLACE INTO attributes_insert_filter')
         result_expression = result_expression.replace('SQL_DIALECT_SQLITE_TIMESTAMP', 'CURRENT_TIMESTAMP')
     else:
-        result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI\(([^\(\)]*)\)', r"REGEXP_REPLACE(CAST(\1 as STRING), '>|<', '')", result_expression)
-        result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL\(([^\(\)]*)\)', r"REGEXP_REPLACE(CAST(\1 as STRING), '\"', '')", result_expression)
+        result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI\(([^\(\)]*)\)',
+                                   r"REGEXP_REPLACE(CAST(\1 as STRING), '>|<', '')", result_expression)
+        result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL\(([^\(\)]*)\)',
+                                   r"REGEXP_REPLACE(CAST(\1 as STRING), '\"', '')", result_expression)
         result_expression = result_expression.replace('SQL_DIALECT_CURRENT_TIMESTAMP', 'CURRENT_TIMESTAMP')
         result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES', 'INSERT into attributes_insert')
         result_expression = result_expression.replace(',SQL_DIALECT_SQLITE_TIMESTAMP', '')
@@ -318,7 +325,7 @@ def wrap_ngsild_variable(ctx, var):
     varname = create_varname(var)
     if var in property_variables:
         if varname in bounds:
-            if property_variables[var] == True:
+            if property_variables[var]:
                 return "'<' || " + bounds[varname] + " || '>'"
             else:
                 return "'\"' || " + bounds[varname] + " || '\"'"

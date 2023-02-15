@@ -48,11 +48,9 @@ def create_statementset(graph):
     """
     statementsets = []
     max_per_set = 1500
-    num_sets = math.ceil(len(graph)/max_per_set)
-    #statementset = ''
+    num_sets = math.ceil(len(graph) / max_per_set)
     for num in range(num_sets):
         statementsets.append('')
-    first = True
     hash_counter = {}
     num = 0
     for s, p, o in graph.triples((None, None, None)):
@@ -132,7 +130,7 @@ def main(knowledgefile, output_folder='output'):
             num += 1
             fp.write("---\n")
             yaml.dump(utils.create_statementset('rdf-statements' + str(num), [table_name],
-                  [], [statementset]), fp)
+                                                [], [statementset]), fp)
         fp.write("---\n")
         yaml.dump(utils.create_kafka_topic(utils.class_to_obj_name(
                                            configs.rdf_topic),

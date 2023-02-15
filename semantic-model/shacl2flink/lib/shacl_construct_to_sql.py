@@ -5,7 +5,6 @@ import sys
 from urllib.parse import urlparse
 import re
 import ruamel.yaml
-from jinja2 import Template
 
 
 file_dir = os.path.dirname(__file__)
@@ -112,24 +111,22 @@ def translate(shaclfile, knowledgefile):
     sqlite = ''
     # Get all NGSI-LD Relationship
     qres = g.query(sparql_get_all_rule_nodes)
-    
+
     for row in qres:
         target_class = row.targetclass
         construct = row.construct.toPython() if row.construct else None
-        nodeshape = strip_class(row.nodeshape.toPython()) if row.nodeshape else None
-        targetclass = utils.class_to_obj_name(strip_class(row.targetclass.toPython())) if row.targetclass else None
         sql_expression, tables = translate_sparql(shaclfile, knowledgefile, construct, target_class, g)
-        
+
         sql_command_yaml = utils.process_sql_dialect(sql_expression, False)
         sql_command_sqlite = utils.process_sql_dialect(sql_expression, True)
-        
+
         sql_command_sqlite += ";"
         sql_command_yaml += ";"
         sql_command_sqlite = '\n' + sql_command_sqlite
         sqlite += sql_command_sqlite
         statementsets.append(sql_command_yaml)
         tables_all += map(utils.snake_case_to_kebab_case, tables)
-    
+
     views = []
     tables = list(set(tables_all))
     for table in tables:
@@ -140,6 +137,3 @@ def translate(shaclfile, knowledgefile):
     tables.append(configs.attributes_table_obj_name)
     tables.append(attributes_insert_table_obj_name)
     return sqlite, (statementsets, tables, views)
-
-
-        

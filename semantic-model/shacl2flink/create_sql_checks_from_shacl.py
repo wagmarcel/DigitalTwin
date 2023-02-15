@@ -47,9 +47,7 @@ def main(shaclfile, knowledgefile, output_folder='output'):
 
     sqlite2, (statementsets2, tables2, views2) = \
         translate_sparql(shaclfile, knowledgefile)
-        
 
-        
     tables = list(set(tables2).union(set(tables)).union(set(tables3)))  # deduplication
     views = list(set(views2).union(set(views)).union(set(views3)))  # deduplication
 
