@@ -47,7 +47,7 @@ def create_statementset(graph):
     """
     """
     statementsets = []
-    max_per_set = 1500
+    max_per_set = configs.rdf_max_per_set
     num_sets = math.ceil(len(graph) / max_per_set)
     for num in range(num_sets):
         statementsets.append('')
