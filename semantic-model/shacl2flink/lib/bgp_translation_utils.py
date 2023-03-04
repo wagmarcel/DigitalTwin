@@ -495,7 +495,6 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
                 return
             else:
                 entity = entity.replace('.`id`', '.id')  # Normalize cases when id is quoted
-                # entity_table = entity.replace('.id', '')
                 entity_column = entity.replace('.id', '.type')
                 if isinstance(o, Variable):
                     # OK let's process the special case here
@@ -515,12 +514,13 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
                         # (1)
                         # variable is bound, so get it and link it with bound value
                         objvar = local_ctx['bounds'][utils.create_varname(o)]
-                        local_ctx['where'] = merge_where_expression(local_ctx['where'], f'{entity_column} = {objvar}')
+                        local_ctx['where'] = merge_where_expression(local_ctx['where'],
+                                                                    f"'<' || {entity_column} || '>' = {objvar}")
                         return
                 else:
                     # subject entity variable but object is no variable
                     local_ctx['where'] = merge_where_expression(local_ctx['where'],
-                                                                f'{entity_column} = {utils.format_node_type(o)}')
+                                                                f"'<' || {entity_column} || '>' = {utils.format_node_type(o)}")
                     return
         else:
             raise utils.SparqlValidationFailed("Cannot query generic RDF term with NGSI-LD entity subject.")
