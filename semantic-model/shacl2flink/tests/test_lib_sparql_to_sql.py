@@ -401,3 +401,18 @@ def test_translate_construct_query(create_ngsild_mappings_mock, merge_vartypes_m
     lib.sparql_to_sql.translate_construct_query(ctx, query)
     assert d['where'] == 'where'
     assert d['target_sql'] == 'target_sql'
+    
+def test_merge_bgp_context():
+    bgp_context = [
+        {
+            'statement': 'statement',
+            'join_condition': 'join_condition',    
+        },
+        {
+            'statement': 'statement2',
+            'join_condition': 'join_condition2',    
+        }
+    ]
+    expression, where = lib.sparql_to_sql.merge_bgp_context(bgp_context, True)
+    assert where == 'join_condition'
+    assert expression == 'statement JOIN statement2 ON join_condition2'
