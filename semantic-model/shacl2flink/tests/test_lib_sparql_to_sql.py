@@ -382,3 +382,22 @@ def test_wrap_sql_construct(attribute_column_mock, get_bound_trim_string_mock):
 \nbound_trim_string,\
 \nCAST(NULL as STRING)\n,\
 SQL_DIALECT_SQLITE_TIMESTAMP\nFROM target_sql WHERE where"
+
+
+@patch('lib.sparql_to_sql.translate')
+@patch('lib.sparql_to_sql.wrap_sql_construct')
+@patch('lib.sparql_to_sql.bgp_translation_utils.merge_vartypes')
+@patch('lib.sparql_to_sql.bgp_translation_utils.create_ngsild_mappings')
+def test_translate_construct_query(create_ngsild_mappings_mock, merge_vartypes_mock, wrap_sql_construct_mock, translate_mock):
+    ctx = {}
+    query = MagicMock()
+    query.p = {
+        'target_sql': 'target_sql',
+        'where': 'where'
+    }
+    d = {}
+    query.__setitem__.side_effect = d.__setitem__
+    create_ngsild_mappings_mock.return_value = ({}, {}, {})
+    lib.sparql_to_sql.translate_construct_query(ctx, query)
+    assert d['where'] == 'where'
+    assert d['target_sql'] == 'target_sql'
