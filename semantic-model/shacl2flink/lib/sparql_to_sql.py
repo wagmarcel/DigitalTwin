@@ -146,16 +146,12 @@ def translate_query(query, target_class):
         'target_modifiers': [],
         'add_triples': [(Variable('this'), RDF['type'], target_class)]
     }
-    if debug:
-        print("DEBUG: First Pass.", file=debugoutput)
     if algebra.name == 'SelectQuery' or algebra.name == 'ConstructQuery':
         translate(ctx, algebra)
     else:
         raise utils.WrongSparqlStructure('Only SelectQueries are supported \
 currently!')
     ctx['target_sql'] = algebra['target_sql']
-    if debug:
-        print('DEBUG: Result: ', ctx['target_sql'], file=debugoutput)
     return ctx
 
 
@@ -203,8 +199,6 @@ supported!')
 
 
 def translate_function(ctx, function):
-    if debug > 2:
-        print(f'function: {function}', file=debugoutput)
     bounds = ctx['bounds']
     iri = function.iri
     expr = function.expr
@@ -223,14 +217,10 @@ def translate_function(ctx, function):
 
 
 def translate_builtin_now(ctx, builtin_now):
-    if debug > 2:
-        print(f'Builtin_NOW: {builtin_now}', file=debugoutput)
     return 'SQL_DIALECT_CURRENT_TIMESTAMP'
 
 
 def translate_builtin_if(ctx, builtin_if):
-    if debug > 2:
-        print(f'Builtin_IF: {builtin_if}', file=debugoutput)
     condition = translate(ctx, builtin_if.arg1)
     if isinstance(builtin_if.arg2, URIRef) or isinstance(builtin_if.arg2, Literal):
         ifyes = utils.format_node_type(builtin_if.arg2)
@@ -245,8 +235,6 @@ def translate_builtin_if(ctx, builtin_if):
 
 
 def translate_extend(ctx, extend):
-    if debug > 2:
-        print(f'Extend: {extend}', file=debugoutput)
     translate(ctx, extend.p)
     if isinstance(extend.expr, Literal) or isinstance(extend.expr, URIRef):
         expression = utils.format_node_type(extend.expr)
@@ -261,8 +249,6 @@ def translate_select_query(ctx, query):
     """
     Decomposes SelectQuery object
     """
-    if debug > 2:
-        print(f'SelectQuery: {query}', file=debugoutput)
     translate(ctx, query.p)
     query['target_sql'] = query.p['target_sql']
     return
@@ -272,8 +258,6 @@ def translate_construct_query(ctx, query):
     """
     Decomposes SelectQuery object
     """
-    if debug > 2:
-        print(f'ConstructQuery: {query}', file=debugoutput)
     h = Graph()
     for s, p, o in query.template:
         h.add((s, p, o))
@@ -290,8 +274,6 @@ def translate_project(ctx, project):
     """
     Translate Project structure
     """
-    if debug > 2:
-        print(f'DEBUG: Project: {project}', file=debugoutput)
     translate(ctx, project.p)
     project['target_sql'] = project.p['target_sql']
     project['where'] = project.p['where']
@@ -395,8 +377,6 @@ def translate_filter(ctx, filter):
     """
     Translates Filter object to SQL
     """
-    if debug > 2:
-        print(f'DEBUG: Filter: {filter}', file=debugoutput)
     translate(ctx, filter.p)
     where1 = translate(ctx, filter.expr)
     where2 = filter.p['where']
@@ -413,8 +393,6 @@ def translate_notexists(ctx, notexists):
     """
     Translates a FILTER NOT EXISTS expression
     """
-    if debug > 2:
-        print(f'DEBUG: FILTER NOT EXISTS: {notexists}', file=debugoutput)
     ctx_copy = copy_context(ctx)
     translate(ctx_copy, notexists.graph)
     notexists['target_sql'] = notexists.graph['target_sql']
@@ -464,8 +442,6 @@ def copy_context(ctx):
 
 
 def translate_join(ctx, join):
-    if debug > 2:
-        print(f'DEBUG: JOIN: {join}', file=debugoutput)
     translate(ctx, join.p1)
     translate(ctx, join.p2)
     expr1 = join.p1['target_sql']
@@ -494,8 +470,6 @@ for left joins.')
 
 
 def translate_left_join(ctx, join):
-    if debug > 2:
-        print(f'DEBUG: LEFT JOIN: {join}', file=debugoutput)
     translate(ctx, join.p1)
     translate(ctx, join.p2)
     expr1 = join.p1['target_sql']
@@ -552,8 +526,6 @@ def translate_and_expression(ctx, expr):
     """
     Translates AND expression to SQL
     """
-    if debug > 2:
-        print(f'DEBUG: ConditionalAndExpression: {expr}', file=debugoutput)
     result = translate(ctx, expr.expr)
     for otherexpr in expr.other:
         result += ' and '
@@ -609,11 +581,6 @@ def translate_BGP(ctx, bgp):
         bgp_translation_utils.WrongSparqlStructure: Problems with SPARQL metadata, or features which are not implemented
         bgp_translation_utils.SparqlValidationFailed: Problems with SPARQL parsing, dependencies
     """
-    if debug > 2:
-        print(f'DEBUG: BGP: {bgp}', file=debugoutput)
-    # Assumes a 'Basic Graph Pattern'
-    if not bgp.name == 'BGP':
-        raise utils.WrongSparqlStructure('No BGP!')
     # Add triples one time
     add_triples = ctx['add_triples']
     for triple in add_triples:
