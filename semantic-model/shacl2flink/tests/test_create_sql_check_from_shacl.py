@@ -24,7 +24,8 @@ import create_sql_checks_from_shacl
 @patch('create_sql_checks_from_shacl.translate_construct')
 @patch('create_sql_checks_from_shacl.ruamel.yaml')
 @patch('create_sql_checks_from_shacl.utils')
-def test_main(mock_utils, mock_yaml, mock_translate_construct, mock_translate_properties, mock_translate_sparql, tmp_path):
+def test_main(mock_utils, mock_yaml, mock_translate_construct, mock_translate_properties,
+              mock_translate_sparql, tmp_path):
     def __add__(self, other):
         return self
 
@@ -33,9 +34,9 @@ def test_main(mock_utils, mock_yaml, mock_translate_construct, mock_translate_pr
     mock_translate_properties.return_value = 'sqlite', ('statementsets',
                                                         ['tables'], ['views'])
     mock_translate_sparql.return_value = 'sqlite2', ('statementsets2',
-                                                    ['tables2'], ['views2'])
+                                                     ['tables2'], ['views2'])
     mock_translate_construct.return_value = 'sqlite3', ('statementsets3',
-                                                    ['tables3'], ['views3'])
+                                                        ['tables3'], ['views3'])
 
     create_sql_checks_from_shacl.main('kms/shacl.ttl', 'kms/knowledge.ttl',
                                       tmp_path)

@@ -520,7 +520,8 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
                 else:
                     # subject entity variable but object is no variable
                     local_ctx['where'] = merge_where_expression(local_ctx['where'],
-                                                                f"'<' || {entity_column} || '>' = {utils.format_node_type(o)}")
+                                                                f"'<' || {entity_column} || '>' \
+= {utils.format_node_type(o)}")
                     return
         else:
             raise utils.SparqlValidationFailed("Cannot query generic RDF term with NGSI-LD entity subject.")

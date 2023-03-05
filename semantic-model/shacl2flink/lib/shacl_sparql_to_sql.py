@@ -2,7 +2,6 @@ from rdflib import Graph
 import owlrl
 import os
 import sys
-from urllib.parse import urlparse
 import re
 import ruamel.yaml
 from jinja2 import Template
@@ -68,20 +67,6 @@ sql_check_sparql_base = """
 """  # noqa E501
 
 
-#def strip_class(klass):
-#    """Get class postfix of IRI
-#
-#    For instance: "http://example.com/class" => "class"
-#    Args:
-#        klass (String): IRI
-#
-#    Returns:
-#        string: class
-#    """
- #   a = urlparse(klass)
- #   return os.path.basename(a.path)
-
-
 def add_variables_to_message(message):
     """Replace ?vars or $vars with SQL term
 
@@ -124,7 +109,8 @@ def translate(shaclfile, knowledgefile):
         message = row.message.toPython() if row.message else None
         select = row.select.toPython() if row.select else None
         nodeshape = utils.strip_class(row.nodeshape.toPython()) if row.nodeshape else None
-        targetclass = utils.class_to_obj_name(utils.strip_class(row.targetclass.toPython())) if row.targetclass else None
+        targetclass = utils.class_to_obj_name(utils.strip_class(row.targetclass.toPython())) \
+            if row.targetclass else None
         severitylabel = row.severitylabel.toPython() if row.severitylabel is not None else 'warning'
         sql_expression, tables = translate_sparql(shaclfile, knowledgefile, select, target_class, g)
         sql_expression_yaml = utils.process_sql_dialect(sql_expression, False)

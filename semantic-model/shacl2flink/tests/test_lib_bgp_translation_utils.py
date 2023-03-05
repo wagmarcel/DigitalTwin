@@ -16,9 +16,7 @@
 
 from unittest.mock import MagicMock, patch
 import lib.bgp_translation_utils
-from bunch import Bunch
-from rdflib import term, RDF, Variable, Graph as rGraph
-import pytest
+from rdflib import term, RDF, Graph as rGraph
 
 hasObjectURI = term.URIRef("https://uri.etsi.org/ngsi-ld/hasObject")
 stateURI = term.URIRef("https://industry-fusion.com/types/v0.9/state")
@@ -50,9 +48,6 @@ ngsild:hasObject;  sh:class ?f ] ] ." in sparql
         "https://industry-fusion.com/types/v0.9/state": True
     }
     g = Graph()
-    #monkeypatch.setattr(lib.bgp_translation_utils, "properties", properties)
-    #monkeypatch.setattr(lib.bgp_translation_utils, "g", g)
-    #monkeypatch.setattr(lib.bgp_translation_utils, "relationships", relationships)
     ctx = {
         'namespace_manager': None,
         'PV': None,
@@ -112,9 +107,6 @@ def test_create_ngsild_mappings_reverse(monkeypatch):
         "https://industry-fusion.com/types/v0.9/state": True
     }
     g = Graph()
-    #monkeypatch.setattr(lib.bgp_translation_utils, "properties", properties)
-    #monkeypatch.setattr(lib.bgp_translation_utils, "g", g)
-    #monkeypatch.setattr(lib.bgp_translation_utils, "relationships", relationships)
     ctx = {
         'namespace_manager': None,
         'PV': None,
@@ -214,8 +206,6 @@ def test_process_rdf_spo_predicate_is_rdf_type_object_is_variable(mock_isentity,
     properties = {
         "https://industry-fusion.com/types/v0.9/state": True
     }
-    #monkeypatch.setattr(lib.bgp_translation_utils, "properties", properties)
-    #monkeypatch.setattr(lib.bgp_translation_utils, "relationships", relationships)
     monkeypatch.setattr(lib.utils, "create_varname", create_varname)
     mock_create_table_name.return_value = 'testtable'
     mock_isentity.return_value = True
@@ -269,7 +259,6 @@ def test_process_rdf_spo_predicate_is_rdf_type_object_is_variable(mock_isentity,
     p = RDF['type']
     o = term.Variable('x')
     lib.bgp_translation_utils.process_rdf_spo(ctx, local_ctx, s, p, o)
-    #assert local_ctx['selvars'] == {'x': 'FILTER.type'}
     assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'f': 'FILTER.id', 'x': 'FILTER.type'}
 
 
@@ -345,7 +334,6 @@ testtable.predicate = '<predicate>' and testtable.object = condition"}]
                                                 'join_condition': "testtable.predicate = '<test>'"}]
     assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'f': '`testtable`.`subject`', 'x': 'testtable.object'}
     assert local_ctx['bgp_tables'] == {'testtable': []}
-    #assert local_ctx['selvars'] == {'f': 'testtable.object'}
 
 
 @patch('lib.bgp_translation_utils.utils')
@@ -455,8 +443,7 @@ def test_process_rdf_spo_subject_is_entity_and_predicate_is_type(mock_isentity, 
 @patch('lib.bgp_translation_utils.create_tablename')
 @patch('lib.bgp_translation_utils.isentity')
 def test_process_rdf_spo_blank_node(mock_isentity, mock_create_table_name, mock_create_varname,
-                                              mock_get_random_string, mock_get_rdf_join_condition,
-                                              monkeypatch):
+                                    mock_get_random_string, mock_get_rdf_join_condition, monkeypatch):
     relationships = {
         "https://industry-fusion.com/types/v0.9/hasFilter": True
     }
@@ -493,10 +480,10 @@ def test_process_rdf_spo_blank_node(mock_isentity, mock_create_table_name, mock_
     o = term.BNode('1')
     lib.bgp_translation_utils.process_rdf_spo(ctx, local_ctx, s, p, o)
     assert local_ctx['bgp_sql_expression'][0] == {'statement': 'rdf AS testtable',
-                                                'join_condition': "testtable.subject = condition and \
+                                                  'join_condition': "testtable.subject = condition and \
 testtable.predicate = '<predicate>' and testtable.object LIKE '_:%'"}
     assert local_ctx['bgp_sql_expression'][1] == {'statement': 'rdf AS testtable2',
-                                                'join_condition': "testtable.subject = condition and \
+                                                  'join_condition': "testtable.subject = condition and \
 testtable2.predicate = '<predicate2>' and testtable.object = testtable2.subject and testtable2.object = condition"}
 
 
@@ -545,7 +532,6 @@ def test_process_ngsild_spo_hasValue(mock_isentity, mock_create_table_name, mock
     assert local_ctx['bgp_tables'] == {'FSTATETABLE': []}
     assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'v1': '`FSTATETABLE`.\
 `https://uri.etsi.org/ngsi-ld/hasValue`'}
-    #assert local_ctx['selvars'] == {'v1': '`FSTATETABLE`.`https://uri.etsi.org/ngsi-ld/hasValue`'}
     assert local_ctx['bgp_sql_expression'] == [{'statement': 'attributes_view AS FSTATETABLE', 'join_condition':
                                                'FSTATETABLE.id = FTABLE.\
 `https://industry-fusion.com/types/v0.9/state`'}]
@@ -578,7 +564,6 @@ def test_process_ngsild_spo_hasValue(mock_isentity, mock_create_table_name, mock
     lib.bgp_translation_utils.process_ngsild_spo(ctx, local_ctx, s, p, o)
     assert local_ctx['bgp_tables'] == {'FSTATETABLE': []}
     assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'f': 'FILTER.id', 'v1': 'V1TABLE.id'}
-    #assert local_ctx['selvars'] == {}
     assert local_ctx['bgp_sql_expression'] == [{'statement': 'attributes_view AS FSTATETABLE', 'join_condition':
                                                'FSTATETABLE.id = FTABLE.`\
 https://industry-fusion.com/types/v0.9/state`'}]
@@ -629,7 +614,6 @@ def test_process_ngsild_spo_hasObject(mock_isentity, mock_create_table_name, moc
     lib.bgp_translation_utils.process_ngsild_spo(ctx, local_ctx, s, p, o)
     assert local_ctx['bgp_tables'] == {'FHAS_FILTERTABLE': [], 'FTABLE': []}
     assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'f': 'FTABLE.`id`'}
-    #assert local_ctx['selvars'] == {'f': 'FTABLE.`id`'}
     assert local_ctx['bgp_sql_expression'] == [
         {'statement': 'attributes_view AS FHAS_FILTERTABLE', 'join_condition': 'FHAS_FILTERTABLE.id = \
 FTABLE.`https://industry-fusion.com/types/v0.9/hasFilter`'},
@@ -665,7 +649,6 @@ FTABLE.`https://industry-fusion.com/types/v0.9/hasFilter`'},
     lib.bgp_translation_utils.process_ngsild_spo(ctx, local_ctx, s, p, o)
     assert local_ctx['bgp_tables'] == {'CHAS_FILTERTABLE': [], 'FTABLE': []}
     assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'c': 'CUTTER.id', 'f': 'FTABLE.`id`'}
-    #assert local_ctx['selvars'] == {'f': 'FTABLE.`id`'}
     assert local_ctx['bgp_sql_expression'] == [
         {'statement': 'attributes_view AS CHAS_FILTERTABLE', 'join_condition': 'CHAS_FILTERTABLE.id = \
 CTABLE.`https://industry-fusion.com/types/v0.9/hasFilter`'},
@@ -686,8 +669,6 @@ def test_sort_triples(mock_copy, monkeypatch):
     properties = {
         "https://industry-fusion.com/types/v0.9/state": True
     }
-    #monkeypatch.setattr(lib.bgp_translation_utils, "properties", properties)
-    #monkeypatch.setattr(lib.bgp_translation_utils, "relationships", relationships)
     monkeypatch.setattr(lib.utils, "create_varname", create_varname)
     bounds = {'this': 'THISTABLE.id'}
     triples = [
@@ -729,17 +710,17 @@ def test_create_tablename():
     namespace_manager = Namespace_manager()
     result = lib.bgp_translation_utils.create_tablename(term.Variable('variable'))
     assert result == 'VARIABLETABLE'
-    result = lib.bgp_translation_utils.create_tablename(term.Variable('variable'), term.URIRef('predicate'), namespace_manager)
+    result = lib.bgp_translation_utils.create_tablename(term.Variable('variable'), term.URIRef('predicate'),
+                                                        namespace_manager)
     assert result == 'VARIABLEPREDICATETABLE'
-    result = lib.bgp_translation_utils.create_tablename(term.URIRef('subject'), term.URIRef('predicate'), namespace_manager)
+    result = lib.bgp_translation_utils.create_tablename(term.URIRef('subject'), term.URIRef('predicate'),
+                                                        namespace_manager)
     assert result == 'SUBJECTPREDICATETABLE'
 
 
 def test_get_rdf_join_condition(monkeypatch):
     def create_varname(var):
         return var.toPython()[1:]
-
-    #monkeypatch.setattr(lib.bgp_translation_utils, "create_varname", create_varname)
 
     property_variables = {
         term.Variable('v2'): True,

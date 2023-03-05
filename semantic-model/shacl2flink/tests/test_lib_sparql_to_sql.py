@@ -18,7 +18,7 @@ from unittest.mock import MagicMock, patch
 import lib.sparql_to_sql
 import lib.utils
 from bunch import Bunch
-from rdflib import term, RDF, Graph as rGraph
+from rdflib import term
 import pytest
 
 hasObjectURI = term.URIRef("https://uri.etsi.org/ngsi-ld/hasObject")
@@ -87,7 +87,6 @@ def test_translate_builtin_if(mock_translate, monkeypatch):
     assert mock_translate.called
 
 
-#@patch('lib.sparql_to_sql.create_bgp_context')
 @patch('lib.sparql_to_sql.bgp_translation_utils.process_ngsild_spo')
 @patch('lib.sparql_to_sql.bgp_translation_utils.process_rdf_spo')
 @patch('lib.sparql_to_sql.bgp_translation_utils.sort_triples')
@@ -115,7 +114,6 @@ def test_translate_BGP(mock_create_ngsild_mappings, mock_sort_triples, mock_proc
     assert mock_process_rdf_spo.called
     assert mock_create_ngsild_mappings.called
     assert not mock_process_ngsild_spo.called
-    #assert mock_create_bgp_context.called
 
 
 @patch('lib.sparql_to_sql.translate')
@@ -226,19 +224,6 @@ def test_remap_join_constraint_to_where():
     assert node['target_sql'] == ' A.predicate = p '
 
 
-#def test_map_join_condition():
-#
-#    sql_expressions = [
-#        {'join_condition': 'select * from table1 join table2 on TABLE1.id = TABLE2.id'}
-#    ]
-#    local_tables = {
-#        'TABLE1': []
-#    }
-#    global_tables = {}
-#    lib.sparql_to_sql.map_join_condition(sql_expressions, local_tables, global_tables)
-#    assert global_tables == {'TABLE2': 'id'}
-
-
 @patch('lib.sparql_to_sql.utils.create_varname')
 def test_wrap_sql_projection(mock_create_varname):
     ctx = {
@@ -260,7 +245,6 @@ def test_wrap_sql_projection(mock_create_varname):
 @patch('lib.sparql_to_sql.translateQuery')
 @patch('lib.sparql_to_sql.parseQuery')
 @patch('lib.sparql_to_sql.translate_query')
-#@patch('lib.sparql_to_sql.owlrl')
 @patch('lib.sparql_to_sql.Graph')
 def test_translate_sparql(mock_graph, mock_translate_query, mock_parseQuery, mock_translateQuery,
                           monkeypatch):
@@ -296,18 +280,6 @@ def test_translate_sparql(mock_graph, mock_translate_query, mock_parseQuery, moc
     assert mock_translate_query.called
     assert mock_translateQuery.called
     assert mock_parseQuery.called
-
-
-#@patch('lib.sparql_to_sql.utils.create_varname')
-#def test_add_projection_vars_to_tables(mock_create_varname):
-#    mock_create_varname.return_value = 'var'
-#    ctx = {
-##        'bounds': {'var': 'TABLE.`id`'},
-#        'PV': ['var'],
-#        'tables': {}
-#    }
-#    lib.sparql_to_sql.add_projection_vars_to_tables(ctx)
-#    assert ctx['tables']['TABLE'] == ['id']
 
 
 @patch('lib.sparql_to_sql.translate')
@@ -388,7 +360,8 @@ SQL_DIALECT_SQLITE_TIMESTAMP\nFROM target_sql WHERE where"
 @patch('lib.sparql_to_sql.wrap_sql_construct')
 @patch('lib.sparql_to_sql.bgp_translation_utils.merge_vartypes')
 @patch('lib.sparql_to_sql.bgp_translation_utils.create_ngsild_mappings')
-def test_translate_construct_query(create_ngsild_mappings_mock, merge_vartypes_mock, wrap_sql_construct_mock, translate_mock):
+def test_translate_construct_query(create_ngsild_mappings_mock, merge_vartypes_mock,
+                                   wrap_sql_construct_mock, translate_mock):
     ctx = {}
     query = MagicMock()
     query.p = {
@@ -401,16 +374,17 @@ def test_translate_construct_query(create_ngsild_mappings_mock, merge_vartypes_m
     lib.sparql_to_sql.translate_construct_query(ctx, query)
     assert d['where'] == 'where'
     assert d['target_sql'] == 'target_sql'
-    
+
+
 def test_merge_bgp_context():
     bgp_context = [
         {
             'statement': 'statement',
-            'join_condition': 'join_condition',    
+            'join_condition': 'join_condition',
         },
         {
             'statement': 'statement2',
-            'join_condition': 'join_condition2',    
+            'join_condition': 'join_condition2',
         }
     ]
     expression, where = lib.sparql_to_sql.merge_bgp_context(bgp_context, True)

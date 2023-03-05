@@ -204,17 +204,15 @@ def test_create_output_folder(tmp_path):
 def test_wrap_ngsild_variable():
     ctx = {
         'bounds': {'var': 'TABLE.`id`'},
-        'property_variables': {},
         'entity_variables': {},
         'property_variables': {rdflib.Variable('var'): True}
     }
     var = rdflib.Variable('var')
     bounds = utils.wrap_ngsild_variable(ctx, var)
     assert bounds == "'<' || TABLE.`id` || '>'"
-    
+
     ctx = {
         'bounds': {'var': 'TABLE.`id`'},
-        'property_variables': {},
         'entity_variables': {},
         'property_variables': {rdflib.Variable('var'): False}
     }
