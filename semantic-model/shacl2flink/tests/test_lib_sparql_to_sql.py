@@ -354,3 +354,31 @@ def test_get_attribute_column(monkeypatch):
     assert attribute_type == 'https://uri.etsi.org/ngsi-ld/Property'
     assert value_var == term.Variable('y')
     assert nodetype == '@value'
+
+
+@patch('lib.sparql_to_sql.get_bound_trim_string')
+@patch('lib.sparql_to_sql.get_attribute_column')
+def test_wrap_sql_construct(attribute_column_mock, get_bound_trim_string_mock):
+    attribute_column_mock.return_value = (term.Variable("var"), 'name', 'type', 'value', 'nodetype')
+    get_bound_trim_string_mock.return_value = 'bound_trim_string'
+    ctx = {
+        'bounds': {'var': 'TABLE.`id`'},
+        'PV': ['var'],
+        'property_variables': {term.Variable('y')},
+        'tables': {}
+    }
+    node = {
+        'target_sql': 'target_sql',
+        'where': 'where'
+    }
+    lib.sparql_to_sql.wrap_sql_construct(ctx, node)
+    assert node['target_sql'] == "SQL_DIALECT_INSERT_ATTRIBUTES\nSELECT TABLE.`id` || '\\' || 'name',\
+\nTABLE.`id`,\
+\n'name',\
+\n'nodetype',\
+\nCAST(NULL as STRING),\
+\n0,\
+\n'type',\
+\nbound_trim_string,\
+\nCAST(NULL as STRING)\n,\
+SQL_DIALECT_SQLITE_TIMESTAMP\nFROM target_sql WHERE where"
