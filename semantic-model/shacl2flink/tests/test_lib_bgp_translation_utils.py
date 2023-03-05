@@ -656,6 +656,58 @@ CTABLE.`https://industry-fusion.com/types/v0.9/hasFilter`'},
 `https://uri.etsi.org/ngsi-ld/hasObject`'}]
 
 
+@patch('lib.bgp_translation_utils.get_random_string')
+@patch('lib.utils.create_varname')
+@patch('lib.bgp_translation_utils.create_tablename')
+@patch('lib.bgp_translation_utils.isentity')
+def test_process_ngsild_spo_obj_defined(mock_isentity, mock_create_table_name, mock_create_varname,
+                                        mock_get_random_string, monkeypatch):
+    relationships = {
+        "https://industry-fusion.com/types/v0.9/hasFilter": True
+    }
+    properties = {
+        "https://industry-fusion.com/types/v0.9/state": True
+    }
+    mock_create_table_name.return_value = 'testtable'
+    mock_isentity.return_value = True
+    mock_create_varname.return_value = 'f'
+    mock_get_random_string.return_value = ''
+    mock_h = MagicMock()
+    mock_h.predicates.return_value = [hasObjectURI]
+    mock_h.objects.return_value = [term.Variable('f')]
+    ctx = {
+        'namespace_manager': None,
+        'bounds': {'this': 'THISTABLE.id'},
+        'tables': {'THISTABLE': ['id']},
+        'sql_tables': [],
+        'properties': properties,
+        'relationships': relationships
+    }
+    # test with unbound v1
+    local_ctx = {
+        'bounds': {'this': 'THISTABLE.id', 'f': 'FTABLE.id'},
+        'selvars': {},
+        'where': '',
+        'bgp_sql_expression': [],
+        'bgp_tables': {},
+        'property_variables': {},
+        'entity_variables': {},
+        'h': mock_h,
+        'row': {'f': 'ftable'}
+    }
+    s = term.Variable('f')
+    p = hasFilterURI
+    o = term.BNode('1')
+    lib.bgp_translation_utils.process_ngsild_spo(ctx, local_ctx, s, p, o)
+    assert local_ctx['bgp_tables'] == {'FHAS_FILTERTABLE': [], 'FTABLE': []}
+    assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'f': 'FTABLE.id'}
+    assert local_ctx['bgp_sql_expression'] == [
+        {'statement': 'attributes_view AS FHAS_FILTERTABLE', 'join_condition': 'FHAS_FILTERTABLE.\
+`https://uri.etsi.org/ngsi-ld/hasObject` = FTABLE.id'},
+        {'statement': 'ftable_view AS FTABLE', 'join_condition': 'FHAS_FILTERTABLE.id = FTABLE.\
+`https://industry-fusion.com/types/v0.9/hasFilter`'}]
+
+
 @patch('lib.bgp_translation_utils.copy')
 def test_sort_triples(mock_copy, monkeypatch):
     def create_varname(var):
