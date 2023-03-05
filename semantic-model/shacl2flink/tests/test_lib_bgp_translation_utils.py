@@ -449,6 +449,57 @@ def test_process_rdf_spo_subject_is_entity_and_predicate_is_type(mock_isentity, 
     assert local_ctx['where'] == "'<' || FILTER.type || '>' = '<https://example.com/obj>'"
 
 
+@patch('lib.bgp_translation_utils.get_rdf_join_condition')
+@patch('lib.bgp_translation_utils.get_random_string')
+@patch('lib.utils.create_varname')
+@patch('lib.bgp_translation_utils.create_tablename')
+@patch('lib.bgp_translation_utils.isentity')
+def test_process_rdf_spo_blank_node(mock_isentity, mock_create_table_name, mock_create_varname,
+                                              mock_get_random_string, mock_get_rdf_join_condition,
+                                              monkeypatch):
+    relationships = {
+        "https://industry-fusion.com/types/v0.9/hasFilter": True
+    }
+    properties = {
+        "https://industry-fusion.com/types/v0.9/state": True
+    }
+    mock_create_table_name.side_effect = ['testtable', 'testtable2']
+    mock_isentity.return_value = False
+    mock_create_varname.return_value = 'f'
+    mock_get_random_string.return_value = ''
+    mock_get_rdf_join_condition.return_value = 'condition'
+    h = rGraph()
+    h.add((term.BNode('1'), term.URIRef('predicate2'), term.Variable('x')))
+    ctx = {
+        'namespace_manager': None,
+        'bounds': {'this': 'THISTABLE.id'},
+        'tables': {'THISTABLE': ['id']},
+        'property_variables': {},
+        'entity_variables': {},
+        'properties': properties,
+        'relationships': relationships
+    }
+    local_ctx = {
+        'bounds': {'this': 'THISTABLE.id', 'f': 'FILTER.id'},
+        'selvars': {},
+        'where': '',
+        'bgp_sql_expression': [],
+        'bgp_tables': {},
+        'h': h,
+        'row': 'row'
+    }
+    s = term.Variable('f')
+    p = term.URIRef('predicate')
+    o = term.BNode('1')
+    lib.bgp_translation_utils.process_rdf_spo(ctx, local_ctx, s, p, o)
+    assert local_ctx['bgp_sql_expression'][0] == {'statement': 'rdf AS testtable',
+                                                'join_condition': "testtable.subject = condition and \
+testtable.predicate = '<predicate>' and testtable.object LIKE '_:%'"}
+    assert local_ctx['bgp_sql_expression'][1] == {'statement': 'rdf AS testtable2',
+                                                'join_condition': "testtable.subject = condition and \
+testtable2.predicate = '<predicate2>' and testtable.object = testtable2.subject and testtable2.object = condition"}
+
+
 @patch('lib.bgp_translation_utils.get_random_string')
 @patch('lib.utils.create_varname')
 @patch('lib.bgp_translation_utils.create_tablename')

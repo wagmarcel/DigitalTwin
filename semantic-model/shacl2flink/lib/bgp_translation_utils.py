@@ -581,7 +581,7 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
         for (bs, bp, bo) in local_ctx['h'].triples((o, None, None)):
             bo_rdftable_name = create_tablename(bo, bp, ctx['namespace_manager']) + get_random_string(10)
             bo_predicate_join_condition = f'{bo_rdftable_name}.predicate = {utils.format_node_type(bp)} and \
-                {rdftable_name}.object = {bo_rdftable_name}.subject'
+{rdftable_name}.object = {bo_rdftable_name}.subject'
             object_join_bound = get_rdf_join_condition(bo, ctx['property_variables'],
                                                        ctx['entity_variables'], local_ctx['bounds'])
             if object_join_bound is None:
