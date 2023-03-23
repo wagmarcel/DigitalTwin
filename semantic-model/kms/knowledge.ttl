@@ -1,6 +1,7 @@
 PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX iff: <https://industry-fusion.com/types/v0.9/>
+PREFIX oee: <https://industry-fusion.com/oee/v0.9/>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
 ### Test classes
@@ -26,10 +27,12 @@ iff:workpiece rdfs:subClassOf iff:entity ;
     a iff:class .
 iff:filterCartridge rdfs:subClassOf iff:entity ;
     a iff:class .
-iff:operationSchedule rdfs:subClassOf iff:linkedEntity ;
-    a iff:class .
-iff:maintenanceInterval rdfs:subClassOf iff:linkedEntity ;
-    a iff:class .
+
+
+iff:scheduleEntity a iff:class .
+iff:oeeTemplate rdfs:subClassOf iff:scheduleEntity .
+
+### Machine states
 iff:machineState a rdfs:class .
 iff:state_OFF a iff:machineState .
 iff:state_OFF iff:stateValidFor iff:filter, iff:cutter .
@@ -43,12 +46,21 @@ iff:state_CLEARING a iff:machineState .
 iff:state_CLEARING iff:stateValidFor iff:cutter .
 iff:state_CLEANING a iff:machineState .
 iff:state_CLEANING iff:stateValidFor iff:filter .
+iff:state_ERROR a iff:machineState .
+iff:state_ERROR iff:stateValidFor iff:filter, iff:cutter .
 
+### OEE definitions: What state defines availability
+iff:state_PROCESSING oee:availability "true" .
+iff:state_PREPARING oee:availability "false" .
+
+# labels for states
 iff:state_ON rdfs:label "ON" .
 iff:state_OFF rdfs:label "OFF" .
 iff:state_PREPARING rdfs:label "PREPARING" .
 iff:state_PROCESSING rdfs:label "PROCESSING" .
 iff:state_CLEARING rdfs:label "ON" .
+iff:state_ERROR rdfs:label "ERROR" .
+
 iff:WC0 a iff:WC .
 iff:WC1 a iff:WC .
 iff:WC2 a iff:WC .
