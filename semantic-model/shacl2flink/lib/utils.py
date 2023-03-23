@@ -309,6 +309,27 @@ def process_sql_dialect(expression, isSqlite):
     return result_expression
 
 
+def unwrap_variables(ctx, var):
+    """unwrap variables for arithmetic operations
+       ngsild variables are not touched except times variables
+       rdf variables are assumed to be Literals
+       
+    Args:
+        ctx (hash): context
+        var (Variable): RDFLib variable
+    """
+    bounds = ctx['bounds']
+    property_variables = ctx['property_variables']
+    entity_variables = ctx['entity_variables']
+    time_variables = ctx['time_variables']
+    varname = create_varname(var)
+    if var in property_variables or var in entity_variables:
+        return bounds[varname]
+    if var in time_variables:
+        return f"SQL_DIALECT_TIME_TO_MILLISECONDS({bounds[varname]})"
+    return f"SQL_DIALECT_STRIP_LITERAL({bounds[varname]})"
+    
+
 def wrap_ngsild_variable(ctx, var):
     """
     Wrap NGSI_LD variables into RDF
@@ -323,6 +344,7 @@ def wrap_ngsild_variable(ctx, var):
     bounds = ctx['bounds']
     property_variables = ctx['property_variables']
     entity_variables = ctx['entity_variables']
+    time_variables = ctx['time_variables']
     varname = create_varname(var)
     if var in property_variables:
         if varname in bounds:
@@ -336,5 +358,8 @@ def wrap_ngsild_variable(ctx, var):
     elif var in entity_variables:
         raise SparqlValidationFailed(f'Cannot bind enttiy variable {varname} to \
 plain RDF context')
+    elif var in time_variables:
+        if varname in bounds:
+            return "'\"' || " + bounds[varname] + " || '\"'"
     elif varname in bounds:  # plain RDF variable
         return bounds[varname]
