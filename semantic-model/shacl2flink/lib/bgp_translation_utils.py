@@ -459,12 +459,12 @@ Consider using a variable and FILTER instead.')
         if utils.create_varname(ngsildvar[0]) not in local_ctx['bounds']:
             local_ctx['bounds'][ngsildvar[0].toPython()[1:]] = f'`{attribute_tablename}`.`ts`'
         if attribute_tablename not in local_ctx['bgp_tables'] and attribute_tablename not in ctx['tables']:
-            if ctx['time_variables'][ngsildvar[0]]:
-                field = ngsild['hasObject']
-            else:
-                field = ngsild['hasValue']       
+            #if ctx['time_variables'][ngsildvar[0]]:
+            #    field = ngsild['hasObject']
+            #else:
+            #    field = ngsild['hasValue']       
             sql_expression = f'attributes_view AS {attribute_tablename}'
-            join_condition = f'{attribute_tablename}.id = {subject_tablename}.`{field}`'
+            join_condition = f'{attribute_tablename}.id = {subject_tablename}.`{p}`'
             local_ctx['bgp_sql_expression'].append({'statement': f'{sql_expression}',
                                                     'join_condition': f'{join_condition}'})
         local_ctx['bgp_tables'][attribute_tablename] = []
