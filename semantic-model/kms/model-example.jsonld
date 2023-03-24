@@ -5,6 +5,7 @@
     "type": "https://industry-fusion.com/types/v0.9/cutter",
     "https://industry-fusion.com/types/v0.9/state": {
       "type": "Property",
+      "observedAt": "2023-03-24 13:42:32.0",
       "value": {
         "@id": "https://industry-fusion.com/types/v0.9/state_PROCESSING"
       }
@@ -143,6 +144,48 @@
       "value": {
         "@id": "https://industry-fusion.com/types/v0.9/WC1"
       }
+    }
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "urn:oee:1",
+    "type": "https://industry-fusion.com/types/v0.9/oeeTemplate",
+    "https://industry-fusion.com/types/v0.9/startTime": {
+      "type": "Property",
+      "value": "2023-03-24 13:42:31"
+    },
+    "https://industry-fusion.com/types/v0.9/endTime": {
+      "type": "Property",
+      "value": "2023-03-24 14:42:31"
+    },
+    "https://industry-fusion.com/oee/v0.9/availabilityState": {
+      "type": "Property",
+      "value": "1",
+      "observedAt": "2023-03-24 13:42:31.2"
+    },
+    "https://industry-fusion.com/oee/v0.9/availabilityTimeAgg": {
+      "type": "Property",
+      "value": "1000"
+    },
+    "https://industry-fusion.com/oee/v0.9/runTime": {
+      "type": "Property",
+      "value": "1000"
+    },
+    "https://industry-fusion.com/oee/v0.9/netRunTime": {
+      "type": "Property",
+      "value": "1000"
+    },
+    "https://industry-fusion.com/oee/v0.9/totalCount": {
+      "type": "Property",
+      "value": "10"
+    },
+    "https://industry-fusion.com/oee/v0.9/goodCount": {
+      "type": "Property",
+      "value": "9"
+    },
+    "https://industry-fusion.com/oee/v0.9/referenceMachine": {
+      "type": "Relationship",
+      "object": "urn:plasmacutter:1"
     }
   }
 ]
