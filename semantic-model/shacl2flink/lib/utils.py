@@ -290,10 +290,11 @@ def format_node_type(node):
 def process_sql_dialect(expression, isSqlite):
     result_expression = expression
     if isSqlite:
-        result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI\(([^\(\)]*)\)',
-                                   r"ltrim(rtrim(\1, '>'), '<')", result_expression)
-        result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL\(([^\(\)]*)\)', r"trim(\1, '\"')",
-                                   result_expression)
+        while "SQL_DIALECT_STRIP" in result_expression:
+            result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI{([^{}]*)}',
+                                    r"ltrim(rtrim(\1, '>'), '<')", result_expression)
+            result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL{([^{}]*)}', r"trim(\1, '\"')",
+                                    result_expression)
         result_expression = result_expression.replace('SQL_DIALECT_CURRENT_TIMESTAMP', 'datetime()')
         result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES',
                                                       'INSERT OR REPLACE INTO attributes_insert_filter')
@@ -323,11 +324,11 @@ def unwrap_variables(ctx, var):
     entity_variables = ctx['entity_variables']
     time_variables = ctx['time_variables']
     varname = create_varname(var)
-    if var in property_variables or var in entity_variables:
-        return bounds[varname]
+    #if var in property_variables or var in entity_variables:
+    #    return bounds[varname]
     if var in time_variables:
         return f"SQL_DIALECT_TIME_TO_MILLISECONDS({bounds[varname]})"
-    return f"SQL_DIALECT_STRIP_LITERAL({bounds[varname]})"
+    return bounds[varname]
     
 
 def wrap_ngsild_variable(ctx, var):

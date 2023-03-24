@@ -241,12 +241,19 @@ def translate_function(ctx, function):
         if len(expr) != 1:
             raise utils.WrongSparqlStructure('XSD function with too many parameters')
         cast = 'notfound'
+        stringcast = False
         var = bounds[utils.create_varname(expr[0])]
-        if iri == iri == XSD['integer']:
+        if iri == XSD['integer']:
             cast = 'INTEGER'
-        elif iri == iri == XSD['float']:
+        elif iri == XSD['float']:
             cast = 'FLOAT'
-        result = f'CAST({var} as {cast})'
+        elif iri == XSD['string']:
+            cast = 'STRING'
+            stringcast = True
+        if not stringcast:
+            result = f'CAST(SQL_DIALECT_STRIP_LITERAL{{{var}}} as {cast})'
+        else: 
+            result = f'CAST(SQL_DIALECT_STRIP_IRI{{{var}}} as {cast})'
     return result
 
 
@@ -339,11 +346,11 @@ def get_bound_trim_string(ctx, boundsvar):
     boundsvarname = boundsvar.toPython()[1:]
     if boundsvarname in bounds and boundsvar in ctx['property_variables']:
         if ctx['property_variables'][boundsvar]:
-            return f"SQL_DIALECT_STRIP_IRI({bounds[boundsvarname]})"
+            return f"SQL_DIALECT_STRIP_IRI{{{bounds[boundsvarname]}}}"
         else:
-            return f"SQL_DIALECT_STRIP_LITERAL({bounds[boundsvarname]})"
+            return f"SQL_DIALECT_STRIP_LITERAL{{{bounds[boundsvarname]}}}"
     elif boundsvarname in bounds and boundsvar in ctx['time_variables']:
-        return f"SQL_DIALECT_STRIP_LITERAL({bounds[boundsvarname]})"
+        return f"SQL_DIALECT_STRIP_LITERAL{{{bounds[boundsvarname]}}}"
     else:  
         raise utils.WrongSparqlStructure('Trying to trim non-bound variable')
 

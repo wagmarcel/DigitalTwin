@@ -493,7 +493,7 @@ iff:OeeTemplateShape
                     OPTIONAL {$this oee:availabilityTimeAgg [ <https://uri.etsi.org/ngsi-ld/hasValue> ?availabilityTimeAgg ] }
                     bind((?stateTs - ?availabilityStateTs) as ?deltaTs) .
                     bind(IF(bound(?availabilityVal) && xsd:integer(?availabilityVal) = 1, 1, 0) as ?availabilityStateUpdate) .
-                    bind(IF(bound(?availabilityState) = 1, ?availabilityTimeAgg + ?stateTs - ?availabilityStateTs, ?availabilityTimeAgg) as ?availabilityTimeAggUpdate) .
+                    bind(IF(bound(?availabilityState) && ?availabilityState = 1, ?availabilityTimeAgg + ?stateTs - ?availabilityStateTs, ?availabilityTimeAgg) as ?availabilityTimeAggUpdate) .
                     FILTER(?deltaTs > 0)
 			}
 			""" ;
