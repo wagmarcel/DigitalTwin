@@ -50,8 +50,8 @@ iff:state_ERROR a iff:machineState .
 iff:state_ERROR iff:stateValidFor iff:filter, iff:cutter .
 
 ### OEE definitions: What state defines availability
-iff:state_PROCESSING oee:availability "true" .
-iff:state_PREPARING oee:availability "false" .
+iff:state_PROCESSING oee:availability "1" .
+iff:state_PREPARING oee:availability "0" .
 
 # labels for states
 iff:state_ON rdfs:label "ON" .

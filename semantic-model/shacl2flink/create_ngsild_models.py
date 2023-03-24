@@ -39,7 +39,7 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 SELECT (?a as ?entityId) (?b as ?name) (?e as ?type) (IF(bound(?g), IF(isIRI(?g), '@id', '@value'), IF(isIRI(?f), '@id', '@value')) as ?nodeType)
-(datatype(?g) as ?valueType) (?f as ?hasValue) (?g as ?hasObject)
+(datatype(?g) as ?valueType) (?f as ?hasValue) (?g as ?hasObject) ?observedAt
 where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?class .
@@ -53,6 +53,7 @@ where {
     } .
     {?a ?b [ ngsild:hasObject ?g ] .
     VALUES ?e {ngsild:Relationship} .
+    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt ] .} .
     }
     UNION
     { ?a ?b [ ngsild:hasValue ?f ] .
@@ -60,12 +61,14 @@ where {
     VALUES ?e {ngsild:Property}
     FILTER(!isIRI(?f))
     ?nodeshape sh:property [ sh:path ?b ] .
+    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt ] .} .
     }
     UNION
     { ?a ?b [ ngsild:hasValue ?f ] .
     VALUES ?d {'@id'} .
     VALUES ?e {ngsild:Property}
     FILTER(isIRI(?f))
+    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt ] .} .
     }
 }
 """  # noqa: E501
@@ -114,7 +117,7 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
         print(f'INSERT INTO `{configs.attributes_table_name}` VALUES',
               file=sqlitef)
         for entityId, name, type, nodeType, valueType, hasValue,\
-                hasObject in qres:
+                hasObject, observedAt in qres:
             id = entityId.toPython() + "\\\\" + name.toPython()
             if id not in entity_count:
                 entity_count[id] = 0
@@ -130,12 +133,15 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                 first = False
             else:
                 print(',', file=sqlitef)
+            current_timestamp = "CURRENT_TIMESTAMP"
+            if observedAt is not None:
+                current_timestamp = f"'{str(observedAt)}'"
             print("('" + id + "', '" + entityId.toPython() + "', '" +
                   name.toPython() +
                   "', '" + nodeType + "', " + valueType + ", " +
                   str(entity_count[id]) +
                   ", '" + type.toPython() + "'," + hasValue + ", " +
-                  hasObject + ", " + 'CURRENT_TIMESTAMP' + ")", end='',
+                  hasObject + ", " + current_timestamp + ")", end='',
                   file=sqlitef)
         print(";", file=sqlitef)
 
