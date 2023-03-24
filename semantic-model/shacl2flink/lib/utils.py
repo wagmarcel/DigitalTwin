@@ -177,7 +177,7 @@ def create_sql_view(table_name, table, primary_key=['id'],
     for field in table:
         for field_name, field_type in field.items():
             if ('metadata' not in field_name.lower() and
-                    field_name.lower() != "ts" and
+                    #field_name.lower() != "ts" and
                     field_name.lower() != "id" and
                     field_name.lower() != "watermark" and
                     field_name.lower() != "type"):
@@ -295,6 +295,8 @@ def process_sql_dialect(expression, isSqlite):
                                     r"ltrim(rtrim(\1, '>'), '<')", result_expression)
             result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL{([^{}]*)}', r"trim(\1, '\"')",
                                     result_expression)
+        result_expression = re.sub(r'SQL_DIALECT_TIME_TO_MILLISECONDS{([^{}]*)}', r"CAST(julianday(\1) * 86400000 as INTEGER)",
+                                result_expression)
         result_expression = result_expression.replace('SQL_DIALECT_CURRENT_TIMESTAMP', 'datetime()')
         result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES',
                                                       'INSERT OR REPLACE INTO attributes_insert_filter')
@@ -313,8 +315,8 @@ def process_sql_dialect(expression, isSqlite):
 def unwrap_variables(ctx, var):
     """unwrap variables for arithmetic operations
        ngsild variables are not touched except times variables
-       rdf variables are assumed to be Literals
-       
+       rdf variables are assumed to be Simple Literals and are treatet
+       as strings when not casted
     Args:
         ctx (hash): context
         var (Variable): RDFLib variable
@@ -327,7 +329,7 @@ def unwrap_variables(ctx, var):
     #if var in property_variables or var in entity_variables:
     #    return bounds[varname]
     if var in time_variables:
-        return f"SQL_DIALECT_TIME_TO_MILLISECONDS({bounds[varname]})"
+        return f"SQL_DIALECT_TIME_TO_MILLISECONDS{{{bounds[varname]}}}"
     return bounds[varname]
     
 
