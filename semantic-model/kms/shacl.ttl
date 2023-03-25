@@ -482,6 +482,7 @@ iff:OeeTemplateShape
             PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 			CONSTRUCT {
 				$this oee:availabilityState [ <https://uri.etsi.org/ngsi-ld/hasValue> ?availabilityStateUpdate ] .
+                $this oee:availabilityTimeAgg [ <https://uri.etsi.org/ngsi-ld/hasValue> ?availabilityTimeAggUpdate ] .
 			}
 			WHERE {
                     $this oee:referenceMachine [ <https://uri.etsi.org/ngsi-ld/hasObject> ?machine ] .
@@ -493,7 +494,7 @@ iff:OeeTemplateShape
                     OPTIONAL {$this oee:availabilityTimeAgg [ <https://uri.etsi.org/ngsi-ld/hasValue> ?availabilityTimeAgg ] }
                     bind((?stateTs - ?availabilityStateTs) as ?deltaTs) .
                     bind(IF(bound(?availabilityVal) && xsd:integer(?availabilityVal) = 1, 1, 0) as ?availabilityStateUpdate) .
-                    bind(IF(bound(?availabilityState) && ?availabilityState = 1, ?availabilityTimeAgg + ?stateTs - ?availabilityStateTs, ?availabilityTimeAgg) as ?availabilityTimeAggUpdate) .
+                    bind(IF(bound(?availabilityState) && xsd:integer(?availabilityState) = 1, ?availabilityTimeAgg + ?stateTs - ?availabilityStateTs, ?availabilityTimeAgg) as ?availabilityTimeAggUpdate) .
                     FILTER(?deltaTs > 0)
 			}
 			""" ;

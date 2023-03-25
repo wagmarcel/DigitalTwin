@@ -221,16 +221,16 @@ def translate_additive_expression(ctx, elem):
     else:  # Neither Variable, nor Literal, nor IRI - hope it is further translatable
         expr = translate(ctx, elem.expr)
 
-    if isinstance(elem.other[0], Variable):
-        other = utils.unwrap_variables(ctx, elem.other[0])
-    elif isinstance(elem.other[0], Literal) or isinstance(elem.other[0], URIRef):
-        other = utils.unwrap_variables(elem.other[0])
-    else:
-        other = translate(ctx, elem.other)
+    for op, other in zip (elem.op, elem.other):
+        if isinstance(other, Variable):
+            other_val = utils.unwrap_variables(ctx, other)
+        elif isinstance(other, Literal) or isinstance(other, URIRef):
+            other_val = utils.unwrap_variables(other)
+        else:
+            other_val = translate(ctx, other)
+        expr += f" {op} {other_val} "
 
-    op = elem.op[0]
-
-    return f'{expr} {op} {other}'
+    return expr
 
 def translate_function(ctx, function):
     bounds = ctx['bounds']
@@ -320,24 +320,32 @@ def translate_project(ctx, project):
 
 def wrap_sql_construct(ctx, node):
     # For the time being, only wrap properties, no relationships
-    (entityId_var, name, attribute_type, value_var, node_type) = get_attribute_column(ctx, node)
-    entityId_varname = entityId_var.toPython()[1:]
-
-    bounds = ctx['bounds']
+    columns = get_attribute_columns(ctx, node)
+    first = True
     construct_query = "SQL_DIALECT_INSERT_ATTRIBUTES\n"
-    construct_query += "SELECT "
-    construct_query += f'{bounds[entityId_varname]} || \'\\\' || \'{name}\',\n'  # id
-    construct_query += f'{bounds[entityId_varname]},\n'  # entityId
-    construct_query += f'\'{name}\',\n'  # name
-    construct_query += f'\'{node_type}\',\n'  # nodeType
-    construct_query += 'CAST(NULL as STRING),\n'  # valueType
-    construct_query += '0,\n'  # index
-    construct_query += f'\'{attribute_type}\',\n'
-    construct_query += f"{get_bound_trim_string(ctx, value_var)},\n"  # value
-    construct_query += 'CAST(NULL as STRING)\n'  # object
-    construct_query += ',SQL_DIALECT_SQLITE_TIMESTAMP\n'  # ts
-    construct_query += 'FROM ' + node['target_sql']
-    construct_query += ' WHERE ' + node['where']
+    bounds = ctx['bounds']
+    
+    for (entityId_var, name, attribute_type, value_var, node_type) in columns:
+        if first:
+            first = False
+        else:
+            construct_query += "\nUNION ALL\n"
+        entityId_varname = entityId_var.toPython()[1:]
+
+        construct_query += "SELECT "
+        construct_query += f'{bounds[entityId_varname]} || \'\\\' || \'{name}\',\n'  # id
+        construct_query += f'{bounds[entityId_varname]},\n'  # entityId
+        construct_query += f'\'{name}\',\n'  # name
+        construct_query += f'\'{node_type}\',\n'  # nodeType
+        construct_query += 'CAST(NULL as STRING),\n'  # valueType
+        construct_query += '0,\n'  # index
+        construct_query += f'\'{attribute_type}\',\n'
+        construct_query += f"{get_bound_trim_string(ctx, value_var)},\n"  # value
+        construct_query += 'CAST(NULL as STRING)\n'  # object
+        construct_query += ',SQL_DIALECT_SQLITE_TIMESTAMP\n'  # ts
+        
+        construct_query += 'FROM ' + node['target_sql']
+        construct_query += ' WHERE ' + node['where']
     node['target_sql'] = construct_query
 
 
@@ -355,33 +363,33 @@ def get_bound_trim_string(ctx, boundsvar):
         raise utils.WrongSparqlStructure('Trying to trim non-bound variable')
 
 
-def get_attribute_column(ctx, node):
+def get_attribute_columns(ctx, node):
     entityId_var = None
     name = None
-
+    properties = ctx['properties']
     value_var = None
     nodetype = '@value'
     bnode = None
+    predicates = {}
+    result = []
     for (s, p, o) in node['template']:
         if p.toPython() in properties:
-            if entityId_var is not None:
-                raise utils.WrongSparqlStructure('Construction of more than one attributes \
-not yet implemented!')
-            entityId_var = s
-            name = p
-            bnode = o
-        if p.toPython() in relationships:
+            predicates[o.toPython()] = (s, p)
+        elif p.toPython() in relationships:
             raise utils.WrongSparqlStructure('Construction of relationship not yet implemented')
     for (s, p, o) in node['template']:
-        if s == bnode:
-            value_var = o
-    if entityId_var is None or name is None or value_var is None:
-        raise utils.WrongSparqlStructure('No attribute constructed in construct query!')
-    attribute_type = bgp_translation_utils.ngsild['Property'] if value_var in ctx['property_variables'] else \
-        bgp_translation_utils.ngsild['Relationship']
-    if value_var in ctx['property_variables'] and ctx['property_variables'][value_var]:
-        nodetype = '@id'
-    return (entityId_var, name.toPython(), attribute_type.toPython(), value_var, nodetype)
+        if s.toPython() not in predicates:
+            continue
+        value_var = o
+        entityId_var, name = predicates[s.toPython()]
+        #if entityId_var is None or name is None or value_var is None:
+            #raise utils.WrongSparqlStructure('No attribute constructed in construct query!')
+        attribute_type = bgp_translation_utils.ngsild['Property'] if value_var in ctx['property_variables'] else \
+            bgp_translation_utils.ngsild['Relationship']
+        if value_var in ctx['property_variables'] and ctx['property_variables'][value_var]:
+            nodetype = '@id'
+        result.append((entityId_var, name.toPython(), attribute_type.toPython(), value_var, nodetype))
+    return result
 
 
 def wrap_sql_projection(ctx, node):
