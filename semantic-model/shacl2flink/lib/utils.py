@@ -289,18 +289,22 @@ def format_node_type(node):
 
 def process_sql_dialect(expression, isSqlite):
     result_expression = expression
+    max_recursion = 10
     if isSqlite:
         while "SQL_DIALECT_STRIP" in result_expression:
+            max_recursion = max_recursion - 1
+            if max_recursion == 0:
+                raise WrongSparqlStructure("Unexpected problem with SQL_DIALECT macros.")
             result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI{([^{}]*)}',
                                     r"ltrim(rtrim(\1, '>'), '<')", result_expression)
             result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL{([^{}]*)}', r"trim(\1, '\"')",
                                     result_expression)
-        result_expression = re.sub(r'SQL_DIALECT_TIME_TO_MILLISECONDS{([^{}]*)}', r"CAST(julianday(\1) * 86400000 as INTEGER)",
-                                result_expression)
-        result_expression = result_expression.replace('SQL_DIALECT_CURRENT_TIMESTAMP', 'datetime()')
-        result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES',
-                                                      'INSERT OR REPLACE INTO attributes_insert_filter')
-        result_expression = result_expression.replace('SQL_DIALECT_SQLITE_TIMESTAMP', 'CURRENT_TIMESTAMP')
+            result_expression = re.sub(r'SQL_DIALECT_TIME_TO_MILLISECONDS{([^{}]*)}', r"CAST(julianday(\1) * 86400000 as INTEGER)",
+                                    result_expression)
+            result_expression = result_expression.replace('SQL_DIALECT_CURRENT_TIMESTAMP', 'datetime()')
+            result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES',
+                                                        'INSERT OR REPLACE INTO attributes_insert_filter')
+            result_expression = result_expression.replace('SQL_DIALECT_SQLITE_TIMESTAMP', 'CURRENT_TIMESTAMP')
     else:
         result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI\(([^\(\)]*)\)',
                                    r"REGEXP_REPLACE(CAST(\1 as STRING), '>|<', '')", result_expression)
