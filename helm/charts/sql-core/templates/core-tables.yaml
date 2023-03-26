@@ -140,7 +140,8 @@ spec:
   sqlstatement: |
     SELECT id, entityId, name, nodeType, valueType, index, `type`,
            `https://uri.etsi.org/ngsi-ld/hasValue`,
-           `https://uri.etsi.org/ngsi-ld/hasObject`
+           `https://uri.etsi.org/ngsi-ld/hasObject`,
+           `ts`
     FROM (
       SELECT *,
       ROW_NUMBER() OVER (PARTITION BY `id`

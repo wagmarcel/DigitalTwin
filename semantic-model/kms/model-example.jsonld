@@ -186,6 +186,10 @@
     "https://industry-fusion.com/oee/v0.9/referenceMachine": {
       "type": "Relationship",
       "object": "urn:plasmacutter:1"
+    },
+    "https://industry-fusion.com/types/v0.9/activeState": {
+      "type": "Property",
+      "value": "0"
     }
   }
 ]

@@ -140,7 +140,7 @@ def create_yaml_view(name, table, primary_key=['id']):
     for field in table:
         for field_name, field_type in field.items():
             if ('metadata' not in field_name.lower() and
-                    field_name.lower() != "ts" and
+                    #field_name.lower() != "ts" and
                     field_name.lower() != "id" and
                     field_name.lower() != "watermark" and
                     field_name.lower() != "type"):
@@ -290,11 +290,12 @@ def format_node_type(node):
 def process_sql_dialect(expression, isSqlite):
     result_expression = expression
     max_recursion = 10
-    if isSqlite:
-        while "SQL_DIALECT_STRIP" in result_expression:
-            max_recursion = max_recursion - 1
-            if max_recursion == 0:
-                raise WrongSparqlStructure("Unexpected problem with SQL_DIALECT macros.")
+    while "SQL_DIALECT_STRIP" in result_expression:
+        max_recursion = max_recursion - 1
+        if max_recursion == 0:
+            raise WrongSparqlStructure("Unexpected problem with SQL_DIALECT macros.")
+        if isSqlite:
+
             result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI{([^{}]*)}',
                                     r"ltrim(rtrim(\1, '>'), '<')", result_expression)
             result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL{([^{}]*)}', r"trim(\1, '\"')",
@@ -305,14 +306,16 @@ def process_sql_dialect(expression, isSqlite):
             result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES',
                                                         'INSERT OR REPLACE INTO attributes_insert_filter')
             result_expression = result_expression.replace('SQL_DIALECT_SQLITE_TIMESTAMP', 'CURRENT_TIMESTAMP')
-    else:
-        result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI\(([^\(\)]*)\)',
-                                   r"REGEXP_REPLACE(CAST(\1 as STRING), '>|<', '')", result_expression)
-        result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL\(([^\(\)]*)\)',
-                                   r"REGEXP_REPLACE(CAST(\1 as STRING), '\"', '')", result_expression)
-        result_expression = result_expression.replace('SQL_DIALECT_CURRENT_TIMESTAMP', 'CURRENT_TIMESTAMP')
-        result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES', 'INSERT into attributes_insert')
-        result_expression = result_expression.replace(',SQL_DIALECT_SQLITE_TIMESTAMP', '')
+        else:
+            result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI{([^{}]*)}',
+                                        r"REGEXP_REPLACE(CAST(\1 as STRING), '>|<', '')", result_expression)
+            result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL{([^{}]*)}',
+                                    r"REGEXP_REPLACE(CAST(\1 as STRING), '\"', '')", result_expression)
+            result_expression = re.sub(r'SQL_DIALECT_TIME_TO_MILLISECONDS{([^{}]*)}', r"1000 * UNIX_TIMESTAMP(CAST(\1 AS STRING)) + EXTRACT(MILLISECOND FROM \1)",
+                                    result_expression)
+            result_expression = result_expression.replace('SQL_DIALECT_CURRENT_TIMESTAMP', 'CURRENT_TIMESTAMP')
+            result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES', 'INSERT into attributes_insert')
+            result_expression = result_expression.replace(',SQL_DIALECT_SQLITE_TIMESTAMP', '')
     return result_expression
 
 
