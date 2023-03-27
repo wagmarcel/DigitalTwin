@@ -178,6 +178,9 @@ def translate(ctx, elem):
     elif elem.name == 'ConditionalAndExpression':
         result = translate_and_expression(ctx, elem)
         return result
+    elif elem.name == 'ConditionalOrExpression':
+        result = translate_or_expression(ctx, elem)
+        return result
     elif elem.name == 'RelationalExpression':
         result = translate_relational_expression(ctx, elem)
         return result
@@ -596,6 +599,17 @@ def translate_and_expression(ctx, expr):
     return result
 
 
+def translate_or_expression(ctx, expr):
+    """
+    Translates OR expression to SQL
+    """
+    result = translate(ctx, expr.expr)
+    for otherexpr in expr.other:
+        result += ' or '
+        result += translate(ctx, otherexpr)
+    return result
+
+
 def translate_relational_expression(ctx, elem):
     """
     Translates RelationalExpression to SQL
@@ -613,7 +627,7 @@ def translate_relational_expression(ctx, elem):
     elif isinstance(elem.other, Literal) or isinstance(elem.other, URIRef):
         other = utils.format_node_type(elem.other)
     else:
-        raise utils.WrongSparqlStructure(f'Expression {elem.other} not supported!')
+        other = translate(ctx, elem.other)
 
     op = elem.op
     if elem.op == '!=':

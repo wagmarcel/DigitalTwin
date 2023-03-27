@@ -336,7 +336,28 @@ iff:ScheduleEntityShape
             sh:hasValue <https://uri.etsi.org/ngsi-ld/Property> ;
         ] ;
     ] ;
+    sh:property [
+        sh:path <https://industry-fusion.com/types/v0.9/activeState> ;
+        sh:order 13 ;
+        sh:nodeKind sh:BlankNode;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:property [
+
+            sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+            sh:nodeKind sh:Literal;
+            sh:minInclusive 0 ;
+            sh:maxInclusive 1 ;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+        ] ;
+        sh:property [
+            sh:path rdf:type ;
+            sh:hasValue <https://uri.etsi.org/ngsi-ld/Property> ;
+        ] ;
+    ];
 .
+
 
 iff:OeeTemplateShape
     a sh:NodeShape ;
@@ -545,6 +566,32 @@ iff:OeeTemplateShape
         ] ;
     ] ;
     .
+
+
+    iff:OEEActivateShape
+    a sh:NodeShape ;
+    rdfs:comment "Update activity state" ;
+    sh:targetClass iff:scheduleEntity ;
+    sh:rule [
+		a sh:SPARQLRule ;
+		sh:construct """
+            PREFIX iff: <https://industry-fusion.com/types/v0.9/>
+            PREFIX oee: <https://industry-fusion.com/oee/v0.9/>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			CONSTRUCT {
+				$this iff:activeState [ <https://uri.etsi.org/ngsi-ld/hasValue> ?stateUpdate ] .
+			}
+			WHERE {
+                    $this iff:startTime [ <https://uri.etsi.org/ngsi-ld/hasValue> ?startTime ] .
+                    $this iff:endTime [ <https://uri.etsi.org/ngsi-ld/hasValue> ?endTime ] .
+                    OPTIONAL{$this iff:activeState [ <https://uri.etsi.org/ngsi-ld/hasValue> ?state ] .} .
+                    FILTER(?state = '0' && ?startTime <= now() || ?state = '1' && ?endTime < now())
+                    bind(IF(?state = '0', '1', '0') as ?stateUpdate)
+			}
+			""" ;
+	] ;
+.
 
 
     iff:OEEUpdateAvailabilityShape
