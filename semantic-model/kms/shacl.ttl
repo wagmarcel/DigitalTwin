@@ -568,6 +568,31 @@ iff:OeeTemplateShape
     .
 
 
+    iff:ScheduleTimeValidation
+    a sh:NodeShape ;
+    rdfs:comment "Check if a schedule is valid" ;
+    sh:targetClass iff:scheduleEntity ;
+    sh:sparql [
+        a sh:SPARQLConstraints ;
+        sh:message "Invalid Schedule: End of Schedule is before start of schedule." ;
+        sh:select """
+        PREFIX iff: <https://industry-fusion.com/types/v0.9/>
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX schema: <https://schema.org/>
+
+        SELECT $this
+            where {
+                $this  iff:startTime [ <https://uri.etsi.org/ngsi-ld/hasValue> ?startTime ] .
+                $this  iff:endTime [ <https://uri.etsi.org/ngsi-ld/hasValue> ?endTime ] .
+                
+                FILTER(?startTime >= ?endTime) .
+            }
+        """ ;
+    ] .
+
+
+
     iff:OEEActivateShape
     a sh:NodeShape ;
     rdfs:comment "Update activity state" ;
