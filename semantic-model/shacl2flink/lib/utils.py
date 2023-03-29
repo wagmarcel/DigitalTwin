@@ -370,6 +370,6 @@ def wrap_ngsild_variable(ctx, var):
 plain RDF context')
     elif var in time_variables:
         if varname in bounds:
-            return "'\"' || " + bounds[varname] + " || '\"'"
+            return f"SQL_DIALECT_TIME_TO_MILLISECONDS{{{bounds[varname]}}}"
     elif varname in bounds:  # plain RDF variable
         return bounds[varname]

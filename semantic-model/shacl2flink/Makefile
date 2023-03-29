@@ -49,7 +49,12 @@ setup-dev: requirements-dev.txt
 test-sqlite:
 	@echo Test with sqlite
 	cat $(sqlite_files) | $(SQLITE3) $(SQLITEDB)
+	echo "Alerts"
+	echo ------------------------------------------------
 	echo 'select * from alerts_bulk;'| sqlite3 ${SQLITEDB}
+	echo "Inserts"
+	echo ------------------------------------------------
+	echo "select * from attributes_insert_filter;"| sqlite3 ${SQLITEDB}
 
 test-sqlite-update:
 	@echo Update model

@@ -239,24 +239,40 @@ def translate_function(ctx, function):
     bounds = ctx['bounds']
     iri = function.iri
     expr = function.expr
-    result = ''
+    if len(expr) != 1:
+        raise utils.WrongSparqlStructure('Only functions with one parameter implemented.')
+    # This is only supporting single parameter functions
+    # TODO: Generalize the functin translation for arbitrary parameters
+    expression = translate(ctx, expr[0])
+    #if isinstance(expr[0], Variable):
+    #    expr = bounds[utils.create_varname(expr[0])] 
+    #elif isinstance(expr[0], Literal):
+    #    expr = expr[0]
+    #else:
+    #    expr = translate(ctx, expr[0])
     if iri in XSD:  # CAST
-        if len(expr) != 1:
-            raise utils.WrongSparqlStructure('XSD function with too many parameters')
+
         cast = 'notfound'
         stringcast = False
-        var = bounds[utils.create_varname(expr[0])]
-        if iri == XSD['integer']:
-            cast = 'INTEGER'
-        elif iri == XSD['float']:
-            cast = 'FLOAT'
-        elif iri == XSD['string']:
-            cast = 'STRING'
-            stringcast = True
-        if not stringcast:
-            result = f'CAST(SQL_DIALECT_STRIP_LITERAL{{{var}}} as {cast})'
-        else: 
-            result = f'CAST(SQL_DIALECT_STRIP_IRI{{{var}}} as {cast})'
+        #var = bounds[utils.create_varname(expr[0])]
+        if iri != XSD['dateTime']:
+            if iri == XSD['integer']:
+                cast = 'INTEGER'
+            elif iri == XSD['float']:
+                cast = 'FLOAT'
+            elif iri == XSD['string']:
+                cast = 'STRING'
+                stringcast = True
+            if cast == 'notfound':
+                raise utils.WrongSparqlStructure('XSD type cast not supported')
+            if not stringcast:
+                result = f'CAST(SQL_DIALECT_STRIP_LITERAL{{{expression}}} as {cast})'
+            else: 
+                result = f'CAST(SQL_DIALECT_STRIP_IRI{{{expression}}} as {cast})'
+        else:
+            result = f'SQL_DIALECT_TIME_TO_MILLISECONDS{{{expression}}}'
+    else:
+        raise utils.WrongSparqlStructure(f'Function {iri.toPython()} not supported!')
     return result
 
 
@@ -335,7 +351,7 @@ def wrap_sql_construct(ctx, node):
             construct_query += "\nUNION ALL\n"
         entityId_varname = entityId_var.toPython()[1:]
 
-        construct_query += "SELECT "
+        construct_query += "SELECT DISTINCT "
         construct_query += f'{bounds[entityId_varname]} || \'\\\' || \'{name}\',\n'  # id
         construct_query += f'{bounds[entityId_varname]},\n'  # entityId
         construct_query += f'\'{name}\',\n'  # name
@@ -592,22 +608,22 @@ def translate_and_expression(ctx, expr):
     """
     Translates AND expression to SQL
     """
-    result = translate(ctx, expr.expr)
+    result = '(' + translate(ctx, expr.expr)
     for otherexpr in expr.other:
         result += ' and '
         result += translate(ctx, otherexpr)
-    return result
+    return result + ')'
 
 
 def translate_or_expression(ctx, expr):
     """
     Translates OR expression to SQL
     """
-    result = translate(ctx, expr.expr)
+    result = '(' + translate(ctx, expr.expr)
     for otherexpr in expr.other:
         result += ' or '
         result += translate(ctx, otherexpr)
-    return result
+    return result + ')'
 
 
 def translate_relational_expression(ctx, elem):

@@ -21,33 +21,6 @@
   },
   {
     "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
-    "id": "urn:filter:1",
-    "type": "https://industry-fusion.com/types/v0.9/filter",
-    "https://industry-fusion.com/types/v0.9/state": [
-      {
-        "type": "Property",
-        "value": {
-          "@id": "https://industry-fusion.com/types/v0.9/state_ON"
-        }
-      },
-      {
-        "type": "Property",
-        "value": {
-          "@id": "https://industry-fusion.com/types/v0.9/state_ON"
-        }
-      }
-    ],
-    "https://industry-fusion.com/types/v0.9/strength": {
-      "type": "Property",
-      "value": "0.9"
-    },
-    "https://industry-fusion.com/types/v0.9/hasCartridge": {
-      "type": "Relationship",
-      "object": "urn:filterCartridge:1"
-    }
-  },
-  {
-    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
     "id": "urn:workpiece:1",
     "type": "https://industry-fusion.com/types/v0.9/workpiece",
     "https://industry-fusion.com/types/v0.9/material": {
@@ -99,60 +72,11 @@
   },
   {
     "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
-    "id": "urn:filter:2",
-    "type": "https://industry-fusion.com/types/v0.9/filter",
-    "https://industry-fusion.com/types/v0.9/state": {
-      "type": "Property",
-      "value": {
-        "@id": "https://industry-fusion.com/types/v0.9/state_OFF"
-      }
-    },
-    "https://industry-fusion.com/types/v0.9/strength": {
-      "type": "Property",
-      "value": "0.1"
-    },
-    "https://industry-fusion.com/types/v0.9/hasCartridge": {
-      "type": "Relationship",
-      "object": "urn:filterCartridge:2"
-    }
-  },
-  {
-    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
-    "id": "urn:filterCartridge:1",
-    "type": "https://industry-fusion.com/types/v0.9/filterCartridge",
-    "https://industry-fusion.com/types/v0.9/wasteClass": {
-      "type": "Property",
-      "value": {
-        "@id": "https://industry-fusion.com/types/v0.9/WC2"
-      }
-    }
-  },
-  {
-    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
-    "id": "urn:filterCartridge:2",
-    "type": "https://industry-fusion.com/types/v0.9/filterCartridge",
-    "https://industry-fusion.com/types/v0.9/inUseFrom": {
-      "type": "Property",
-      "value": "2021-10-10 13:51:51.0"
-    },
-    "https://industry-fusion.com/types/v0.9/inUseUntil": {
-      "type": "Property",
-      "value": "2021-10-25 13:54:55.4"
-    },
-    "https://industry-fusion.com/types/v0.9/wasteClass": {
-      "type": "Property",
-      "value": {
-        "@id": "https://industry-fusion.com/types/v0.9/WC1"
-      }
-    }
-  },
-  {
-    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
     "id": "urn:oee:1",
     "type": "https://industry-fusion.com/types/v0.9/oeeTemplate",
     "https://industry-fusion.com/types/v0.9/startTime": {
       "type": "Property",
-      "value": "2099-03-24 13:42:31"
+      "value": "2023-03-24 13:42:31"
     },
     "https://industry-fusion.com/types/v0.9/endTime": {
       "type": "Property",
@@ -189,7 +113,7 @@
     },
     "https://industry-fusion.com/types/v0.9/activeState": {
       "type": "Property",
-      "value": "1"
+      "value": "0"
     }
   }
 ]
