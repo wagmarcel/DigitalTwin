@@ -507,7 +507,7 @@ iff:OeeTemplateShape
         ] ;
     ] ;
     sh:property [
-        sh:path <https://industry-fusion.com/oee/v0.9/referenceMachine> ;
+        sh:path <https://industry-fusion.com/oee/v0.9/hasReferenceMachine> ;
         sh:order 12 ;
         sh:nodeKind sh:BlankNode;
         sh:minCount 1 ;
@@ -568,7 +568,31 @@ iff:OeeTemplateShape
     .
 
 
-    iff:ScheduleTimeValidation
+    iff:AggregateWorkpiecesShape
+    a sh:NodeShape ;
+    sh:targetClass iff:oeeTemplate ;
+    rdfs:comment "Aggregate the Workpieces to OEE object" ;
+    sh:rule [
+		a sh:SPARQLRule ;
+		sh:construct """
+            PREFIX iff: <https://industry-fusion.com/types/v0.9/>
+            PREFIX oee: <https://industry-fusion.com/oee/v0.9/>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			CONSTRUCT {
+				$this oee:totalCount [ <https://uri.etsi.org/ngsi-ld/hasValue> ?workpieces ] .
+			}
+			WHERE {
+                    $this oee:hasReferenceMachine [ <https://uri.etsi.org/ngsi-ld/hasObject> ?machine ] .
+                    ?machine iff:hasOutWorkpiece [ <https://uri.etsi.org/ngsi-ld/hasObject> ?workpiece ] .
+                    bind(COUNT(DISTINCT ?workpiece) as ?workpieces)
+			}
+            GROUP BY ?machine
+			""" ;
+	] ;
+.
+
+    iff:ScheduleTimeValidationShape
     a sh:NodeShape ;
     rdfs:comment "Check if a schedule is valid" ;
     sh:targetClass iff:scheduleEntity ;
@@ -637,7 +661,7 @@ iff:OeeTemplateShape
                 $this oee:availabilityTimeAgg [ <https://uri.etsi.org/ngsi-ld/hasValue> ?availabilityTimeAggUpdate ] .
 			}
 			WHERE {
-                    $this oee:referenceMachine [ <https://uri.etsi.org/ngsi-ld/hasObject> ?machine ] .
+                    $this oee:hasReferenceMachine [ <https://uri.etsi.org/ngsi-ld/hasObject> ?machine ] .
                     $this iff:activeState [ <https://uri.etsi.org/ngsi-ld/hasValue> ?active ] .
                     ?machine iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?state ] .
                     ?machine iff:state [ <https://uri.etsi.org/ngsi-ld/observedAt> ?stateTs ] .

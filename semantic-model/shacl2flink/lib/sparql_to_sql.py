@@ -21,6 +21,7 @@ from rdflib import Graph, Namespace, URIRef, Variable, BNode, Literal
 from rdflib.namespace import RDF, XSD
 from rdflib.plugins.sparql.parser import parseQuery
 from rdflib.plugins.sparql.algebra import translateQuery
+from functools import reduce
 import copy
 
 file_dir = os.path.dirname(__file__)
@@ -205,9 +206,46 @@ def translate(ctx, elem):
         return translate_additive_expression(ctx, elem)
     elif elem.name == 'Builtin_BOUND':
         return translate_builtin_bound(ctx, elem)
+    elif elem.name == 'AggregateJoin':
+        translate_aggregate_join(ctx, elem)
+    elif elem.name == 'Group':
+        translate_group(ctx, elem)
+    elif elem.name == 'Aggregate_Count':
+        return translate_aggregate_count(ctx, elem)
     else:
         raise utils.WrongSparqlStructure(f'SparQL structure {elem.name} not \
 supported!')
+
+
+def translate_aggregate_count(ctx, elem):
+    distinct = elem.distinct
+    translate(ctx, elem.vars)
+    var = utils.create_varname(elem.vars)
+    expression = translate(ctx, elem.vars)
+    add_aggregate_var_to_context(ctx, var)
+    return f"COUNT({distinct} {expression})"
+
+
+def add_aggregate_var_to_context(ctx, var):
+    if 'aggregate_vars' not in ctx:
+        ctx['aggregate_vars'] = []
+    ctx['aggregate_vars'].append(var)
+    
+
+def translate_group(ctx, elem):
+    ctx['group_by_vars'] = elem.expr
+    translate(ctx, elem.p)
+    elem['target_sql'] = elem.p['target_sql']
+    elem['where'] = elem.p['where']
+
+
+def translate_aggregate_join(ctx, elem):
+    translate(ctx, elem.p)
+    vars = None
+    if 'aggregate_vars' in ctx:
+        vars = ctx['aggregate_vars']
+    elem['target_sql'] = bgp_translation_utils.replace_attributes_table_expression(elem.p['target_sql'], vars)
+    elem['where'] = elem.p['where']
 
 
 def translate_builtin_bound(ctx, elem):
@@ -291,10 +329,12 @@ def translate_builtin_if(ctx, builtin_if):
 
 def translate_extend(ctx, extend):
     translate(ctx, extend.p)
-    if isinstance(extend.expr, Literal) or isinstance(extend.expr, URIRef):
-        expression = utils.format_node_type(extend.expr)
-    else:
-        expression = translate(ctx, extend.expr)
+
+    #if isinstance(extend.expr, Literal) or isinstance(extend.expr, URIRef):
+    #    expression = utils.format_node_type(extend.expr)
+    #else:
+    expression = translate(ctx, extend.expr)
+    
     ctx['bounds'][utils.create_varname(extend.var)] = expression
     extend['target_sql'] = extend.p['target_sql']
     extend['where'] = extend.p['where']
@@ -364,7 +404,13 @@ def wrap_sql_construct(ctx, node):
         construct_query += ',SQL_DIALECT_SQLITE_TIMESTAMP\n'  # ts
         
         construct_query += 'FROM ' + node['target_sql']
-        construct_query += ' WHERE ' + node['where']
+        if node['where'] != '':
+            construct_query += ' WHERE ' + node['where']
+        group_by = None
+        if 'group_by_vars' in ctx:
+            group_by = reduce(lambda x,y: f'{x}, {y}', map(lambda x: bounds[utils.create_varname(x)], ctx['group_by_vars']))
+        if group_by is not None:
+            construct_query += f' GROUP BY {group_by}'
     node['target_sql'] = construct_query
 
 
@@ -435,9 +481,17 @@ def wrap_sql_projection(ctx, node):
 
     target_sql = node['target_sql']
     target_where = node['where']
+    group_by = None
+    if 'group_by_vars' in ctx:
+        group_by = reduce(lambda x,y: f'{x}, {y}', map(lambda x: bounds[utils.create_varname(x)], ctx['group_by_vars']))
+        group_by_term += f' GROUP BY {group_by}'
+    else:
+        group_by_term = ''
     node['target_sql'] = f'{expression} FROM {target_sql}'
     node['target_sql'] = node['target_sql'] + f' WHERE {target_where}' if \
         target_where != '' else node['target_sql']
+    node['target_sql'] = node['target_sql'] + f' {group_by_term}' if \
+        group_by_term != '' else node['target_sql']    
 
 
 def translate_filter(ctx, filter):

@@ -37,6 +37,23 @@ sys.path.append(file_dir)
 import utils  # noqa: E402
 import configs  # noqa: E402
 
+replace_attributes_prefix = 'REPLACE_ATTRIBUTES_TABLE_FOR_'
+
+def replace_attributes_table_expression(sql_expression, vars):
+    for var in vars:
+        toreplace = replace_attributes_prefix + var
+        sql_expression = sql_expression.replace(toreplace, 'attributes')        
+    sql_expression = re.sub(replace_attributes_prefix + r'[^\s]+', 'attributes_view', sql_expression)
+    return sql_expression
+
+
+def create_attribute_table_expression(ctx, attribute_tablename, var):
+    if 'group_by_vars' not in ctx:
+        expression = f'attributes_view AS {attribute_tablename}'
+    else:
+        expression = f'{replace_attributes_prefix}{utils.create_varname(var)} AS {attribute_tablename}'
+    return expression
+
 
 def merge_vartypes(ctx, property_variables, entity_variables, time_variables):
     if 'property_variables' not in ctx:
@@ -344,7 +361,7 @@ def create_ngsild_mappings(ctx, sorted_graph):
         # TODO: Implement multi class resolutions
         qres = ctx['g'].query(query)
         if len(qres) != 1:
-            raise utils.utils.SparqlValidationFailed("Validation of BGP failed. It either contradicts what is defined \
+            raise utils.SparqlValidationFailed("Validation of BGP failed. It either contradicts what is defined \
                 in SHACL or is too ambigue!")
     else:
         # no ngsi-ld variables found, so do not try to infer the types
@@ -408,7 +425,8 @@ Consider to use a variable and FILTER.')
         if utils.create_varname(ngsildvar[0]) not in local_ctx['bounds']:
             local_ctx['bounds'][ngsildvar[0].toPython()[1:]] = f'`{attribute_tablename}`.`{ngsildtype[0]}`'
         if attribute_tablename not in local_ctx['bgp_tables'] and attribute_tablename not in ctx['tables']:
-            sql_expression = f'attributes_view AS {attribute_tablename}'
+            #sql_expression = f'attributes_view AS {attribute_tablename}'
+            sql_expression = create_attribute_table_expression(ctx, attribute_tablename, ngsildvar[0])
             join_condition = f'{attribute_tablename}.id = {subject_tablename}.`{p}`'
             local_ctx['bgp_sql_expression'].append({'statement': f'{sql_expression}',
                                                     'join_condition': f'{join_condition}'})
@@ -427,7 +445,8 @@ Consider using a variable and FILTER instead.')
         if object_varname not in local_ctx['bounds']:
             # case (1)
             join_condition = f'{attribute_tablename}.id = {subject_tablename}.`{p}`'
-            sql_expression = f'attributes_view AS {attribute_tablename}'
+            #sql_expression = f'attributes_view AS {attribute_tablename}'
+            sql_expression = create_attribute_table_expression(ctx, attribute_tablename, ngsildvar[0])
             local_ctx['bgp_tables'][attribute_tablename] = []
             local_ctx['bgp_tables'][object_tablename] = []
             local_ctx['bgp_sql_expression'].append({'statement': f'{sql_expression}',
@@ -440,7 +459,8 @@ Consider using a variable and FILTER instead.')
         else:
             # case (2)
             join_condition = f'{attribute_tablename}.`{ngsildtype[0].toPython()}` = {object_tablename}.id'
-            sql_expression = f'attributes_view AS {attribute_tablename}'
+            #sql_expression = f'attributes_view AS {attribute_tablename}'
+            sql_expression = create_attribute_table_expression(ctx, attribute_tablename, ngsildvar[0])
             local_ctx['bgp_sql_expression'].append({'statement': f'{sql_expression}',
                                                     'join_condition': f'{join_condition}'})
             join_condition = f'{attribute_tablename}.id = {subject_tablename}.`{p}`'
@@ -462,8 +482,9 @@ Consider using a variable and FILTER instead.')
             #if ctx['time_variables'][ngsildvar[0]]:
             #    field = ngsild['hasObject']
             #else:
-            #    field = ngsild['hasValue']       
-            sql_expression = f'attributes_view AS {attribute_tablename}'
+            #    field = ngsild['hasValue']
+            sql_expression = create_attribute_table_expression(ctx, attribute_tablename, ngsildvar[0])
+            #sql_expression = f'attributes_view AS {attribute_tablename}'
             join_condition = f'{attribute_tablename}.id = {subject_tablename}.`{p}`'
             local_ctx['bgp_sql_expression'].append({'statement': f'{sql_expression}',
                                                     'join_condition': f'{join_condition}'})
