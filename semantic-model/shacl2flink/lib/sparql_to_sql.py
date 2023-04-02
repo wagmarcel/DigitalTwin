@@ -214,10 +214,16 @@ def translate(ctx, elem):
         return translate_aggregate_count(ctx, elem)
     elif elem.name == 'Aggregate_Sum':
         return translate_aggregate_sum(ctx, elem)
+    elif elem.name == 'UnaryNot':
+        return translate_unary_not(ctx, elem)
     else:
         raise utils.WrongSparqlStructure(f'SparQL structure {elem.name} not \
 supported!')
 
+
+def translate_unary_not(ctx, elem):
+    expression = translate(ctx, elem.expr)
+    return f" NOT ({expression}) "    
 
 def process_aggregate(ctx, elem):
     distinct = elem.distinct
@@ -249,6 +255,8 @@ def translate_aggregate_count(ctx, elem):
 
 def translate_group(ctx, elem):
     ctx['group_by_vars'] = elem.expr
+    if Variable('this') not in ctx['group_by_vars']:
+        ctx['group_by_vars'].append(Variable('this'))
     translate(ctx, elem.p)
     elem['target_sql'] = elem.p['target_sql']
     elem['where'] = elem.p['where']

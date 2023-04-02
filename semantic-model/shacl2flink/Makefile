@@ -67,7 +67,7 @@ test-kms:
 	@echo Test different kms setups
 	cd tests/sql-tests && bash tests.sh
 
-flink-deploy:
+flink-deploy: clean
 	@echo deploy helm package
 	make helm
 	cd ../../helm && ./helmfile -f helmfile-shacl.yaml apply

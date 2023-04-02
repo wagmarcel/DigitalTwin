@@ -641,9 +641,10 @@ iff:OeeTemplateShape
                     $this iff:endTime [ <https://uri.etsi.org/ngsi-ld/hasValue> ?endTime ] .
                     OPTIONAL{$this iff:activeState [ <https://uri.etsi.org/ngsi-ld/hasValue> ?state ] .} .
                     FILTER(
+                        !bound(?state) ||
                         (?state = '0' && xsd:dateTime(?startTime) <= xsd:dateTime(now()) && xsd:dateTime(?endTime) > xsd:dateTime(now())) || 
                         (?state = '1' && ( xsd:dateTime(?endTime) < xsd:dateTime(now()) || xsd:dateTime(?startTime) > xsd:dateTime(now())))) .
-                    bind(IF(?state = '0', '1', '0') as ?stateUpdate)
+                    bind(IF(bound(?state),IF(?state = '0', '1', '0'), '0') as ?stateUpdate)
 			}
 			""" ;
 	] ;
