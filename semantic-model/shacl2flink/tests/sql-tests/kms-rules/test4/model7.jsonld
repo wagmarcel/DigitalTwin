@@ -21,7 +21,14 @@
       "object": "urn:workpiece:2",
       "observedAt": "2023-03-24 13:52:32.0"
 
-    }],
+    },
+    {
+      "type": "Relationship",
+      "object": "urn:workpiece:3",
+      "observedAt": "2023-03-24 13:55:32.0"
+
+    }
+  ],
     "https://industry-fusion.com/types/v0.9/hasInWorkpiece": {
       "type": "Relationship",
       "object": "urn:workpiece:1"
@@ -75,7 +82,7 @@
       }
     },
     "https://industry-fusion.com/types/v0.9/qualityCheck": {
-      "value": "0"
+      "value": "1"
     },
     "https://schema.org/depth": {
       "type": "Property",
