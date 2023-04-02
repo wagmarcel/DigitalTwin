@@ -53,7 +53,7 @@ where {
     } .
     {?a ?b [ ngsild:hasObject ?g ] .
     VALUES ?e {ngsild:Relationship} .
-    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt ] .} .
+    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt; ngsild:hasObject ?g  ] .} .
     }
     UNION
     { ?a ?b [ ngsild:hasValue ?f ] .
@@ -61,14 +61,14 @@ where {
     VALUES ?e {ngsild:Property}
     FILTER(!isIRI(?f))
     ?nodeshape sh:property [ sh:path ?b ] .
-    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt ] .} .
+    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt; ngsild:hasValue ?f ] .} .
     }
     UNION
     { ?a ?b [ ngsild:hasValue ?f ] .
     VALUES ?d {'@id'} .
     VALUES ?e {ngsild:Property}
     FILTER(isIRI(?f))
-    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt ] .} .
+    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt;ngsild:hasValue ?f  ] .} .
     }
 }
 """  # noqa: E501

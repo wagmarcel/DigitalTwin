@@ -38,7 +38,7 @@ iff:CutterShape
     sh:targetClass iff:cutter ;
     sh:property [
         sh:path <https://industry-fusion.com/types/v0.9/state> ;
-        sh:order 1 ;
+        sh:order 10 ;
         sh:nodeKind sh:BlankNode;
         sh:minCount 1 ;
         sh:maxCount 1 ;
@@ -57,7 +57,7 @@ iff:CutterShape
     ] ;
     sh:property [
         sh:path <https://industry-fusion.com/types/v0.9/hasFilter> ;
-        sh:order 2 ;
+        sh:order 20 ;
         sh:nodeKind sh:BlankNode;
         sh:minCount 1 ;
         sh:maxCount 1 ;
@@ -75,7 +75,7 @@ iff:CutterShape
     ] ;
     sh:property [
         sh:path <https://industry-fusion.com/types/v0.9/hasInWorkpiece> ;
-        sh:order 3 ;
+        sh:order 30 ;
         sh:nodeKind sh:BlankNode;
         sh:minCount 0 ;
         sh:maxCount 1 ;
@@ -93,7 +93,7 @@ iff:CutterShape
     ] ;
     sh:property [
         sh:path <https://industry-fusion.com/types/v0.9/hasOutWorkpiece> ;
-        sh:order 3 ;
+        sh:order 40 ;
         sh:nodeKind sh:BlankNode;
         sh:minCount 0 ;
         sh:maxCount 1 ;
@@ -581,11 +581,16 @@ iff:OeeTemplateShape
             PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 			CONSTRUCT {
 				$this oee:totalCount [ <https://uri.etsi.org/ngsi-ld/hasValue> ?workpieces ] .
+                $this oee:goodCount [ <https://uri.etsi.org/ngsi-ld/hasValue> ?qualityCount ] .
 			}
 			WHERE {
                     $this oee:hasReferenceMachine [ <https://uri.etsi.org/ngsi-ld/hasObject> ?machine ] .
                     ?machine iff:hasOutWorkpiece [ <https://uri.etsi.org/ngsi-ld/hasObject> ?workpiece ] .
+                    $this  iff:activeState [ <https://uri.etsi.org/ngsi-ld/hasValue> ?activeState ] .
+                    OPTIONAL{?workpiece  iff:qualityCheck [ <https://uri.etsi.org/ngsi-ld/hasValue> ?qualityCheck ] .} .
                     bind(COUNT(DISTINCT ?workpiece) as ?workpieces)
+                    bind(?workpieces - SUM(IF(?qualityCheck = '0', 1, 0)) as ?qualityCount)
+                    FILTER(?activeState = '1')
 			}
             GROUP BY ?machine
 			""" ;
@@ -674,7 +679,7 @@ iff:OeeTemplateShape
                     bind((?stateTs - ?availabilityStateTs) as ?deltaTs) .
                     bind(IF(bound(?availabilityVal) && xsd:integer(?availabilityVal) = 1, 1, 0) as ?availabilityStateUpdate) .
                     bind(IF(bound(?availabilityState) && xsd:integer(?availabilityState) = 1, xsd:integer(?availabilityTimeAgg) + ?stateTs - ?availabilityStateTs, xsd:integer(?availabilityTimeAgg)) as ?availabilityTimeAggUpdate) .
-                    FILTER(?deltaTs > 0 && xsd:integer(?active) = 1 && ?stateTs < xsd:dateTime(?endTime) && ?stateTs < xsd:dateTime(?startTime))
+                    FILTER(?deltaTs > 0 && xsd:integer(?active) = 1 && ?stateTs < xsd:dateTime(?endTime) && ?stateTs > xsd:dateTime(?startTime))
 			}
 			""" ;
 	] ;

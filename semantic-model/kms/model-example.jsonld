@@ -10,7 +10,19 @@
         "@id": "https://industry-fusion.com/types/v0.9/state_PROCESSING"
       }
     },
-    "https://industry-fusion.com/types/v0.9/hasWorkpiece": {
+    "https://industry-fusion.com/types/v0.9/hasOutWorkpiece": [{
+      "type": "Relationship",
+      "object": "urn:workpiece:1",
+      "observedAt": "2023-03-24 13:42:32.0"
+
+    },
+    {
+      "type": "Relationship",
+      "object": "urn:workpiece:2",
+      "observedAt": "2023-03-24 13:52:32.0"
+
+    }],
+    "https://industry-fusion.com/types/v0.9/hasInWorkpiece": {
       "type": "Relationship",
       "object": "urn:workpiece:1"
     },
@@ -56,6 +68,41 @@
         "@type": "https://industry-fusion.com/types/v0.9/steelGrade",
         "@value": "1.4301"
       }
+    },
+    "https://schema.org/depth": {
+      "type": "Property",
+      "unitCode": "MMT",
+      "value": "550"
+    },
+    "https://schema.org/height": {
+      "type": "Property",
+      "value": "100",
+      "unitCode": "MMT"
+    },
+    "https://schema.org/weight": {
+      "type": "Property",
+      "value": "10000",
+      "unitCode": "GRM"
+    },
+    "https://schema.org/width": {
+      "type": "Property",
+      "value": "100",
+      "unitCode": "MMT"
+    }
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "urn:workpiece:2",
+    "type": "https://industry-fusion.com/types/v0.9/workpiece",
+    "https://industry-fusion.com/types/v0.9/material": {
+      "type": "Property",
+      "value": {
+        "@type": "https://industry-fusion.com/types/v0.9/steelGrade",
+        "@value": "1.4301"
+      }
+    },
+    "https://industry-fusion.com/types/v0.9/qualityCheck": {
+      "value": "0"
     },
     "https://schema.org/depth": {
       "type": "Property",
@@ -156,7 +203,7 @@
     },
     "https://industry-fusion.com/types/v0.9/endTime": {
       "type": "Property",
-      "value": "2099-03-24 14:42:31"
+      "value": "2023-03-24 14:42:31"
     },
     "https://industry-fusion.com/oee/v0.9/availabilityState": {
       "type": "Property",
@@ -183,7 +230,7 @@
       "type": "Property",
       "value": "9"
     },
-    "https://industry-fusion.com/oee/v0.9/referenceMachine": {
+    "https://industry-fusion.com/oee/v0.9/hasReferenceMachine": {
       "type": "Relationship",
       "object": "urn:plasmacutter:1"
     },

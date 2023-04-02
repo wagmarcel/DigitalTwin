@@ -107,7 +107,7 @@
       "type": "Property",
       "value": "9"
     },
-    "https://industry-fusion.com/oee/v0.9/referenceMachine": {
+    "https://industry-fusion.com/oee/v0.9/hasReferenceMachine": {
       "type": "Relationship",
       "object": "urn:plasmacutter:1"
     },

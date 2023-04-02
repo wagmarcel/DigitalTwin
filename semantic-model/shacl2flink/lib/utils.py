@@ -39,6 +39,23 @@ class DnsNameNotCompliant(Exception):
     Exception for non compliant DNS name
     """
 
+def set_aggregate_var(ctx, state):
+    ctx['is_aggregate_var'] = state
+
+
+def get_aggregate_vars(ctx):
+    vars = None
+    if 'aggregate_vars' in ctx:
+        vars = ctx['aggregate_vars']
+    return vars
+
+def add_aggregate_var_to_context(ctx, var):
+    if not 'is_aggregate_var' in ctx or not ctx['is_aggregate_var']:
+        return
+    if 'aggregate_vars' not in ctx:
+        ctx['aggregate_vars'] = []
+    ctx['aggregate_vars'].append(var)
+
 
 def create_varname(variable):
     """
@@ -333,6 +350,8 @@ def unwrap_variables(ctx, var):
     entity_variables = ctx['entity_variables']
     time_variables = ctx['time_variables']
     varname = create_varname(var)
+    add_aggregate_var_to_context(ctx, varname)
+    
     #if var in property_variables or var in entity_variables:
     #    return bounds[varname]
     if var in time_variables:
@@ -356,6 +375,7 @@ def wrap_ngsild_variable(ctx, var):
     entity_variables = ctx['entity_variables']
     time_variables = ctx['time_variables']
     varname = create_varname(var)
+    add_aggregate_var_to_context(ctx, varname)
     if var in property_variables:
         if varname in bounds:
             if property_variables[var]:

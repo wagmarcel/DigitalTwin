@@ -212,24 +212,39 @@ def translate(ctx, elem):
         translate_group(ctx, elem)
     elif elem.name == 'Aggregate_Count':
         return translate_aggregate_count(ctx, elem)
+    elif elem.name == 'Aggregate_Sum':
+        return translate_aggregate_sum(ctx, elem)
     else:
         raise utils.WrongSparqlStructure(f'SparQL structure {elem.name} not \
 supported!')
 
 
-def translate_aggregate_count(ctx, elem):
+def process_aggregate(ctx, elem):
     distinct = elem.distinct
-    translate(ctx, elem.vars)
-    var = utils.create_varname(elem.vars)
+    utils.set_aggregate_var(ctx, True)
     expression = translate(ctx, elem.vars)
-    add_aggregate_var_to_context(ctx, var)
+    utils.set_aggregate_var(ctx, False)
+    distinct_string = 'DISTINCT'
+    if distinct != 'DISTINCT':
+        distinct_string = ''    
+    return expression, distinct_string
+
+def translate_aggregate_sum(ctx, elem):
+    expression, distinct = process_aggregate(ctx, elem)
+    return f"SUM({distinct} {expression})"
+
+
+def translate_aggregate_count(ctx, elem):
+    #distinct = elem.distinct
+    #utils.set_aggregate_var(ctx, True)
+    #expression = translate(ctx, elem.vars)
+    #utils.set_aggregate_var(ctx, False)
+    #distinct_string = 'DISTINCT'
+    #if distinct != 'DISTINCT':
+    #    distinct_string = ''
+    expression, distinct = process_aggregate(ctx, elem)
     return f"COUNT({distinct} {expression})"
 
-
-def add_aggregate_var_to_context(ctx, var):
-    if 'aggregate_vars' not in ctx:
-        ctx['aggregate_vars'] = []
-    ctx['aggregate_vars'].append(var)
     
 
 def translate_group(ctx, elem):
@@ -241,10 +256,11 @@ def translate_group(ctx, elem):
 
 def translate_aggregate_join(ctx, elem):
     translate(ctx, elem.p)
-    vars = None
-    if 'aggregate_vars' in ctx:
-        vars = ctx['aggregate_vars']
-    elem['target_sql'] = bgp_translation_utils.replace_attributes_table_expression(elem.p['target_sql'], vars)
+    vars = utils.get_aggregate_vars(ctx)
+    try:
+        elem['target_sql'] = bgp_translation_utils.replace_attributes_table_expression(elem.p['target_sql'], vars)
+    except:
+        utils.SparqlValidationFailed('Group by aggregation defined but no aggregated variables found.')
     elem['where'] = elem.p['where']
 
 
