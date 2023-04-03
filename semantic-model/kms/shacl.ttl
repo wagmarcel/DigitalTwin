@@ -581,7 +581,7 @@ iff:OeeTemplateShape
             PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 			CONSTRUCT {
 				$this oee:totalCount [ <https://uri.etsi.org/ngsi-ld/hasValue> ?workpieces ] .
-                $this oee:goodCount [ <https://uri.etsi.org/ngsi-ld/hasValue> ?qualityCount ] .
+                #$this oee:goodCount [ <https://uri.etsi.org/ngsi-ld/hasValue> ?qualityCount ] .
 			}
 			WHERE {
                     $this oee:hasReferenceMachine [ <https://uri.etsi.org/ngsi-ld/hasObject> ?machine ] .
@@ -589,7 +589,7 @@ iff:OeeTemplateShape
                     $this  iff:activeState [ <https://uri.etsi.org/ngsi-ld/hasValue> ?activeState ] .
                     OPTIONAL{?workpiece  iff:qualityCheck [ <https://uri.etsi.org/ngsi-ld/hasValue> ?qualityCheck ] .} .
                     bind(COUNT(DISTINCT ?workpiece) as ?workpieces)
-                    bind(?workpieces - SUM(IF(?qualityCheck = '0', 1, 0)) as ?qualityCount)
+                    #bind(?workpieces - SUM(IF(?qualityCheck = '0', 1, 0)) as ?qualityCount)
                     FILTER(?activeState = '1')
 			}
             GROUP BY ?machine
@@ -641,10 +641,36 @@ iff:OeeTemplateShape
                     $this iff:endTime [ <https://uri.etsi.org/ngsi-ld/hasValue> ?endTime ] .
                     OPTIONAL{$this iff:activeState [ <https://uri.etsi.org/ngsi-ld/hasValue> ?state ] .} .
                     FILTER(
-                        !bound(?state) ||
+                        #!bound(?state) ||
                         (?state = '0' && xsd:dateTime(?startTime) <= xsd:dateTime(now()) && xsd:dateTime(?endTime) > xsd:dateTime(now())) || 
                         (?state = '1' && ( xsd:dateTime(?endTime) < xsd:dateTime(now()) || xsd:dateTime(?startTime) > xsd:dateTime(now())))) .
-                    bind(IF(bound(?state),IF(?state = '0', '1', '0'), '0') as ?stateUpdate)
+                    bind(IF(?state = '0', '1', '0') as ?stateUpdate)
+			}
+			""" ;
+	] ;
+.
+
+    iff:OEEInitialActivationShape
+    a sh:NodeShape ;
+    rdfs:comment "First update activity state" ;
+    sh:targetClass iff:scheduleEntity ;
+    sh:rule [
+		a sh:SPARQLRule ;
+		sh:construct """
+            PREFIX iff: <https://industry-fusion.com/types/v0.9/>
+            PREFIX oee: <https://industry-fusion.com/oee/v0.9/>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			CONSTRUCT {
+				$this iff:activeState [ <https://uri.etsi.org/ngsi-ld/hasValue> ?initialState ] .
+			}
+			WHERE {
+                    $this iff:startTime [ <https://uri.etsi.org/ngsi-ld/hasValue> ?startTime ] .
+                    bind('0' as ?initialState)
+                    FILTER NOT EXISTS{
+                        $this iff:activeState [ <https://uri.etsi.org/ngsi-ld/hasValue> ?state ] .
+                    }
+
 			}
 			""" ;
 	] ;

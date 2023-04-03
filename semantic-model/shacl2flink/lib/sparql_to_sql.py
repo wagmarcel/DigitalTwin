@@ -414,18 +414,18 @@ def wrap_sql_construct(ctx, node):
         else:
             construct_query += "\nUNION ALL\n"
         entityId_varname = entityId_var.toPython()[1:]
-
+        construct_query += f"SELECT A.id || \'\\\' || \'{name}\', B.entityId, B.name, B.nodeType, B.valueType, IFNULL(B.`index`, 0), B.`type`, B.`value`, B.`object`,SQL_DIALECT_SQLITE_TIMESTAMP from {utils.camelcase_to_snake_case(utils.strip_class(ctx['classes']['this']))}_view as A LEFT JOIN ("
         construct_query += "SELECT DISTINCT "
-        construct_query += f'{bounds[entityId_varname]} || \'\\\' || \'{name}\',\n'  # id
-        construct_query += f'{bounds[entityId_varname]},\n'  # entityId
-        construct_query += f'\'{name}\',\n'  # name
-        construct_query += f'\'{node_type}\',\n'  # nodeType
-        construct_query += 'CAST(NULL as STRING),\n'  # valueType
-        construct_query += '0,\n'  # index
-        construct_query += f'\'{attribute_type}\',\n'
-        construct_query += f"{get_bound_trim_string(ctx, value_var)},\n"  # value
-        construct_query += 'CAST(NULL as STRING)\n'  # object
-        construct_query += ',SQL_DIALECT_SQLITE_TIMESTAMP\n'  # ts
+        construct_query += f'{bounds[entityId_varname]} || \'\\\' || \'{name}\' as id,\n'  # id
+        construct_query += f'{bounds[entityId_varname]} as entityId,\n'  # entityId
+        construct_query += f'\'{name}\' as name,\n'  # name
+        construct_query += f'\'{node_type}\' as nodeType,\n'  # nodeType
+        construct_query += 'CAST(NULL as STRING) as valueType,\n'  # valueType
+        construct_query += '0 as `index`,\n'  # index
+        construct_query += f'\'{attribute_type}\' as `type`,\n'
+        construct_query += f"{get_bound_trim_string(ctx, value_var)} as `value`,\n"  # value
+        construct_query += 'CAST(NULL as STRING) as `object`\n'  # object
+        #construct_query += ',SQL_DIALECT_SQLITE_TIMESTAMP\n'  # ts
         
         construct_query += 'FROM ' + node['target_sql']
         if node['where'] != '':
@@ -435,6 +435,7 @@ def wrap_sql_construct(ctx, node):
             group_by = reduce(lambda x,y: f'{x}, {y}', map(lambda x: bounds[utils.create_varname(x)], ctx['group_by_vars']))
         if group_by is not None:
             construct_query += f' GROUP BY {group_by}'
+        construct_query += f") as B on A.`id` || '\\\' ||\'{name}\' = B.id "
     node['target_sql'] = construct_query
 
 
