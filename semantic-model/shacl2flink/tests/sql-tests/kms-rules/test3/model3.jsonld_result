@@ -1,2 +1,3 @@
 'urn:filterCartridge:1\https://industry-fusion.com/types/v0.9/inUseFrom','urn:filterCartridge:1','https://industry-fusion.com/types/v0.9/inUseFrom','@value',NULL,0,'https://uri.etsi.org/ngsi-ld/Property','timestamp_from',NULL
 'urn:filterCartridge:1\https://industry-fusion.com/types/v0.9/inUseUntil','urn:filterCartridge:1','https://industry-fusion.com/types/v0.9/inUseUntil','@value',NULL,0,'https://uri.etsi.org/ngsi-ld/Property','timestamp_until',NULL
+'urn:filterCartridge:1\https://industry-fusion.com/types/v0.9/wasteClass',NULL,NULL,NULL,NULL,0,NULL,NULL,NULL

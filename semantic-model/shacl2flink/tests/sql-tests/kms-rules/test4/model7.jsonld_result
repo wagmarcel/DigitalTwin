@@ -1,3 +1,12 @@
+'urn:filterCartridge:1\https://industry-fusion.com/types/v0.9/inUseFrom',NULL,NULL,NULL,NULL,0,NULL,NULL,NULL
+'urn:filterCartridge:1\https://industry-fusion.com/types/v0.9/inUseUntil',NULL,NULL,NULL,NULL,0,NULL,NULL,NULL
+'urn:filterCartridge:1\https://industry-fusion.com/types/v0.9/wasteClass',NULL,NULL,NULL,NULL,0,NULL,NULL,NULL
+'urn:filterCartridge:2\https://industry-fusion.com/types/v0.9/inUseFrom',NULL,NULL,NULL,NULL,0,NULL,NULL,NULL
+'urn:filterCartridge:2\https://industry-fusion.com/types/v0.9/inUseUntil',NULL,NULL,NULL,NULL,0,NULL,NULL,NULL
+'urn:filterCartridge:2\https://industry-fusion.com/types/v0.9/wasteClass',NULL,NULL,NULL,NULL,0,NULL,NULL,NULL
+'urn:oee:1\https://industry-fusion.com/oee/v0.9/availabilityState',NULL,NULL,NULL,NULL,0,NULL,NULL,NULL
+'urn:oee:1\https://industry-fusion.com/oee/v0.9/availabilityTimeAgg',NULL,NULL,NULL,NULL,0,NULL,NULL,NULL
 'urn:oee:1\https://industry-fusion.com/oee/v0.9/goodCount','urn:oee:1','https://industry-fusion.com/oee/v0.9/goodCount','@value',NULL,0,'https://uri.etsi.org/ngsi-ld/Property',2,NULL
 'urn:oee:1\https://industry-fusion.com/oee/v0.9/totalCount','urn:oee:1','https://industry-fusion.com/oee/v0.9/totalCount','@value',NULL,0,'https://uri.etsi.org/ngsi-ld/Property',3,NULL
+'urn:oee:1\https://industry-fusion.com/types/v0.9/activeState',NULL,NULL,NULL,NULL,0,NULL,NULL,NULL
 'urn:oee:1\https://industry-fusion.com/types/v0.9/activeState','urn:oee:1','https://industry-fusion.com/types/v0.9/activeState','@value',NULL,0,'https://uri.etsi.org/ngsi-ld/Property',0,NULL
