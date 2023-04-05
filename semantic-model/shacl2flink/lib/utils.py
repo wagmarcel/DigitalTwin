@@ -217,7 +217,7 @@ def create_sql_view(table_name, table, primary_key=['id'],
 
 
 def create_statementset(object_name, table_object_names,
-                        view_object_names, statementsets):
+                        view_object_names, ttl, statementsets):
     yaml_bsqls = {}
     yaml_bsqls['apiVersion'] = 'industry-fusion.com/v1alpha2'
     yaml_bsqls['kind'] = 'BeamSqlStatementSet'
@@ -229,6 +229,8 @@ def create_statementset(object_name, table_object_names,
     yaml_bsqls['spec'] = spec
     spec['tables'] = table_object_names
     spec['views'] = view_object_names
+    if ttl is not None:
+        spec['sqlsettings'] = [{"table.exec.state.ttl": f"{ttl}"}]
     spec['sqlstatements'] = statementsets
     spec['updateStrategy'] = "savepoint"
     return yaml_bsqls
