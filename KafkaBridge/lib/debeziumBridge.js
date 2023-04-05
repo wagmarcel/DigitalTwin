@@ -44,7 +44,7 @@ module.exports = function DebeziumBridge (conf) {
     const isEntityUpdated = this.diffEntity(beforeEntity, afterEntity);
     const { insertedAttrs, updatedAttrs, deletedAttrs } = this.diffAttributes(beforeAttrs, afterAttrs);
     const isKafkaUpdate = (updatedAttrs[syncOnAttribute] !== undefined ||
-      insertedAttrs[syncOnAttribute] !== undefined) && ! body.before == null; // There is one important exception:
+      insertedAttrs[syncOnAttribute] !== undefined) && !body.before == null; // There is one important exception:
       // When body.before is null, it means that the whole entity is created.
       // This is unlikely happening over default Kafka update. Even if it is a Kafka update
       // the next iteration will be an update with body.before != null so the loop will be detected.
