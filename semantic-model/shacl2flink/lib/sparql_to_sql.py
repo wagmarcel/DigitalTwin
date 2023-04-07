@@ -328,9 +328,9 @@ def translate_function(ctx, function):
             if cast == 'notfound':
                 raise utils.WrongSparqlStructure('XSD type cast not supported')
             if not stringcast:
-                result = f'CAST(SQL_DIALECT_STRIP_LITERAL{{{expression}}} as {cast})'
+                result = f'SQL_DIALECT_CAST(SQL_DIALECT_STRIP_LITERAL{{{expression}}} as {cast})'
             else: 
-                result = f'CAST(SQL_DIALECT_STRIP_IRI{{{expression}}} as {cast})'
+                result = f'SQL_DIALECT_CAST(SQL_DIALECT_STRIP_IRI{{{expression}}} as {cast})'
         else:
             result = f'SQL_DIALECT_TIME_TO_MILLISECONDS{{{expression}}}'
     else:
@@ -425,7 +425,7 @@ def wrap_sql_construct(ctx, node):
         construct_query += f'\'{attribute_type}\' as `type`,\n'
         construct_query += f"{get_bound_trim_string(ctx, value_var)} as `value`,\n"  # value
         construct_query += 'CAST(NULL as STRING) as `object`\n'  # object
-        #construct_query += ',SQL_DIALECT_SQLITE_TIMESTAMP\n'  # ts
+        construct_query += ',SQL_DIALECT_SQLITE_TIMESTAMP\n'  # ts
         
         construct_query += 'FROM ' + node['target_sql']
         if node['where'] != '':

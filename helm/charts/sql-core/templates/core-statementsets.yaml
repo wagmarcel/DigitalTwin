@@ -1,6 +1,6 @@
 ---
 # yamllint disable rule:line-length
-apiVersion: industry-fusion.com/v1alpha1
+apiVersion: industry-fusion.com/v1alpha2
 kind: BeamSqlStatementSet
 metadata:
     name: core-services
@@ -73,15 +73,15 @@ spec:
             /* forward only non-retracted attribute changes
             This is part of the core service */
             insert into attributes
-            select  id, entityId, name, nodeType, valueType, index, `type`, `value`, `object`, now()
-                from (
-                        select window_time as ts, id, entityId, name, nodeType, valueType, index, window_start, window_end,
-                        last_value(`https://uri.etsi.org/ngsi-ld/hasValue`) as `value`, last_value(`https://uri.etsi.org/ngsi-ld/hasObject`) as `object`, last_value(`type`) as `type`
-                        from TABLE(
-                        TUMBLE(TABLE attributes_insert_filter, DESCRIPTOR(`ts`), INTERVAL {{.Values.flink.attributeInsertWindow|squote}} SECOND))
-                        GROUP BY window_time, window_start, window_end, id, index, entityId, name, nodeType, valueType
-                    ) as A
-                WHERE `type` is not NULL;
+            select id, entityId, name, nodeType, valueType, `index`, `type`, `value`, `object`, endts from
+            (select id,
+            last_value(entityId) as entityId, last_value(name) as name, last_value(nodeType) as nodeType, last_value(valueType) as valueType, last_value(index) as `index`, last_value(`type`) as `type`, 
+            last_value(`https://uri.etsi.org/ngsi-ld/hasValue`) as `value`, last_value(`https://uri.etsi.org/ngsi-ld/hasObject`) as `object`, 
+              TUMBLE_START(ts, INTERVAL '0.001' SECOND), 
+              TUMBLE_END(ts, INTERVAL '0.001' SECOND) as endts
+            from attributes_insert_view
+            group by id, TUMBLE(ts, INTERVAL '0.001' SECOND)
+            HAVING last_value(`type`) IS NOT NULL);
 
     tables:
         - alerts
@@ -89,3 +89,5 @@ spec:
         - attributes
         - attributes-insert-filter
         - ngsild-updates
+    views:
+        - attributes-insert-view

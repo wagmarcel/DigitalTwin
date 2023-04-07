@@ -71,8 +71,9 @@ flink-deploy: clean
 	@echo deploy helm package
 	make helm
 	cd ../../helm && ./helmfile -f helmfile-shacl.yaml apply
-	kubectl -n $(NAMESPACE) -l "app.kubernetes.io/instance"="kafka-connect" delete pod
 	make test-flink-is-deployed
+	sleep 2
+	kubectl -n $(NAMESPACE) -l "app.kubernetes.io/instance"="kafka-connect" delete pod
 
 flink-undeploy:
 	@echo undeploy helm package

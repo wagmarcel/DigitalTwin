@@ -125,7 +125,7 @@ spec:
     topic: {{.Values.kafkaBridge.debezium.attributesTopic}}
     properties:
       bootstrap.servers: {{.Values.kafka.bootstrapServer}}
-    scan.startup.mode: earliest-offset
+    scan.startup.mode: latest-offset
   value:
     format: json
     json.fail-on-missing-field: false
@@ -207,3 +207,21 @@ spec:
     format: json
     json.fail-on-missing-field: false
     json.ignore-parse-errors: true
+---
+apiVersion: industry-fusion.com/v1alpha1
+kind: BeamSqlView
+metadata:
+  name: attributes-insert-view
+spec:
+  name: attributes_insert_view
+  sqlstatement: |
+    SELECT id, entityId, name, nodeType, valueType, index, `type`,
+           `https://uri.etsi.org/ngsi-ld/hasValue`,
+           `https://uri.etsi.org/ngsi-ld/hasObject`,
+           `ts`
+    FROM (
+      SELECT *,
+      ROW_NUMBER() OVER (PARTITION BY `id`
+         ORDER BY ts DESC) AS rownum
+      FROM `attributes_insert_filter`)
+      WHERE rownum = 1 and entityId is NOT NULL;

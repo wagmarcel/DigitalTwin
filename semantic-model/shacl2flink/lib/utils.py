@@ -325,16 +325,18 @@ def process_sql_dialect(expression, isSqlite):
             result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES',
                                                         'INSERT OR REPLACE INTO attributes_insert_filter')
             result_expression = result_expression.replace('SQL_DIALECT_SQLITE_TIMESTAMP', 'CURRENT_TIMESTAMP')
+            result_expression = result_expression.replace('SQL_DIALECT_CAST', 'CAST')
         else:
             result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI{([^{}]*)}',
                                         r"REGEXP_REPLACE(CAST(\1 as STRING), '>|<', '')", result_expression)
             result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL{([^{}]*)}',
                                     r"REGEXP_REPLACE(CAST(\1 as STRING), '\"', '')", result_expression)
-            result_expression = re.sub(r'SQL_DIALECT_TIME_TO_MILLISECONDS{([^{}]*)}', r"1000 * UNIX_TIMESTAMP(CAST(\1 AS STRING)) + EXTRACT(MILLISECOND FROM CAST(\1 as TIMESTAMP))",
+            result_expression = re.sub(r'SQL_DIALECT_TIME_TO_MILLISECONDS{([^{}]*)}', r"1000 * UNIX_TIMESTAMP(TRY_CAST(\1 AS STRING)) + EXTRACT(MILLISECOND FROM TRY_CAST(\1 as TIMESTAMP))",
                                     result_expression)
             result_expression = result_expression.replace('SQL_DIALECT_CURRENT_TIMESTAMP', 'CURRENT_TIMESTAMP')
             result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES', 'INSERT into attributes_insert')
             result_expression = result_expression.replace(',SQL_DIALECT_SQLITE_TIMESTAMP', '')
+            result_expression = result_expression.replace('SQL_DIALECT_CAST', 'TRY_CAST')
     return result_expression
 
 
