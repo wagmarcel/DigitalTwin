@@ -72,21 +72,22 @@ spec:
         - |-
             /* forward only non-retracted attribute changes
             This is part of the core service */
-            insert into attributes
-            select id, entityId, name, nodeType, valueType, `index`, `type`, `value`, `object`, endts from
-            (select id,
-            last_value(entityId) as entityId, last_value(name) as name, last_value(nodeType) as nodeType, last_value(valueType) as valueType, last_value(index) as `index`, last_value(`type`) as `type`, 
-            last_value(`https://uri.etsi.org/ngsi-ld/hasValue`) as `value`, last_value(`https://uri.etsi.org/ngsi-ld/hasObject`) as `object`, 
-              TUMBLE_START(ts, INTERVAL '0.001' SECOND), 
-              TUMBLE_END(ts, INTERVAL '0.001' SECOND) as endts
-            from attributes_insert_view
-            group by id, TUMBLE(ts, INTERVAL '0.001' SECOND)
-            HAVING last_value(`type`) IS NOT NULL);
+            insert into attributes_writeback
+            select id, entityId, name, nodeType, valueType, `index`, `type`, `value`, `object` from
+            (select id, last_value(entityId) as entityId, last_value(name) as name, last_value(nodeType) as nodeType, last_value(valueType) as valueType , `index`, last_value(`type`) as `type`, 
+            last_value(`https://uri.etsi.org/ngsi-ld/hasValue`) as `value`,
+            last_value(`https://uri.etsi.org/ngsi-ld/hasObject`) as `object`,
+              TUMBLE_START(ts, INTERVAL '0.001' SECOND),
+              TUMBLE_END(ts, INTERVAL '0.001' SECOND)
+            from attributes_insert
+            group by id, `index`, TUMBLE(ts, INTERVAL '0.001' SECOND));
 
     tables:
         - alerts
         - alerts-filter
         - attributes
+        - attributes-writeback
+        - attributes-insert
         - attributes-insert-filter
         - ngsild-updates
     views:
