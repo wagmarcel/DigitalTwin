@@ -138,7 +138,7 @@ CREATE TABLE machine (
   `id` STRING,
   `type` STRING,
   `https://industry-fusion.com/types/v0.9/state` STRING,
-  `ts` TIMESTAMP(3) METADATA FROM 'timestamp',
+  `ts` TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
    WATERMARK FOR ts AS ts
 ) WITH (
   'connector' = 'kafka',
@@ -164,10 +164,11 @@ drop table if exists cutter;
 CREATE TABLE cutter (
   `id` STRING,
   `type` STRING,
-  `https://industry-fusion.com/types/v0.9/hasWorkpiece` STRING,
+  `https://industry-fusion.com/types/v0.9/hasInWorkpiece` STRING,
+    `https://industry-fusion.com/types/v0.9/hasOutWorkpiece` STRING,
   `https://industry-fusion.com/types/v0.9/hasFilter` STRING,
   `https://industry-fusion.com/types/v0.9/state` STRING,
-  `ts` TIMESTAMP(3) METADATA FROM 'timestamp',
+  `ts` TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
    WATERMARK FOR ts AS ts
 ) WITH (
   'connector' = 'kafka',
@@ -180,7 +181,8 @@ CREATE TABLE cutter (
 );
 drop view if exists cutter_view;
 create view cutter_view as
-SELECT id, `type`, `https://industry-fusion.com/types/v0.9/hasWorkpiece`, `https://industry-fusion.com/types/v0.9/hasFilter`, `https://industry-fusion.com/types/v0.9/state`, ts
+SELECT id, `type`, `https://industry-fusion.com/types/v0.9/hasInWorkpiece`, `https://industry-fusion.com/types/v0.9/hasOutWorkpiece`,
+    `https://industry-fusion.com/types/v0.9/hasFilter`, `https://industry-fusion.com/types/v0.9/state`, ts
   FROM (
       SELECT *,
       ROW_NUMBER() OVER (PARTITION BY `id`
@@ -196,7 +198,7 @@ CREATE TABLE `filter` (
   `https://industry-fusion.com/types/v0.9/strength` STRING,
   `https://industry-fusion.com/types/v0.9/hasCartridge` STRING,
   `https://industry-fusion.com/types/v0.9/state` STRING,
-  `ts` TIMESTAMP(3) METADATA FROM 'timestamp',
+  `ts` TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
     WATERMARK FOR ts AS ts
 ) WITH (
   'connector' = 'kafka',
@@ -225,7 +227,7 @@ CREATE TABLE `linked_entity` (
   `type` STRING,
   `https://industry-fusion.com/types/v0.9/jsonEntity` STRING,
   `https://industry-fusion.com/types/v0.9/linkedTo` STRING,
-  `ts` TIMESTAMP(3) METADATA FROM 'timestamp',
+  `ts` TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
    WATERMARK FOR ts AS ts
 ) WITH (
   'connector' = 'kafka',
@@ -255,7 +257,7 @@ CREATE TABLE `workpiece` (
   `https://industry-fusion.com/types/v0.9/material` STRING,
   `https://schema.org/depth` STRING,
   `https://industry-fusion.com/types/v0.9/qualityCheck` STRING,
-  `ts` TIMESTAMP(3) METADATA FROM 'timestamp',
+  `ts` TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
    WATERMARK FOR ts AS ts
 ) WITH (
   'connector' = 'kafka',
@@ -285,7 +287,7 @@ CREATE TABLE `filter_cartridge` (
   `https://industry-fusion.com/types/v0.9/wasteClass` STRING,
   `https://industry-fusion.com/types/v0.9/inUseFrom` STRING,
   `https://industry-fusion.com/types/v0.9/inUseUntil` STRING,
-  `ts` TIMESTAMP(3) METADATA FROM 'timestamp',
+  `ts` TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
    WATERMARK FOR ts AS ts
 ) WITH (
   'connector' = 'kafka',
@@ -329,7 +331,7 @@ CREATE TABLE attributes (
   `type` STRING,
   `https://uri.etsi.org/ngsi-ld/hasValue` STRING,
   `https://uri.etsi.org/ngsi-ld/hasObject` STRING,
-  `ts` TIMESTAMP(3) METADATA FROM 'timestamp',
+  `ts` TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
   WATERMARK FOR ts AS ts
 ) WITH (
   'connector' = 'kafka',
@@ -475,88 +477,6 @@ CREATE TABLE ngsild_updates_filter (
 );
 
 
--------------------- only for testing ------
-------------------------------------
-drop table if exists stateAggregationUpsert;
-CREATE TABLE stateAggregationUpsert (
-  id STRING,
-  state STRING,
-  inOperation BOOLEAN,
-  inMaintenance BOOLEAN,
-    `ep` BIGINT,
-  `ts` TIMESTAMP(3) METADATA FROM 'timestamp',
-  WATERMARK FOR ts AS ts - INTERVAL '0.001' SECOND,
-  PRIMARY KEY (id) NOT ENFORCED
-) WITH (
-  'connector' = 'upsert-kafka',
-  'topic' = 'test.stateaggregation',
-  'properties.bootstrap.servers' = 'my-cluster-kafka-bootstrap:9092',
-  'value.format' = 'json',
-  'key.format' = 'json'
-);
-drop table if exists stateAggregation;
-CREATE TABLE stateAggregation (
- id STRING,
-  state STRING,
-  inOperation BOOLEAN,
-  inMaintenance BOOLEAN,
-  `ep` BIGINT,
-  `ts` TIMESTAMP(3) METADATA FROM 'timestamp',
-  WATERMARK FOR ts AS ts - INTERVAL '0.001' SECOND
-) WITH (
-  'connector' = 'kafka',
-  'topic' = 'test.stateaggregation',
-  'properties.bootstrap.servers' = 'my-cluster-kafka-bootstrap:9092',
-  'scan.startup.mode' = 'latest-offset',
-  'format' = 'json',
-  'json.fail-on-missing-field' = 'false',
-  'json.ignore-parse-errors' = 'true'
-);
-
-
-drop table if exists attributes_test;
-CREATE TABLE attributes_test (
-  id STRING,
-  entityId STRING,
-  name STRING,
-  nodeType STRING,
-  valueType STRING,
-  index INTEGER,
-  `type` STRING,
-  `https://uri.etsi.org/ngsi-ld/hasValue` STRING,
-  `https://uri.etsi.org/ngsi-ld/hasObject` STRING,
-  `ts` TIMESTAMP(3) METADATA FROM 'timestamp',
-  WATERMARK FOR ts AS ts - INTERVAL '0.001' SECOND
-) WITH (
-  'connector' = 'kafka',
-  'topic' = 'iff.ngsild.attributes',
-  'properties.bootstrap.servers' = 'my-cluster-kafka-bootstrap:9092',
-  'scan.startup.mode' = 'latest-offset',
-  'format' = 'json',
-  'json.fail-on-missing-field' = 'false',
-  'json.ignore-parse-errors' = 'true'
-);
-
-drop view if exists attributes_test_view;
-create view attributes_test_view as
-SELECT id, entityId, name, nodeType, valueType, index, `type`, `https://uri.etsi.org/ngsi-ld/hasValue`, `https://uri.etsi.org/ngsi-ld/hasObject`, ts
-  FROM (
-      SELECT *,
-      ROW_NUMBER() OVER (PARTITION BY `id`, index
-         ORDER BY ts DESC) AS rownum
-      FROM `attributes` )
-WHERE rownum = 1 and entityId is NOT NULL;
-
-drop view if exists filter_diff;
-create view filter_diff as
-SELECT id, `type`, `https://industry-fusion.com/types/v0.9/strength`, `https://industry-fusion.com/types/v0.9/hasCartridge`, `https://industry-fusion.com/types/v0.9/state`, rownum, ts
-  FROM (
-      SELECT *,
-      ROW_NUMBER() OVER (PARTITION BY `id`
-         ORDER BY ts DESC) AS rownum
-      FROM `filter` )
-WHERE rownum <= 2;
-
 DROP TABLE IF EXISTS `schedule_entity`;
 CREATE TABLE `schedule_entity` (
 `id` STRING,
@@ -564,7 +484,7 @@ CREATE TABLE `schedule_entity` (
 `https://industry-fusion.com/types/v0.9/startTime` STRING,
 `https://industry-fusion.com/types/v0.9/endTime` STRING,
 `https://industry-fusion.com/types/v0.9/activeState` STRING,
-`ts` TIMESTAMP(3) METADATA FROM 'timestamp',
+`ts` TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
   WATERMARK FOR ts AS ts - INTERVAL '0.001' SECOND
   ) WITH (
   'connector' = 'kafka',
@@ -610,48 +530,50 @@ PRIMARY KEY(`subject`,`predicate`,`index`)
   'value.json.ignore-parse-errors' = 'true'
 );
 
+DROP TABLE IF EXISTS `oee_template`;
+CREATE TABLE `oee_template` (
+`id` STRING,
+`type` STRING,
+`https://industry-fusion.com/types/v0.9/startTime` STRING,
+`https://industry-fusion.com/types/v0.9/endTime` STRING,
+`https://industry-fusion.com/oee/v0.9/availabilityState` STRING,
+`https://industry-fusion.com/oee/v0.9/availabilityTimeAgg` STRING,
+`https://industry-fusion.com/oee/v0.9/runTime` STRING,
+`https://industry-fusion.com/oee/v0.9/netRunTime` STRING,
+`https://industry-fusion.com/oee/v0.9/goodCount` STRING,
+`https://industry-fusion.com/oee/v0.9/totalCount` STRING,
+`https://industry-fusion.com/oee/v0.9/hasReferenceMachine` STRING,
+`https://industry-fusion.com/types/v0.9/activeState` STRING,
+`https://industry-fusion.com/oee/v0.9/oeeSummary` STRING,
+  `ts` TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
+   WATERMARK FOR ts AS ts
+) WITH (
+  'connector' = 'kafka',
+  'topic' = 'iff.ngsild.entities.oee_template',
+  'properties.bootstrap.servers' = 'my-cluster-kafka-bootstrap:9092',
+  'scan.startup.mode' = 'latest-offset',
+  'format' = 'json',
+  'json.fail-on-missing-field' = 'false',
+  'json.ignore-parse-errors' = 'true'
+);
 
-
-
------------------------------------------
---- experiments
-----------------------------------------
-DROP VIEW IF  EXISTS `attributes_insert_view`;
-CREATE VIEW `attributes_insert_view` AS
-SELECT `id`, entityId, name, nodeType, valueType, `index`,`type`,
-`https://uri.etsi.org/ngsi-ld/hasValue` as `value`,
-`https://uri.etsi.org/ngsi-ld/hasObject` as `object`,
+DROP VIEW IF EXISTS `oee_template_view`;
+CREATE VIEW `oee_template_view` AS
+SELECT `id`,`type`,
+`https://industry-fusion.com/types/v0.9/startTime`,
+`https://industry-fusion.com/types/v0.9/endTime`,
+`https://industry-fusion.com/oee/v0.9/availabilityState`,
+`https://industry-fusion.com/oee/v0.9/availabilityTimeAgg`,
+`https://industry-fusion.com/oee/v0.9/runTime`,
+`https://industry-fusion.com/oee/v0.9/netRunTime`,
+`https://industry-fusion.com/oee/v0.9/goodCount`,
+`https://industry-fusion.com/oee/v0.9/totalCount`,
+`https://industry-fusion.com/oee/v0.9/hasReferenceMachine`,
+`https://industry-fusion.com/types/v0.9/activeState`,
+`https://industry-fusion.com/oee/v0.9/oeeSummary`,
 `ts` FROM (
   SELECT *,
-ROW_NUMBER() OVER (PARTITION BY `id`, `index`
+ROW_NUMBER() OVER (PARTITION BY `id`
 ORDER BY ts DESC) AS rownum
-FROM `attributes_insert_filter` )
+FROM `oee_template` )
 WHERE rownum = 1;
-
-insert into attributes
-select id, entityId, name, nodeType, valueType, `index`, `type`, `value`, `object`, endts from
-(select id,
-last_value(entityId) as entityId, last_value(name) as name, last_value(nodeType) as nodeType, last_value(valueType) as valueType, `index`, last_value(`type`) as `type`, 
-last_value(`value`) as `value`, last_value(`object`) as `object`, 
-  TUMBLE_START(ts, INTERVAL '0.002' SECOND), 
-  TUMBLE_END(ts, INTERVAL '0.002' SECOND) as endts
-from attributes_insert_view
-group by id, index, TUMBLE(ts, INTERVAL '0.002' SECOND)
-HAVING last_value(`type`) IS NOT NULL);
-
-
-SELECT DISTINCT THISTABLE.`id` || '\\' || 'https://industry-fusion.com/types/v0.9/activeState' as id,\nTHISTABLE.`id` as entityId,\n'https://industry-fusi
-on.com/types/v0.9/activeState' as name,\n'@value' as nodeType,\nCAST(NULL as STRING) as valueType,\n0 as `index`,\n'https://uri.etsi.org/ngsi-ld/Property' as `type`,\nREGEXP_REPLACE(CAST(CASE WHEN '\"' |
-| `THISACTIVE_STATETABLE`.`https://uri.etsi.org/ngsi-ld/hasValue` || '\"' = '\"0\"' THEN '\"1\"' ELSE '\"0\"' END as STRING), '\\\"', '') as `value`,\nCAST(NULL as STRING) as `object`\n\nFROM  schedule_e
-ntity_view AS THISTABLE JOIN rdf as THISTYPETABLEM9IZ2EC5P3 ON THISTYPETABLEM9IZ2EC5P3.subject = '<' || THISTABLE.`type` || '>' and THISTYPETABLEM9IZ2EC5P3.predicate = '<http://www.w3.org/2000/01/rdf-sch
-ema#subClassOf>' and THISTYPETABLEM9IZ2EC5P3.object = '<https://industry-fusion.com/types/v0.9/scheduleEntity>' JOIN attributes_view AS THISEND_TIMETABLE ON THISEND_TIMETABLE.id = THISTABLE.`https://indu
-stry-fusion.com/types/v0.9/endTime` JOIN attributes_view AS THISSTART_TIMETABLE ON THISSTART_TIMETABLE.id = THISTABLE.`https://industry-fusion.com/types/v0.9/startTime` LEFT JOIN attributes_view AS THISA
-CTIVE_STATETABLE ON THISACTIVE_STATETABLE.id = THISTABLE.`https://industry-fusion.com/types/v0.9/activeState` WHERE (('\"' || `THISACTIVE_STATETABLE`.`https://uri.etsi.org/ngsi-ld/hasValue` || '\"' = '\"
-0\"' and 1000 * UNIX_TIMESTAMP(TRY_CAST(`THISSTART_TIMETABLE`.`https://uri.etsi.org/ngsi-ld/hasValue` AS STRING)) + EXTRACT(MILLISECOND FROM TRY_CAST(`THISSTART_TIMETABLE`.`https://uri.etsi.org/ngsi-ld/h
-asValue` as TIMESTAMP)) <= 1000 * UNIX_TIMESTAMP(TRY_CAST(CURRENT_TIMESTAMP AS STRING)) + EXTRACT(MILLISECOND FROM TRY_CAST(CURRENT_TIMESTAMP as TIMESTAMP)) and 1000 * UNIX_TIMESTAMP(TRY_CAST(`THISEND_TI
-METABLE`.`https://uri.etsi.org/ngsi-ld/hasValue` AS STRING)) + EXTRACT(MILLISECOND FROM TRY_CAST(`THISEND_TIMETABLE`.`https://uri.etsi.org/ngsi-ld/hasValue` as TIMESTAMP)) > 1000 * UNIX_TIMESTAMP(TRY_CAS
-T(CURRENT_TIMESTAMP AS STRING)) + EXTRACT(MILLISECOND FROM TRY_CAST(CURRENT_TIMESTAMP as TIMESTAMP))) or ('\"' || `THISACTIVE_STATETABLE`.`https://uri.etsi.org/ngsi-ld/hasValue` || '\"' = '\"1\"' and (10
-00 * UNIX_TIMESTAMP(TRY_CAST(`THISEND_TIMETABLE`.`https://uri.etsi.org/ngsi-ld/hasValue` AS STRING)) + EXTRACT(MILLISECOND FROM TRY_CAST(`THISEND_TIMETABLE`.`https://uri.etsi.org/ngsi-ld/hasValue` as TIM
-ESTAMP)) < 1000 * UNIX_TIMESTAMP(TRY_CAST(CURRENT_TIMESTAMP AS STRING)) + EXTRACT(MILLISECOND FROM TRY_CAST(CURRENT_TIMESTAMP as TIMESTAMP)) or 1000 * UNIX_TIMESTAMP(TRY_CAST(`THISSTART_TIMETABLE`.`https
-://uri.etsi.org/ngsi-ld/hasValue` AS STRING)) + EXTRACT(MILLISECOND FROM TRY_CAST(`THISSTART_TIMETABLE`.`https://uri.etsi.org/ngsi-ld/hasValue` as TIMESTAMP)) > 1000 * UNIX_TIMESTAMP(TRY_CAST(CURRENT_TIM
-ESTAMP AS STRING)) + EXTRACT(MILLISECOND FROM TRY_CAST(CURRENT_TIMESTAMP as TIMESTAMP)))))
