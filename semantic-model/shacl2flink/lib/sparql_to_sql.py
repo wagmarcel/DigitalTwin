@@ -121,8 +121,11 @@ def translate_sparql(shaclfile, knowledgefile, sparql_query, target_class, lg):
     for row in qres:
         if row.relationship is not None:
             relationships[row.relationship.toPython()] = True
-
-    parsed_query = translateQuery(parseQuery(sparql_query))
+    parsed_query = None
+    try:
+        parsed_query = translateQuery(parseQuery(sparql_query))
+    except:
+        raise utils.SparqlValidationFailed('Failed to parse: ' + sparql_query)
     ctx = translate_query(parsed_query, target_class)
     return ctx['target_sql'], ctx['sql_tables']
 
@@ -268,7 +271,7 @@ def translate_aggregate_join(ctx, elem):
     try:
         elem['target_sql'] = bgp_translation_utils.replace_attributes_table_expression(elem.p['target_sql'], vars)
     except:
-        utils.SparqlValidationFailed('Group by aggregation defined but no aggregated variables found.')
+        raise utils.SparqlValidationFailed('Group by aggregation defined but no aggregated variables found.')
     elem['where'] = elem.p['where']
 
 
@@ -414,7 +417,7 @@ def wrap_sql_construct(ctx, node):
         else:
             construct_query += "\nUNION ALL\n"
         entityId_varname = entityId_var.toPython()[1:]
-        construct_query += f"SELECT A.id || \'\\\' || \'{name}\', B.entityId, B.name, B.nodeType, B.valueType, IFNULL(B.`index`, 0), B.`type`, B.`value`, B.`object`,SQL_DIALECT_SQLITE_TIMESTAMP from {utils.camelcase_to_snake_case(utils.strip_class(ctx['classes']['this']))}_view as A LEFT JOIN ("
+        #construct_query += f"SELECT A.id || \'\\\' || \'{name}\', B.entityId, B.name, B.nodeType, B.valueType, IFNULL(B.`index`, 0), B.`type`, B.`value`, B.`object`,SQL_DIALECT_SQLITE_TIMESTAMP from {utils.camelcase_to_snake_case(utils.strip_class(ctx['classes']['this']))}_view as A LEFT JOIN ("
         construct_query += "SELECT DISTINCT "
         construct_query += f'{bounds[entityId_varname]} || \'\\\' || \'{name}\' as id,\n'  # id
         construct_query += f'{bounds[entityId_varname]} as entityId,\n'  # entityId
@@ -435,7 +438,7 @@ def wrap_sql_construct(ctx, node):
             group_by = reduce(lambda x,y: f'{x}, {y}', map(lambda x: bounds[utils.create_varname(x)], ctx['group_by_vars']))
         if group_by is not None:
             construct_query += f' GROUP BY {group_by}'
-        construct_query += f") as B on A.`id` || '\\\' ||\'{name}\' = B.id "
+        #construct_query += f") as B on A.`id` || '\\\' ||\'{name}\' = B.id "
     node['target_sql'] = construct_query
 
 
