@@ -284,7 +284,7 @@ def create_ngsild_mappings(ctx, sorted_graph):
                     if prop_plain in ctx['properties'] and isIri is None:
                         isIri = ctx['properties'][prop_plain]
                     else:
-                        raise utils.WrongSparqlStructure('Unexpected property structure found.')
+                        raise utils.WrongSparqlStructure(f"Unexpected property structure found for property {prop_p}. Check if the prefix + property exists in the shacl definion.\n Check expression {ctx['query']}.")
                 property_variables[o] = isIri
         if p == ngsild['hasObject']:
             if isinstance(o, Variable):
@@ -306,7 +306,7 @@ def create_ngsild_mappings(ctx, sorted_graph):
                     elif isRel is None:
                         isRel = False
                     else:
-                        raise utils.WrongSparqlStructure('Unexpected time property structure found.')
+                        raise utils.WrongSparqlStructure('Unexpected time(observedAt) property structure found.')
                 time_variables[o] = isRel
                         
     # For every entity or property_variable, find out to which entity class it belongs to.
@@ -361,8 +361,8 @@ def create_ngsild_mappings(ctx, sorted_graph):
         # TODO: Implement multi class resolutions
         qres = ctx['g'].query(query)
         if len(qres) != 1:
-            raise utils.SparqlValidationFailed("Validation of BGP failed. It either contradicts what is defined \
-                in SHACL or is too ambigue!")
+            raise utils.SparqlValidationFailed(f"Validation of BGP failed. It either contradicts what is defined \
+in SHACL or is too ambigue! Check expression {ctx['query']}")
     else:
         # no ngsi-ld variables found, so do not try to infer the types
         qres = []

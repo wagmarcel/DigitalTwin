@@ -126,11 +126,11 @@ def translate_sparql(shaclfile, knowledgefile, sparql_query, target_class, lg):
         parsed_query = translateQuery(parseQuery(sparql_query))
     except:
         raise utils.SparqlValidationFailed('Failed to parse: ' + sparql_query)
-    ctx = translate_query(parsed_query, target_class)
+    ctx = translate_query(parsed_query, target_class, sparql_query)
     return ctx['target_sql'], ctx['sql_tables']
 
 
-def translate_query(query, target_class):
+def translate_query(query, target_class, orig_query):
     """
     Decomposes parsed SparQL object
     query: parsed sparql object
@@ -149,7 +149,8 @@ def translate_query(query, target_class):
         'target_sql': '',
         'target_where': '',
         'target_modifiers': [],
-        'add_triples': [(Variable('this'), RDF['type'], target_class)]
+        'add_triples': [(Variable('this'), RDF['type'], target_class)],
+        'query': orig_query
     }
     if algebra.name == 'SelectQuery' or algebra.name == 'ConstructQuery':
         translate(ctx, algebra)
@@ -384,6 +385,7 @@ def translate_construct_query(ctx, query):
     for s, p, o in query.template:
         h.add((s, p, o))
     property_variables, entity_variables, time_variables, _ = bgp_translation_utils.create_ngsild_mappings(ctx, h)
+
     translate(ctx, query.p)
     query['target_sql'] = query.p['target_sql']
     query['where'] = query.p['where']
