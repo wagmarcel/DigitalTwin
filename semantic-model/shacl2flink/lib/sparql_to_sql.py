@@ -455,7 +455,7 @@ def get_bound_trim_string(ctx, boundsvar):
     elif boundsvarname in bounds and boundsvar in ctx['time_variables']:
         return f"SQL_DIALECT_STRIP_LITERAL{{{bounds[boundsvarname]}}}"
     else:  
-        raise utils.WrongSparqlStructure('Trying to trim non-bound variable')
+        raise utils.WrongSparqlStructure(f"Trying to trim non-bound variable ?{boundsvarname} in expression {ctx['query']}")
 
 
 def get_attribute_columns(ctx, node):

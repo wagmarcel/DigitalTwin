@@ -360,9 +360,10 @@ def create_ngsild_mappings(ctx, sorted_graph):
         # For the time being only unique resolutions of classes are allowed.
         # TODO: Implement multi class resolutions
         qres = ctx['g'].query(query)
-        if len(qres) != 1:
-            raise utils.SparqlValidationFailed(f"Validation of BGP failed. It either contradicts what is defined \
-in SHACL or is too ambigue! Check expression {ctx['query']}")
+        if len(qres) > 1:
+            raise utils.SparqlValidationFailed(f"Validation of BGP failed. Variable types cannot be uniquely determined! Check expression {ctx['query']}")
+        elif len(qres) == 0:
+            raise utils.SparqlValidationFailed(f"Validation of BGP failed. No solution found for ngsild variable mappings! Check expression {ctx['query']}")
     else:
         # no ngsi-ld variables found, so do not try to infer the types
         qres = []
