@@ -168,7 +168,10 @@ def translate(ctx, elem):
     if isinstance(elem, URIRef) or isinstance(elem, Literal):
         return utils.format_node_type(elem)
     elif isinstance(elem, Variable):
-        return utils.unwrap_variables(ctx, elem)
+        try:
+            return utils.unwrap_variables(ctx, elem)
+        except Exception as e:
+            raise utils.SparqlValidationFailed(f"Error while unwrapping variables: {str(e)} while processing {ctx['query']}")
     if elem.name == 'SelectQuery':
         return translate_select_query(ctx, elem)
     elif elem.name == 'ConstructQuery':
