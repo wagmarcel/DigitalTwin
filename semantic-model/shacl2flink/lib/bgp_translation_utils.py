@@ -476,7 +476,7 @@ Consider using a variable and FILTER instead.')
     else:
         # it must be a time value
         if ngsildtype[0] != ngsild['observedAt']:
-            raise utils.SparqlValidationFailed("Internal implementation error. Found unexpected NGSI-LD property")
+            raise utils.SparqlValidationFailed(f"Internal implementation error. Found unexpected NGSI-LD property {ngsildtype[0]} in {ctx['query']}")
         if utils.create_varname(ngsildvar[0]) not in local_ctx['bounds']:
             local_ctx['bounds'][ngsildvar[0].toPython()[1:]] = f'`{attribute_tablename}`.`ts`'
         if attribute_tablename not in local_ctx['bgp_tables'] and attribute_tablename not in ctx['tables']:
