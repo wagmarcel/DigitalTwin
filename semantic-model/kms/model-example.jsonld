@@ -170,7 +170,7 @@
     "https://industry-fusion.com/types/v0.9/wasteClass": {
       "type": "Property",
       "value": {
-        "@id": "https://industry-fusion.com/types/v0.9/WC2"
+        "@id": "https://industry-fusion.com/types/v0.9/WC0"
       }
     }
   },
@@ -178,10 +178,7 @@
     "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
     "id": "urn:filterCartridge:2",
     "type": "https://industry-fusion.com/types/v0.9/filterCartridge",
-    "https://industry-fusion.com/types/v0.9/inUseFrom": {
-      "type": "Property",
-      "value": "2021-10-10 13:51:51.0"
-    },
+    
     "https://industry-fusion.com/types/v0.9/inUseUntil": {
       "type": "Property",
       "value": "2021-10-25 13:54:55.4"
@@ -199,11 +196,11 @@
     "type": "https://industry-fusion.com/types/v0.9/oeeTemplate",
     "https://industry-fusion.com/types/v0.9/startTime": {
       "type": "Property",
-      "value": "2099-03-24 13:42:31"
+      "value": "2023-03-23 13:42:31"
     },
     "https://industry-fusion.com/types/v0.9/endTime": {
       "type": "Property",
-      "value": "2023-03-24 14:42:31"
+      "value": "2099-03-25 14:42:31"
     },
     "https://industry-fusion.com/oee/v0.9/availabilityState": {
       "type": "Property",
@@ -212,7 +209,7 @@
     },
     "https://industry-fusion.com/oee/v0.9/availabilityTimeAgg": {
       "type": "Property",
-      "value": "1000"
+      "value": "0"
     },
     "https://industry-fusion.com/oee/v0.9/runTime": {
       "type": "Property",

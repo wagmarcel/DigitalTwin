@@ -66,7 +66,7 @@ certmanager:
   issuer: {{ .StateValues.certmanager.issuer }}
 
 flink:
-  imageTag: 1.14.3
+  imageTag: 1.16.1
   clusterId: iff
   taskmanagers: 1
   jobmanager: 1
@@ -79,7 +79,7 @@ flink:
   defaultParalellism: 1
   alertWindow: '0.001'
   ngsildUpdateWindow: '0.001'
-  attributeInsertWindow: '0.1'
+  attributeInsertWindow: '0.001'
 
 minio:
   enabled: {{ .StateValues.minio.enabled }}
@@ -134,6 +134,7 @@ kafkaBridge:
     attributesTopic: "iff.ngsild.attributes"
     entityTopicRetention: "604800000"
     attributesTopicRetention: "86400000"
+    #attributesTopicRetention: "3600000"
   alerta:
     replicaCount: 1
     listenTopic: "iff.alerts"

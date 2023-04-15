@@ -380,20 +380,24 @@ def wrap_ngsild_variable(ctx, var):
     time_variables = ctx['time_variables']
     varname = create_varname(var)
     add_aggregate_var_to_context(ctx, varname)
+    if not varname in bounds:
+        raise SparqlValidationFailed(f'Could not resolve variable \
+?{varname} in expression {ctx["query"]}.')
     if var in property_variables:
-        if varname in bounds:
-            if property_variables[var]:
-                return "'<' || " + bounds[varname] + " || '>'"
-            else:
-                return "'\"' || " + bounds[varname] + " || '\"'"
+        #if varname in bounds:
+        if property_variables[var]:
+            return "'<' || " + bounds[varname] + " || '>'"
         else:
-            raise SparqlValidationFailed(f'Could not resolve variable \
-?{varname}.')
+            return "'\"' || " + bounds[varname] + " || '\"'"
+        #else:
+        #    raise SparqlValidationFailed(f'Could not resolve variable \
+        # ?{varname}.')
     elif var in entity_variables:
         raise SparqlValidationFailed(f'Cannot bind enttiy variable {varname} to \
 plain RDF context')
     elif var in time_variables:
         if varname in bounds:
             return f"SQL_DIALECT_TIME_TO_MILLISECONDS{{{bounds[varname]}}}"
-    elif varname in bounds:  # plain RDF variable
+    #elif varname in bounds:  # plain RDF variable
+    else:  # plain RDF variable
         return bounds[varname]
