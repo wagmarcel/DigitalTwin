@@ -223,6 +223,8 @@ def translate(ctx, elem):
         return translate_aggregate_sum(ctx, elem)
     elif elem.name == 'UnaryNot':
         return translate_unary_not(ctx, elem)
+    elif elem.name == 'MultiplicativeExpression':
+        return translate_multiplicative_expression(ctx, elem)
     else:
         raise utils.WrongSparqlStructure(f'SparQL structure {elem.name} not \
 supported!')
@@ -303,6 +305,18 @@ def translate_additive_expression(ctx, elem):
         expr += f" {op} {other_val} "
 
     return expr
+
+
+def translate_multiplicative_expression(ctx, elem):
+    expr = translate(ctx, elem.expr)
+
+    for op, other in zip (elem.op, elem.other):
+        
+        other_val = translate(ctx, other)
+        expr += f" {op} {other_val} "
+
+    return expr
+
 
 def translate_function(ctx, function):
     bounds = ctx['bounds']
