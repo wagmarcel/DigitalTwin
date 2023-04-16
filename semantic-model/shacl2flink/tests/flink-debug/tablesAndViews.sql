@@ -168,6 +168,7 @@ CREATE TABLE cutter (
     `https://industry-fusion.com/types/v0.9/hasOutWorkpiece` STRING,
   `https://industry-fusion.com/types/v0.9/hasFilter` STRING,
   `https://industry-fusion.com/types/v0.9/state` STRING,
+  `https://industry-fusion.com/oee/v0.9/availabilityState` STRING,
   `ts` TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
    WATERMARK FOR ts AS ts
 ) WITH (
@@ -182,7 +183,7 @@ CREATE TABLE cutter (
 drop view if exists cutter_view;
 create view cutter_view as
 SELECT id, `type`, `https://industry-fusion.com/types/v0.9/hasInWorkpiece`, `https://industry-fusion.com/types/v0.9/hasOutWorkpiece`,
-    `https://industry-fusion.com/types/v0.9/hasFilter`, `https://industry-fusion.com/types/v0.9/state`, ts
+    `https://industry-fusion.com/types/v0.9/hasFilter`, `https://industry-fusion.com/types/v0.9/state`, `https://industry-fusion.com/oee/v0.9/availabilityState`, ts
   FROM (
       SELECT *,
       ROW_NUMBER() OVER (PARTITION BY `id`
@@ -536,7 +537,6 @@ CREATE TABLE `oee_template` (
 `type` STRING,
 `https://industry-fusion.com/types/v0.9/startTime` STRING,
 `https://industry-fusion.com/types/v0.9/endTime` STRING,
-`https://industry-fusion.com/oee/v0.9/availabilityState` STRING,
 `https://industry-fusion.com/oee/v0.9/availabilityTimeAgg` STRING,
 `https://industry-fusion.com/oee/v0.9/runTime` STRING,
 `https://industry-fusion.com/oee/v0.9/netRunTime` STRING,
@@ -562,7 +562,6 @@ CREATE VIEW `oee_template_view` AS
 SELECT `id`,`type`,
 `https://industry-fusion.com/types/v0.9/startTime`,
 `https://industry-fusion.com/types/v0.9/endTime`,
-`https://industry-fusion.com/oee/v0.9/availabilityState`,
 `https://industry-fusion.com/oee/v0.9/availabilityTimeAgg`,
 `https://industry-fusion.com/oee/v0.9/runTime`,
 `https://industry-fusion.com/oee/v0.9/netRunTime`,

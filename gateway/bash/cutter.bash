@@ -101,12 +101,13 @@ print_oee(){
     #declare -A valvars=( [hasreferencemachine]=HASREFERENCEMASCHINE_ATTRIBUTE [availabilitytimeagg]=AVAILABILITYTIMEAGG_ATTRIBUTE [availabilitystate]=AVAILABILITYSTATE_ATTRIBUTE )
     #declare -A valextract=( [hasreferencemachine]=".object" [availabilitytimeagg]=".value" [availabilitystate]=".value" )
     oee=$(get_ngsild_entity "$TOKEN" "$OEE_ID")
+    cutter=$(get_ngsild_entity "$TOKEN" "$CUTTER_ID")
     #for key in "${!valvars[@]}"; do 
     #    eval "$'$(echo $oee | jq \' .\"\'${'${valvars[$key]}$'}\'\"'${valextract[$key]}$'\')'"
     #done
     hasreferencemachine=$(echo $oee | jq ' ."'${HASREFERENCEMASCHINE_ATTRIBUTE}'".object')
     availabilitytimeagg=$(echo $oee | jq ' ."'${AVAILABILITYTIMEAGG_ATTRIBUTE}'".value' | xargs)
-    availabilitystate=$(echo $oee | jq ' ."'${AVAILABILITYSTATE_ATTRIBUTE}'".value' | xargs)
+    availabilitystate=$(echo $cutter | jq ' ."'${AVAILABILITYSTATE_ATTRIBUTE}'".value' | xargs)
     starttime=$(echo $oee | jq ' ."'${STARTTIME_ATTRIBUTE}'".value' | xargs)
     endtime=$(echo $oee | jq ' ."'${ENDTIME_ATTRIBUTE}'".value' | xargs)
     totalcount=$(echo $oee | jq ' ."'${TOTALCOUNT_ATTRIBUTE}'".value' | xargs)

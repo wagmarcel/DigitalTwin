@@ -29,6 +29,11 @@
     "https://industry-fusion.com/types/v0.9/hasFilter": {
       "type": "Relationship",
       "object": "urn:filter:1"
+    },
+    "https://industry-fusion.com/oee/v0.9/availabilityState": {
+      "type": "Property",
+      "value": "1",
+      "observedAt": "2023-03-24 13:42:31.2"
     }
   },
   {
@@ -196,44 +201,16 @@
     "type": "https://industry-fusion.com/types/v0.9/oeeTemplate",
     "https://industry-fusion.com/types/v0.9/startTime": {
       "type": "Property",
-      "value": "2023-03-23 13:42:31"
+      "value": "2000-03-23 13:42:31"
     },
     "https://industry-fusion.com/types/v0.9/endTime": {
       "type": "Property",
       "value": "2099-03-25 14:42:31"
     },
-    "https://industry-fusion.com/oee/v0.9/availabilityState": {
-      "type": "Property",
-      "value": "1",
-      "observedAt": "2023-03-24 13:42:31.2"
-    },
-    "https://industry-fusion.com/oee/v0.9/availabilityTimeAgg": {
-      "type": "Property",
-      "value": "0"
-    },
-    "https://industry-fusion.com/oee/v0.9/runTime": {
-      "type": "Property",
-      "value": "1000"
-    },
-    "https://industry-fusion.com/oee/v0.9/netRunTime": {
-      "type": "Property",
-      "value": "1000"
-    },
-    "https://industry-fusion.com/oee/v0.9/totalCount": {
-      "type": "Property",
-      "value": "10"
-    },
-    "https://industry-fusion.com/oee/v0.9/goodCount": {
-      "type": "Property",
-      "value": "9"
-    },
+
     "https://industry-fusion.com/oee/v0.9/hasReferenceMachine": {
       "type": "Relationship",
       "object": "urn:plasmacutter:1"
-    },
-    "https://industry-fusion.com/types/v0.9/activeState": {
-      "type": "Property",
-      "value": "1"
     }
   }
 ]
