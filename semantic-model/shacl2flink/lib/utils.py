@@ -230,7 +230,7 @@ def create_statementset(object_name, table_object_names,
     spec['tables'] = table_object_names
     spec['views'] = view_object_names
     if ttl is not None:
-        spec['sqlsettings'] = [{"table.exec.state.ttl": f"{ttl}"}]
+        spec['sqlsettings'] = [{"table.exec.state.ttl": f"{ttl}", "execution.savepoint.ignore-unclaimed-state": "true"}]
     spec['sqlstatements'] = statementsets
     spec['updateStrategy'] = "savepoint"
     return yaml_bsqls
