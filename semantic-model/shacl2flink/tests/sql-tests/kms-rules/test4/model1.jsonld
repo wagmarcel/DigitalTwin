@@ -10,7 +10,7 @@
         "@id": "https://industry-fusion.com/types/v0.9/state_PROCESSING"
       }
     },
-    "https://industry-fusion.com/types/v0.9/hasWorkpiece": {
+    "https://industry-fusion.com/types/v0.9/hasInWorkpiece": {
       "type": "Relationship",
       "object": "urn:workpiece:1"
     },
