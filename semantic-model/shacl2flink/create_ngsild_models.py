@@ -38,7 +38,7 @@ attributes_query = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
-SELECT (?a as ?entityId) (?b as ?name) (?e as ?type) (IF(bound(?g), IF(isIRI(?g), '@id', '@value'), IF(isIRI(?f), '@id', '@value')) as ?nodeType)
+SELECT DISTINCT (?a as ?entityId) (?b as ?name) (?e as ?type) (IF(bound(?g), IF(isIRI(?g), '@id', '@value'), IF(isIRI(?f), '@id', '@value')) as ?nodeType)
 (datatype(?g) as ?valueType) (?f as ?hasValue) (?g as ?hasObject) ?observedAt
 where {
     ?nodeshape a sh:NodeShape .
@@ -112,6 +112,7 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
         model += g + knowledge
 
         qres = model.query(attributes_query)
+        
         entity_count = {}
         first = True
         print(f'INSERT INTO `{configs.attributes_table_name}` VALUES',
