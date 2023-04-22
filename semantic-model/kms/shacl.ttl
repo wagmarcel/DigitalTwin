@@ -632,21 +632,18 @@ iff:OeeTemplateShape
 			}
 			WHERE {
                     $this iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?state ] .
-                    #?this iff:state [ <https://uri.etsi.org/ngsi-ld/observedAt> ?stateTs ] .
                     OPTIONAL{?state oee:availability ?availabilityVal .} .
                     bind(IF(bound(?availabilityVal), ?availabilityVal, "0") as ?availabilityState)
-                    #FILTER(?stateTs > xsd:dateTime(?startTime) && ?stateTs < xsd:dateTime(?endTime))
 			}
 			""" ;
 	] ;
 .
 
 
-    iff:OEEUpdateAvailabilityTimeAgg
+    iff:OEEUpdateAvailabilityTimeAggShape
     a sh:NodeShape ;
     rdfs:comment "Update availabilityTimeAgg" ;
     sh:targetClass iff:oeeTemplate ;
-    
 	sh:rule [
 		a sh:SPARQLRule ;
 		sh:construct """
@@ -661,12 +658,12 @@ iff:OeeTemplateShape
                     $this iff:startTime [ <https://uri.etsi.org/ngsi-ld/hasValue> ?startTime ] .
                     $this iff:endTime [ <https://uri.etsi.org/ngsi-ld/hasValue> ?endTime ] .
                     $this oee:hasReferenceMachine [ <https://uri.etsi.org/ngsi-ld/hasObject> ?machine ] .
-                    ?machine oee:availabilityState [ <https://uri.etsi.org/ngsi-ld/hasValue> ?availabilityState ] .
-                    ?machine oee:availabilityState [ <https://uri.etsi.org/ngsi-ld/hasValue> ?availabilityStateTs ] .
-                    bind(SUM(xsd:integer(?availabilityState))*5 as ?availabilityStateAgg) .
-                    FILTER(?availabilityStateTs > xsd:dateTime(?startTime) && ?availabilityStateTs < xsd:dateTime(?endTime))
+                    ?machine oee:availabilityState [ <https://uri.etsi.org/ngsi-ld/hasValue> ?state ] .
+                    ?machine oee:availabilityState [ <https://uri.etsi.org/ngsi-ld/observedAt> ?stateTs ] .
+                    bind(SUM(xsd:integer(?state))*5 as ?availabilityStateAgg) .
+                    FILTER(?stateTs > xsd:dateTime(?startTime) && ?stateTs < xsd:dateTime(?endTime))
 			}
-            GROUP BY $this
+            GROUP BY $this ?machine
 			""" ;
 	] ;
 .
