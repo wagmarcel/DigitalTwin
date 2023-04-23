@@ -125,13 +125,13 @@
       {
         "value": "1",
         "type": "Property",
-        "datasetId": 0,
+        "datasetId": "0",
         "observedAt": "2023-03-24 13:42:32.0"
       },
       {
         "value": "0",
         "type": "Property",
-        "datasetId": 0,
+        "datasetId": "0",
         "observedAt": "2023-03-24 13:52:32.0"
       }
     ],

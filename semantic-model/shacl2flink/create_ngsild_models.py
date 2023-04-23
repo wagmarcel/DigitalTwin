@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from rdflib import Graph
+from rdflib import Graph, URIRef
 import os
 import sys
 import argparse
@@ -131,6 +131,11 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                 current_index = entity_count[id]
             else:
                 current_index = index
+                if isinstance(index, URIRef):
+                    try:
+                        current_index = int(utils.strip_class(current_index.toPython()))
+                    except:
+                        current_index = 0
             valueType = nullify(valueType)
             hasValue = nullify(hasValue)
             hasObject = nullify(hasObject)
