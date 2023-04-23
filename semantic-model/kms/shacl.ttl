@@ -581,9 +581,9 @@ iff:OeeTemplateShape
                     ?machinex iff:hasOutWorkpiece [ <https://uri.etsi.org/ngsi-ld/observedAt> ?workpieceTs ] .
                     OPTIONAL{?workpiece  iff:qualityCheck [ <https://uri.etsi.org/ngsi-ld/hasValue> ?qualityCheck ] .} .
                     bind(COUNT(DISTINCT ?workpiece) as ?workpieces)
-                    bind(IF(?qualityCheck = "1" || !bound(?qualityCheck), ?workpiece, "NULL" ) as ?qc)
+                    bind(IF(?qualityCheck = "1" || (!bound(?qualityCheck) && bound(?workpiece)), ?workpiece, "NULL" ) as ?qc)
                     bind(COUNT(DISTINCT ?qc ) as ?qualityCount)
-                    FILTER( (?qualityCheck = "1" || !bound(?qualityCheck)) && ?workpieceTs > xsd:dateTime(?startTime) && ?workpieceTs < xsd:dateTime(?endTime) )
+                    FILTER( (?qualityCheck = "1" || (!bound(?qualityCheck) && bound(?workpiece))) && ?workpieceTs > xsd:dateTime(?startTime) && ?workpieceTs < xsd:dateTime(?endTime) )
 			}
             GROUP BY ?machinex
 			""" ;
