@@ -59,8 +59,12 @@ def test_main(mock_utils, mock_configs, mock_graph, mock_nullify, tmp_path):
     hasValue.toPython.return_value = 'hasValue'
     hasObject = MagicMock()
     hasObject.toPython.return_value = 'hasObject'
+    observedAt = MagicMock()
+    observedAt.toPython.return_value = 'Timestamp'
+    index = MagicMock()
+    index.toPython.return_value = 'index'
     g.query = MagicMock(side_effect=[
-        [(entityId, name, type, nodeType, valueType, hasValue, hasObject)],
+        [(entityId, name, type, nodeType, valueType, hasValue, hasObject, observedAt, index)],
         [(entityId, type, name, 1, type)]
     ])
 
