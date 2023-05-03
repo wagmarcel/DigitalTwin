@@ -146,7 +146,7 @@ FROM (\n  SELECT *,\nROW_NUMBER() OVER (PARTITION BY `id`\nORDER BY ts DESC)\
 
 
 def test_create_statementset():
-    result = utils.create_statementset('object', 'table_object', 'view',
+    result = utils.create_statementset('object', 'table_object', 'view', None,
                                        'statementset')
     assert result == {
         'apiVersion': 'industry-fusion.com/v1alpha2',
@@ -206,6 +206,7 @@ def test_wrap_ngsild_variable():
     ctx = {
         'bounds': {'var': 'TABLE.`id`'},
         'entity_variables': {},
+        'time_variables': {},
         'property_variables': {rdflib.Variable('var'): True}
     }
     var = rdflib.Variable('var')
@@ -215,6 +216,7 @@ def test_wrap_ngsild_variable():
     ctx = {
         'bounds': {'var': 'TABLE.`id`'},
         'entity_variables': {},
+        'time_variables': {},
         'property_variables': {rdflib.Variable('var'): False}
     }
     var = rdflib.Variable('var')
