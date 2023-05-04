@@ -232,7 +232,7 @@ to Variable and use FILTER.')
                         if utils.create_varname(s) in bounds:
                             count += 1
                             if isinstance(bo, Variable):
-                                bounds[utils.create_varname(bo)]
+                                bounds[utils.create_varname(bo)] = ''
                         elif isinstance(bo, Variable) and utils.create_varname(bo) in bounds:
                             count += 1
                             bounds[utils.create_varname(s)] = ''
