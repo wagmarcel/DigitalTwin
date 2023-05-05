@@ -1,11 +1,12 @@
 @prefix dash: <http://datashapes.org/dash#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix schema: <http://schema.org/> .
+@prefix schema: <https://schema.org/> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix iff: <https://industry-fusion.com/types/v0.9/> .
 PREFIX ex: <http://example.com/ns#>
+PREFIX mat: <http://material.org/material#>
 
 
 iff:MachineShape
@@ -133,21 +134,19 @@ iff:CutterShape
 iff:WorkpieceShape
     a sh:NodeShape ;
     sh:targetClass iff:workpiece ;
-    sh:property [
+ sh:property [
         sh:path <https://industry-fusion.com/types/v0.9/material> ;
         sh:order 1 ;
         sh:nodeKind sh:BlankNode;
+        sh:severity iff:severityCritical ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:property [
             sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
-            sh:nodeKind sh:Literal;
-            sh:minLength 6 ;
-            sh:maxLength 7 ;
-            sh:pattern "^1\\.\\d{4,5}" ;
+            sh:nodeKind sh:IRI ;
+            sh:class mat:Material ;
             sh:minCount 1 ;
             sh:maxCount 1 ;
-            sh:datatype <https://industry-fusion.com/types/v0.9/steelGrade>
         ] ;
         sh:property [
             sh:path rdf:type ;
@@ -530,6 +529,29 @@ iff:OeeTemplateShape
     .
 
 
+iff:LowAlloyShape
+    a sh:NodeShape ;
+    sh:targetClass iff:workpiece ;
+    sh:sparql [
+        a sh:SPARQLConstraints;
+        sh:severity iff:severityCritical ;
+        sh:message "High Alloy with 1% Chrome detected" ;
+        sh:select """
+        PREFIX iff: <https://industry-fusion.com/types/v0.9/>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX mat: <http://material.org/material#>
+        SELECT $this
+        where {
+            $this  iff:material [ <https://uri.etsi.org/ngsi-ld/hasValue> ?material ] .
+            ?material mat:hasAlloyType mat:highAlloy .
+            ?material mat:contains [ mat:isChemicalElement ?element ; mat:maxPercent ?element_max ] .
+            FILTER( ?element = mat:chromium && xsd:float(?element_max) > 1)
+        }
+        """ ;
+    ] .
+
+
     iff:AggregateWorkpiecesShape
     a sh:NodeShape ;
     sh:targetClass iff:oeeTemplate ;
@@ -863,3 +885,5 @@ iff:TimestampCartridgeUntilRulesShape
 			""" ;
 	] ;
 .
+
+

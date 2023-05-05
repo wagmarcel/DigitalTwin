@@ -3,7 +3,9 @@ PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX iff: <https://industry-fusion.com/types/v0.9/>
 PREFIX oee: <https://industry-fusion.com/oee/v0.9/>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
-
+PREFIX saf: <http://safety.org/safety#>
+PREFIX mat: <http://material.org/material#>
+PREFIX om: <http://www.wurvoc.org/vocabularies/om-1.8/>
 ### Test classes
 iff:cutter_test rdfs:subClassOf iff:machine_test ;
     a iff:class .
@@ -100,3 +102,159 @@ iff:severityCritical a iff:severityClass .
 iff:SeverityWarning a iff:severityClass .
 iff:severityCritical iff:severityCode "critical" .
 iff:severityWarning iff:severityCode "warning" .
+
+
+
+## Additional Safety knowledge
+# Safety Thresholds
+saf:Thresholds rdfs:subClassOf rdfs:Class .
+saf:standardBurningTemperature a rdf:Property ;
+    rdfs:domain saf:Thresholds ;
+    rdfs:range rdf:Literal ;
+.
+saf:chromeCancerThreshold a rdf:Property ;
+    rdfs:domain rdfs:Thresholds ;
+    rdfs:range rdf:Literal ;
+.
+saf:chromeVolumeEvaporation a rdf:Property ;
+    rdfs:domain rdfs:Thresholds ;
+    rdfs:range rdfs:Literal ;
+.
+
+saf:thresholds a saf:Thresholds ;
+    saf:standardBurningTemperature "40"^^om:degree_celsius;
+    saf:chromeCancerThreshold "0.01" ;
+    saf:chromeVolumeEvaporation "0.01" ;
+.
+
+# Material type
+mat:Material rdfs:subClassOf rdfs:Class .
+mat:contains a rdf:Property .
+mat:contains rdfs:domain mat:Material ;
+    rdfs:range rdfs:Blank ;
+.
+# ChemicalElement type
+mat:ChemicalElement rdfs:subClassOf rdfs:Class .
+mat:hasChemicalSymbol rdfs:domain mat:ChemicalElement ;
+    rdfs:range rdf:Literal .
+
+mat:evaporationTemperature a rdf:Property .
+mat:hasAlloyType a rdf:Property .
+mat:Alloy a rdfs:Class .
+mat:lowAlloy a mat:Alloy .
+mat:highAlloy a mat:Alloy . 
+
+# ChemicalElement
+mat:carbon rdf:type mat:ChemicalElement ;
+    mat:hasChemicalSymbol "C" .
+mat:manganese rdf:type mat:ChemicalElement ;
+    mat:hasChemicalSymbol "Mn" .
+mat:silicon a mat:ChemicalElement ;
+    mat:hasChemicalSymbol "Si" .
+mat:phosphorus a mat:ChemicalElement ;
+    mat:hasChemicalSymbol "P" .
+mat:sulfur a mat:ChemicalElement ;
+    mat:hasChemicalSymbol "S" .
+mat:chromium a mat:ChemicalElement ;
+    mat:hasChemicalSymbol "Cr" .
+mat:nickel a mat:ChemicalElement ;
+    mat:hasChemicalSymbol "Ni" .
+mat:titan a mat:ChemicalElement ;
+    mat:hasChemicalSymbol "Ti" ;
+.
+# Material according ton EN
+
+# EN1.5301
+mat:Material_EN1.5301 a mat:Material ;
+    mat:evaporationTemperature "1200" ;
+    mat:hasAlloyType mat:highAlloy ;
+    mat:contains [
+        mat:isChemicalElement mat:carbon ;
+        mat:maxPercent "0.08" ;
+        ]
+;
+    mat:contains [
+        mat:isChemicalElement mat:mangan ; 
+        mat:maxPercent "2.0" ;
+        ]
+;
+    mat:contains [ 
+        mat:isChemicalElement mat:silicon ; 
+        mat:maxPercent "1.0" ; 
+        ]
+;
+    mat:contains [ 
+        mat:isChemicalElement mat:phosphorus ;
+        mat:maxPercent "0.045" ;
+        ]
+;
+    mat:contains [ 
+        mat:isChemicalElement mat:sulfur ;
+        mat:maxPercent "0.030" ; 
+        ]
+;
+    mat:contains [
+        mat:isChemicalElement mat:chromium ;
+        mat:maxPercent "19.0" ;
+        mat:minPercent "17.0" ; 
+        ]
+;
+    mat:contains [ 
+        mat:isChemicalElement mat:nickel ;
+        mat:maxPercent "12.0" ;
+        mat:minPercent "12.0" ; 
+        ]
+;
+    mat:contains [ 
+        mat:isChemicalElement mat:titan ;
+        mat:maxPercent "0.7" ;
+        mat:minPercent "17.0" ;
+        ]
+. 
+# EN1.5302
+mat:Material_EN1.5302 a mat:Material ;
+    mat:evaporationTemperature "1000" ;
+    mat:hasAlloyType mat:lowAlloy ;
+    mat:contains [
+        mat:isChemicalElement mat:carbon ;
+        mat:maxPercent "0.01" ;
+        ]
+;
+    mat:contains [
+        mat:isChemicalElement mat:mangan ; 
+        mat:maxPercent "2.5" ;
+        ]
+;
+    mat:contains [ 
+        mat:isChemicalElement mat:silicon ; 
+        mat:maxPercent "1.5" ; 
+        ]
+;
+    mat:contains [ 
+        mat:isChemicalElement mat:phosphorus ;
+        mat:maxPercent "1.045" ;
+        ]
+;
+    mat:contains [ 
+        mat:isChemicalElement mat:sulfur ;
+        mat:maxPercent "1.030" ; 
+        ]
+;
+    mat:contains [
+        mat:isChemicalElement mat:chromium ;
+        mat:maxPercent "16.0" ;
+        mat:minPercent "15.0" ; 
+        ]
+;
+    mat:contains [ 
+        mat:isChemicalElement mat:nickel ;
+        mat:maxPercent "12.0" ;
+        mat:minPercent "12.0" ; 
+        ]
+;
+    mat:contains [ 
+        mat:isChemicalElement mat:titan ;
+        mat:maxPercent "17.0" ;
+        mat:minPercent "17.0" ;
+        ]
+ .
