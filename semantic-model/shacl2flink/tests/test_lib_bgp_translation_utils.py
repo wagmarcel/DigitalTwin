@@ -726,6 +726,54 @@ def test_process_ngsild_spo_obj_defined(mock_isentity, mock_create_table_name, m
 `https://industry-fusion.com/types/v0.9/hasFilter`'}]
 
 
+
+@patch('lib.bgp_translation_utils.get_random_string')
+@patch('lib.utils.create_varname')
+@patch('lib.bgp_translation_utils.create_tablename')
+@patch('lib.bgp_translation_utils.isentity')
+def test_process_ngsild_spo_time_vars(mock_isentity, mock_create_table_name, mock_create_varname,
+                                        mock_get_random_string, monkeypatch):
+    relationships = {
+    }
+    properties = {
+    }
+    mock_create_table_name.return_value = 'testtable'
+    mock_isentity.return_value = True
+    mock_create_varname.return_value = 'f'
+    mock_get_random_string.return_value = ''
+    mock_h = MagicMock()
+    mock_h.predicates.return_value = [observedAtURI]
+    mock_h.objects.return_value = [term.Variable('f')]
+    ctx = {
+        'namespace_manager': None,
+        'bounds': {'this': 'THISTABLE.id'},
+        'tables': {'THISTABLE': ['id']},
+        'sql_tables': [],
+        'properties': properties,
+        'relationships': relationships
+    }
+    # test with unbound v1
+    local_ctx = {
+        'bounds': {'this': 'THISTABLE.id', 'f': 'FTABLE.id'},
+        'selvars': {},
+        'where': '',
+        'bgp_sql_expression': [],
+        'bgp_tables': {'FOBSERVED_ATTABLE': []},
+        'property_variables': {},
+        'entity_variables': {},
+        'time_variables': {},
+        'h': mock_h,
+        'row': {'f': 'ftable'}
+    }
+    s = term.Variable('f')
+    p = observedAtURI
+    o = term.BNode('1')
+    lib.bgp_translation_utils.process_ngsild_spo(ctx, local_ctx, s, p, o)
+    assert local_ctx['bgp_tables'] == {'FOBSERVED_ATTABLE': []}
+    assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'f': 'FTABLE.id'}
+    assert local_ctx['bgp_sql_expression'] == []
+
+
 @patch('lib.bgp_translation_utils.copy')
 def test_sort_triples(mock_copy, monkeypatch):
     def create_varname(var):
@@ -738,6 +786,55 @@ def test_sort_triples(mock_copy, monkeypatch):
     }
     properties = {
         "https://industry-fusion.com/types/v0.9/state": True
+    }
+    monkeypatch.setattr(lib.utils, "create_varname", create_varname)
+    bounds = {'this': 'THISTABLE.id'}
+    triples = [
+        (term.Variable('f'), stateURI, term.BNode('2')),
+        (term.BNode('1'), hasObjectURI, term.Variable('f')),
+        (term.Variable('this'), hasFilterURI, term.BNode('1')),
+        ((term.BNode('2'), hasValueURI, term.Variable('v2')))
+    ]
+    mock_copy.deepcopy.return_value = bounds
+    graph = MagicMock()
+    graph.triples = MagicMock(side_effect=[
+        [(term.BNode('2'), hasValueURI, term.Variable('v2'))],
+        [(term.BNode('2'), hasValueURI, term.Variable('v2'))],
+        [(term.BNode('1'), hasObjectURI, term.Variable('f'))],
+        [(term.BNode('2'), hasValueURI, term.Variable('v2'))],
+        [(term.BNode('2'), hasValueURI, term.Variable('v2'))],
+        [(term.BNode('2'), hasValueURI, term.Variable('v2'))],
+        [(term.BNode('1'), hasObjectURI, term.Variable('f'))],
+        [(term.BNode('2'), hasValueURI, term.Variable('v2'))]
+    ])
+    ctx = {
+        'namespace_manager': None,
+        'bounds': {'this': 'THISTABLE.id'},
+        'tables': {'THISTABLE': ['id']},
+        'sql_tables': [],
+        'property_variables': {},
+        'entity_variables': {},
+        'time_variables': {},
+        'properties': properties,
+        'relationships': relationships
+    }
+    result = lib.bgp_translation_utils.sort_triples(ctx, bounds, triples, graph)
+    assert result[1] == (term.BNode('1'), hasObjectURI, term.Variable('f'))
+    assert result[0] == (term.Variable('this'), hasFilterURI, term.BNode('1'))
+    assert result[2] == (term.Variable('f'), stateURI, term.BNode('2'))
+    assert result[3] == ((term.BNode('2'), hasValueURI, term.Variable('v2')))
+
+
+@patch('lib.bgp_translation_utils.copy')
+def test_sort_triples_rdf(mock_copy, monkeypatch):
+    def create_varname(var):
+        if var == term.Variable('f'):
+            return 'f'
+        if var == term.Variable('this'):
+            return 'this'
+    relationships = {
+    }
+    properties = {
     }
     monkeypatch.setattr(lib.utils, "create_varname", create_varname)
     bounds = {'this': 'THISTABLE.id'}
