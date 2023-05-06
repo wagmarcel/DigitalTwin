@@ -17,6 +17,7 @@
 from unittest.mock import MagicMock, patch
 import lib.bgp_translation_utils
 from rdflib import term, RDF, Graph as rGraph
+import pytest
 
 hasObjectURI = term.URIRef("https://uri.etsi.org/ngsi-ld/hasObject")
 stateURI = term.URIRef("https://industry-fusion.com/types/v0.9/state")
@@ -912,3 +913,26 @@ def test_get_rdf_join_condition(monkeypatch):
     r = term.Variable('v1')
     result = lib.bgp_translation_utils.get_rdf_join_condition(r, property_variables, entity_variables, time_variables, selectvars)
     assert result == "'<' ||v1.id|| '>'"
+
+
+def test_get_rdf_join_condition_rdf(monkeypatch):
+    def create_varname(var):
+        return var.toPython()[1:]
+
+    property_variables = {
+        term.Variable('v2'): True,
+    }
+    entity_variables = {
+        term.Variable('f'): True,
+        term.Variable('this'): True
+    }
+    time_variables = {}
+    selectvars = {
+        'v1': 'v1.id',
+    }
+    r = term.Variable('f')
+    with pytest.raises(Exception):
+        result = lib.bgp_translation_utils.get_rdf_join_condition(r, property_variables, entity_variables, time_variables, selectvars)
+    r = term.Variable('v1')
+    result = lib.bgp_translation_utils.get_rdf_join_condition(r, property_variables, entity_variables, time_variables, selectvars)
+    assert result == "v1.id"
