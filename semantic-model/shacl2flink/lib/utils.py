@@ -336,8 +336,8 @@ def process_sql_dialect(expression, isSqlite):
                                        r"REGEXP_REPLACE(CAST(\1 as STRING), '\"', '')",
                                        result_expression)
             result_expression = re.sub(r'SQL_DIALECT_TIME_TO_MILLISECONDS{([^{}]*)}',
-                                       r"1000 * UNIX_TIMESTAMP(TRY_CAST(\1 AS STRING)) +\
-EXTRACT(MILLISECOND FROM TRY_CAST(\1 as TIMESTAMP))",
+                                       r"1000 * UNIX_TIMESTAMP(TRY_CAST(\1 AS STRING)) + " +
+                                       r"EXTRACT(MILLISECOND FROM TRY_CAST(\1 as TIMESTAMP))",
                                        result_expression)
             result_expression = result_expression.replace('SQL_DIALECT_CURRENT_TIMESTAMP',
                                                           'CURRENT_TIMESTAMP')

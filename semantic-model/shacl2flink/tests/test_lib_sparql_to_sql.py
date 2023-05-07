@@ -83,8 +83,6 @@ def test_translate_builtin_if(mock_translate, monkeypatch):
     ctx = MagicMock()
     mock_translate.side_effect = ["condition", "<arg2>", "<arg3>"]
     builtin_if = MagicMock()
-    #builtin_if.arg2 = term.URIRef('arg2')
-    #builtin_if.arg3 = term.URIRef('arg3')
     result = lib.sparql_to_sql.translate_builtin_if(ctx, builtin_if)
     assert result == "CASE WHEN condition THEN <arg2> ELSE <arg3> END"
     assert mock_translate.called
@@ -108,7 +106,6 @@ def test_translate_BGP(mock_create_ngsild_mappings, mock_sort_triples, mock_proc
     }
     bgp.triples = []
     ctx.__getitem__.side_effect = hash.__getitem__
-    
 
     lib.sparql_to_sql.translate_BGP(ctx, bgp)
     assert not mock_create_ngsild_mappings.called

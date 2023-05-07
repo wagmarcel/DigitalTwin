@@ -77,7 +77,8 @@ ngsild:hasObject;  sh:class ?f ] ] ." in sparql
     graph.add((term.BNode('3'), hasValueURI, term.Variable('v1')))
     graph.add((term.BNode('3'), observedAtURI, term.Variable('v1_time')))
 
-    property_variables, entity_variables, time_variables, row = lib.bgp_translation_utils.create_ngsild_mappings(ctx, graph)
+    property_variables, entity_variables, time_variables, row = \
+        lib.bgp_translation_utils.create_ngsild_mappings(ctx, graph)
     assert property_variables == {
         term.Variable('v2'): True,
         term.Variable('v1'): True,
@@ -139,7 +140,8 @@ def test_create_ngsild_mappings_reverse(monkeypatch):
     graph.add((term.BNode('1'), hasValueURI, term.Variable('v1')))
     graph.add((term.BNode('3'), hasValueURI, term.Variable('v2')))
 
-    property_variables, entity_variables, time_variables, row = lib.bgp_translation_utils.create_ngsild_mappings(ctx, graph)
+    property_variables, entity_variables, \
+        time_variables, row = lib.bgp_translation_utils.create_ngsild_mappings(ctx, graph)
     assert property_variables == {
         term.Variable('v2'): True,
         term.Variable('v1'): True
@@ -727,13 +729,12 @@ def test_process_ngsild_spo_obj_defined(mock_isentity, mock_create_table_name, m
 `https://industry-fusion.com/types/v0.9/hasFilter`'}]
 
 
-
 @patch('lib.bgp_translation_utils.get_random_string')
 @patch('lib.utils.create_varname')
 @patch('lib.bgp_translation_utils.create_tablename')
 @patch('lib.bgp_translation_utils.isentity')
 def test_process_ngsild_spo_time_vars(mock_isentity, mock_create_table_name, mock_create_varname,
-                                        mock_get_random_string, monkeypatch):
+                                      mock_get_random_string, monkeypatch):
     relationships = {
     }
     properties = {
@@ -908,10 +909,16 @@ def test_get_rdf_join_condition(monkeypatch):
         'v1': 'v1.id',
     }
     r = term.URIRef('test')
-    result = lib.bgp_translation_utils.get_rdf_join_condition(r, property_variables, entity_variables, time_variables, selectvars)
+    result = lib.bgp_translation_utils.get_rdf_join_condition(r, property_variables,
+                                                              entity_variables,
+                                                              time_variables,
+                                                              selectvars)
     assert result == "'<test>'"
     r = term.Variable('v1')
-    result = lib.bgp_translation_utils.get_rdf_join_condition(r, property_variables, entity_variables, time_variables, selectvars)
+    result = lib.bgp_translation_utils.get_rdf_join_condition(r, property_variables,
+                                                              entity_variables,
+                                                              time_variables,
+                                                              selectvars)
     assert result == "'<' ||v1.id|| '>'"
 
 
@@ -932,7 +939,12 @@ def test_get_rdf_join_condition_rdf(monkeypatch):
     }
     r = term.Variable('f')
     with pytest.raises(Exception):
-        result = lib.bgp_translation_utils.get_rdf_join_condition(r, property_variables, entity_variables, time_variables, selectvars)
+        result = lib.bgp_translation_utils.get_rdf_join_condition(r, property_variables,
+                                                                  entity_variables,
+                                                                  time_variables,
+                                                                  selectvars)
     r = term.Variable('v1')
-    result = lib.bgp_translation_utils.get_rdf_join_condition(r, property_variables, entity_variables, time_variables, selectvars)
+    result = lib.bgp_translation_utils.get_rdf_join_condition(r, property_variables, entity_variables,
+                                                              time_variables,
+                                                              selectvars)
     assert result == "v1.id"

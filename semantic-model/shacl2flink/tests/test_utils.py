@@ -237,15 +237,17 @@ zzCURRENT_TIMESTAMP, INSERT into attributes_insert, TRY_CAST"
 
     isSqlite = True
     result_expression = utils.process_sql_dialect(expression, isSqlite)
-    assert result_expression == 'ltrim(rtrim(stripme, \'>\'), \'<\')xxtrim(literal, \'\\"\')yyCAST(julianday(time) * 86400000 as INTEGER)zzdatetime(), INSERT OR REPLACE INTO attributes_insert_filter,CURRENT_TIMESTAMP, CAST'
+    assert result_expression == 'ltrim(rtrim(stripme, \'>\'), \'<\')xxtrim(literal, \'\\"\')yyCAST(julianday(time) \
+* 86400000 as INTEGER)zzdatetime(), INSERT OR REPLACE INTO attributes_insert_filter,CURRENT_TIMESTAMP, CAST'
 
     # Check recursive strutures
-    
+
     isSqlite = False
     expression = "SQL_DIALECT_STRIP_IRI{SQL_DIALECT_STRIP_IRI{SQL_DIALECT_STRIP_IRI{stripme}}}"
     result_expression = utils.process_sql_dialect(expression, isSqlite)
-    assert result_expression == "REGEXP_REPLACE(CAST(REGEXP_REPLACE(CAST(REGEXP_REPLACE(CAST(stripme as STRING), '>|<', '') as STRING), '>|<', '') as STRING), '>|<', '')"
-    
+    assert result_expression == "REGEXP_REPLACE(CAST(REGEXP_REPLACE(CAST(REGEXP_REPLACE(CAST(stripme as STRING), \
+'>|<', '') as STRING), '>|<', '') as STRING), '>|<', '')"
+
     isSqlite = True
     result_expression = utils.process_sql_dialect(expression, isSqlite)
     assert result_expression == "ltrim(rtrim(ltrim(rtrim(ltrim(rtrim(stripme, '>'), '<'), '>'), '<'), '>'), '<')"
@@ -253,10 +255,10 @@ zzCURRENT_TIMESTAMP, INSERT into attributes_insert, TRY_CAST"
     isSqlite = False
     expression = "SQL_DIALECT_STRIP_LITERAL{SQL_DIALECT_TIME_TO_MILLISECONDS{SQL_DIALECT_STRIP_IRI{test}}}"
     result_expression = utils.process_sql_dialect(expression, isSqlite)
-    assert result_expression == 'REGEXP_REPLACE(CAST(1000 * UNIX_TIMESTAMP(TRY_CAST(REGEXP_REPLACE(CAST(test as STRING), \'>|<\', \'\') AS STRING)) + EXTRACT(MILLISECOND FROM TRY_CAST(REGEXP_REPLACE(CAST(test as STRING), \'>|<\', \'\') as TIMESTAMP)) as STRING), \'\\"\', \'\')'
+    assert result_expression == 'REGEXP_REPLACE(CAST(1000 * UNIX_TIMESTAMP(TRY_CAST(REGEXP_REPLACE(CAST(test \
+as STRING), \'>|<\', \'\') AS STRING)) + EXTRACT(MILLISECOND FROM TRY_CAST(REGEXP_REPLACE(CAST(test as STRING), \
+\'>|<\', \'\') as TIMESTAMP)) as STRING), \'\\"\', \'\')'
 
     isSqlite = True
     result_expression = utils.process_sql_dialect(expression, isSqlite)
     assert result_expression == 'trim(CAST(julianday(ltrim(rtrim(test, \'>\'), \'<\')) * 86400000 as INTEGER), \'\\"\')'
-    
-    
