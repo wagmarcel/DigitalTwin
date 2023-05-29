@@ -85,7 +85,12 @@ UPDATE_STRATEGY_SAVEPOINT = "savepoint"
 UPDATE_STRATEGY_NONE = "none"
 
 
-@kopf.on.create("industry-fusion.com", "v1alpha2", "beamsqlstatementsets")
+@kopf.on.startup()
+def configure(settings: kopf.OperatorSettings, **_):
+    settings.execution.max_workers = 1
+    
+
+@kopf.on.create("industry-fusion.com", "v1alpha3", "beamsqlstatementsets")
 # pylint: disable=unused-argument
 # Kopf decorated functions match their expectations
 def create(body, spec, patch, logger, **kwargs):
@@ -102,7 +107,7 @@ def create(body, spec, patch, logger, **kwargs):
     return {"createdOn": str(time.time())}
 
 
-@kopf.on.delete("industry-fusion.com", "v1alpha2", "beamsqlstatementsets",
+@kopf.on.delete("industry-fusion.com", "v1alpha3", "beamsqlstatementsets",
                 retries=10)
 # pylint: disable=unused-argument
 # Kopf decorated functions match their expectations
@@ -164,7 +169,13 @@ def beamsqlviews(name: str, namespace: str, body: kopf.Body, **_):
     return {(namespace, name): body}
 
 
-@kopf.on.update("industry-fusion.com", "v1alpha2", "beamsqlstatementsets")
+@kopf.index("", "v1", "configmaps")
+# pylint: disable=missing-function-docstring
+def configmaps(name: str, namespace: str, body: kopf.Body, **_):
+    return {(namespace, name): body}
+
+
+@kopf.on.update("industry-fusion.com", "v1alpha3", "beamsqlstatementsets")
 # pylint: disable=unused-argument
 # Kopf decorated functions match their expectations
 def update(body, spec, patch, logger, retries=20, **kwargs):
@@ -252,13 +263,13 @@ def update(body, spec, patch, logger, retries=20, **kwargs):
                 patch.status[STATE] = States.UPDATING.name
 
 
-@kopf.timer("industry-fusion.com", "v1alpha2", "beamsqlstatementsets",
+@kopf.timer("industry-fusion.com", "v1alpha3", "beamsqlstatementsets",
             interval=timer_interval_seconds, backoff=timer_backoff_seconds)
 # pylint: disable=too-many-arguments unused-argument redefined-outer-name
 # pylint: disable=too-many-locals too-many-statements
 # Kopf decorated functions match their expectations
-def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index, patch, logger,
-            body, spec, status, **kwargs):
+def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index, configmaps: kopf.Index, 
+            patch, logger, body, spec, status, **kwargs):
     """
     Managaging the main lifecycle of the beamsqlstatementset crd
     Current state is stored under
@@ -343,11 +354,17 @@ def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index, patch, logger,
                 from exc
 
         # now create statement set
+        if spec.get("sqlstatements") is not None and spec.get("sqlstatementmaps") is not None:
+            logger.error(f"The resoure {namespace}/{name} needs either sqlstatements or sqlstatementmaps.")
+            kopf.PermanentError(f"The resoure {namespace}/{name} needs either sqlstatements or sqlstatementmaps.")
         statementset = ddls
         statementset += "BEGIN STATEMENT SET;\n"
-        statementset += "\n".join(spec.get("sqlstatements")) + "\n"
-        # TODO: check for "insert into" prefix and terminating ";"
-        # in sqlstatement
+        if spec.get("sqlstatements"):
+            statementset += "\n".join(spec.get("sqlstatements")) + "\n"
+            # TODO: check for "insert into" prefix and terminating ";"
+            # in sqlstatement
+        if spec.get("sqlstatementmaps"):
+            statementset += "\n".join(create_statementmaps(configmaps, spec, body, namespace, name, logger)) + "\n"
         statementset += "END;"
         logger.debug(f"Now deploying statementset {statementset}")
         try:
@@ -545,3 +562,14 @@ def add_message(logger, body, patch, reason, mtype):
     messages.append({"timestamp": f"{datetime.datetime.now()}",
                     "type": mtype, "message": reason})
     patch.status[MESSAGES] = messages
+
+
+def create_statementmaps(configmaps, spec, body, namespace, name, logger):
+    statementmaps = spec.get('sqlstatementmaps')
+    result = []
+    for map in statementmaps:
+        map_namespace, map_name = map.split('/')
+        cm = configmaps[(map_namespace, map_name)]
+        for dat in list(list(cm)[0].get('data').values()):
+            result.append(dat)
+    return result
