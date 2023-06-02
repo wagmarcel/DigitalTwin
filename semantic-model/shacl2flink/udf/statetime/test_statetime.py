@@ -39,10 +39,22 @@ def test_statetime_true_step():
     statetime.accum = [None, 1, 10]
     statetime.step(1, 15)
     assert statetime.accum == [5, 1, 15]
+    statetime.accum = [None, 0, 10]
+    statetime.step(1, 15)
+    assert statetime.accum == [None, 1, 15]
+    statetime.accum = [11, 0, 10]
+    statetime.step(1, 13)
+    assert statetime.accum == [11, 1, 13]
+
 
 def test_statetime_false_step():
     statetime = sqlite_statetime.Statetime()
-    statetime.accum = [10, 1, 10]
-    statetime.step(1, 17)
-    assert statetime.accum == [17, 1, 17]
-     
+    statetime.accum = [10, 0, 10]
+    statetime.step(0, 17)
+    assert statetime.accum == [10, 0, 17]
+    statetime.accum = [None, 1, 10]
+    statetime.step(0, 15)
+    assert statetime.accum == [5, 0, 15]
+    statetime.accum = [None, 0, 3318]
+    statetime.step(0, 3325)
+    assert statetime.accum == [None, 0, 3325]
