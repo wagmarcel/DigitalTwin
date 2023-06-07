@@ -39,7 +39,7 @@ spec:
         command: ["/bin/bash", "-c", "mc mb -p iff/{{ .Values.flink.bucket }}"]
       containers:
       - name: jobmanager
-        image: apache/flink:{{ .Values.flink.imageTag }}
+        image: '{{ .Values.mainRepo }}/flink-sql-gateway:{{ .Values.mainVersion }}'
         workingDir: /opt/flink
         command: ["/bin/bash", "-c", "mkdir -p /opt/flink/plugins/s3; \
           cp /opt/flink/opt/flink-s3-fs-hadoop-*.jar /opt/flink/plugins/s3 ; \
