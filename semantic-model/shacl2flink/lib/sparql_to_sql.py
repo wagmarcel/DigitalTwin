@@ -33,6 +33,8 @@ import bgp_translation_utils  # noqa: E402
 sh = Namespace("http://www.w3.org/ns/shacl#")
 
 iff = Namespace("https://industry-fusion.com/types/v0.9/")
+IFOA = Namespace("https://industry-fusion.com/orderedAggregators/v0.9/")
+
 debug = 0
 debugoutput = sys.stdout
 dummyvar = 'dummyvar'
@@ -238,6 +240,8 @@ def translate_unary_not(ctx, elem):
 
 def process_aggregate(ctx, elem):
     distinct = elem.distinct
+    if utils.get_ordered_aggregation_mode(ctx):
+        raise("Combinatio of default aggregates and time ordered aggregates not (yet) implemented")
     utils.set_aggregate_var(ctx, True)
     expression = translate(ctx, elem.vars)
     utils.set_aggregate_var(ctx, False)
@@ -316,12 +320,15 @@ def translate_multiplicative_expression(ctx, elem):
 def translate_function(ctx, function):
     iri = function.iri
     expr = function.expr
-    if len(expr) != 1:
-        raise utils.WrongSparqlStructure('Only functions with one parameter implemented.')
+    numargs = len(expr)
+
     # This is only supporting single parameter functions
     # TODO: Generalize the functin translation for arbitrary parameters
-    expression = translate(ctx, expr[0])
+    expression = None
     if iri in XSD:  # CAST
+        if numargs != 1:
+            raise utils.WrongSparqlStructure('CASTS need only one parameter.')
+        expression = translate(ctx, expr[0])
 
         cast = 'notfound'
         stringcast = False
@@ -341,6 +348,39 @@ def translate_function(ctx, function):
                 result = f'SQL_DIALECT_CAST(SQL_DIALECT_STRIP_IRI{{{expression}}} as {cast})'
         else:
             result = f'SQL_DIALECT_TIME_TO_MILLISECONDS{{{expression}}}'
+    elif iri in IFOA:
+        udf = utils.strip_class(iri)
+        result = f'{udf}('
+        utils.set_aggregate_var(ctx, True)
+        utils.set_ordered_aggregation_mode(ctx)
+        for i in range(0, numargs):
+            if i != 0:
+                result += ', '
+            expression = translate(ctx, expr[i])
+            result += expression
+        utils.set_aggregate_var(ctx, False)
+        result += ')'
+        # IFOAs are organized as Over window and not as group by because they need to be ordered by time
+        vars = utils.get_aggregate_vars(ctx)
+        timevars = utils.get_timevars(ctx['bounds'], vars)
+        group_by_vars = utils.get_group_by_variables(ctx) 
+        result += ' OVER ( PARTITION BY '
+        first = True
+        for gbvar in group_by_vars:
+            if first:
+                first = False
+            else:
+                result += ", "
+            result += gbvar
+        first = True
+        result += " ORDER BY "
+        for var in timevars:
+            if first:
+                first = False
+            else:
+                result += ", "
+            result += var
+        result += ')'
     else:
         raise utils.WrongSparqlStructure(f'Function {iri.toPython()} not supported!')
     return result
@@ -439,7 +479,7 @@ def wrap_sql_construct(ctx, node):
         if 'group_by_vars' in ctx:
             group_by = reduce(lambda x, y: f'{x}, {y}', map(lambda x: bounds[utils.create_varname(x)],
                                                             ctx['group_by_vars']))
-        if group_by is not None:
+        if group_by is not None and not utils.get_ordered_aggregation_mode(ctx):
             construct_query += f' GROUP BY {group_by}'
     node['target_sql'] = construct_query
 
@@ -453,7 +493,7 @@ def get_bound_trim_string(ctx, boundsvar):
         else:
             return f"SQL_DIALECT_STRIP_LITERAL{{{bounds[boundsvarname]}}}"
     elif boundsvarname in bounds and boundsvar in ctx['time_variables']:
-        return f"SQL_DIALECT_STRIP_LITERAL{{{bounds[boundsvarname]}}}"
+        return f"SQL_DIALIFAECT_STRIP_LITERAL{{{bounds[boundsvarname]}}}"
     else:
         raise utils.WrongSparqlStructure(f"Trying to trim non-bound variable ?{boundsvarname} in expression \
 {ctx['query']}")
@@ -513,7 +553,10 @@ def wrap_sql_projection(ctx, node):
     if 'group_by_vars' in ctx:
         group_by = reduce(lambda x, y: f'{x}, {y}', map(lambda x: bounds[utils.create_varname(x)],
                                                         ctx['group_by_vars']))
-        group_by_term = f' GROUP BY {group_by}'
+        if utils.get_ordered_aggregation_mode(ctx):
+            group_by_term = ''
+        else:
+            group_by_term = f' GROUP BY {group_by}'
     else:
         group_by_term = ''
     node['target_sql'] = f'{expression} FROM {target_sql}'

@@ -40,6 +40,47 @@ class DnsNameNotCompliant(Exception):
     """
 
 
+def get_timevars(bounds, vars):
+    """calculate time-attribute of variables
+
+    Args:
+        bounds (dict): dictionary of varialbe bounds
+        vars (list): list of variables
+    """
+    sqltables = []
+    timevars = []
+    for var in vars:
+       sqlvar = bounds[var]
+       sqltable = sqlvar.split('.')[0]
+       sqltable = sqltable.strip('`')
+       sqltables.append(sqltable)
+    sqltables = list(set(sqltables))
+    for tab in sqltables:
+        timevars.append(f'{tab}.ts')
+    return timevars
+       
+
+def set_ordered_aggregation_mode(ctx):
+    ctx['is_ordered_aggregation_mode'] = True
+
+
+def get_ordered_aggregation_mode(ctx):
+    if 'is_ordered_aggregation_mode' in ctx:
+        return ctx['is_ordered_aggregation_mode']
+    else:
+        return False
+
+
+def get_group_by_variables(ctx):
+    bounds = ctx['bounds']
+    result = []
+    if 'group_by_vars' in ctx:
+        vars = ctx['group_by_vars']
+        for var in vars:
+            result.append(bounds[create_varname(var)])
+    return result
+
+
 def set_aggregate_var(ctx, state):
     ctx['is_aggregate_var'] = state
 

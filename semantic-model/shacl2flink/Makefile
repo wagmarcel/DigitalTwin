@@ -56,6 +56,20 @@ test-sqlite:
 	echo ------------------------------------------------
 	echo "select * from attributes_insert_filter;"| sqlite3 ${SQLITEDB}
 
+
+test-sqlite-udf:
+	@echo Test with sqlite
+	for file in $(sqlite_files); do \
+		${PYTHON} udf/sqlite3_udf.py $(SQLITEDB) $${file};\
+	done
+	echo "Alerts"
+	echo ------------------------------------------------
+	echo 'select * from alerts_bulk;'| sqlite3 ${SQLITEDB}
+	echo "Inserts"
+	echo ------------------------------------------------
+	echo "select * from attributes_insert_filter;"| sqlite3 ${SQLITEDB}
+
+
 test-sqlite-update:
 	@echo Update model
 	$(PYTHON) create_ngsild_models.py $(SHACL) $(KNOWLEDGE) $(MODEL)

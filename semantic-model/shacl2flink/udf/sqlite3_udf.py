@@ -2,7 +2,7 @@ import sys
 import re
 import argparse
 import sqlite3
-import test.sqlite_test as sqlite_udf_test
+import statetime.sqlite_statetime as sqlite_udf_statetime
 
 
 def parse_args(args=sys.argv[1:]):
@@ -24,7 +24,7 @@ def main(databasefile, sqlscript):
         with open(sqlscript, 'r') as file:
             conn.enable_load_extension(True)
             conn.load_extension('/usr/lib/sqlite3/pcre.so')
-            conn.create_aggregate('test', -1, sqlite_udf_test.Test)
+            conn.create_window_function('statetime', 2, sqlite_udf_statetime.Statetime)
 
             cur = conn.cursor()
             data = file.read()
