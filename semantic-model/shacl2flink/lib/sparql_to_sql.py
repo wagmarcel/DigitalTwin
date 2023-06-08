@@ -242,9 +242,9 @@ def process_aggregate(ctx, elem):
     distinct = elem.distinct
     if utils.get_ordered_aggregation_mode(ctx):
         raise("Combinatio of default aggregates and time ordered aggregates not (yet) implemented")
-    utils.set_aggregate_var(ctx, True)
+    utils.set_is_aggregate_var(ctx, True)
     expression = translate(ctx, elem.vars)
-    utils.set_aggregate_var(ctx, False)
+    utils.set_is_aggregate_var(ctx, False)
     distinct_string = 'DISTINCT'
     if distinct != 'DISTINCT':
         distinct_string = ''
@@ -262,9 +262,8 @@ def translate_aggregate_count(ctx, elem):
 
 
 def translate_group(ctx, elem):
-    ctx['group_by_vars'] = elem.expr
-    if Variable('this') not in ctx['group_by_vars']:
-        ctx['group_by_vars'].append(Variable('this'))
+    utils.set_group_by_vars(ctx, elem.expr)
+    utils.add_group_by_vars(ctx, Variable('this'))
     translate(ctx, elem.p)
     elem['target_sql'] = elem.p['target_sql']
     elem['where'] = elem.p['where']
@@ -351,36 +350,36 @@ def translate_function(ctx, function):
     elif iri in IFOA:
         udf = utils.strip_class(iri)
         result = f'{udf}('
-        utils.set_aggregate_var(ctx, True)
+        utils.set_is_aggregate_var(ctx, True)
         utils.set_ordered_aggregation_mode(ctx)
         for i in range(0, numargs):
             if i != 0:
                 result += ', '
             expression = translate(ctx, expr[i])
             result += expression
-        utils.set_aggregate_var(ctx, False)
+        utils.set_is_aggregate_var(ctx, False)
         result += ')'
         # IFOAs are organized as Over window and not as group by because they need to be ordered by time
-        vars = utils.get_aggregate_vars(ctx)
-        timevars = utils.get_timevars(ctx['bounds'], vars)
-        group_by_vars = utils.get_group_by_variables(ctx) 
-        result += ' OVER ( PARTITION BY '
-        first = True
-        for gbvar in group_by_vars:
-            if first:
-                first = False
-            else:
-                result += ", "
-            result += gbvar
-        first = True
-        result += " ORDER BY "
-        for var in timevars:
-            if first:
-                first = False
-            else:
-                result += ", "
-            result += var
-        result += ')'
+        # vars = utils.get_aggregate_vars(ctx)
+        # timevars = utils.get_timevars(ctx, vars)
+        # group_by_vars = utils.get_group_by_vars(ctx) 
+        # result += ' OVER ( PARTITION BY '
+        # first = True
+        # for gbvar in group_by_vars:
+        #     if first:
+        #         first = False
+        #     else:
+        #         result += ", "
+        #     result += gbvar
+        # first = True
+        # result += " ORDER BY "
+        # for var in timevars:
+        #     if first:
+        #         first = False
+        #     else:
+        #         result += ", "
+        #     result += var
+        # result += ')'
     else:
         raise utils.WrongSparqlStructure(f'Function {iri.toPython()} not supported!')
     return result
@@ -452,6 +451,9 @@ def wrap_sql_construct(ctx, node):
     columns = get_attribute_columns(ctx, node)
     first = True
     construct_query = "SQL_DIALECT_INSERT_ATTRIBUTES\n"
+    order_by = create_order_by(ctx)
+    group_by = create_group_by(ctx)
+    subbounds_var = create_subbounds(ctx, node)
     bounds = ctx['bounds']
 
     for (entityId_var, name, attribute_type, value_var, node_type) in columns:
@@ -468,19 +470,31 @@ def wrap_sql_construct(ctx, node):
         construct_query += 'CAST(NULL as STRING) as valueType,\n'  # valueType
         construct_query += '0 as `index`,\n'  # index
         construct_query += f'\'{attribute_type}\' as `type`,\n'
-        construct_query += f"{get_bound_trim_string(ctx, value_var)} as `value`,\n"  # value
+        value = f"{get_bound_trim_string(ctx, value_var)} as `value`,\n"
+        if utils.get_ordered_aggregation_mode(ctx):
+            value = replace_column_by_alias(node, value)
+        construct_query += value  # value
         construct_query += 'CAST(NULL as STRING) as `object`\n'  # object
         construct_query += ',SQL_DIALECT_SQLITE_TIMESTAMP\n'  # ts
 
-        construct_query += 'FROM ' + node['target_sql']
+        construct_query += 'FROM '
+        if utils.get_ordered_aggregation_mode(ctx):
+            construct_query += f'(SELECT {subbounds_var} FROM '
+        construct_query += node['target_sql']
         if node['where'] != '':
             construct_query += ' WHERE ' + node['where']
-        group_by = None
-        if 'group_by_vars' in ctx:
-            group_by = reduce(lambda x, y: f'{x}, {y}', map(lambda x: bounds[utils.create_varname(x)],
-                                                            ctx['group_by_vars']))
-        if group_by is not None and not utils.get_ordered_aggregation_mode(ctx):
+        if not utils.get_ordered_aggregation_mode(ctx):
+            
+            if group_by is not None:
+                construct_query += f' GROUP BY {group_by}'
+        if order_by is not None:
+            construct_query += f' ORDER BY {order_by}'
+        
+        if utils.get_ordered_aggregation_mode(ctx):
+            construct_query += ")"
+            group_by = create_group_by(ctx)
             construct_query += f' GROUP BY {group_by}'
+            
     node['target_sql'] = construct_query
 
 
@@ -857,3 +871,52 @@ def translate_BGP(ctx, bgp):
         bgp['where'] = local_ctx['where']
 
     ctx['tables'] = {**(ctx['tables']), **local_ctx['bgp_tables']}
+
+
+def create_subbounds(ctx, node):
+    group_by_vars = utils.get_group_by_vars(ctx)
+    aggregate_vars = utils.get_aggregate_vars(ctx)
+    subquery_vars = ''
+    aliasmap = {}
+    bounds = ctx['bounds']
+    first = True
+    for var in group_by_vars + aggregate_vars:
+        if first:
+            first = False
+        else:
+            subquery_vars += ', '
+        alias = "X" + bgp_translation_utils.get_random_string(16)
+        column_name = bounds[var]
+        aliasmap[column_name] = alias
+        subquery_vars += f'{column_name} as {alias}'
+        bounds[var] = alias
+    node['column_alias'] = aliasmap
+    return subquery_vars
+
+
+def replace_column_by_alias(node, value):
+    aliasmap = node['column_alias']
+    for k, v in aliasmap.items():
+        value = value.replace(k, v)
+    return value
+
+
+def create_order_by(ctx):
+    bounds = ctx['bounds']
+    if not utils.get_ordered_aggregation_mode(ctx):
+        return None
+    aggregate_vars = utils.get_aggregate_vars(ctx)
+    timevars = utils.get_timevars(ctx, aggregate_vars)
+    first = True
+    result = ', '.join(timevars)
+    return result
+
+
+def create_group_by(ctx):
+    bounds = ctx['bounds']
+    group_by_vars = utils.get_group_by_vars(ctx)
+    result = None
+    if group_by_vars is not None:
+        result = reduce(lambda x, y: f'{x}, {y}', map(lambda x: bounds[x],
+                                                            group_by_vars))
+    return result
