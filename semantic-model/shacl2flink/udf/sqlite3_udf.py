@@ -24,7 +24,7 @@ def main(databasefile, sqlscript):
         with open(sqlscript, 'r') as file:
             conn.enable_load_extension(True)
             conn.load_extension('/usr/lib/sqlite3/pcre.so')
-            conn.create_window_function('statetime', 2, sqlite_udf_statetime.Statetime)
+            conn.create_aggregate('statetime', 2, sqlite_udf_statetime.Statetime)
 
             cur = conn.cursor()
             data = file.read()

@@ -453,7 +453,8 @@ def wrap_sql_construct(ctx, node):
     construct_query = "SQL_DIALECT_INSERT_ATTRIBUTES\n"
     order_by = create_order_by(ctx)
     group_by = create_group_by(ctx)
-    subbounds_var = create_subbounds(ctx, node)
+    if utils.get_ordered_aggregation_mode(ctx):
+        subbounds_var = create_subbounds(ctx, node)
     bounds = ctx['bounds']
 
     for (entityId_var, name, attribute_type, value_var, node_type) in columns:
