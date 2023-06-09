@@ -51,7 +51,8 @@ function apppost (request, response) {
   const id = uuid.v4();
   const filename = '/tmp/script_' + id + '.sql';
   fs.writeFileSync(filename, body.statement.toString());
-  const command = flinkRoot + flinkSqlClient + sqlJars + ' -f ' + filename;
+  var udfFiles = getLocalPythonUdfs()
+  const command = flinkRoot + flinkSqlClient + sqlJars + ' -f ' + filename + ' --pyExecutable /usr/local/bin/python3 --pyFiles ' + udfFiles;
   logger.debug('Now executing ' + command);
   exec(command, (error, stdout, stderr) => {
     fs.unlinkSync(filename);
@@ -113,9 +114,27 @@ function udfpost(req, res){
   res.status(201).send('CREATED')
 }
 
+
+function getLocalPythonUdfs() {
+  var verfiles = {}
+  var files = fs.readdirSync(udfdir)
+    .filter(fn => fn.endsWith('.py'))
+    .sort()
+    .map(x => x.substring(0, x.lastIndexOf('.')))
+    .map(x => x.split('_v'));
+  
+  files.map(x => verfiles[x[0]] = x[1]);
+  var result = Object.keys(verfiles).map(x => `${x}_v${verfiles[x]}.py`).map( x => `${udfdir}/${x}`)
+  return result.join(',')
+}
+
+
 if(!fs.existsSync(udfdir)){
   fs.mkdirSync(udfdir)
 }
+
+
+
 
 app.use(express.json({ limit: '10mb' }));
 
