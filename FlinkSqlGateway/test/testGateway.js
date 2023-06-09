@@ -65,7 +65,7 @@ describe('Test statement path', function () {
       }
     };
     const exec = function (command, output) {
-      command.should.equal(flinkSqlCommand + fsWriteFilename);
+      command.should.equal(flinkSqlCommand + fsWriteFilename + ' --pyExecutable /usr/local/bin/python3 --pyFiles testfile');
     };
     const fs = {
       writeFileSync: function (filename, data) {
@@ -73,10 +73,16 @@ describe('Test statement path', function () {
         data.should.equal(statement);
       }
     };
+
+    const getLocalPythonUdfs = function () {
+      return ['testfile'];
+    };
+
     const revert = toTest.__set__({
       logger: logger,
       exec: exec,
-      fs: fs
+      fs: fs,
+      getLocalPythonUdfs: getLocalPythonUdfs
     });
 
     const apppost = toTest.__get__('apppost');
@@ -145,11 +151,17 @@ describe('Test statement path', function () {
     const exec = function (command, output) {
       output(error, null, null);
     };
+
+    const getLocalPythonUdfs = function () {
+      return ['testfile'];
+    };
+
     const revert = toTest.__set__({
       logger: logger,
       exec: exec,
       uuid: uuid,
-      fs: fs
+      fs: fs,
+      getLocalPythonUdfs: getLocalPythonUdfs
     });
 
     const apppost = toTest.__get__('apppost');
@@ -188,11 +200,17 @@ describe('Test statement path', function () {
     const exec = function (command, output) {
       output(null, stdout, null);
     };
+
+    const getLocalPythonUdfs = function () {
+      return ['testfile'];
+    };
+
     const revert = toTest.__set__({
       logger: logger,
       exec: exec,
       uuid: uuid,
-      fs: fs
+      fs: fs,
+      getLocalPythonUdfs: getLocalPythonUdfs
     });
 
     const apppost = toTest.__get__('apppost');
@@ -227,15 +245,116 @@ describe('Test statement path', function () {
     const exec = function (command, output) {
       output(null, stdout, null);
     };
+
+    const getLocalPythonUdfs = function () {
+      return ['testfile'];
+    };
+
     const revert = toTest.__set__({
       logger: logger,
       exec: exec,
       uuid: uuid,
-      fs: fs
+      fs: fs,
+      getLocalPythonUdfs: getLocalPythonUdfs
     });
 
     const apppost = toTest.__get__('apppost');
     apppost(request, response);
+    revert();
+  });
+  it('Test getLocalPythonUdf', function () {
+    const fs = {
+      readdirSync: function (filename) {
+        return ['file1_v1.py', 'file2_v2.py', 'file3_v1.py', 'file3_v22.py', 'file3_v23-alpha.py', 'file4_v1'];
+      }
+    };
+    const revert = toTest.__set__({
+      fs: fs
+    });
+
+    const getLocalPythonUdfs = toTest.__get__('getLocalPythonUdfs');
+    const result = getLocalPythonUdfs();
+    result.should.equal('/tmp/udf/file1_v1.py,/tmp/udf/file2_v2.py,/tmp/udf/file3_v23-alpha.py');
+    revert();
+  });
+  it('Test udfpost without body', function () {
+    const request = {
+      params: {
+        filename: 'filename'
+      },
+      body: undefined
+    };
+    const response = {
+      status: function (val) {
+        val.should.equal(500);
+      },
+      send: function (val) {
+        val.should.equal('No body received!');
+      }
+    };
+    const revert = toTest.__set__({
+      logger: logger
+    });
+    const udfpost = toTest.__get__('udfpost');
+    udfpost(request, response);
+    revert();
+  });
+  it('Test udfpost with text body', function () {
+    const request = {
+      params: {
+        filename: 'filename'
+      },
+      body: 'body'
+    };
+    const response = {
+      status: function (val) {
+        val.should.equal(201);
+        return response;
+      },
+      send: function (val) {
+        val.should.equal('CREATED');
+      }
+    };
+    const fs = {
+      writeFileSync: function (filename, data) {
+        filename.should.equal('/tmp/udf/filename.py');
+        data.should.equal('body');
+      }
+    };
+    const revert = toTest.__set__({
+      logger: logger,
+      fs: fs
+    });
+    const udfpost = toTest.__get__('udfpost');
+    udfpost(request, response);
+    revert();
+  });
+  it('Test udfget', function () {
+    const request = {
+      params: {
+        filename: 'filename'
+      }
+    };
+    const response = {
+      status: function (val) {
+        val.should.equal(200);
+        return response;
+      },
+      send: function (val) {
+        val.should.equal('OK');
+      }
+    };
+    const fs = {
+      readFileSync: function (filename) {
+        filename.should.equal('/tmp/udf/filename.py');
+      }
+    };
+    const revert = toTest.__set__({
+      logger: logger,
+      fs: fs
+    });
+    const udfget = toTest.__get__('udfget');
+    udfget(request, response);
     revert();
   });
 });

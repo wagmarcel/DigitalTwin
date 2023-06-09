@@ -29,16 +29,12 @@ const flinkSqlClient = '/bin/sql-client.sh -l ';
 const sqlJars = process.env.SIMPLE_FLINK_SQL_GATEWAY_JARS || './jars';
 const runningAsMain = require.main === module;
 
-const udfdir = "/tmp/udf"
-
-
+const udfdir = '/tmp/udf';
 
 function appget (_, response) {
   response.status(200).send('OK');
   logger.debug('Health Endpoint was requested.');
 };
-
-
 
 function apppost (request, response) {
   // for now ignore session_id
@@ -51,7 +47,7 @@ function apppost (request, response) {
   const id = uuid.v4();
   const filename = '/tmp/script_' + id + '.sql';
   fs.writeFileSync(filename, body.statement.toString());
-  var udfFiles = getLocalPythonUdfs()
+  const udfFiles = getLocalPythonUdfs();
   const command = flinkRoot + flinkSqlClient + sqlJars + ' -f ' + filename + ' --pyExecutable /usr/local/bin/python3 --pyFiles ' + udfFiles;
   logger.debug('Now executing ' + command);
   exec(command, (error, stdout, stderr) => {
@@ -78,63 +74,52 @@ function apppost (request, response) {
   });
 }
 
-
 function udfget (req, res) {
-  var filename = req.params.filename;
+  const filename = req.params.filename;
   logger.debug('python_udf get was requested for: ' + filename);
-  var fullname = `${udfdir}/${filename}.py`;
+  const fullname = `${udfdir}/${filename}.py`;
   try {
     fs.readFileSync(fullname);
   } catch (err) {
     res.status(404).send('File not Found');
-    logger.info('File not found: ' + fullname)
-    return
+    logger.info('File not found: ' + fullname);
+    return;
   }
-  res.status(200).send('OK')
+  res.status(200).send('OK');
 };
 
-
-function udfpost(req, res){
-  var filename = req.params.filename;
-  var body = req.body;
+function udfpost (req, res) {
+  const filename = req.params.filename;
+  const body = req.body;
   if (body === undefined || body === null) {
-    response.status(500);
-    response.send('No body received!');
+    res.status(500);
+    res.send('No body received!');
     return;
   }
   logger.debug(`python_udf with name ${filename}`);
-  var fullname = `${udfdir}/${filename}.py`;
+  const fullname = `${udfdir}/${filename}.py`;
   try {
     fs.writeFileSync(fullname, body);
   } catch (err) {
     res.status(500).send('Could not write file: ' + err);
     logger.error('WriteSync failed:' + err);
-    return
+    return;
   }
-  res.status(201).send('CREATED')
+  res.status(201).send('CREATED');
 }
 
-
-function getLocalPythonUdfs() {
-  var verfiles = {}
-  var files = fs.readdirSync(udfdir)
+function getLocalPythonUdfs () {
+  const verfiles = {};
+  const files = fs.readdirSync(udfdir)
     .filter(fn => fn.endsWith('.py'))
     .sort()
     .map(x => x.substring(0, x.lastIndexOf('.')))
     .map(x => x.split('_v'));
-  
-  files.map(x => verfiles[x[0]] = x[1]);
-  var result = Object.keys(verfiles).map(x => `${x}_v${verfiles[x]}.py`).map( x => `${udfdir}/${x}`)
-  return result.join(',')
+
+  files.forEach(x => { verfiles[x[0]] = x[1]; });
+  const result = Object.keys(verfiles).map(x => `${x}_v${verfiles[x]}.py`).map(x => `${udfdir}/${x}`);
+  return result.join(',');
 }
-
-
-if(!fs.existsSync(udfdir)){
-  fs.mkdirSync(udfdir)
-}
-
-
-
 
 app.use(express.json({ limit: '10mb' }));
 
@@ -145,6 +130,10 @@ app.post('/v1/sessions/:session_id/statements', apppost);
 app.post('/v1/python_udf/:filename', bodyParser.text(), udfpost);
 
 if (runningAsMain) {
+  if (!fs.existsSync(udfdir)) {
+    fs.mkdirSync(udfdir);
+  }
+
   app.listen(port, function () {
     console.log('Listening on port ' + port);
   });
