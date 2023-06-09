@@ -85,11 +85,6 @@ UPDATE_STRATEGY_SAVEPOINT = "savepoint"
 UPDATE_STRATEGY_NONE = "none"
 
 
-@kopf.on.startup()
-def configure(settings: kopf.OperatorSettings, **_):
-    settings.execution.max_workers = 1
-    
-
 @kopf.on.create("industry-fusion.com", "v1alpha3", "beamsqlstatementsets")
 # pylint: disable=unused-argument
 # Kopf decorated functions match their expectations
@@ -266,9 +261,9 @@ def update(body, spec, patch, logger, retries=20, **kwargs):
 @kopf.timer("industry-fusion.com", "v1alpha3", "beamsqlstatementsets",
             interval=timer_interval_seconds, backoff=timer_backoff_seconds)
 # pylint: disable=too-many-arguments unused-argument redefined-outer-name
-# pylint: disable=too-many-locals too-many-statements
+# pylint: disable=too-many-locals too-many-statements too-many-branches
 # Kopf decorated functions match their expectations
-def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index, configmaps: kopf.Index, 
+def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index, configmaps: kopf.Index,
             patch, logger, body, spec, status, **kwargs):
     """
     Managaging the main lifecycle of the beamsqlstatementset crd
@@ -355,8 +350,10 @@ def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index, configmaps: kop
 
         # now create statement set
         if spec.get("sqlstatements") is not None and spec.get("sqlstatementmaps") is not None:
-            logger.error(f"The resoure {namespace}/{name} needs either sqlstatements or sqlstatementmaps.")
-            kopf.PermanentError(f"The resoure {namespace}/{name} needs either sqlstatements or sqlstatementmaps.")
+            logger.error(f"The resoure {namespace}/{name} needs either sqlstatements or \
+sqlstatementmaps.")
+            raise kopf.PermanentError(f"The resoure {namespace}/{name} needs either sqlstatements \
+or sqlstatementmaps.")
         statementset = ddls
         statementset += "BEGIN STATEMENT SET;\n"
         if spec.get("sqlstatements"):
@@ -364,7 +361,8 @@ def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index, configmaps: kop
             # TODO: check for "insert into" prefix and terminating ";"
             # in sqlstatement
         if spec.get("sqlstatementmaps"):
-            statementset += "\n".join(create_statementmaps(configmaps, spec, body, namespace, name, logger)) + "\n"
+            statementset += "\n".join(create_statementmaps(configmaps, spec, body,
+                                                           namespace, name, logger)) + "\n"
         statementset += "END;"
         logger.debug(f"Now deploying statementset {statementset}")
         try:
@@ -565,11 +563,13 @@ def add_message(logger, body, patch, reason, mtype):
 
 
 def create_statementmaps(configmaps, spec, body, namespace, name, logger):
+    """create statements from configmap
+    """
     statementmaps = spec.get('sqlstatementmaps')
     result = []
-    for map in statementmaps:
-        map_namespace, map_name = map.split('/')
-        cm = configmaps[(map_namespace, map_name)]
-        for dat in list(list(cm)[0].get('data').values()):
+    for statementmap in statementmaps:
+        map_namespace, map_name = statementmap.split('/')
+        cfm = configmaps[(map_namespace, map_name)]
+        for dat in list(list(cfm)[0].get('data').values()):
             result.append(dat)
     return result

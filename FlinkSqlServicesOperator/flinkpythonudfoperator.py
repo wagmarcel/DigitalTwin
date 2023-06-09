@@ -17,15 +17,11 @@
 """A kopf operator that manages Flink python udfs."""
 
 import time
-import datetime
 import os
 from enum import Enum
 
 import requests
 import kopf
-
-import flink_util
-import tables_and_views
 
 iff_namespace = os.getenv("IFF_NAMESPACE", default="iff")
 FLINK_URL = os.getenv("IFF_FLINK_REST",
@@ -59,10 +55,6 @@ STATE = "state"
 CLASS = 'class'
 VERSION = 'version'
 
-@kopf.on.startup()
-def configure(settings: kopf.OperatorSettings, **_):
-    settings.execution.max_workers = 1
-    
 
 @kopf.on.create("industry-fusion.com", "v1alpha1", "flinkpythonudf")
 # pylint: disable=unused-argument
@@ -121,12 +113,6 @@ def monitor(patch, logger, body, spec, status, **kwargs):
         - FAILED - uploading failed
  
     """
-    namespace = body['metadata'].get("namespace")
-    metadata_name = body['metadata'].get("name")
-    try:
-        state = body['status'].get(STATE)
-    except (KeyError, TypeError):
-        create(body, spec, patch, logger, **kwargs)
     filename = spec.get('filename')
     version = spec.get('version')
     fullname = f'{filename}_{version}'
@@ -137,12 +123,14 @@ def monitor(patch, logger, body, spec, status, **kwargs):
             post_file(spec, logger)
         except DeploymentFailedException as err:
             logger.warn(f"Could not upload udf: {err}")
-            patch.status[STATE] = States.FAILED.name  
+            patch.status[STATE] = States.FAILED.name
     logger.info("monitoring triggered")
     return {"monitoredOn": str(time.time())}
 
 
 def check_file_state(filename):
+    """Get udf file state from sql-gateway
+    """
     url = f"{FLINK_SQL_GATEWAY}/v1/python_udf/{filename}"
     response = requests.get(url,
         timeout=DEFAULT_TIMEOUT)
@@ -150,11 +138,13 @@ def check_file_state(filename):
 
 
 def post_file(spec, logger):
+    """Post spec data to gateway
+    """
     filename = spec.get('filename')
     version = spec.get('version')
     fullname = f'{filename}_{version}'
     udf = spec.get(CLASS)
-    
+
     url = f"{FLINK_SQL_GATEWAY}/v1/python_udf/{fullname}"
     logger.debug(f"Deployment udf to SQL Gateway {url}")
     try:
