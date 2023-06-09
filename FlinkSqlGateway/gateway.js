@@ -19,6 +19,8 @@ const { exec } = require('child_process');
 const uuid = require('uuid');
 const fs = require('fs');
 const app = express();
+const bodyParser = require('body-parser');
+
 const logger = require('./lib/logger.js');
 const port = process.env.SIMPLE_FLINK_SQL_GATEWAY_PORT || 9000;
 const flinkVersion = '1.14.3';
@@ -27,10 +29,16 @@ const flinkSqlClient = '/bin/sql-client.sh -l ';
 const sqlJars = process.env.SIMPLE_FLINK_SQL_GATEWAY_JARS || './jars';
 const runningAsMain = require.main === module;
 
+const udfdir = "/tmp/udf"
+
+
+
 function appget (_, response) {
   response.status(200).send('OK');
   logger.debug('Health Endpoint was requested.');
 };
+
+
 
 function apppost (request, response) {
   // for now ignore session_id
@@ -69,11 +77,53 @@ function apppost (request, response) {
   });
 }
 
+
+function udfget (req, res) {
+  var filename = req.params.filename;
+  logger.debug('python_udf get was requested for: ' + filename);
+  var fullname = `${udfdir}/${filename}.py`;
+  try {
+    fs.readFileSync(fullname);
+  } catch (err) {
+    res.status(404).send('File not Found');
+    logger.info('File not found: ' + fullname)
+    return
+  }
+  res.status(200).send('OK')
+};
+
+
+function udfpost(req, res){
+  var filename = req.params.filename;
+  var body = req.body;
+  if (body === undefined || body === null) {
+    response.status(500);
+    response.send('No body received!');
+    return;
+  }
+  logger.debug(`python_udf with name ${filename}`);
+  var fullname = `${udfdir}/${filename}.py`;
+  try {
+    fs.writeFileSync(fullname, body);
+  } catch (err) {
+    res.status(500).send('Could not write file: ' + err);
+    logger.error('WriteSync failed:' + err);
+    return
+  }
+  res.status(201).send('CREATED')
+}
+
+if(!fs.existsSync(udfdir)){
+  fs.mkdirSync(udfdir)
+}
+
 app.use(express.json({ limit: '10mb' }));
 
 app.get('/health', appget);
+app.get('/v1/python_udf/:filename', udfget);
 
 app.post('/v1/sessions/:session_id/statements', apppost);
+app.post('/v1/python_udf/:filename', bodyParser.text(), udfpost);
 
 if (runningAsMain) {
   app.listen(port, function () {
