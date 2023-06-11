@@ -42,6 +42,8 @@ spec:
         volumeMounts:
         - name: flink-config-volume
           mountPath: /opt/flink/conf/
+        - mountPath: /tmp
+          name: tm-tmp-volume
         securityContext:
           runAsUser: 9999  # refers to user _flink_ from official flink image, change if necessary
       serviceAccountName: flink-service-account # Service account which has the permissions to create, edit, delete ConfigMaps
@@ -54,3 +56,6 @@ spec:
             path: flink-conf.yaml
           - key: log4j-console.properties
             path: log4j-console.properties
+      - name: tm-tmp-volume
+        emptyDir:
+          sizeLimit: {{ .Values.flink.taskmanagerCacheSize }}
