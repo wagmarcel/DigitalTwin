@@ -12,6 +12,7 @@ spec:
         from pyflink.table.expressions import call
         from pyflink.table.udf import udaf
         from pyflink.table.expressions import col, lit
+        from pyflink.table import DataTypes
     except ImportError:
         class Row():
             def __init__(self, a, b, c, d, e):
@@ -20,7 +21,7 @@ spec:
             pass
 
 
-    class Statetime(AggregateFunction):
+    class statetime(AggregateFunction):
 
         def create_accumulator(self):
             # statetime, last_state, last_timeInMs, first_state, first_timeInMs
@@ -58,6 +59,69 @@ spec:
             return 'BIGINT'
             
         def get_accumulator_type(self):
-            return 'ROW<f0 INT, f1 BIGINT>'    
+            return 'ROW<f0 DataTypes.BIGINT, f1 DataTypes.BIGINT>'
+---
+apiVersion: industry-fusion.com/v1alpha1
+kind: flinkpythonudf
+metadata:
+  name: weightedaverage
+spec:
+  filename: weightedaverage
+  version: v1
+  class: |
+    from pyflink.common import Row
+    from pyflink.table import AggregateFunction, DataTypes, TableEnvironment, EnvironmentSettings
+    from pyflink.table.expressions import call
+    from pyflink.table.udf import udaf
+    from pyflink.table.expressions import col, lit
+    from pyflink.table.window import Tumble
 
-        json.ignore-parse-errors: true
+
+    class WeightedAvg(AggregateFunction):
+
+        def create_accumulator(self):
+            # Row(sum, count)
+            return Row(0, 0)
+
+        def get_value(self, accumulator):
+            if accumulator[1] == 0:
+                return None
+            else:
+                return accumulator[0] / accumulator[1]
+
+        def accumulate(self, accumulator, value, weight):
+            accumulator[0] += value * weight
+            accumulator[1] += weight
+        
+        def retract(self, accumulator, value, weight):
+            accumulator[0] -= value * weight
+            accumulator[1] -= weight
+            
+        def get_result_type(self):
+            return 'BIGINT'
+            
+        def get_accumulator_type(self):
+            return 'ROW<f0 BIGINT, f1 BIGINT>'
+---
+apiVersion: industry-fusion.com/v1alpha1
+kind: flinkpythonudf
+metadata:
+  name: hash
+spec:
+  filename: hash
+  version: v1
+  class: |
+    from pyflink.table.expressions import call, col
+    from pyflink.table import DataTypes, TableEnvironment, EnvironmentSettings
+    from pyflink.table.udf import ScalarFunction, udf
+
+    @udf(result_type=DataTypes.BIGINT())
+    class HashCode(ScalarFunction):
+        def __init__(self):
+            self.factor = 12
+
+        def eval(self, s):
+            return hash(s) * self.factor
+
+        def __call__(self, s):
+            return hash(s) * self.factor

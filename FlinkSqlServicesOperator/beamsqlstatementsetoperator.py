@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
 """A kopf operator that manages SQL jobs on flink."""
 
@@ -263,7 +262,8 @@ def update(body, spec, patch, logger, retries=20, **kwargs):
 # pylint: disable=too-many-arguments unused-argument redefined-outer-name
 # pylint: disable=too-many-locals too-many-statements too-many-branches
 # Kopf decorated functions match their expectations
-def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index, configmaps: kopf.Index,
+def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index,
+            configmaps: kopf.Index,
             patch, logger, body, spec, status, **kwargs):
     """
     Managaging the main lifecycle of the beamsqlstatementset crd
@@ -349,11 +349,12 @@ def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index, configmaps: kop
                 from exc
 
         # now create statement set
-        if spec.get("sqlstatements") is not None and spec.get("sqlstatementmaps") is not None:
-            logger.error(f"The resoure {namespace}/{name} needs either sqlstatements or \
-sqlstatementmaps.")
-            raise kopf.PermanentError(f"The resoure {namespace}/{name} needs either sqlstatements \
-or sqlstatementmaps.")
+        if spec.get("sqlstatements") is not None and \
+                spec.get("sqlstatementmaps") is not None:
+            logger.error(f"The resoure {namespace}/{name} needs either \
+sqlstatements or sqlstatementmaps.")
+            raise kopf.PermanentError(f"The resoure {namespace}/{name} \
+needs either sqlstatements or sqlstatementmaps.")
         statementset = ddls
         statementset += "BEGIN STATEMENT SET;\n"
         if spec.get("sqlstatements"):
@@ -361,8 +362,11 @@ or sqlstatementmaps.")
             # TODO: check for "insert into" prefix and terminating ";"
             # in sqlstatement
         if spec.get("sqlstatementmaps"):
-            statementset += "\n".join(create_statementmaps(configmaps, spec, body,
-                                                           namespace, name, logger)) + "\n"
+            statementset += "\n".join(create_statementmaps(configmaps,
+                                                           spec, body,
+                                                           namespace,
+                                                           name,
+                                                           logger)) + "\n"
         statementset += "END;"
         logger.debug(f"Now deploying statementset {statementset}")
         try:

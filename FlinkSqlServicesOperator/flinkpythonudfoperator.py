@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+# pylint: disable=duplicate-code
 
 """A kopf operator that manages Flink python udfs."""
 
@@ -50,6 +50,7 @@ class States(Enum):
     """Sync states"""
     SYNCED = "Uploading"
     FAILED = "Uploaded"
+
 
 STATE = "state"
 CLASS = 'class'
@@ -111,7 +112,6 @@ def monitor(patch, logger, body, spec, status, **kwargs):
     STATE can be
         - SYNCED - uploaded to flink jobmanager
         - FAILED - uploading failed
- 
     """
     filename = spec.get('filename')
     version = spec.get('version')
@@ -133,7 +133,7 @@ def check_file_state(filename):
     """
     url = f"{FLINK_SQL_GATEWAY}/v1/python_udf/{filename}"
     response = requests.get(url,
-        timeout=DEFAULT_TIMEOUT)
+                            timeout=DEFAULT_TIMEOUT)
     return response.status_code
 
 
