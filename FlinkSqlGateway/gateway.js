@@ -48,7 +48,11 @@ function apppost (request, response) {
   const filename = '/tmp/script_' + id + '.sql';
   fs.writeFileSync(filename, body.statement.toString());
   const udfFiles = getLocalPythonUdfs();
-  const command = flinkRoot + flinkSqlClient + sqlJars + ' -f ' + filename + ' --pyExecutable /usr/local/bin/python3 --pyFiles ' + udfFiles;
+  let pyudfFiles = '';
+  if (udfFiles !== undefined && udfFiles !== null && udfFiles != '') {
+    pyudfFiles = '--pyFiles ' + udfFiles;
+  }
+  const command = flinkRoot + flinkSqlClient + sqlJars + ' -f ' + filename + ' --pyExecutable /usr/local/bin/python3 ' + pyudfFiles;
   logger.debug('Now executing ' + command);
   exec(command, (error, stdout, stderr) => {
     fs.unlinkSync(filename);
