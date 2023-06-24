@@ -6,11 +6,12 @@ from pyflink.table.expressions import col, lit
 from pyflink.table.window import Tumble
 import json
 import pathlib
+import os
+#import udf.weightedAvg as WeightedAvg
 
 
 JARDIR = '/opt/gateway/jars'
 # Add udf modules
-from udf.weightedAvg import WeightedAvg
 
 #print(os.getcwd())
 #print(os.listdir())
@@ -18,7 +19,7 @@ with open('data/SQL-structures.json') as f:
     d = json.load(f)
 
     # Register udf models
-    weighted_avg = udaf(WeightedAvg())
+
     #config = Configuration()
     #config.set_string('pipeline.name', 'pipelinename')
     env_settings = EnvironmentSettings.in_streaming_mode() #.new_instance().with_configuration(config).build()
@@ -33,7 +34,16 @@ with open('data/SQL-structures.json') as f:
 
     # the result type and accumulator type can also be specified in the udaf decorator:
     # weighted_avg = udaf(WeightedAvg(), result_type=DataTypes.BIGINT(), accumulator_type=...)
-    table_env.create_temporary_function("weighted_avg", WeightedAvg())
+    #weighted_avg = udaf(udf.weightedAvg.WeightedAvg())
+    #table_env.create_temporary_function("weighted_avg", udf.weightedAvg.WeightedAvg())
+    #WeightedAvg.register(table_env)
+    for file in os.scandir('udf'):
+        if file.name.endswith('.py') and file.name != '__init__.py':
+            name = file.name[:-3]      # without the '.py' at the end
+            package = __import__('udf.' + name)
+            #package.register(table_env)
+            mod = getattr(package, name)
+            mod.register(table_env)
 
     # Create SETs
     sets = d['sqlsets']
