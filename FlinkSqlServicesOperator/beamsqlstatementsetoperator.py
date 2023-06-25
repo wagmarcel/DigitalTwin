@@ -22,6 +22,7 @@ from enum import Enum
 
 import requests
 import kopf
+import json
 
 import flink_util
 import tables_and_views
@@ -320,21 +321,24 @@ def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index,
         # (1) SET statements (sqlsettings)
         # (2) Tables
         # (3) Views
-
-        ddls = create_sets(spec, body, namespace, name, logger)
+        statementset = {}
+        sets = create_sets(spec, body, namespace, name, logger)
+        statementset['sets'] = sets
 
         # get first all table ddls
         # get inputTable and outputTable
 
-        ddls += create_tables(beamsqltables, spec, body, namespace, name,
+        tables = create_tables(beamsqltables, spec, body, namespace, name,
                               logger)
-
+        statementset['tables'] = tables
         # Now get all views
         try:
             if spec.get("views") is not None:
-                ddls += "\n".join(tables_and_views.create_view(
-                    list(beamsqlviews[(namespace, view_name)])[0]
-                    ) for view_name in spec.get("views")) + "\n"
+                views = []
+                for view_name in spec.get("views"):
+                    views.append(tables_and_views.create_view(
+                    list(beamsqlviews[(namespace, view_name)])[0])) 
+                statementset['views'] = views
 
         except (KeyError, TypeError) as exc:
             logger.error("Views could not be created for "
@@ -355,19 +359,19 @@ def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index,
 sqlstatements or sqlstatementmaps.")
             raise kopf.PermanentError(f"The resoure {namespace}/{name} \
 needs either sqlstatements or sqlstatementmaps.")
-        statementset = ddls
-        statementset += "BEGIN STATEMENT SET;\n"
+        #statementset += "BEGIN STATEMENT SET;\n"
+        sqlstatementset = []
         if spec.get("sqlstatements"):
-            statementset += "\n".join(spec.get("sqlstatements")) + "\n"
+            sqlstatementset = spec.get("sqlstatements")
             # TODO: check for "insert into" prefix and terminating ";"
             # in sqlstatement
         if spec.get("sqlstatementmaps"):
-            statementset += "\n".join(create_statementmaps(configmaps,
+            sqlstatementset += create_statementmaps(configmaps,
                                                            spec, body,
                                                            namespace,
                                                            name,
-                                                           logger)) + "\n"
-        statementset += "END;"
+                                                           logger)
+        statementset['sqlstatementset'] = sqlstatementset
         logger.debug(f"Now deploying statementset {statementset}")
         try:
             patch.status[JOB_ID] = deploy_statementset(statementset, logger)
@@ -416,11 +420,13 @@ def create_tables(beamsqltables, spec, body, namespace, name, logger):
     """
     create tables from beamsqltables index
     """
-    ddls = ""
+    ddls = []
     try:
-        ddls += "\n".join(tables_and_views.create_ddl_from_beamsqltables(
+        for table_name in spec.get("tables"):
+
+            ddls.append(tables_and_views.create_ddl_from_beamsqltables(
             list(beamsqltables[(namespace, table_name)])[0],
-            logger) for table_name in spec.get("tables")) + "\n"
+            logger))
 
     except (KeyError, TypeError) as exc:
         logger.error("Table DDLs could not be created for "
@@ -440,24 +446,24 @@ def create_sets(spec, body, namespace, name, logger):
     create the list of SET statements which configures the
     statementsets
     """
-    sets = ""
+    sets = []
     sqlsettings = spec.get('sqlsettings')
     if not sqlsettings:
         message = "pipeline name not determined in"\
                   f" {namespace}/{name}, using default"
         logger.debug(message)
-        sets = f"SET pipeline.name = '{namespace}/{name}';\n"
+        sets.append(f"SET pipeline.name = '{namespace}/{name}';")
     elif all(x for x in sqlsettings if x.get('pipeline.name') is None):
-        sets = f"SET pipeline.name = '{namespace}/{name}';\n"
+        sets.append(f"SET pipeline.name = '{namespace}/{name}';")
         for setting in sqlsettings:
             key = list(setting.keys())[0]
             value = setting.get(key)
-            sets += f"SET '{key}' = '{value}';\n"
+            sets.append(f"SET '{key}' = '{value}';")
     # add savepoint if location is set
     try:
         savepoint_location = body['status'].get(SAVEPOINT_LOCATION)
         if savepoint_location is not None:
-            sets += f"SET execution.savepoint.path = '{savepoint_location}';\n"
+            sets.append(f"SET execution.savepoint.path = '{savepoint_location}';")
         logger.debug(f"Savepoint location {savepoint_location} used for sets.")
     except KeyError:
         pass
@@ -511,9 +517,10 @@ def deploy_statementset(statementset, logger):
     request = f"{FLINK_SQL_GATEWAY}/v1/sessions/session/statements"
     logger.debug(f"Deployment request to SQL Gateway {request}")
     try:
+        #json_obj = json.dumps(statementset)
         response = requests.post(request,
                                  timeout=DEFAULT_TIMEOUT,
-                                 json={"statement": statementset})
+                                 json=statementset)
     except requests.RequestException as err:
         raise DeploymentFailedException(
             f"Could not deploy job to {request}, server unreachable ({err})")\

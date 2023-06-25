@@ -20,40 +20,45 @@ const uuid = require('uuid');
 const fs = require('fs');
 const app = express();
 const bodyParser = require('body-parser');
+//const JSZip = require('jszip');
 
 const logger = require('./lib/logger.js');
 const port = process.env.SIMPLE_FLINK_SQL_GATEWAY_PORT || 9000;
-const flinkVersion = '1.14.3';
-const flinkRoot = process.env.SIMPLE_FLINK_SQL_GATEWAY_ROOT || `./flink-${flinkVersion}`;
-const flinkSqlClient = '/bin/sql-client.sh -l ';
-const sqlJars = process.env.SIMPLE_FLINK_SQL_GATEWAY_JARS || './jars';
+//const flinkVersion = '1.14.3';
+//const flinkRoot = process.env.SIMPLE_FLINK_SQL_GATEWAY_ROOT || `./flink-${flinkVersion}`;
+const flinksubmit = '/opt/flink/bin/flink run';
+//const sqlJars = process.env.SIMPLE_FLINK_SQL_GATEWAY_JARS || './jars';
 const runningAsMain = require.main === module;
 
 const udfdir = '/tmp/udf';
+const submitdir = 'submitjob';
+const localudf = 'udf';
+const localdata = 'data';
+const sqlStructures = 'SQL-structures.json';
+const submitjobscript = 'job.py';
+//const zip = new JSZip();
+
 
 function appget (_, response) {
   response.status(200).send('OK');
   logger.debug('Health Endpoint was requested.');
 };
 
-function apppost (request, response) {
-  // for now ignore session_id
-  const body = request.body;
-  if (body === undefined || body === null || body.statement === undefined) {
-    response.status(500);
-    response.send('Wrong format! No statement field in body');
-    return;
-  }
-  const id = uuid.v4();
-  const filename = '/tmp/script_' + id + '.sql';
-  fs.writeFileSync(filename, body.statement.toString());
-  const udfFiles = getLocalPythonUdfs();
-  let pyudfFiles = '';
-  if (udfFiles !== undefined && udfFiles !== null && udfFiles != '') {
-    pyudfFiles = '--pyFiles ' + udfFiles;
-  }
-  const command = flinkRoot + flinkSqlClient + sqlJars + ' -f ' + filename + ' --pyExecutable /usr/local/bin/python3 ' + pyudfFiles;
-  logger.debug('Now executing ' + command);
+function zipData (dir) {
+  return new Promise(resolve => {
+    var files = fs.readdirSync(dir).map(x => dir + '/' + x);
+    var command = "zip " + dir + ".zip " + files.join(' ');
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        logger.error('Error while zipping file: ' + error);
+        throw new Error('Could not zip file in dir ' + dir)
+      }
+      resolve();
+    })
+  }) 
+}
+
+function submitJob(){
   exec(command, (error, stdout, stderr) => {
     fs.unlinkSync(filename);
     if (error) {
@@ -76,6 +81,79 @@ function apppost (request, response) {
       response.send('Not successfully submitted. No JOB ID found in server reply.');
     }
   });
+}
+
+
+/*var cpSync = function(src, dest) {
+  var exists = fs.existsSync(src);
+  var stats = exists && fs.statSync(src);
+  var isDirectory = exists && stats.isDirectory();
+  if (isDirectory) {
+    fs.mkdirSync(dest);
+    fs.readdirSync(src).forEach(function(childItemName) {
+      cpSync(path.join(src, childItemName),
+                        path.join(dest, childItemName));
+    });
+  } else {
+    fs.copyFileSync(src, dest);
+  }
+};*/
+
+
+function apppost (request, response) {
+  // for now ignore session_id
+  const body = request.body;
+  if (body === undefined || body === null || body.sqlstatementset === undefined) {
+    response.status(500);
+    response.send('Wrong format! No statement field in body');
+    return;
+  }
+  const id = uuid.v4();
+  const dirname = '/tmp/gateway_' + id;
+  const datatargetdir = dirname + '/' + localdata;
+  const udftargetdir = dirname + '/' + localudf;
+  const submitjobscripttargetdir = dirname + '/' + submitjobscript; 
+  //const filename = '/tmp/script_' + id + '.sql';
+  try {
+    fs.mkdirSync(dirname, '0744');
+    fs.mkdirSync(datatargetdir, '0744');
+    fs.cpSync(submitdir + '/' + localudf, udftargetdir, {recursive: true})
+    fs.cpSync(submitdir + '/' + submitjobscript, submitjobscripttargetdir)
+    fs.writeFileSync(datatargetdir + '/' + sqlStructures, body.toString());
+    const udfFiles = getLocalPythonUdfs();
+    udfFiles.forEach(file => fs.cpSync(file, udftargetdir))
+    
+    zipData(udftargetdir).then(
+      () => {
+        //let pyudfFiles = '';
+        /*if (udfFiles !== undefined && udfFiles !== null && udfFiles != '') {
+          pyudfFiles = '--pyFiles ' + udfFiles;
+        }*/
+        const command = flinksubmit + ' --python ' + dirname + '/' + submitjobscript + ' -pyfs udf.zip' ;
+        logger.debug('Now executing ' + command);
+        return command
+      } 
+    ).then(
+      (name) => {
+        console.log(name)
+      }
+    ).then(
+      () => {
+        //fs.rmSync(dirname, {recursive: true, force: true});
+      }
+    ).catch(
+      (e) => {
+        logger.error(e); 
+        fs.rmSync(dirname, {recursive: true, force: true});
+      }
+    )
+  
+
+  } catch (e) {
+    logger.debug('Could not submit job: ' + e)
+    fs.rmSync(dirname, {recursive: true, force: true});
+  }
+  
 }
 
 function udfget (req, res) {
@@ -120,9 +198,10 @@ function getLocalPythonUdfs () {
     .map(x => x.substring(0, x.lastIndexOf('.')))
     .map(x => x.split('_v'));
 
-  files.forEach(x => { verfiles[x[0]] = x[1]; });
-  const result = Object.keys(verfiles).map(x => `${x}_v${verfiles[x]}.py`).map(x => `${udfdir}/${x}`);
-  return result.join(',');
+  //files.forEach(x => { verfiles[x[0]] = x[1]; });
+  //const result = Object.keys(verfiles).map(x => `${x}_v${verfiles[x]}.py`).map(x => `${udfdir}/${x}`);
+  //return result.join(',');
+  return files
 }
 
 app.use(express.json({ limit: '10mb' }));

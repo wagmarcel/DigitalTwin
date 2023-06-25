@@ -123,5 +123,5 @@ python3 -m kopf run beamsqlstatementsetoperator.py
 To debug locally with VS-Code:
 
 ```
-python3 -m debugpy --listen 5678 --wait-for-client -m kopf run beamsqlstatementsetoperator_v2.py
+python3 -m debugpy --listen 5678 --wait-for-client -m kopf run beamsqlstatementsetoperator.py
 ```
