@@ -323,7 +323,7 @@ def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index,
         # (3) Views
         statementset = {}
         sets = create_sets(spec, body, namespace, name, logger)
-        statementset['sets'] = sets
+        statementset['sqlsets'] = sets
 
         # get first all table ddls
         # get inputTable and outputTable

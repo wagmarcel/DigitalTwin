@@ -8,11 +8,10 @@ spec:
   class: |
     try:
         from pyflink.common import Row
-        from pyflink.table import AggregateFunction
+        from pyflink.table import AggregateFunction, DataTypes
         from pyflink.table.expressions import call
         from pyflink.table.udf import udaf
         from pyflink.table.expressions import col, lit
-        from pyflink.table import DataTypes
     except ImportError:
         class Row():
             def __init__(self, a, b, c, d, e):
@@ -21,7 +20,7 @@ spec:
             pass
 
 
-    class statetime(AggregateFunction):
+    class Statetime(AggregateFunction):
 
         def create_accumulator(self):
             # statetime, last_state, last_timeInMs, first_state, first_timeInMs
@@ -56,10 +55,17 @@ spec:
                 accumulator[3] = state
                 
         def get_result_type(self):
-            return 'BIGINT'
+            return DataTypes.BIGINT()
             
         def get_accumulator_type(self):
-            return 'ROW<f0 DataTypes.BIGINT, f1 DataTypes.BIGINT>'
+            return DataTypes.ROW([
+                DataTypes.FIELD("f0", DataTypes.INT()), 
+                DataTypes.FIELD("f1", DataTypes.BIGINT())])
+
+
+    def register(table_env):
+        statetime = udaf(Statetime())
+        table_env.create_temporary_function("statetime", statetime)
 ---
 apiVersion: industry-fusion.com/v1alpha1
 kind: flinkpythonudf
@@ -102,26 +108,3 @@ spec:
             
         def get_accumulator_type(self):
             return 'ROW<f0 BIGINT, f1 BIGINT>'
----
-apiVersion: industry-fusion.com/v1alpha1
-kind: flinkpythonudf
-metadata:
-  name: hash
-spec:
-  filename: hash
-  version: v1
-  class: |
-    from pyflink.table.expressions import call, col
-    from pyflink.table import DataTypes, TableEnvironment, EnvironmentSettings
-    from pyflink.table.udf import ScalarFunction, udf
-
-    @udf(result_type=DataTypes.BIGINT())
-    class HashCode(ScalarFunction):
-        def __init__(self):
-            self.factor = 12
-
-        def eval(self, s):
-            return hash(s) * self.factor
-
-        def __call__(self, s):
-            return hash(s) * self.factor

@@ -18,6 +18,7 @@ const express = require('express');
 const { exec } = require('child_process');
 const uuid = require('uuid');
 const fs = require('fs');
+const path = require('path')
 const app = express();
 const bodyParser = require('body-parser');
 //const JSZip = require('jszip');
@@ -37,7 +38,7 @@ const localdata = 'data';
 const sqlStructures = 'SQL-structures.json';
 const submitjobscript = 'job.py';
 //const zip = new JSZip();
-
+const cwd = process.cwd()
 
 function appget (_, response) {
   response.status(200).send('OK');
@@ -45,42 +46,49 @@ function appget (_, response) {
 };
 
 function zipData (dir) {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     var files = fs.readdirSync(dir).map(x => dir + '/' + x);
     var command = "zip " + dir + ".zip " + files.join(' ');
     exec(command, (error, stdout, stderr) => {
       if (error) {
         logger.error('Error while zipping file: ' + error);
-        throw new Error('Could not zip file in dir ' + dir)
+        reject('Could not zip file in dir ' + dir)
+        return
       }
       resolve();
     })
   }) 
 }
 
-function submitJob(){
-  exec(command, (error, stdout, stderr) => {
-    fs.unlinkSync(filename);
-    if (error) {
-      logger.error('Error while executing sql-client: ' + error);
-      response.status(500);
-      response.send('Error while executing sql-client: ' + error);
-      return;
-    }
-    // find Job ID ind stdout, e.g.
-    // Job ID: e1ebb6b314c82b27cf81cbc812300d97
-    const regexp = /Job ID: ([0-9a-f]*)/i;
-    const found = stdout.match(regexp);
-    logger.debug('Server output: ' + stdout);
-    if (found !== null && found !== undefined) {
-      const jobId = found[1];
-      logger.debug('jobId found:' + jobId);
-      response.status(200).send('{ "jobid": "' + jobId + '" }');
-    } else { // no JOB ID found, unsuccessful
-      response.status(500);
-      response.send('Not successfully submitted. No JOB ID found in server reply.');
-    }
-  });
+function submitJob(command, response){
+  return new Promise((resolve, reject) =>
+    exec(command, (error, stdout, stderr) => {
+      //fs.unlinkSync(filename);
+      if (error) {
+        logger.error('Error while submitting sql job: ' + error);
+        logger.error('Additional stdout messages from applicatino: ' + stdout);
+        logger.error('Additional sterr messages from applicatino: ' + stderr);
+        response.status(500);
+        response.send('Error while submitting sql job: ' + error);
+        reject(error)
+        return;
+      }
+      // find Job ID ind stdout, e.g.
+      // Job ID: e1ebb6b314c82b27cf81cbc812300d97
+      const regexp = /JobID=\[([0-9a-f]*)\]/i;
+      const found = stdout.match(regexp);
+      logger.debug('Server output: ' + stdout);
+      if (found !== null && found !== undefined) {
+        const jobId = found[1];
+        logger.debug('jobId found:' + jobId);
+        response.status(200).send('{ "jobid": "' + jobId + '" }');
+      } else { // no JOB ID found, unsuccessful
+        response.status(500);
+        response.send('Not successfully submitted. No JOB ID found in server reply.');
+      }
+      resolve()
+    })
+  )
 }
 
 
@@ -115,13 +123,14 @@ function apppost (request, response) {
   const submitjobscripttargetdir = dirname + '/' + submitjobscript; 
   //const filename = '/tmp/script_' + id + '.sql';
   try {
+    process.chdir(cwd)
     fs.mkdirSync(dirname, '0744');
     fs.mkdirSync(datatargetdir, '0744');
     fs.cpSync(submitdir + '/' + localudf, udftargetdir, {recursive: true})
     fs.cpSync(submitdir + '/' + submitjobscript, submitjobscripttargetdir)
-    fs.writeFileSync(datatargetdir + '/' + sqlStructures, body.toString());
+    fs.writeFileSync(datatargetdir + '/' + sqlStructures, JSON.stringify(body) );
     const udfFiles = getLocalPythonUdfs();
-    udfFiles.forEach(file => fs.cpSync(file, udftargetdir))
+    udfFiles.forEach(file => fs.copyFileSync(file, udftargetdir + '/' + path.basename(file)))
     
     zipData(udftargetdir).then(
       () => {
@@ -131,26 +140,25 @@ function apppost (request, response) {
         }*/
         const command = flinksubmit + ' --python ' + dirname + '/' + submitjobscript + ' -pyfs udf.zip' ;
         logger.debug('Now executing ' + command);
+        process.chdir(dirname)
         return command
       } 
     ).then(
-      (name) => {
-        console.log(name)
-      }
+      (command) => submitJob(command, response)
     ).then(
       () => {
-        //fs.rmSync(dirname, {recursive: true, force: true});
+        fs.rmSync(dirname, {recursive: true, force: true});
       }
     ).catch(
       (e) => {
-        logger.error(e); 
+        logger.error(e.stack || e)
         fs.rmSync(dirname, {recursive: true, force: true});
       }
     )
   
 
   } catch (e) {
-    logger.debug('Could not submit job: ' + e)
+    logger.error('Could not submit job: ' + e.stack || e)
     fs.rmSync(dirname, {recursive: true, force: true});
   }
   
@@ -198,10 +206,10 @@ function getLocalPythonUdfs () {
     .map(x => x.substring(0, x.lastIndexOf('.')))
     .map(x => x.split('_v'));
 
-  //files.forEach(x => { verfiles[x[0]] = x[1]; });
-  //const result = Object.keys(verfiles).map(x => `${x}_v${verfiles[x]}.py`).map(x => `${udfdir}/${x}`);
+  files.forEach(x => { verfiles[x[0]] = x[1]; });
+  const result = Object.keys(verfiles).map(x => `${x}_v${verfiles[x]}.py`).map(x => `${udfdir}/${x}`);
   //return result.join(',');
-  return files
+  return result;
 }
 
 app.use(express.json({ limit: '10mb' }));

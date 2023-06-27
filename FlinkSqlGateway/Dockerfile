@@ -22,13 +22,14 @@ WORKDIR /opt/gateway
 ADD gateway.js gateway.js
 ADD package.json package.json
 ADD lib/ lib
+COPY submitjob/ submitjob
 RUN mkdir jars && cd jars && wget https://repo1.maven.org/maven2/org/apache/flink/flink-sql-connector-kafka/1.16.1/flink-sql-connector-kafka-1.16.1.jar
 RUN . $HOME/.nvm/nvm.sh && npm install --production
 ADD sql-client-defaults.yaml /opt/flink/conf/
 
 
 RUN apt-get update -y && \
-apt-get install -y build-essential libssl-dev zlib1g-dev libbz2-dev libffi-dev liblzma-dev && \
+apt-get install -y build-essential libssl-dev zlib1g-dev libbz2-dev libffi-dev liblzma-dev zip && \
 wget https://www.python.org/ftp/python/3.7.9/Python-3.7.9.tgz && \
 tar -xvf Python-3.7.9.tgz && \
 cd Python-3.7.9 && \

@@ -43,43 +43,40 @@ with open('data/SQL-structures.json') as f:
             package = __import__('udf.' + name)
             #package.register(table_env)
             mod = getattr(package, name)
-            mod.register(table_env)
+            try:
+                mod.register(table_env)
+            except:
+                 print(f"Error: Could not register module {file.name}! Does the module have a registration function?") 
 
     # Create SETs
-    sets = d['sqlsets']
-    for set in sets:
-            v = set.replace('=', ' ').split(' ')
-            key = v[1]
-            value = v[-1].strip(';').strip('\'')
-            print(f'SET: {key}={value}')
-            table_env.get_config().set(key, value)
-            #table_env.get_config().set("pipeline.name", "pipelinename")
+    if 'sqlsets' in d:
+        sets = d['sqlsets']
+        for set in sets:
+                v = set.replace('=', ' ').split(' ')
+                key = v[1]
+                value = v[-1].strip(';').strip('\'')
+                print(f'SET: {key}={value}')
+                table_env.get_config().set(key, value)
+                #table_env.get_config().set("pipeline.name", "pipelinename")
 
     # Create Tables
-    tables = d['tables']
-    for table in tables:
-        table_env.execute_sql(table)
+    if 'tables' in d:
+        tables = d['tables']
+        for table in tables:
+            table_env.execute_sql(table)
 
     # Create Views
-    views = d['views']
-    for view in views:
-        table_env.execute_sql(view)
+    if 'views' in d:
+        views = d['views']
+        for view in views:
+            table_env.execute_sql(view)
 
     # CREATE SQL Statement SET
+
     statement_set = table_env.create_statement_set()
     for statement in d["sqlstatementset"]:
         statement_set.add_insert_sql(statement)
         
-    statement_set.execute()
-
-    #t = table_env.from_elements([(1, 2, "Lee"),
-    #                            (3, 4, "Jay"),
-    #                            (5, 6, "Jay"),
-    #                            (7, 8, "Lee")]).alias("value", "count", "name")
-
-    #table_env.execute_sql("INSERT into testtable VALUES(1,2, 'Lee');").wait()
-    #table_env.create_temporary_view("source", t)
-
-    # call registered function in SQL
-    #table_env.execute_sql(
-    #    "INSERT INTO aggtable SELECT weighted_avg(`value`, `count`) AS `avg`, `name` FROM testtable GROUP BY name;")
+    jobresult = statement_set.execute()
+    print(f'JobID=[{jobresult.get_job_client().get_job_id()}]')
+    
