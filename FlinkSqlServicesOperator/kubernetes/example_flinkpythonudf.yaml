@@ -70,41 +70,23 @@ spec:
 apiVersion: industry-fusion.com/v1alpha1
 kind: flinkpythonudf
 metadata:
-  name: weightedaverage
+  name: hash
 spec:
-  filename: weightedaverage
+  filename: hash
   version: v1
   class: |
-    from pyflink.common import Row
-    from pyflink.table import AggregateFunction, DataTypes, TableEnvironment, EnvironmentSettings
-    from pyflink.table.expressions import call
-    from pyflink.table.udf import udaf
-    from pyflink.table.expressions import col, lit
-    from pyflink.table.window import Tumble
+    from pyflink.table.expressions import call, col
+    from pyflink.table import DataTypes, TableEnvironment, EnvironmentSettings
+    from pyflink.table.udf import ScalarFunction, udf
+
+    class HashCode(ScalarFunction):
+    def __init__(self):
+        self.factor = 12
+
+    def eval(self, s):
+        return hash(s) * self.factor
 
 
-    class WeightedAvg(AggregateFunction):
-
-        def create_accumulator(self):
-            # Row(sum, count)
-            return Row(0, 0)
-
-        def get_value(self, accumulator):
-            if accumulator[1] == 0:
-                return None
-            else:
-                return accumulator[0] / accumulator[1]
-
-        def accumulate(self, accumulator, value, weight):
-            accumulator[0] += value * weight
-            accumulator[1] += weight
-        
-        def retract(self, accumulator, value, weight):
-            accumulator[0] -= value * weight
-            accumulator[1] -= weight
-            
-        def get_result_type(self):
-            return 'BIGINT'
-            
-        def get_accumulator_type(self):
-            return 'ROW<f0 BIGINT, f1 BIGINT>'
+    def register(table_env):
+        hashcode = udf(HashCode(), result_type=DataTypes.BIGINT())
+        table_env.create_temporary_function("hash", hashcode)

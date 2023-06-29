@@ -1,52 +1,38 @@
-from pyflink.common import Row, Configuration
+#from pyflink.common import Row, Configuration
 from pyflink.table import AggregateFunction, DataTypes, TableEnvironment, EnvironmentSettings
-from pyflink.table.expressions import call
+#from pyflink.table.expressions import call
 from pyflink.table.udf import udaf
-from pyflink.table.expressions import col, lit
-from pyflink.table.window import Tumble
+#from pyflink.table.expressions import col, lit
+#from pyflink.table.window import Tumble
 import json
 import pathlib
 import os
-#import udf.weightedAvg as WeightedAvg
 
 
 JARDIR = '/opt/gateway/jars'
-# Add udf modules
 
-#print(os.getcwd())
-#print(os.listdir())
 with open('data/SQL-structures.json') as f:
     d = json.load(f)
 
-    # Register udf models
-
-    #config = Configuration()
-    #config.set_string('pipeline.name', 'pipelinename')
     env_settings = EnvironmentSettings.in_streaming_mode() #.new_instance().with_configuration(config).build()
     table_env = TableEnvironment.create(env_settings)
 
-
     # Get all jars from /opt/gateway/jar
     jars = ';'.join(list(map(lambda x: "file://"+str(x), pathlib.Path(JARDIR).glob('*.jar'))))
-    print(jars)
 
     table_env.get_config().set("pipeline.classpaths", jars)
 
-    # the result type and accumulator type can also be specified in the udaf decorator:
-    # weighted_avg = udaf(WeightedAvg(), result_type=DataTypes.BIGINT(), accumulator_type=...)
-    #weighted_avg = udaf(udf.weightedAvg.WeightedAvg())
-    #table_env.create_temporary_function("weighted_avg", udf.weightedAvg.WeightedAvg())
-    #WeightedAvg.register(table_env)
+    # Register udf models
     for file in os.scandir('udf'):
         if file.name.endswith('.py') and file.name != '__init__.py':
-            name = file.name[:-3]      # without the '.py' at the end
-            package = __import__('udf.' + name)
-            #package.register(table_env)
-            mod = getattr(package, name)
             try:
-                mod.register(table_env)
-            except:
-                 print(f"Error: Could not register module {file.name}! Does the module have a registration function?") 
+                print(f"Executing {file.name}")
+                f = open('udf/' + file.name).read()
+                exec(f)
+                register(table_env)
+            except Exception as error:
+                print(error)
+
 
     # Create SETs
     if 'sqlsets' in d:

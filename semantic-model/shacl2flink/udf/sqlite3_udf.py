@@ -2,7 +2,7 @@ import sys
 import re
 import argparse
 import sqlite3
-import statetime.sqlite_statetime as sqlite_udf_statetime
+import statetime.sqlite_statetime_v1 as sqlite_udf_statetime
 
 
 def parse_args(args=sys.argv[1:]):
@@ -30,8 +30,6 @@ def main(databasefile, sqlscript):
             data = file.read()
             cur.executescript(
                 f"BEGIN;\n{data}\n COMMIT;")
-            #conn.commit()
-            #conn.close()
 
 if __name__ == '__main__':
     args = parse_args()
