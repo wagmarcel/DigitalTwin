@@ -59,17 +59,6 @@ def get_timevars(ctx, vars):
     for tab in sqltables:
         timevars.append(f'{tab}.ts')
     return timevars
-       
-
-def set_ordered_aggregation_mode(ctx):
-    ctx['is_ordered_aggregation_mode'] = True
-
-
-def get_ordered_aggregation_mode(ctx):
-    if 'is_ordered_aggregation_mode' in ctx:
-        return ctx['is_ordered_aggregation_mode']
-    else:
-        return False
 
 
 def set_group_by_vars(ctx, vars):

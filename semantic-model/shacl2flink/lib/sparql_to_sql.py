@@ -33,7 +33,7 @@ import bgp_translation_utils  # noqa: E402
 sh = Namespace("http://www.w3.org/ns/shacl#")
 
 iff = Namespace("https://industry-fusion.com/types/v0.9/")
-IFOA = Namespace("https://industry-fusion.com/orderedAggregators/v0.9/")
+IFA = Namespace("https://industry-fusion.com/aggregators/v0.9/")
 
 debug = 0
 debugoutput = sys.stdout
@@ -240,8 +240,6 @@ def translate_unary_not(ctx, elem):
 
 def process_aggregate(ctx, elem):
     distinct = elem.distinct
-    if utils.get_ordered_aggregation_mode(ctx):
-        raise("Combinatio of default aggregates and time ordered aggregates not (yet) implemented")
     utils.set_is_aggregate_var(ctx, True)
     expression = translate(ctx, elem.vars)
     utils.set_is_aggregate_var(ctx, False)
@@ -347,11 +345,10 @@ def translate_function(ctx, function):
                 result = f'SQL_DIALECT_CAST(SQL_DIALECT_STRIP_IRI{{{expression}}} as {cast})'
         else:
             result = f'SQL_DIALECT_TIME_TO_MILLISECONDS{{{expression}}}'
-    elif iri in IFOA:
+    elif iri in IFA:
         udf = utils.strip_class(iri)
         result = f'{udf}('
         utils.set_is_aggregate_var(ctx, True)
-        utils.set_ordered_aggregation_mode(ctx)
         for i in range(0, numargs):
             if i != 0:
                 result += ', '
@@ -451,10 +448,6 @@ def wrap_sql_construct(ctx, node):
     columns = get_attribute_columns(ctx, node)
     first = True
     construct_query = "SQL_DIALECT_INSERT_ATTRIBUTES\n"
-    order_by = create_order_by(ctx)
-    group_by = create_group_by(ctx)
-    if utils.get_ordered_aggregation_mode(ctx):
-        subbounds_var = create_subbounds(ctx, node)
     bounds = ctx['bounds']
 
     for (entityId_var, name, attribute_type, value_var, node_type) in columns:
@@ -471,31 +464,20 @@ def wrap_sql_construct(ctx, node):
         construct_query += 'CAST(NULL as STRING) as valueType,\n'  # valueType
         construct_query += '0 as `index`,\n'  # index
         construct_query += f'\'{attribute_type}\' as `type`,\n'
-        value = f"{get_bound_trim_string(ctx, value_var)} as `value`,\n"
-        if utils.get_ordered_aggregation_mode(ctx):
-            value = replace_column_by_alias(node, value)
-        construct_query += value  # value
+        construct_query += f"{get_bound_trim_string(ctx, value_var)} as `value`,\n"  # value
         construct_query += 'CAST(NULL as STRING) as `object`\n'  # object
         construct_query += ',SQL_DIALECT_SQLITE_TIMESTAMP\n'  # ts
 
-        construct_query += 'FROM '
-        if utils.get_ordered_aggregation_mode(ctx):
-            construct_query += f'(SELECT {subbounds_var} FROM '
-        construct_query += node['target_sql']
+        construct_query += 'FROM ' + node['target_sql']
         if node['where'] != '':
             construct_query += ' WHERE ' + node['where']
-        if not utils.get_ordered_aggregation_mode(ctx):
-            
-            if group_by is not None:
-                construct_query += f' GROUP BY {group_by}'
-        if order_by is not None:
-            construct_query += f' ORDER BY {order_by}'
-        
-        if utils.get_ordered_aggregation_mode(ctx):
-            construct_query += ")"
-            group_by = create_group_by(ctx)
+        #group_by = None
+        group_by = create_group_by(ctx)
+        #if 'group_by_vars' in ctx:
+        #    group_by = reduce(lambda x, y: f'{x}, {y}', map(lambda x: bounds[utils.create_varname(x)],
+        #                                                    ctx['group_by_vars']))
+        if group_by is not None:
             construct_query += f' GROUP BY {group_by}'
-            
     node['target_sql'] = construct_query
 
 
@@ -564,14 +546,13 @@ def wrap_sql_projection(ctx, node):
 
     target_sql = node['target_sql']
     target_where = node['where']
-    group_by = None
-    if 'group_by_vars' in ctx:
-        group_by = reduce(lambda x, y: f'{x}, {y}', map(lambda x: bounds[utils.create_varname(x)],
-                                                        ctx['group_by_vars']))
-        if utils.get_ordered_aggregation_mode(ctx):
-            group_by_term = ''
-        else:
-            group_by_term = f' GROUP BY {group_by}'
+    group_by = create_group_by(ctx)
+    #if 'group_by_vars' in ctx:
+    #    group_by = reduce(lambda x, y: f'{x}, {y}', map(lambda x: bounds[utils.create_varname(x)],
+    #                                                    ctx['group_by_vars']))
+    
+    if group_by is not None:
+        group_by_term = f' GROUP BY {group_by}'
     else:
         group_by_term = ''
     node['target_sql'] = f'{expression} FROM {target_sql}'
@@ -904,8 +885,6 @@ def replace_column_by_alias(node, value):
 
 def create_order_by(ctx):
     bounds = ctx['bounds']
-    if not utils.get_ordered_aggregation_mode(ctx):
-        return None
     aggregate_vars = utils.get_aggregate_vars(ctx)
     timevars = utils.get_timevars(ctx, aggregate_vars)
     first = True
