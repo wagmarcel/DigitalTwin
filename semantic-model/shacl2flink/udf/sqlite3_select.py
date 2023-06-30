@@ -2,8 +2,7 @@ import sys
 import re
 import argparse
 import sqlite3
-import statetime.sqlite_statetime_v1 as sqlite_udf_statetime
-import hash.sqlite_hash_v1 as sqlite_udf_hash
+import statetime.sqlite_statetime as sqlite_udf_statetime
 
 
 def parse_args(args=sys.argv[1:]):
@@ -25,12 +24,14 @@ def main(databasefile, sqlscript):
         with open(sqlscript, 'r') as file:
             conn.enable_load_extension(True)
             conn.load_extension('/usr/lib/sqlite3/pcre.so')
-            conn.create_aggregate('statetime', 2, sqlite_udf_statetime.Statetime)
-            conn.create_function('hash', 1, sqlite_udf_hash.Hash)
+            conn.create_window_function('statetime', 2, sqlite_udf_statetime.Statetime)
+
             cur = conn.cursor()
             data = file.read()
-            cur.executescript(
-                f"BEGIN;\n{data}\n COMMIT;")
+            cur.execute(data)
+            print(cur.fetchone())
+            #conn.commit()
+            #conn.close()
 
 if __name__ == '__main__':
     args = parse_args()
