@@ -60,7 +60,7 @@ test-sqlite:
 test-sqlite-udf:
 	@echo Test with sqlite
 	for file in $(sqlite_files); do \
-		${PYTHON} udf/sqlite3_udf.py $(SQLITEDB) $${file};\
+		${PYTHON} udf/sqlite3_insert.py $(SQLITEDB) $${file};\
 	done
 	echo "Alerts"
 	echo ------------------------------------------------

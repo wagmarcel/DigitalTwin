@@ -19,16 +19,10 @@ from unittest.mock import patch, MagicMock
 import hash.sqlite_hash_v1 as sqlite_hash
 
 
-def test_hash_init():
-    hash = sqlite_hash.Hash()
-    assert hash.flink_hash is not None
-
-
 def test_hash_value():
-    hashcode = sqlite_hash.Hash()
-    result = hashcode.eval(10)
+    result = sqlite_hash.eval(10)
     assert result == 120
-    result = hashcode.eval("hello world")
+    result = sqlite_hash.eval("hello world")
     assert result == hash("hello world") * 12
-    result = hashcode.eval(12.34)
+    result = sqlite_hash.eval(12.34)
     assert result == hash(12.34) * 12

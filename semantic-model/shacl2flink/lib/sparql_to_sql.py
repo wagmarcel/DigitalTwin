@@ -34,6 +34,7 @@ sh = Namespace("http://www.w3.org/ns/shacl#")
 
 iff = Namespace("https://industry-fusion.com/types/v0.9/")
 IFA = Namespace("https://industry-fusion.com/aggregators/v0.9/")
+IFN = Namespace("https://industry-fusion.com/functions/v0.9/")
 
 debug = 0
 debugoutput = sys.stdout
@@ -286,16 +287,16 @@ def translate_builtin_bound(ctx, elem):
 def translate_additive_expression(ctx, elem):
     if isinstance(elem.expr, Variable):
         expr = utils.unwrap_variables(ctx, elem.expr)
-    elif isinstance(elem.expr, Literal) or isinstance(elem.expr, URIRef):
-        expr = utils.unwrap_variables(elem.expr)
+ #   elif isinstance(elem.expr, Literal) or isinstance(elem.expr, URIRef):
+ #       expr = utils.unwrap_variables(ctx, elem.expr)
     else:  # Neither Variable, nor Literal, nor IRI - hope it is further translatable
         expr = translate(ctx, elem.expr)
 
     for op, other in zip(elem.op, elem.other):
         if isinstance(other, Variable):
             other_val = utils.unwrap_variables(ctx, other)
-        elif isinstance(other, Literal) or isinstance(other, URIRef):
-            other_val = utils.unwrap_variables(other)
+#        elif isinstance(other, Literal) or isinstance(other, URIRef):
+#            other_val = utils.unwrap_variables(ctx, other)
         else:
             other_val = translate(ctx, other)
         expr += f" {op} {other_val} "
@@ -349,6 +350,16 @@ def translate_function(ctx, function):
         udf = utils.strip_class(iri)
         result = f'{udf}('
         utils.set_is_aggregate_var(ctx, True)
+        for i in range(0, numargs):
+            if i != 0:
+                result += ', '
+            expression = translate(ctx, expr[i])
+            result += expression
+        utils.set_is_aggregate_var(ctx, False)
+        result += ')'
+    elif iri in IFN:
+        udf = utils.strip_class(iri)
+        result = f'{udf}('
         for i in range(0, numargs):
             if i != 0:
                 result += ', '

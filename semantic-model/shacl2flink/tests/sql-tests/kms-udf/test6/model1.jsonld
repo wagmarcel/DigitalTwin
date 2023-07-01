@@ -85,7 +85,7 @@
     ],
     "https://industry-fusion.com/types/v0.9/strength": {
       "type": "Property",
-      "value": "0.9"
+      "value": "1"
     },
     "https://industry-fusion.com/types/v0.9/hasCartridge": {
       "type": "Relationship",
@@ -188,25 +188,6 @@
     "https://industry-fusion.com/types/v0.9/hasFilter": {
       "type": "Relationship",
       "object": "urn:filter:2"
-    }
-  },
-  {
-    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
-    "id": "urn:filter:2",
-    "type": "https://industry-fusion.com/types/v0.9/filter",
-    "https://industry-fusion.com/types/v0.9/state": {
-      "type": "Property",
-      "value": {
-        "@id": "https://industry-fusion.com/types/v0.9/state_OFF"
-      }
-    },
-    "https://industry-fusion.com/types/v0.9/strength": {
-      "type": "Property",
-      "value": "0.1"
-    },
-    "https://industry-fusion.com/types/v0.9/hasCartridge": {
-      "type": "Relationship",
-      "object": "urn:filterCartridge:2"
     }
   },
   {

@@ -587,3 +587,28 @@ iff:OeeTemplateShape
 			""" ;
 	] ;
 .
+
+
+    iff:Test
+    a sh:NodeShape ;
+    rdfs:comment "Create hash test" ;
+    sh:targetClass iff:filter ;
+    sh:rule [
+		a sh:SPARQLRule ;
+		sh:construct """
+            PREFIX iff: <https://industry-fusion.com/types/v0.9/>
+            PREFIX oee: <https://industry-fusion.com/oee/v0.9/>
+            PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            PREFIX ifn: <https://industry-fusion.com/functions/v0.9/>
+			CONSTRUCT {
+				$this iff:strength  [ <https://uri.etsi.org/ngsi-ld/hasValue> ?testx ] .
+			}
+			WHERE {
+                    $this iff:strength [ <https://uri.etsi.org/ngsi-ld/hasValue> ?strength ] .
+                    bind(ifn:hash(xsd:integer(?strength)) as ?testx)
+			}
+			""" ;
+	] ;
+.

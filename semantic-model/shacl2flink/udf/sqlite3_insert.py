@@ -26,7 +26,7 @@ def main(databasefile, sqlscript):
             conn.enable_load_extension(True)
             conn.load_extension('/usr/lib/sqlite3/pcre.so')
             conn.create_aggregate('statetime', 2, sqlite_udf_statetime.Statetime)
-            conn.create_function('hash', 1, sqlite_udf_hash.Hash)
+            conn.create_function('hash', 1, sqlite_udf_hash.eval)
             cur = conn.cursor()
             data = file.read()
             cur.executescript(
