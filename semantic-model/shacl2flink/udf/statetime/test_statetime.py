@@ -14,8 +14,6 @@
 # limitations under the License.
 #
 
-import os.path
-from unittest.mock import patch, MagicMock
 import statetime.sqlite_statetime_v1 as sqlite_statetime
 
 
@@ -33,7 +31,7 @@ def test_statetime_init_step():
 
 def test_statetime_true_step():
     statetime = sqlite_statetime.Statetime()
-    statetime.accum = [10, 1, 10, None, 10, {},{}]
+    statetime.accum = [10, 1, 10, None, 10, {}, {}]
     statetime.step(1, 17)
     assert statetime.accum == [10, 1, 10, None, 10, {17: 1}, {}]
     statetime.accum = [None, 1, 10, None, None, {}, {}]
@@ -70,34 +68,36 @@ def test_inverse_all_true():
     statetime.step(1, 11)
     statetime.step(1, 13)
     statetime.step(1, 17)
-    statetime.inverse(1,11)
-    statetime.inverse(1,13)
+    statetime.inverse(1, 11)
+    statetime.inverse(1, 13)
     result = statetime.finalize()
-    assert result == None
+    assert result is None
     statetime = sqlite_statetime.Statetime()
     statetime.step(1, 11)
     statetime.step(1, 13)
     statetime.step(1, 17)
-    statetime.inverse(1,17)
+    statetime.inverse(1, 17)
     result = statetime.finalize()
     assert result == 2
+
 
 def test_inverse_all_false():
     statetime = sqlite_statetime.Statetime()
     statetime.step(0, 11)
     statetime.step(0, 13)
     statetime.step(0, 17)
-    statetime.inverse(0,11)
-    statetime.inverse(0,13)
+    statetime.inverse(0, 11)
+    statetime.inverse(0, 13)
     result = statetime.finalize()
-    assert result == None
+    assert result is None
     statetime = sqlite_statetime.Statetime()
     statetime.step(0, 11)
     statetime.step(0, 13)
     statetime.step(0, 17)
-    statetime.inverse(0,11)
+    statetime.inverse(0, 11)
     result = statetime.finalize()
-    assert result == None
+    assert result is None
+
 
 def test_inverse_all_mixed():
     statetime = sqlite_statetime.Statetime()
@@ -109,24 +109,24 @@ def test_inverse_all_mixed():
     statetime.step(1, 2900)
     statetime.step(1, 3100)
     result = statetime.finalize()
-    assert result == 600 
-    statetime.inverse(1,1100)
-    statetime.inverse(0,1300)
+    assert result == 600
+    statetime.inverse(1, 1100)
+    statetime.inverse(0, 1300)
     result = statetime.finalize()
     assert result == 400
-    statetime.inverse(1,1700)
+    statetime.inverse(1, 1700)
     result = statetime.finalize()
     assert result == 400
-    statetime.inverse(0,1900)
+    statetime.inverse(0, 1900)
     result = statetime.finalize()
     assert result == 200
-    statetime.inverse(0,2300)
+    statetime.inverse(0, 2300)
     result = statetime.finalize()
     assert result == 200
-    statetime.inverse(1,2900)
+    statetime.inverse(1, 2900)
     result = statetime.finalize()
     assert result == 0
-    statetime.inverse(1,3100)
+    statetime.inverse(1, 3100)
     result = statetime.finalize()
     assert result == 0
 
@@ -160,7 +160,8 @@ def test_extend():
     statetime.step(0, 1000)
     result = statetime.finalize()
     assert result == 651
-    
+
+
 def test_shrink():
     statetime = sqlite_statetime.Statetime()
     statetime.step(1, 1100)
@@ -183,6 +184,7 @@ def test_shrink():
     result = statetime.finalize()
     assert result == 651
 
+
 def test_shrink_extend():
     statetime = sqlite_statetime.Statetime()
     statetime.step(1, 1100)
@@ -202,6 +204,7 @@ def test_shrink_extend():
     statetime.step(0, 3102)
     result = statetime.finalize()
     assert result == 652
+
 
 def test_extend_shrink():
     statetime = sqlite_statetime.Statetime()

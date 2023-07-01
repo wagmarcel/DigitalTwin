@@ -18,8 +18,8 @@ def parse_args(args=sys.argv[1:]):
 def regexp(y, x, search=re.search):
     return 1 if search(y, x) else 0
 
+
 def main(databasefile, sqlscript):
-    
 
     with sqlite3.connect(databasefile) as conn:
         with open(sqlscript, 'r') as file:
@@ -31,6 +31,7 @@ def main(databasefile, sqlscript):
             data = file.read()
             cur.executescript(
                 f"BEGIN;\n{data}\n COMMIT;")
+
 
 if __name__ == '__main__':
     args = parse_args()

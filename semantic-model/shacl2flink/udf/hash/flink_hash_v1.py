@@ -7,8 +7,8 @@ class HashCode(ScalarFunction):
         self.factor = 12
 
 
-def eval(self, s):
-    return hash(s) * self.factor
+    def eval(self, s):
+        return hash(s) * self.factor
 
 
 def register(table_env):
