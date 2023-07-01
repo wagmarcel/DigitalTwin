@@ -14,8 +14,6 @@
 # limitations under the License.
 #
 
-import os.path
-from unittest.mock import patch, MagicMock
 import hash.sqlite_hash_v1 as sqlite_hash
 
 

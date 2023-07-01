@@ -51,10 +51,10 @@ def get_timevars(ctx, vars):
     timevars = []
     bounds = ctx['bounds']
     for var in vars:
-       sqlvar = bounds[var]
-       sqltable = sqlvar.split('.')[0]
-       sqltable = sqltable.strip('`')
-       sqltables.append(sqltable)
+        sqlvar = bounds[var]
+        sqltable = sqlvar.split('.')[0]
+        sqltable = sqltable.strip('`')
+        sqltables.append(sqltable)
     sqltables = list(set(sqltables))
     for tab in sqltables:
         timevars.append(f'{tab}.ts')
@@ -64,7 +64,7 @@ def get_timevars(ctx, vars):
 def set_group_by_vars(ctx, vars):
     for var in vars:
         if 'group_by_vars' not in ctx:
-            ctx['group_by_vars'] = []        
+            ctx['group_by_vars'] = []
         ctx['group_by_vars'].append(create_varname(var))
 
 
@@ -82,14 +82,6 @@ def get_group_by_vars(ctx):
         return ctx['group_by_vars']
     else:
         return None
-    #bounds = ctx['bounds']
-    #result = []
-    #if 'group_by_vars' in ctx:
-    #    vars = ctx['group_by_vars']
-    #    for var in vars:
-    #        result.append(bounds[create_varname(var)])
-        
-    #return result
 
 
 def set_is_aggregate_var(ctx, state):
@@ -115,7 +107,6 @@ def set_aggregate_vars(ctx, vars):
         if 'aggregate_vars' not in ctx:
             ctx['aggregate_vars'] = []
         ctx['aggregate_vars'].append(var)
-
 
 
 def add_aggregate_var_to_context(ctx, var):

@@ -287,16 +287,12 @@ def translate_builtin_bound(ctx, elem):
 def translate_additive_expression(ctx, elem):
     if isinstance(elem.expr, Variable):
         expr = utils.unwrap_variables(ctx, elem.expr)
- #   elif isinstance(elem.expr, Literal) or isinstance(elem.expr, URIRef):
- #       expr = utils.unwrap_variables(ctx, elem.expr)
     else:  # Neither Variable, nor Literal, nor IRI - hope it is further translatable
         expr = translate(ctx, elem.expr)
 
     for op, other in zip(elem.op, elem.other):
         if isinstance(other, Variable):
             other_val = utils.unwrap_variables(ctx, other)
-#        elif isinstance(other, Literal) or isinstance(other, URIRef):
-#            other_val = utils.unwrap_variables(ctx, other)
         else:
             other_val = translate(ctx, other)
         expr += f" {op} {other_val} "
@@ -367,27 +363,6 @@ def translate_function(ctx, function):
             result += expression
         utils.set_is_aggregate_var(ctx, False)
         result += ')'
-        # IFOAs are organized as Over window and not as group by because they need to be ordered by time
-        # vars = utils.get_aggregate_vars(ctx)
-        # timevars = utils.get_timevars(ctx, vars)
-        # group_by_vars = utils.get_group_by_vars(ctx) 
-        # result += ' OVER ( PARTITION BY '
-        # first = True
-        # for gbvar in group_by_vars:
-        #     if first:
-        #         first = False
-        #     else:
-        #         result += ", "
-        #     result += gbvar
-        # first = True
-        # result += " ORDER BY "
-        # for var in timevars:
-        #     if first:
-        #         first = False
-        #     else:
-        #         result += ", "
-        #     result += var
-        # result += ')'
     else:
         raise utils.WrongSparqlStructure(f'Function {iri.toPython()} not supported!')
     return result
@@ -482,11 +457,7 @@ def wrap_sql_construct(ctx, node):
         construct_query += 'FROM ' + node['target_sql']
         if node['where'] != '':
             construct_query += ' WHERE ' + node['where']
-        #group_by = None
         group_by = create_group_by(ctx)
-        #if 'group_by_vars' in ctx:
-        #    group_by = reduce(lambda x, y: f'{x}, {y}', map(lambda x: bounds[utils.create_varname(x)],
-        #                                                    ctx['group_by_vars']))
         if group_by is not None:
             construct_query += f' GROUP BY {group_by}'
     node['target_sql'] = construct_query
@@ -549,7 +520,6 @@ def wrap_sql_projection(ctx, node):
             expression += ', '
         try:
             column = bounds[utils.create_varname(var)]
-            # column_no_bacticks =  column.replace('`', '')
             expression += f'{column} AS `{utils.create_varname(var)}` '
         except:
             # variable could not be bound, bind it with NULL
@@ -558,10 +528,7 @@ def wrap_sql_projection(ctx, node):
     target_sql = node['target_sql']
     target_where = node['where']
     group_by = create_group_by(ctx)
-    #if 'group_by_vars' in ctx:
-    #    group_by = reduce(lambda x, y: f'{x}, {y}', map(lambda x: bounds[utils.create_varname(x)],
-    #                                                    ctx['group_by_vars']))
-    
+
     if group_by is not None:
         group_by_term = f' GROUP BY {group_by}'
     else:
@@ -895,10 +862,8 @@ def replace_column_by_alias(node, value):
 
 
 def create_order_by(ctx):
-    bounds = ctx['bounds']
     aggregate_vars = utils.get_aggregate_vars(ctx)
     timevars = utils.get_timevars(ctx, aggregate_vars)
-    first = True
     result = ', '.join(timevars)
     return result
 
@@ -909,5 +874,5 @@ def create_group_by(ctx):
     result = None
     if group_by_vars is not None:
         result = reduce(lambda x, y: f'{x}, {y}', map(lambda x: bounds[x],
-                                                            group_by_vars))
+                        group_by_vars))
     return result

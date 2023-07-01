@@ -1,12 +1,13 @@
-from pyflink.table.expressions import call, col
-from pyflink.table import DataTypes, TableEnvironment, EnvironmentSettings
+from pyflink.table import DataTypes
 from pyflink.table.udf import ScalarFunction, udf
 
-class HashCode(ScalarFunction):
-  def __init__(self):
-    self.factor = 12
 
-  def eval(self, s):
+class HashCode(ScalarFunction):
+    def __init__(self):
+        self.factor = 12
+
+
+def eval(self, s):
     return hash(s) * self.factor
 
 
