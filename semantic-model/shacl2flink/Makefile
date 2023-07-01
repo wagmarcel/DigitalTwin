@@ -17,6 +17,7 @@ build: $(SHACL) $(KNOWLEDGE $(MODEL)
 	@echo Build tables
 	$(PYTHON) create_rdf_table.py $(KNOWLEDGE)
 	$(PYTHON) create_core_tables.py
+	${PYTHON} create_udfs.py
 	$(PYTHON) create_ngsild_tables.py $(SHACL)
 	$(PYTHON) create_ngsild_models.py $(SHACL) $(KNOWLEDGE) $(MODEL)
 	$(PYTHON) create_sql_checks_from_shacl.py $(SHACL) $(KNOWLEDGE)
