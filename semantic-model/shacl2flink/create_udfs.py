@@ -14,28 +14,22 @@
 # limitations under the License.
 #
 
-import argparse
 import os.path
-import sys
-import math
-import hashlib
-import owlrl
 import ruamel.yaml
-import rdflib
 from lib import utils
-from lib import configs
 import glob
 
 
 udfdir = 'udf/*/flink_*.py'
 udfcrdname = 'udf.yaml'
 
+
 def main(output_folder='output'):
     yaml = ruamel.yaml.YAML()
 
     utils.create_output_folder(output_folder)
-    udfs_full =  glob.glob(udfdir) 
-    
+    udfs_full = glob.glob(udfdir)
+
     with open(os.path.join(output_folder, udfcrdname), 'w') as f:
         for file in udfs_full:
             with open(file) as fi:
@@ -53,8 +47,12 @@ def main(output_folder='output'):
             spec['class'] = txt
             crd['metadata'] = metadata
             crd['spec'] = spec
-            print('---', file=f)
+            f.write('---')
             yaml.dump(crd, f)
+    with open(os.path.join(output_folder, 'test'), 'w') as f:
+        f.write('---')
+        f.close()
+
 
 if __name__ == '__main__':
     main()
