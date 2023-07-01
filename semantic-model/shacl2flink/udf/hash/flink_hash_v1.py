@@ -6,7 +6,6 @@ class HashCode(ScalarFunction):
     def __init__(self):
         self.factor = 12
 
-
     def eval(self, s):
         return hash(s) * self.factor
 

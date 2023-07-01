@@ -116,7 +116,6 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
         model += g + knowledge
 
         qres = model.query(attributes_query)
-        entity_count = {}
         first = True
         print(f'INSERT INTO `{configs.attributes_table_name}` VALUES',
               file=sqlitef)
@@ -125,10 +124,6 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
             id = entityId.toPython() + "\\\\" + name.toPython()
             current_index = None
             if index is None:
-                #if id not in entity_count:
-                #    entity_count[id] = 0
-                #else:
-                #    entity_count[id] += 1
                 current_index = 0
             else:
                 current_index = index
