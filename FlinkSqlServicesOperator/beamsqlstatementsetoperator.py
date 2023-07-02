@@ -22,7 +22,6 @@ from enum import Enum
 
 import requests
 import kopf
-import json
 
 import flink_util
 import tables_and_views
@@ -265,7 +264,7 @@ def update(body, spec, patch, logger, retries=20, **kwargs):
 # Kopf decorated functions match their expectations
 def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index,
             configmaps: kopf.Index,
-            patch, logger, body, spec, status, **kwargs):
+            patch, logger, body, spec, **kwargs):
     """
     Managaging the main lifecycle of the beamsqlstatementset crd
     Current state is stored under
@@ -337,7 +336,7 @@ def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index,
                 views = []
                 for view_name in spec.get("views"):
                     views.append(tables_and_views.create_view(
-                    list(beamsqlviews[(namespace, view_name)])[0])) 
+                    list(beamsqlviews[(namespace, view_name)])[0]))
                 statementset['views'] = views
 
         except (KeyError, TypeError) as exc:
@@ -517,7 +516,6 @@ def deploy_statementset(statementset, logger):
     request = f"{FLINK_SQL_GATEWAY}/v1/sessions/session/statements"
     logger.debug(f"Deployment request to SQL Gateway {request}")
     try:
-        #json_obj = json.dumps(statementset)
         response = requests.post(request,
                                  timeout=DEFAULT_TIMEOUT,
                                  json=statementset)
