@@ -45,7 +45,7 @@ function appget (_, response) {
   logger.debug('Health Endpoint was requested.');
 };
 
-function zipData (dir) {
+/*function zipData (dir) {
   return new Promise((resolve, reject) => {
     const files = fs.readdirSync(dir).map(x => dir + '/' + x);
     const command = 'zip ' + dir + '.zip ' + files.join(' ');
@@ -58,12 +58,11 @@ function zipData (dir) {
       resolve();
     });
   });
-}
+}*/
 
 function submitJob (command, response) {
   return new Promise((resolve, reject) =>
     exec(command, (error, stdout, stderr) => {
-      // fs.unlinkSync(filename);
       if (error) {
         logger.error('Error while submitting sql job: ' + error);
         logger.error('Additional stdout messages from applicatino: ' + stdout);
@@ -91,20 +90,12 @@ function submitJob (command, response) {
   );
 }
 
-/* var cpSync = function(src, dest) {
-  var exists = fs.existsSync(src);
-  var stats = exists && fs.statSync(src);
-  var isDirectory = exists && stats.isDirectory();
-  if (isDirectory) {
-    fs.mkdirSync(dest);
-    fs.readdirSync(src).forEach(function(childItemName) {
-      cpSync(path.join(src, childItemName),
-                        path.join(dest, childItemName));
-    });
-  } else {
-    fs.copyFileSync(src, dest);
-  }
-}; */
+var createCommand = function() {
+    const command = flinksubmit + ' --python ' + dirname + '/' + submitjobscript + ' -pyfs udf.zip';
+    logger.debug('Now executing ' + command);
+    process.chdir(dirname);
+    return command;
+}
 
 function apppost (request, response) {
   // for now ignore session_id
@@ -130,23 +121,11 @@ function apppost (request, response) {
     const udfFiles = getLocalPythonUdfs();
     udfFiles.forEach(file => fs.copyFileSync(file, udftargetdir + '/' + path.basename(file)));
 
-    zipData(udftargetdir).then(
-      () => {
-        // let pyudfFiles = '';
-        /* if (udfFiles !== undefined && udfFiles !== null && udfFiles != '') {
-          pyudfFiles = '--pyFiles ' + udfFiles;
-        } */
-        const command = flinksubmit + ' --python ' + dirname + '/' + submitjobscript + ' -pyfs udf.zip';
-        logger.debug('Now executing ' + command);
-        process.chdir(dirname);
-        return command;
-      }
-    ).then(
-      (command) => submitJob(command, response)
-    ).then(
-      () => {
-        // fs.rmSync(dirname, {recursive: true, force: true});
-      }
+    //zipData(udftargetdir).then(
+    const command = createCommand()
+    //).then(
+    submitJob(command, response).then(
+      () => { fs.rmSync(dirname, {recursive: true, force: true});}
     ).catch(
       (e) => {
         logger.error(e.stack || e);

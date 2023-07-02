@@ -57,7 +57,6 @@ describe('Test statement path', function () {
 
     const response = {
       status: function (val) {
-
       }
     };
     const body = {
@@ -99,22 +98,20 @@ describe('Test statement path', function () {
         chdir: function(dir) {}
     }
 
-    const zipData = function() {
-
-    }
     const revert = toTest.__set__({
       logger: logger,
       exec: exec,
       fs: fs,
       getLocalPythonUdfs: getLocalPythonUdfs,
-      process: process,
-      zipData: zipData
+      process: process
     });
 
     const apppost = toTest.__get__('apppost');
     apppost(request, response);
     revert();
   });
+});
+describe('Test apppost', function () {
   it('Test empty body (should return 500)', function () {
     const response = {
       status: function (val) {
@@ -197,7 +194,7 @@ describe('Test statement path', function () {
     apppost(request, response);
     revert();
   });
-  it('Test exec output with Job ID (should return 200)', function () {
+  it('Test exec output with Job ID (should return 200)', function (done) {
     const stdout = 'Job ID: abcdef123456789';
     const response = {
       status: function (val) {
@@ -222,6 +219,8 @@ describe('Test statement path', function () {
       writeFileSync: () => {},
       rmSync: function(file) {
         file.startsWith('/tmp/gateway_').should.equal(true)
+        done()
+        revert();
       }
     };
     const request = {
@@ -247,7 +246,7 @@ describe('Test statement path', function () {
 
     const apppost = toTest.__get__('apppost');
     apppost(request, response);
-    revert();
+    //revert();
   });
   it('Test exec output with no Job ID (should return 500)', function () {
     const stdout = 'Job : error';
@@ -297,6 +296,8 @@ describe('Test statement path', function () {
     apppost(request, response);
     revert();
   });
+});
+describe('Test udf functions', function () {
   it('Test getLocalPythonUdf', function () {
     const fs = {
       readdirSync: function (filename) {
@@ -392,6 +393,80 @@ describe('Test statement path', function () {
     });
     const udfget = toTest.__get__('udfget');
     udfget(request, response);
+    revert();
+  });
+});
+describe('Test submitJob', function () {
+  it('Submit without error', function (done) {
+    const command = "command";
+    const exec = function(command, fn) {
+      fn('error', null, null);
+    }
+    const response = {
+      status: function (val) {
+        val.should.equal(500);
+        return response;
+      },
+      send: function (val) {
+        val.should.equal('Error while submitting sql job: error');
+        revert();
+        done();
+      }
+    };
+    const revert = toTest.__set__({
+      logger: logger,
+      exec: exec
+    });
+    const submitJob = toTest.__get__('submitJob');
+    submitJob(command, response);
+    revert();
+  });
+  it('Submit without jobId', function (done) {
+    const command = "command";
+    const exec = function(command, fn) {
+      fn(null, 'nojobid', null);
+    }
+    const response = {
+      status: function (val) {
+        val.should.equal(500);
+        return response;
+      },
+      send: function (val) {
+        val.should.equal('Not successfully submitted. No JOB ID found in server reply.');
+        revert();
+        done();
+      }
+    };
+    const revert = toTest.__set__({
+      logger: logger,
+      exec: exec
+    });
+    const submitJob = toTest.__get__('submitJob');
+    submitJob(command, response);
+    revert();
+  });
+  it('Submit with jobId', function (done) {
+    const command = "command";
+    const exec = function(command, fn) {
+      fn(null, 'JobID=[1234]', null);
+    }
+    const response = {
+      status: function (val) {
+        val.should.equal(200);
+        return response;
+      },
+      send: function (val) {
+        val.should.equal('{ "jobid": "1234" }');
+        revert();
+        done();
+      }
+    };
+    const revert = toTest.__set__({
+      logger: logger,
+      exec: exec
+    });
+    const submitJob = toTest.__get__('submitJob');
+    submitJob(command, response);
     revert();
   });
 });
