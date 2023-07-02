@@ -18,17 +18,17 @@ const express = require('express');
 const { exec } = require('child_process');
 const uuid = require('uuid');
 const fs = require('fs');
-const path = require('path')
+const path = require('path');
 const app = express();
 const bodyParser = require('body-parser');
-//const JSZip = require('jszip');
+// const JSZip = require('jszip');
 
 const logger = require('./lib/logger.js');
 const port = process.env.SIMPLE_FLINK_SQL_GATEWAY_PORT || 9000;
-//const flinkVersion = '1.14.3';
-//const flinkRoot = process.env.SIMPLE_FLINK_SQL_GATEWAY_ROOT || `./flink-${flinkVersion}`;
+// const flinkVersion = '1.14.3';
+// const flinkRoot = process.env.SIMPLE_FLINK_SQL_GATEWAY_ROOT || `./flink-${flinkVersion}`;
 const flinksubmit = '/opt/flink/bin/flink run';
-//const sqlJars = process.env.SIMPLE_FLINK_SQL_GATEWAY_JARS || './jars';
+// const sqlJars = process.env.SIMPLE_FLINK_SQL_GATEWAY_JARS || './jars';
 const runningAsMain = require.main === module;
 
 const udfdir = '/tmp/udf';
@@ -37,8 +37,8 @@ const localudf = 'udf';
 const localdata = 'data';
 const sqlStructures = 'SQL-structures.json';
 const submitjobscript = 'job.py';
-//const zip = new JSZip();
-const cwd = process.cwd()
+// const zip = new JSZip();
+const cwd = process.cwd();
 
 function appget (_, response) {
   response.status(200).send('OK');
@@ -47,30 +47,30 @@ function appget (_, response) {
 
 function zipData (dir) {
   return new Promise((resolve, reject) => {
-    var files = fs.readdirSync(dir).map(x => dir + '/' + x);
-    var command = "zip " + dir + ".zip " + files.join(' ');
+    const files = fs.readdirSync(dir).map(x => dir + '/' + x);
+    const command = 'zip ' + dir + '.zip ' + files.join(' ');
     exec(command, (error, stdout, stderr) => {
       if (error) {
         logger.error('Error while zipping file: ' + error);
-        reject('Could not zip file in dir ' + dir)
-        return
+        reject(new Error('Could not zip file in dir ' + dir));
+        return;
       }
       resolve();
-    })
-  }) 
+    });
+  });
 }
 
-function submitJob(command, response){
+function submitJob (command, response) {
   return new Promise((resolve, reject) =>
     exec(command, (error, stdout, stderr) => {
-      //fs.unlinkSync(filename);
+      // fs.unlinkSync(filename);
       if (error) {
         logger.error('Error while submitting sql job: ' + error);
         logger.error('Additional stdout messages from applicatino: ' + stdout);
         logger.error('Additional sterr messages from applicatino: ' + stderr);
         response.status(500);
         response.send('Error while submitting sql job: ' + error);
-        reject(error)
+        reject(error);
         return;
       }
       // find Job ID ind stdout, e.g.
@@ -86,13 +86,12 @@ function submitJob(command, response){
         response.status(500);
         response.send('Not successfully submitted. No JOB ID found in server reply.');
       }
-      resolve()
+      resolve();
     })
-  )
+  );
 }
 
-
-/*var cpSync = function(src, dest) {
+/* var cpSync = function(src, dest) {
   var exists = fs.existsSync(src);
   var stats = exists && fs.statSync(src);
   var isDirectory = exists && stats.isDirectory();
@@ -105,8 +104,7 @@ function submitJob(command, response){
   } else {
     fs.copyFileSync(src, dest);
   }
-};*/
-
+}; */
 
 function apppost (request, response) {
   // for now ignore session_id
@@ -120,48 +118,45 @@ function apppost (request, response) {
   const dirname = '/tmp/gateway_' + id;
   const datatargetdir = dirname + '/' + localdata;
   const udftargetdir = dirname + '/' + localudf;
-  const submitjobscripttargetdir = dirname + '/' + submitjobscript; 
-  //const filename = '/tmp/script_' + id + '.sql';
+  const submitjobscripttargetdir = dirname + '/' + submitjobscript;
+  // const filename = '/tmp/script_' + id + '.sql';
   try {
-    process.chdir(cwd)
+    process.chdir(cwd);
     fs.mkdirSync(dirname, '0744');
     fs.mkdirSync(datatargetdir, '0744');
-    fs.cpSync(submitdir + '/' + localudf, udftargetdir, {recursive: true})
-    fs.cpSync(submitdir + '/' + submitjobscript, submitjobscripttargetdir)
-    fs.writeFileSync(datatargetdir + '/' + sqlStructures, JSON.stringify(body) );
+    fs.cpSync(submitdir + '/' + localudf, udftargetdir, { recursive: true });
+    fs.cpSync(submitdir + '/' + submitjobscript, submitjobscripttargetdir);
+    fs.writeFileSync(datatargetdir + '/' + sqlStructures, JSON.stringify(body));
     const udfFiles = getLocalPythonUdfs();
-    udfFiles.forEach(file => fs.copyFileSync(file, udftargetdir + '/' + path.basename(file)))
-    
+    udfFiles.forEach(file => fs.copyFileSync(file, udftargetdir + '/' + path.basename(file)));
+
     zipData(udftargetdir).then(
       () => {
-        //let pyudfFiles = '';
-        /*if (udfFiles !== undefined && udfFiles !== null && udfFiles != '') {
+        // let pyudfFiles = '';
+        /* if (udfFiles !== undefined && udfFiles !== null && udfFiles != '') {
           pyudfFiles = '--pyFiles ' + udfFiles;
-        }*/
-        const command = flinksubmit + ' --python ' + dirname + '/' + submitjobscript + ' -pyfs udf.zip' ;
+        } */
+        const command = flinksubmit + ' --python ' + dirname + '/' + submitjobscript + ' -pyfs udf.zip';
         logger.debug('Now executing ' + command);
-        process.chdir(dirname)
-        return command
-      } 
+        process.chdir(dirname);
+        return command;
+      }
     ).then(
       (command) => submitJob(command, response)
     ).then(
       () => {
-        fs.rmSync(dirname, {recursive: true, force: true});
+        // fs.rmSync(dirname, {recursive: true, force: true});
       }
     ).catch(
       (e) => {
-        logger.error(e.stack || e)
-        fs.rmSync(dirname, {recursive: true, force: true});
+        logger.error(e.stack || e);
+        fs.rmSync(dirname, { recursive: true, force: true });
       }
-    )
-  
-
+    );
   } catch (e) {
-    logger.error('Could not submit job: ' + e.stack || e)
-    fs.rmSync(dirname, {recursive: true, force: true});
+    logger.error('Could not submit job: ' + e.stack || e);
+    fs.rmSync(dirname, { recursive: true, force: true });
   }
-  
 }
 
 function udfget (req, res) {
@@ -208,7 +203,7 @@ function getLocalPythonUdfs () {
 
   files.forEach(x => { verfiles[x[0]] = x[1]; });
   const result = Object.keys(verfiles).map(x => `${x}_v${verfiles[x]}.py`).map(x => `${udfdir}/${x}`);
-  //return result.join(',');
+  // return result.join(',');
   return result;
 }
 
