@@ -1,9 +1,4 @@
-#from pyflink.common import Row, Configuration
-from pyflink.table import AggregateFunction, DataTypes, TableEnvironment, EnvironmentSettings
-#from pyflink.table.expressions import call
-from pyflink.table.udf import udaf
-#from pyflink.table.expressions import col, lit
-#from pyflink.table.window import Tumble
+from pyflink.table import TableEnvironment, EnvironmentSettings
 import json
 import pathlib
 import os
@@ -14,11 +9,12 @@ JARDIR = '/opt/gateway/jars'
 with open('data/SQL-structures.json') as f:
     d = json.load(f)
 
-    env_settings = EnvironmentSettings.in_streaming_mode() #.new_instance().with_configuration(config).build()
+    env_settings = EnvironmentSettings.in_streaming_mode()
     table_env = TableEnvironment.create(env_settings)
 
     # Get all jars from /opt/gateway/jar
-    jars = ';'.join(list(map(lambda x: "file://"+str(x), pathlib.Path(JARDIR).glob('*.jar'))))
+    jars = ';'.join(list(map(lambda x: "file://"+str(x),
+                             pathlib.Path(JARDIR).glob('*.jar'))))
 
     table_env.get_config().set("pipeline.classpaths", jars)
 
@@ -29,21 +25,19 @@ with open('data/SQL-structures.json') as f:
                 print(f"Executing {file.name}")
                 f = open('udf/' + file.name).read()
                 exec(f)
-                register(table_env)
+                register(table_env)  # noqa: F821
             except Exception as error:
                 print(error)
-
 
     # Create SETs
     if 'sqlsets' in d:
         sets = d['sqlsets']
         for set in sets:
-                v = set.replace('=', ' ').split(' ')
-                key = v[1]
-                value = v[-1].strip(';').strip('\'')
-                print(f'SET: {key}={value}')
-                table_env.get_config().set(key, value)
-                #table_env.get_config().set("pipeline.name", "pipelinename")
+            v = set.replace('=', ' ').split(' ')
+            key = v[1]
+            value = v[-1].strip(';').strip('\'')
+            print(f'SET: {key}={value}')
+            table_env.get_config().set(key, value)
 
     # Create Tables
     if 'tables' in d:
@@ -62,7 +56,6 @@ with open('data/SQL-structures.json') as f:
     statement_set = table_env.create_statement_set()
     for statement in d["sqlstatementset"]:
         statement_set.add_insert_sql(statement)
-        
+
     jobresult = statement_set.execute()
     print(f'JobID=[{jobresult.get_job_client().get_job_id()}]')
-    
