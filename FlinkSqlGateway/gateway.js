@@ -111,7 +111,7 @@ function apppost (request, response) {
   const body = request.body;
   if (body === undefined || body === null || body.sqlstatementset === undefined) {
     response.status(500);
-    response.send('Wrong format! No statement field in body');
+    response.send('Wrong format! No sqlstatementset field in body');
     return;
   }
   const id = uuid.v4();

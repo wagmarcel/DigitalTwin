@@ -17,6 +17,7 @@
 
 const chai = require('chai');
 global.should = chai.should();
+const expect = chai.expect;
 
 const rewire = require('rewire');
 const toTest = rewire('../gateway.js');
@@ -51,7 +52,7 @@ describe('Test health path', function () {
 describe('Test statement path', function () {
   it('Test exec command for sqlclient', function () {
     let fsWriteFilename;
-    const statement = 'select *;';
+    const statement = 'select *;'
     const flinkSqlCommand = `./flink-${flinkVersion}/bin/sql-client.sh -l ./jars -f `;
 
     const response = {
@@ -59,10 +60,12 @@ describe('Test statement path', function () {
 
       }
     };
+    const body = {
+      sqlstatementset: statement
+    }
+  
     const request = {
-      body: {
-        statement: statement
-      }
+      body: body
     };
     const exec = function (command, output) {
       command.should.equal(flinkSqlCommand + fsWriteFilename + ' --pyExecutable /usr/local/bin/python3 --pyFiles testfile');
@@ -70,7 +73,20 @@ describe('Test statement path', function () {
     const fs = {
       writeFileSync: function (filename, data) {
         fsWriteFilename = filename;
-        data.should.equal(statement);
+        data.should.equal(JSON.stringify(body));
+      },
+      mkdirSync: function(dirname, mode) {
+        mode.should.equal('0744');
+        dirname.startsWith('/tmp/gateway_').should.equal(true)
+      },
+      cpSync: function(src, tgt, mode) {
+        tgt.startsWith('/tmp/gateway_').should.equal(true)
+      },
+      copyFileSync: function(file) {
+        file.should.equal('testfile')
+      },
+      rmSync: function(file) {
+        file.startsWith('/tmp/gateway_').should.equal(true)
       }
     };
 
@@ -78,11 +94,21 @@ describe('Test statement path', function () {
       return ['testfile'];
     };
 
+    const process = {
+        cwd: function() { return 'cwd'},
+        chdir: function(dir) {}
+    }
+
+    const zipData = function() {
+
+    }
     const revert = toTest.__set__({
       logger: logger,
       exec: exec,
       fs: fs,
-      getLocalPythonUdfs: getLocalPythonUdfs
+      getLocalPythonUdfs: getLocalPythonUdfs,
+      process: process,
+      zipData: zipData
     });
 
     const apppost = toTest.__get__('apppost');
@@ -95,7 +121,7 @@ describe('Test statement path', function () {
         val.should.equal(500);
       },
       send: function (val) {
-        val.should.equal('Wrong format! No statement field in body');
+        val.should.equal('Wrong format! No sqlstatementset field in body');
       }
     };
     const request = {
@@ -131,7 +157,7 @@ describe('Test statement path', function () {
         val.should.equal(500);
       },
       send: function (val) {
-        val.should.equal('Error while executing sql-client: ' + error);
+        val.should.equal('Wrong format! No sqlstatementset field in body');
       }
     };
     const uuid = {
@@ -141,7 +167,10 @@ describe('Test statement path', function () {
       unlinkSync: function (filename) {
         filename.should.equal('/tmp/script_uuid.sql');
       },
-      writeFileSync: () => {}
+      writeFileSync: () => {},
+      rmSync: function(file) {
+        file.startsWith('/tmp/gateway_').should.equal(true)
+      }
     };
     const request = {
       body: {
@@ -190,11 +219,14 @@ describe('Test statement path', function () {
       unlinkSync: function (filename) {
         filename.should.equal('/tmp/script_uuid.sql');
       },
-      writeFileSync: () => {}
+      writeFileSync: () => {},
+      rmSync: function(file) {
+        file.startsWith('/tmp/gateway_').should.equal(true)
+      }
     };
     const request = {
       body: {
-        statement: 'select *;'
+        sqlstatementset: 'select *;'
       }
     };
     const exec = function (command, output) {
@@ -235,11 +267,14 @@ describe('Test statement path', function () {
       unlinkSync: function (filename) {
         filename.should.equal('/tmp/script_uuid.sql');
       },
-      writeFileSync: () => {}
+      writeFileSync: () => {},
+      rmSync: function(file) {
+        file.startsWith('/tmp/gateway_').should.equal(true)
+      }
     };
     const request = {
       body: {
-        statement: 'select *;'
+        sqlstatementset: 'select *;'
       }
     };
     const exec = function (command, output) {
@@ -274,7 +309,9 @@ describe('Test statement path', function () {
 
     const getLocalPythonUdfs = toTest.__get__('getLocalPythonUdfs');
     const result = getLocalPythonUdfs();
-    result.should.equal('/tmp/udf/file1_v1.py,/tmp/udf/file2_v2.py,/tmp/udf/file3_v23-alpha.py');
+    expect(result).to.deep.equal(['/tmp/udf/file1_v1.py', 
+                         '/tmp/udf/file2_v2.py',
+                         '/tmp/udf/file3_v23-alpha.py']);
     revert();
   });
   it('Test udfpost without body', function () {
