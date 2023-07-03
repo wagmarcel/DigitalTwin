@@ -72,8 +72,8 @@ def create(body, spec, patch, logger, **kwargs):
     patch.status[STATE] = States.SYNCED.name
     try:
         post_file(spec, logger)
-    except requests.RequestException as err:
-        logger.warn(f"Could not upload udf: {err}")
+    except DeploymentFailedException as err:
+        logger.warning(f"Could not upload udf: {err}")
         patch.status[STATE] = States.FAILED.name
     return {"createdOn": str(time.time())}
 
@@ -93,7 +93,7 @@ def update(body, spec, patch, logger, retries=20, **kwargs):
     try:
         post_file(spec, logger)
     except DeploymentFailedException as err:
-        logger.warn(f"Could not upload udf: {err}")
+        logger.warning(f"Could not upload udf: {err}")
         patch.status[STATE] = States.FAILED.name
     return {"updatedOn": str(time.time())}
 
@@ -103,12 +103,10 @@ def update(body, spec, patch, logger, retries=20, **kwargs):
 # pylint: disable=too-many-arguments unused-argument redefined-outer-name
 # pylint: disable=too-many-locals too-many-statements
 # Kopf decorated functions match their expectations
-def monitor(patch, logger, body, spec, status, **kwargs):
+def monitor(patch, logger, body, spec, **kwargs):
     """
     Managaging the main lifecycle of the flinkpythonudf CRD
     Current state is stored under
-    status:
-        state: STATE
     STATE can be
         - SYNCED - uploaded to flink jobmanager
         - FAILED - uploading failed
@@ -116,13 +114,18 @@ def monitor(patch, logger, body, spec, status, **kwargs):
     filename = spec.get('filename')
     version = spec.get('version')
     fullname = f'{filename}_{version}'
-    result = check_file_state(fullname)
+    try:
+        result = check_file_state(fullname)
+    except:
+        patch.status[STATE] = States.FAILED.name
+        logger.error("Could not check file state.")
+        return      
     patch.status[STATE] = States.SYNCED.name
     if result == 404:
         try:
             post_file(spec, logger)
         except DeploymentFailedException as err:
-            logger.warn(f"Could not upload udf: {err}")
+            logger.error(f"Could not upload udf: {err}")
             patch.status[STATE] = States.FAILED.name
     logger.info("monitoring triggered")
     return {"monitoredOn": str(time.time())}

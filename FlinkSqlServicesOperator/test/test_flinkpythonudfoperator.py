@@ -22,6 +22,7 @@ from bunch import Bunch
 from mock import patch
 import kopf
 import requests
+import os.path
 
 import flinkpythonudfoperator as target
 
@@ -201,3 +202,53 @@ class TestMonitor(TestCase):
         patchx.status = {}
         result = target.monitor(patchx, Logger(), body, body["spec"])
         self.assertEqual(patchx.status['state'], "FAILED")
+
+
+def requests_get_successful(url, timeout):
+    assert(os.path.basename(url) == 'filename')
+    result = Bunch()
+    result.status_code = 200
+    return result
+
+def requests_post_successful(url, timeout, data, headers):
+    assert(os.path.basename(url) == 'filename_version')
+    result = Bunch()
+    result.status_code = 201
+    return result
+
+def requests_post_fail(url, timeout, data, headers):
+    assert(os.path.basename(url) == 'filename_version')
+    result = Bunch()
+    result.status_code = 500
+    return result
+
+class TestCheckFileState(TestCase):
+    """unit test class for check_file_state"""
+    @patch('requests.get', requests_get_successful)
+    def test_check_request_successful(self):
+
+        result = target.check_file_state('filename')
+        self.assertEqual(result, 200)
+
+
+class TestCheckPostFile(TestCase):
+    """unit test class for check_file_state"""
+    @patch('requests.post', requests_post_successful)
+    def test_check_request_successful(self):
+        spec = {
+            "filename": "filename",
+            "version": "version",
+            "class": "class"
+        }
+        result = target.post_file(spec, Logger())
+
+
+    @patch('requests.post', requests_post_fail)
+    def test_check_request_fail(self):
+        spec = {
+            "filename": "filename",
+            "version": "version",
+            "class": "class"
+        }
+        with self.assertRaises(target.DeploymentFailedException):
+            result = target.post_file(spec, Logger())
