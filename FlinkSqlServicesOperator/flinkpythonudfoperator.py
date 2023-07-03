@@ -116,10 +116,10 @@ def monitor(patch, logger, body, spec, **kwargs):
     fullname = f'{filename}_{version}'
     try:
         result = check_file_state(fullname)
-    except:
+    except requests.RequestException:
         patch.status[STATE] = States.FAILED.name
         logger.error("Could not check file state.")
-        return      
+        return {"monitoredOn": str(time.time())}
     patch.status[STATE] = States.SYNCED.name
     if result == 404:
         try:
