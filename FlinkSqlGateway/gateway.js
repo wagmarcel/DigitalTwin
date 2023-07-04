@@ -91,7 +91,7 @@ function submitJob (command, response) {
 }
 
 var createCommand = function() {
-    const command = flinksubmit + ' --python ' + dirname + '/' + submitjobscript + ' -pyfs udf.zip';
+    const command = flinksubmit + ' --python ' + dirname + '/' + submitjobscript;
     logger.debug('Now executing ' + command);
     process.chdir(dirname);
     return command;

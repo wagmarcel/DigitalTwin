@@ -1,3 +1,7 @@
+FROM python:3.8 as plint
+ADD submitjob/ submitjob
+RUN pip3 install flake8 && flake8 submitjob/job.py
+
 FROM node:16
 ADD gateway.js gateway.js
 ADD package.json package.json
@@ -22,7 +26,7 @@ WORKDIR /opt/gateway
 ADD gateway.js gateway.js
 ADD package.json package.json
 ADD lib/ lib
-COPY submitjob/ submitjob
+COPY --from=plint submitjob submitjob
 RUN mkdir jars && cd jars && wget https://repo1.maven.org/maven2/org/apache/flink/flink-sql-connector-kafka/1.16.1/flink-sql-connector-kafka-1.16.1.jar
 RUN . $HOME/.nvm/nvm.sh && npm install --production
 ADD sql-client-defaults.yaml /opt/flink/conf/
