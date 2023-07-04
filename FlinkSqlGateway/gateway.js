@@ -21,14 +21,10 @@ const fs = require('fs');
 const path = require('path');
 const app = express();
 const bodyParser = require('body-parser');
-// const JSZip = require('jszip');
 
 const logger = require('./lib/logger.js');
 const port = process.env.SIMPLE_FLINK_SQL_GATEWAY_PORT || 9000;
-// const flinkVersion = '1.14.3';
-// const flinkRoot = process.env.SIMPLE_FLINK_SQL_GATEWAY_ROOT || `./flink-${flinkVersion}`;
 const flinksubmit = '/opt/flink/bin/flink run';
-// const sqlJars = process.env.SIMPLE_FLINK_SQL_GATEWAY_JARS || './jars';
 const runningAsMain = require.main === module;
 
 const udfdir = '/tmp/udf';
@@ -37,28 +33,12 @@ const localudf = 'udf';
 const localdata = 'data';
 const sqlStructures = 'SQL-structures.json';
 const submitjobscript = 'job.py';
-// const zip = new JSZip();
 const cwd = process.cwd();
 
 function appget (_, response) {
   response.status(200).send('OK');
   logger.debug('Health Endpoint was requested.');
 };
-
-/*function zipData (dir) {
-  return new Promise((resolve, reject) => {
-    const files = fs.readdirSync(dir).map(x => dir + '/' + x);
-    const command = 'zip ' + dir + '.zip ' + files.join(' ');
-    exec(command, (error, stdout, stderr) => {
-      if (error) {
-        logger.error('Error while zipping file: ' + error);
-        reject(new Error('Could not zip file in dir ' + dir));
-        return;
-      }
-      resolve();
-    });
-  });
-}*/
 
 function submitJob (command, response) {
   return new Promise((resolve, reject) =>
@@ -90,12 +70,12 @@ function submitJob (command, response) {
   );
 }
 
-var createCommand = function() {
-    const command = flinksubmit + ' --python ' + dirname + '/' + submitjobscript;
-    logger.debug('Now executing ' + command);
-    process.chdir(dirname);
-    return command;
-}
+const createCommand = function (dirname) {
+  const command = flinksubmit + ' --python ' + dirname + '/' + submitjobscript;
+  logger.debug('Now executing ' + command);
+  process.chdir(dirname);
+  return command;
+};
 
 function apppost (request, response) {
   // for now ignore session_id
@@ -110,7 +90,6 @@ function apppost (request, response) {
   const datatargetdir = dirname + '/' + localdata;
   const udftargetdir = dirname + '/' + localudf;
   const submitjobscripttargetdir = dirname + '/' + submitjobscript;
-  // const filename = '/tmp/script_' + id + '.sql';
   try {
     process.chdir(cwd);
     fs.mkdirSync(dirname, '0744');
@@ -121,11 +100,9 @@ function apppost (request, response) {
     const udfFiles = getLocalPythonUdfs();
     udfFiles.forEach(file => fs.copyFileSync(file, udftargetdir + '/' + path.basename(file)));
 
-    //zipData(udftargetdir).then(
-    const command = createCommand()
-    //).then(
+    const command = createCommand(dirname);
     submitJob(command, response).then(
-      () => { fs.rmSync(dirname, {recursive: true, force: true});}
+      () => { fs.rmSync(dirname, { recursive: true, force: true }); }
     ).catch(
       (e) => {
         logger.error(e.stack || e);
@@ -182,7 +159,6 @@ function getLocalPythonUdfs () {
 
   files.forEach(x => { verfiles[x[0]] = x[1]; });
   const result = Object.keys(verfiles).map(x => `${x}_v${verfiles[x]}.py`).map(x => `${udfdir}/${x}`);
-  // return result.join(',');
   return result;
 }
 

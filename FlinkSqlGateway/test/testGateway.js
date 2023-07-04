@@ -52,7 +52,7 @@ describe('Test health path', function () {
 describe('Test statement path', function () {
   it('Test exec command for sqlclient', function () {
     let fsWriteFilename;
-    const statement = 'select *;'
+    const statement = 'select *;';
     const flinkSqlCommand = `./flink-${flinkVersion}/bin/sql-client.sh -l ./jars -f `;
 
     const response = {
@@ -61,8 +61,8 @@ describe('Test statement path', function () {
     };
     const body = {
       sqlstatementset: statement
-    }
-  
+    };
+
     const request = {
       body: body
     };
@@ -74,18 +74,18 @@ describe('Test statement path', function () {
         fsWriteFilename = filename;
         data.should.equal(JSON.stringify(body));
       },
-      mkdirSync: function(dirname, mode) {
+      mkdirSync: function (dirname, mode) {
         mode.should.equal('0744');
-        dirname.startsWith('/tmp/gateway_').should.equal(true)
+        dirname.startsWith('/tmp/gateway_').should.equal(true);
       },
-      cpSync: function(src, tgt, mode) {
-        tgt.startsWith('/tmp/gateway_').should.equal(true)
+      cpSync: function (src, tgt, mode) {
+        tgt.startsWith('/tmp/gateway_').should.equal(true);
       },
-      copyFileSync: function(file) {
-        file.should.equal('testfile')
+      copyFileSync: function (file) {
+        file.should.equal('testfile');
       },
-      rmSync: function(file) {
-        file.startsWith('/tmp/gateway_').should.equal(true)
+      rmSync: function (file) {
+        file.startsWith('/tmp/gateway_').should.equal(true);
       }
     };
 
@@ -94,9 +94,9 @@ describe('Test statement path', function () {
     };
 
     const process = {
-        cwd: function() { return 'cwd'},
-        chdir: function(dir) {}
-    }
+      cwd: function () { return 'cwd'; },
+      chdir: function (dir) {}
+    };
 
     const revert = toTest.__set__({
       logger: logger,
@@ -165,8 +165,8 @@ describe('Test apppost', function () {
         filename.should.equal('/tmp/script_uuid.sql');
       },
       writeFileSync: () => {},
-      rmSync: function(file) {
-        file.startsWith('/tmp/gateway_').should.equal(true)
+      rmSync: function (file) {
+        file.startsWith('/tmp/gateway_').should.equal(true);
       }
     };
     const request = {
@@ -217,9 +217,9 @@ describe('Test apppost', function () {
         filename.should.equal('/tmp/script_uuid.sql');
       },
       writeFileSync: () => {},
-      rmSync: function(file) {
-        file.startsWith('/tmp/gateway_').should.equal(true)
-        done()
+      rmSync: function (file) {
+        file.startsWith('/tmp/gateway_').should.equal(true);
+        done();
         revert();
       }
     };
@@ -246,7 +246,7 @@ describe('Test apppost', function () {
 
     const apppost = toTest.__get__('apppost');
     apppost(request, response);
-    //revert();
+    // revert();
   });
   it('Test exec output with no Job ID (should return 500)', function () {
     const stdout = 'Job : error';
@@ -267,8 +267,8 @@ describe('Test apppost', function () {
         filename.should.equal('/tmp/script_uuid.sql');
       },
       writeFileSync: () => {},
-      rmSync: function(file) {
-        file.startsWith('/tmp/gateway_').should.equal(true)
+      rmSync: function (file) {
+        file.startsWith('/tmp/gateway_').should.equal(true);
       }
     };
     const request = {
@@ -310,9 +310,9 @@ describe('Test udf functions', function () {
 
     const getLocalPythonUdfs = toTest.__get__('getLocalPythonUdfs');
     const result = getLocalPythonUdfs();
-    expect(result).to.deep.equal(['/tmp/udf/file1_v1.py', 
-                         '/tmp/udf/file2_v2.py',
-                         '/tmp/udf/file3_v23-alpha.py']);
+    expect(result).to.deep.equal(['/tmp/udf/file1_v1.py',
+      '/tmp/udf/file2_v2.py',
+      '/tmp/udf/file3_v23-alpha.py']);
     revert();
   });
   it('Test udfpost without body', function () {
@@ -398,10 +398,10 @@ describe('Test udf functions', function () {
 });
 describe('Test submitJob', function () {
   it('Submit without error', function (done) {
-    const command = "command";
-    const exec = function(command, fn) {
+    const command = 'command';
+    const exec = function (command, fn) {
       fn('error', null, null);
-    }
+    };
     const response = {
       status: function (val) {
         val.should.equal(500);
@@ -422,10 +422,10 @@ describe('Test submitJob', function () {
     revert();
   });
   it('Submit without jobId', function (done) {
-    const command = "command";
-    const exec = function(command, fn) {
+    const command = 'command';
+    const exec = function (command, fn) {
       fn(null, 'nojobid', null);
-    }
+    };
     const response = {
       status: function (val) {
         val.should.equal(500);
@@ -446,10 +446,10 @@ describe('Test submitJob', function () {
     revert();
   });
   it('Submit with jobId', function (done) {
-    const command = "command";
-    const exec = function(command, fn) {
+    const command = 'command';
+    const exec = function (command, fn) {
       fn(null, 'JobID=[1234]', null);
-    }
+    };
     const response = {
       status: function (val) {
         val.should.equal(200);

@@ -2,7 +2,7 @@ FROM python:3.8 as plint
 ADD submitjob/ submitjob
 RUN pip3 install flake8 && flake8 submitjob/job.py
 
-FROM node:16
+FROM node:16 as nodelint
 ADD gateway.js gateway.js
 ADD package.json package.json
 ADD lib/ lib
@@ -23,7 +23,8 @@ ENV NODE_ENV=production
 ENV NODEJSPATH=/.nvm/versions/node/v*/bin
 ENV NODE_PATH=/.nvm/versions/node/v*/lib/node_modules
 WORKDIR /opt/gateway
-ADD gateway.js gateway.js
+#ADD gateway.js gateway.js
+COPY --from=nodelint gateway.js gateway.js
 ADD package.json package.json
 ADD lib/ lib
 COPY --from=plint submitjob submitjob
