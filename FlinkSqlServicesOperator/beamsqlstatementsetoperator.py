@@ -40,10 +40,10 @@ FLINK_SAVEPOINT_DIR = os.getenv("IFF_FLINK_SAVEPOINT_DIR",
 DEFAULT_TIMEOUT = 60
 
 timer_interval_seconds = int(os.getenv("TIMER_INTERVAL", default="10"))
-timer_backoff_seconds = int(os.getenv("TIMER_BACKOFF_INTERVAL", default="10"))
+timer_backoff_seconds = int(os.getenv("TIMER_BACKOFF_INTERVAL", default="30"))
 timer_backoff_temp_failure_seconds = int(
     os.getenv("TIMER_BACKOFF_TEMPORARY_FAILURE_INTERVAL", default="30"))
-
+monitor_retries = int(os.getenv("MONITOR_RETRIES", default="10080"))
 
 class States(Enum):
     """SQL Job states as defined by Flink"""
@@ -258,7 +258,7 @@ def update(body, spec, patch, logger, retries=20, **kwargs):
 
 
 @kopf.timer("industry-fusion.com", "v1alpha3", "beamsqlstatementsets",
-            interval=timer_interval_seconds, backoff=timer_backoff_seconds)
+            interval=timer_interval_seconds, backoff=timer_backoff_seconds, retries=monitor_retries)
 # pylint: disable=too-many-arguments unused-argument redefined-outer-name
 # pylint: disable=too-many-locals too-many-statements too-many-branches
 # Kopf decorated functions match their expectations
