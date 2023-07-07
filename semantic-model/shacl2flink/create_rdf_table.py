@@ -30,6 +30,7 @@ def parse_args(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='create_rdf_table.py \
                                                   <knowledge.ttl>')
     parser.add_argument('knowledgefile', help='Path to the knowledge file')
+    parser.add_argument('--no-kafka-topics', action='store_true', help='Disable creation of Kafka Topics')
     parsed_args = parser.parse_args(args)
     return parsed_args
 
@@ -75,7 +76,7 @@ def create_statementset(graph):
     return statementsets
 
 
-def main(knowledgefile, output_folder='output'):
+def main(knowledgefile, output_folder='output', no_kafka_topics=False):
     yaml = ruamel.yaml.YAML()
 
     utils.create_output_folder(output_folder)
@@ -130,15 +131,17 @@ def main(knowledgefile, output_folder='output'):
             fp.write("---\n")
             yaml.dump(utils.create_statementset('rdf-statements' + str(num), [table_name],
                                                 [], None, [statementset]), fp)
-        fp.write("---\n")
-        yaml.dump(utils.create_kafka_topic(utils.class_to_obj_name(
-                                           configs.rdf_topic),
-                                           configs.rdf_topic,
-                                           configs.kafka_topic_object_label,
-                                           config), fp)
+        if not no_kafka_topics:
+            fp.write("---\n")
+            yaml.dump(utils.create_kafka_topic(utils.class_to_obj_name(
+                                            configs.rdf_topic),
+                                            configs.rdf_topic,
+                                            configs.kafka_topic_object_label,
+                                            config), fp)
 
 
 if __name__ == '__main__':
     args = parse_args()
     knowledgefile = args.knowledgefile
-    main(knowledgefile)
+    no_kafka_topics = args.no_kafka_topics
+    main(knowledgefile, no_kafka_topics=no_kafka_topics)

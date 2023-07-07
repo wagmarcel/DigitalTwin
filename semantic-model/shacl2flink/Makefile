@@ -10,15 +10,18 @@ SQLITE3 := sqlite3
 HELM_DIR := ../../helm/charts/shacl
 NAMESPACE := iff
 
+ifdef NO_KAFKA_TOPICS
+	KAFKA_TOPICS=--no-kafka-topics
+endif
 
 sqlite_files = $(OUTPUTDIR)/core.sqlite $(OUTPUTDIR)/ngsild.sqlite $(OUTPUTDIR)/rdf.sqlite $(OUTPUTDIR)/ngsild-models.sqlite $(OUTPUTDIR)/shacl-validation.sqlite
 
 build: $(SHACL) $(KNOWLEDGE $(MODEL)
 	@echo Build tables
-	$(PYTHON) create_rdf_table.py $(KNOWLEDGE)
+	$(PYTHON) create_rdf_table.py $(KNOWLEDGE) $(KAFKA_TOPICS)
 	$(PYTHON) create_core_tables.py
 	${PYTHON} create_udfs.py
-	$(PYTHON) create_ngsild_tables.py $(SHACL)
+	$(PYTHON) create_ngsild_tables.py $(SHACL) $(KAFKA_TOPICS)
 	$(PYTHON) create_ngsild_models.py $(SHACL) $(KNOWLEDGE) $(MODEL)
 	$(PYTHON) create_sql_checks_from_shacl.py $(SHACL) $(KNOWLEDGE)
 

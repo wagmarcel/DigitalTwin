@@ -29,11 +29,12 @@ def parse_args(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='create_ngsild_tables.py \
                                                   <shacl.ttl>')
     parser.add_argument('shaclfile', help='Path to the SHACL file')
+    parser.add_argument('--no-kafka-topics', action='store_true', help='Disable creation of Kafka Topics')
     parsed_args = parser.parse_args(args)
     return parsed_args
 
 
-def main(shaclfile, output_folder='output'):
+def main(shaclfile, output_folder='output', no_kafka_topics = False):
     yaml = ruamel.yaml.YAML()
     utils.create_output_folder(output_folder)
     g = Graph()
@@ -88,15 +89,17 @@ def main(shaclfile, output_folder='output'):
             print('---', file=f)
             yaml.dump(utils.create_yaml_view(table_name, table), f)
             print(utils.create_sql_view(table_name, table), file=sqlitef)
-            print('---', file=f)
-            yaml.dump(utils.create_kafka_topic(f'{configs.kafka_topic_ngsi_prefix}.\
+            if not no_kafka_topics:
+                print('---', file=f)
+                yaml.dump(utils.create_kafka_topic(f'{configs.kafka_topic_ngsi_prefix}.\
 {utils.class_to_obj_name(table_name)}',
-                                               f'{configs.kafka_topic_ngsi_prefix}.\
+                                                   f'{configs.kafka_topic_ngsi_prefix}.\
 {table_name}', configs.kafka_topic_object_label,
-                                               config), f)
+                                                    config), f)
 
 
 if __name__ == '__main__':
     args = parse_args()
     shaclfile = args.shaclfile
-    main(shaclfile)
+    no_kafka_topics = args.no_kafka_topics
+    main(shaclfile, no_kafka_topics=no_kafka_topics)
