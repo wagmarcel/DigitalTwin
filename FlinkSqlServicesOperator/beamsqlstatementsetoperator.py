@@ -43,7 +43,7 @@ timer_interval_seconds = int(os.getenv("TIMER_INTERVAL", default="10"))
 timer_backoff_seconds = int(os.getenv("TIMER_BACKOFF_INTERVAL", default="30"))
 timer_backoff_temp_failure_seconds = int(
     os.getenv("TIMER_BACKOFF_TEMPORARY_FAILURE_INTERVAL", default="30"))
-monitor_retries = int(os.getenv("MONITOR_RETRIES", default="10080"))
+monitor_retries = int(os.getenv("MONITOR_RETRIES", default="10000000"))
 
 class States(Enum):
     """SQL Job states as defined by Flink"""
