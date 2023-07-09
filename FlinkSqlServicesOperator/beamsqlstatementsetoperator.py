@@ -84,6 +84,11 @@ UPDATE_STRATEGY_SAVEPOINT = "savepoint"
 UPDATE_STRATEGY_NONE = "none"
 
 
+@kopf.on.startup()
+def configure(settings: kopf.OperatorSettings, **_):
+    settings.execution.max_workers = 1
+
+
 @kopf.on.create("industry-fusion.com", "v1alpha3", "beamsqlstatementsets")
 # pylint: disable=unused-argument
 # Kopf decorated functions match their expectations
@@ -404,14 +409,16 @@ needs either sqlstatements or sqlstatementmaps.")
             create(body, spec, patch, logger, **kwargs)
     # If state is not INITIALIZED, DEPLOYMENT_FAILURE nor CANCELED,
     # the state is monitored
-    if state not in [States.CANCELED.name,
-       States.CANCELING.name, States.SAVEPOINTING.name, States.UPDATING.name]:
+    if state not in [States.CANCELING.name, States.SAVEPOINTING.name, States.UPDATING.name]:
         refresh_state(body, patch, logger)
         if patch.status[STATE] == States.NOT_FOUND.name:
             logger.info("Job seems to be lost. Will re-initialize")
             patch.status[STATE] = States.INITIALIZED.name
             patch.status[JOB_ID] = None
-
+        if patch.status[STATE] == States.CANCELED.name:
+            logger.info("Job is cancelled. Will re-initialize")
+            patch.status[STATE] = States.INITIALIZED.name
+            patch.status[JOB_ID] = None
 
 # pylint: disable=too-many-arguments unused-argument redefined-outer-name
 # kopf is ingesting too many parameters, this is inherite by subroutine
@@ -486,12 +493,15 @@ def refresh_state(body, patch, logger):
             f"Could not monitor task {job_id}: {exc}",
             timer_backoff_temp_failure_seconds) from exc
     if job_info is not None:
-        patch.status[STATE] = job_info.get("state")
+        state = job_info.get("state")
+        patch.status[STATE] = state
     else:
         # API etc works but no job found. Can happen for instance
         # after restart of job manager
-        # In this case, we need to signal that stage
+        # In this case, we need to redeploy the service
+        #
         patch.status[STATE] = States.UNKNOWN.name
+
 
 
 def deploy_statementset(statementset, logger):
