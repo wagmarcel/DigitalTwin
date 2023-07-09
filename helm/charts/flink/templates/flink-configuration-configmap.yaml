@@ -17,8 +17,8 @@ data:
     jobmanager.rpc.port: 6123
     taskmanager.rpc.port: 6122
     queryable-state.proxy.ports: 6125
-    jobmanager.memory.process.size: 1600m
-    taskmanager.memory.process.size: 1728m
+    jobmanager.memory.process.size: 800m
+    taskmanager.memory.process.size: 1400m
     parallelism.default: {{ .Values.flink.defaultParalellism }}
     s3.endpoint: {{ printf "%s://%s" .Values.s3.protocol .Values.s3.endpoint }}
     {{- if .Values.minio.enabled }}
@@ -30,14 +30,16 @@ data:
     {{ else }}
     s3.secret-key: {{ .Values.s3.userSecretKey }}
     {{ end }}
+    state.backend: rocksdb
+    state.backend.incremental: true
     state.checkpoints.dir: s3://{{ .Values.flink.bucket }}/{{ .Values.flink.checkpointDir }}
     state.savepoints.dir: s3://{{ .Values.flink.bucket }}/{{ .Values.flink.savepointDir }}
     kubernetes.cluster-id: {{ .Values.flink.clusterId }}
-    high-availability: org.apache.flink.kubernetes.highavailability.KubernetesHaServicesFactory
+    high-availability: kubernetes
     high-availability.storageDir: s3://{{ .Values.flink.bucket }}/{{ .Values.flink.haDir }}
     kubernetes.namespace: {{ .Release.Namespace }}
-    restart-strategy: fixed-delay
-    restart-strategy.fixed-delay.attempts: 10
+    restart-strategy: exponential-delay
+    restart-strategy.exponential-delay.max-backoff: 2 min 
     execution.checkpointing.interval: {{ .Values.flink.checkpointInterval }}
     process.working-dir: '/tmp'
   log4j-console.properties: |+
