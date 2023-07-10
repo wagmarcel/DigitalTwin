@@ -84,11 +84,6 @@ UPDATE_STRATEGY_SAVEPOINT = "savepoint"
 UPDATE_STRATEGY_NONE = "none"
 
 
-@kopf.on.startup()
-def configure(settings: kopf.OperatorSettings, **_):
-    settings.execution.max_workers = 1
-
-
 @kopf.on.create("industry-fusion.com", "v1alpha3", "beamsqlstatementsets")
 # pylint: disable=unused-argument
 # Kopf decorated functions match their expectations
@@ -327,7 +322,7 @@ def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index,
         # (3) Views
         statementset = {}
         sets = create_sets(spec, body, namespace, name, logger)
-        statementset['sqlsets'] = sets
+        statementset['sqlsettings'] = sets
 
         # get first all table ddls
         # get inputTable and outputTable
@@ -454,17 +449,18 @@ def create_sets(spec, body, namespace, name, logger):
     """
     sets = []
     sqlsettings = spec.get('sqlsettings')
+    pipeline_name = {'pipeline.name': f'{namespace}/{name}'}
     if not sqlsettings:
         message = "pipeline name not determined in"\
                   f" {namespace}/{name}, using default"
         logger.debug(message)
-        sets.append(f"SET pipeline.name = '{namespace}/{name}';")
+        sets.append(pipeline_name)
     elif all(x for x in sqlsettings if x.get('pipeline.name') is None):
-        sets.append(f"SET pipeline.name = '{namespace}/{name}';")
+        sets.append(pipeline_name)
         for setting in sqlsettings:
-            key = list(setting.keys())[0]
-            value = setting.get(key)
-            sets.append(f"SET '{key}' = '{value}';")
+            #key = list(setting.keys())[0]
+            #value = setting.get(key)
+            sets.append(setting)
     # add savepoint if location is set
     try:
         savepoint_location = body['status'].get(SAVEPOINT_LOCATION)

@@ -10,9 +10,6 @@ SQLITE3 := sqlite3
 HELM_DIR := ../../helm/charts/shacl
 NAMESPACE := iff
 
-ifdef NO_KAFKA_TOPICS
-	KAFKA_TOPICS=--no-kafka-topics
-endif
 
 sqlite_files = $(OUTPUTDIR)/core.sqlite $(OUTPUTDIR)/ngsild.sqlite $(OUTPUTDIR)/rdf.sqlite $(OUTPUTDIR)/ngsild-models.sqlite $(OUTPUTDIR)/shacl-validation.sqlite
 
@@ -88,7 +85,13 @@ test-kms:
 flink-deploy: clean
 	@echo deploy helm package
 	make helm
-	cd ../../helm && ./helmfile -f helmfile-shacl.yaml apply --args "--force"
+	kubectl -n $(NAMESPACE) scale deployment -l "operators.coreos.com/strimzi-kafka-operator.iff"="" --replicas=0 || echo "Can fail"
+	make build || kubectl -n $(NAMESPACE) scale deployment -l "operators.coreos.com/strimzi-kafka-operator.iff"="" --replicas=1
+	kubectl -n $(NAMESPACE) delete -f output/ngsild-kafka.yaml || kubectl -n $(NAMESPACE) scale deployment -l "operators.coreos.com/strimzi-kafka-operator.iff"="" --replicas=1
+	kubectl -n $(NAMESPACE) delete -f output/rdf-kafka.yaml || kubectl -n $(NAMESPACE) scale deployment -l "operators.coreos.com/strimzi-kafka-operator.iff"="" --replicas=1
+	kubectl -n $(NAMESPACE) scale deployment -l "operators.coreos.com/strimzi-kafka-operator.iff"="" --replicas=1 || kubectl -n $(NAMESPACE) scale deployment -l "operators.coreos.com/strimzi-kafka-operator.iff"="" --replicas=1
+	cd ../../helm && ./helmfile -f helmfile-shacl.yaml apply --args "--force" || kubectl -n $(NAMESPACE) scale deployment -l "operators.coreos.com/strimzi-kafka-operator.iff"="" --replicas=1
+	kubectl -n $(NAMESPACE) scale deployment -l "operators.coreos.com/strimzi-kafka-operator.iff"="" --replicas=1 
 	make test-flink-is-deployed
 	sleep 2
 	kubectl -n $(NAMESPACE) -l "app.kubernetes.io/instance"="kafka-connect" delete pod
