@@ -20,9 +20,8 @@ data:
     rest.flamegraph.enabled: true
     
     queryable-state.proxy.ports: 6125
-    jobmanager.memory.process.size: 1400m
-    taskmanager.memory.process.size: 2500 mb
-    taskmanager.memory.managed.size: 1000 mb
+    jobmanager.memory.process.size: 1000m
+    taskmanager.memory.process.size: 2500m
     
     s3.endpoint: {{ printf "%s://%s" .Values.s3.protocol .Values.s3.endpoint }}
     {{- if .Values.minio.enabled }}
@@ -36,12 +35,11 @@ data:
     {{ end }}
     state.backend: rocksdb
     state.backend.rocksdb.localdir: /tmp/rocksdb
-    state.backend.incremental: true
-    state.backend.rocksdb.writebuffer.size: 512mb
-    state.backend.rocksdb.writebuffer.count: 4
-    state.backend.rocksdb.writebuffer.number-to-merge: 2
+    state.backend.incremental: false
+    state.backend.rocksdb.writebuffer.size: 64 kb
+    state.backend.rocksdb.compaction.level.target-file-size-base: 64 kb
     state.backend.rocksdb.use-bloom-filter: true
-    #state.backend.rocksdb.predefined-options: SPINNING_DISK_OPTIMIZED_HIGH_MEM
+    state.backend.rocksdb.predefined-options: SPINNING_DISK_OPTIMIZED
     state.checkpoints.dir: s3://{{ .Values.flink.bucket }}/{{ .Values.flink.checkpointDir }}
     state.savepoints.dir: s3://{{ .Values.flink.bucket }}/{{ .Values.flink.savepointDir }}
     kubernetes.cluster-id: {{ .Values.flink.clusterId }}

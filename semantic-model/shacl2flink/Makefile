@@ -78,23 +78,33 @@ test-sqlite-update:
 	sleep 1
 	cat $(OUTPUTDIR)/shacl-validation.sqlite | $(SQLITE3) $(SQLITEDB)
 
+
 test-kms:
 	@echo Test different kms setups
 	cd tests/sql-tests && bash tests.sh
 
+
+disable-strimzi:
+	kubectl -n $(NAMESPACE) scale deployment -l "operators.coreos.com/strimzi-kafka-operator.iff"="" --replicas=0
+
+
+enable-strimzi:
+	kubectl -n $(NAMESPACE) scale deployment -l "operators.coreos.com/strimzi-kafka-operator.iff"="" --replicas=1
+
+
 flink-deploy: clean
 	@echo deploy helm package
 	make helm
-	kubectl -n $(NAMESPACE) scale deployment -l "operators.coreos.com/strimzi-kafka-operator.iff"="" --replicas=0 || echo "Can fail"
-	make build || kubectl -n $(NAMESPACE) scale deployment -l "operators.coreos.com/strimzi-kafka-operator.iff"="" --replicas=1
-	kubectl -n $(NAMESPACE) delete -f output/ngsild-kafka.yaml || kubectl -n $(NAMESPACE) scale deployment -l "operators.coreos.com/strimzi-kafka-operator.iff"="" --replicas=1
-	kubectl -n $(NAMESPACE) delete -f output/rdf-kafka.yaml || kubectl -n $(NAMESPACE) scale deployment -l "operators.coreos.com/strimzi-kafka-operator.iff"="" --replicas=1
-	kubectl -n $(NAMESPACE) scale deployment -l "operators.coreos.com/strimzi-kafka-operator.iff"="" --replicas=1 || kubectl -n $(NAMESPACE) scale deployment -l "operators.coreos.com/strimzi-kafka-operator.iff"="" --replicas=1
-	cd ../../helm && ./helmfile -f helmfile-shacl.yaml apply --args "--force" || kubectl -n $(NAMESPACE) scale deployment -l "operators.coreos.com/strimzi-kafka-operator.iff"="" --replicas=1
-	kubectl -n $(NAMESPACE) scale deployment -l "operators.coreos.com/strimzi-kafka-operator.iff"="" --replicas=1 
+	make disable-strimzi || echo "Can fail"
+	make build || make enable-strimzi
+	kubectl -n $(NAMESPACE) delete -f output/ngsild-kafka.yaml --ignore-not-found || make enable-strimzi
+	kubectl -n $(NAMESPACE) delete -f output/rdf-kafka.yaml --ignore-not-found || make enable-strimzi
+	cd ../../helm && ./helmfile -f helmfile-shacl.yaml apply --args "--force" || make enable-strimzi
+	make enable-strimzi 
 	make test-flink-is-deployed
 	sleep 2
 	kubectl -n $(NAMESPACE) -l "app.kubernetes.io/instance"="kafka-connect" delete pod
+
 
 flink-undeploy:
 	@echo undeploy helm package
@@ -108,11 +118,13 @@ test-flink-is-deployed:
 	cd tests/bats && bats test-shacl-flink-deployment
 	rm tests/bats/lib
 
+
 test-full-flink-deployment:
 	@echo test deployment of helm package
 	make helm
 	make flink-deploy
 	make flink-undeploy
+
 
 test-flink-is-undeployed:
 	@echo test undeployment of helm package
