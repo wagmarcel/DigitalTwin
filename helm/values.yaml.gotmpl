@@ -82,6 +82,7 @@ flink:
   attributeInsertWindow: '0.001'
   jobmanagerCacheSize: 2Gi
   taskmanagerCacheSize: 10Gi
+  ttl: "86400000 ms"
 
 minio:
   enabled: {{ .StateValues.minio.enabled }}
@@ -113,6 +114,10 @@ alerta:
 
 kafka:
   name: my-cluster
+  resources:
+{{ .StateValues.kafka.resources | toYaml | indent 4 }}
+  jvmOptions:
+{{ .StateValues.kafka.jvmOptions | toYaml | indent 4 }}
   bootstrapServer: my-cluster-kafka-bootstrap:9092
   storage:
     type: persistent-claim
@@ -133,10 +138,12 @@ kafkaBridge:
     replicaCount: 1
     listenTopic: "iff.ngsild.public.entity"
     listenTopicRetention: "86400000"
+    listenTopicCompression: none
     entityTopicPrefix: "iff.ngsild.entities"
     attributesTopic: "iff.ngsild.attributes"
-    entityTopicRetention: "604800000"
+    entityTopicRetention: "86400000"
     attributesTopicRetention: "86400000"
+    attributesTopicCompression: none
   alerta:
     replicaCount: 1
     listenTopic: "iff.alerts"
