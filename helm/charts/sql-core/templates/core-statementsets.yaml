@@ -23,7 +23,6 @@ spec:
                 select resource, event,
                     last_value(environment) as environment,
                     service,
-                    rand() as rnd,
                     last_value(A.customer) as customer,
                     last_value(`text`) as `text`,
                     LAG(A.severity) as last_severity,
