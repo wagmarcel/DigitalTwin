@@ -10,4 +10,4 @@ spec:
   replicas: 1
   config:
     retention.ms: {{.Values.kafkaBridge.debezium.listenTopicRetention}}
-     compression.type: {{.Values.kafkaBridge.debezium.listenTopicCompression}}
+    compression.type: {{.Values.kafkaBridge.debezium.listenTopicCompression}}

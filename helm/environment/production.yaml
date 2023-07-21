@@ -57,8 +57,15 @@ minio:
   enabled: true
   storageSize: 10G
 
-
 kafka:
+  storage:
+    type: persistent-claim
+    size: 20Gi
+  zookeeper:
+    replicas: 1
+    storage:
+      type: persistent-claim
+      size: 1Gi
   resources:
     requests:
       memory: 400Mi
@@ -69,14 +76,6 @@ kafka:
   jvmOptions:
     "-Xmx": "500m"
   name: my-cluster
-  storage:
-    type: persistent-claim
-    size: 5Gi
-  zookeeper:
-    replicas: 1
-    storage:
-      type: persistent-claim
-      size: 1Gi
 
 kafkaBridge:
   debezium:

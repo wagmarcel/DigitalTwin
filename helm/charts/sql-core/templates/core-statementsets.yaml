@@ -10,7 +10,8 @@ metadata:
             {{ include (print $.Template.BasePath "/core-kafka-topics.yaml") . | sha256sum }}
 spec:
     sqlsettings:
-        - table.exec.state.ttl: '{{.Values.flink.ttl}}'
+        - table.exec.state.ttl: '{{.Values.flink.coreTtl}}'
+        - state.backend: hashmap
         - execution.savepoint.ignore-unclaimed-state: 'true'
         - pipeline.object-reuse: 'true'
     sqlstatements:

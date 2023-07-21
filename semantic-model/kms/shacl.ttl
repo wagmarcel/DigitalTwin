@@ -813,7 +813,6 @@ iff:TimestampCartridgeFromRulesShape
                 PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 			CONSTRUCT {
 				$this iff:inUseFrom [ <https://uri.etsi.org/ngsi-ld/hasValue> ?ts ] .
-                $this iff:inUseUntil [ <https://uri.etsi.org/ngsi-ld/hasValue> ?ts ] .
 			}
 			WHERE {
 				
@@ -850,12 +849,10 @@ iff:TimestampCartridgeUntilRulesShape
 			}
 			WHERE {
 				
-                                #$this iff:wasteClass [ <https://uri.etsi.org/ngsi-ld/hasValue> ?wc ] .
                                 ?filter iff:hasCartridge [ <https://uri.etsi.org/ngsi-ld/hasObject> $this ] .
                                 ?cutter iff:hasFilter [ <https://uri.etsi.org/ngsi-ld/hasObject> ?filter ] .
                                 ?cutter iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?cstate ] .
                                 ?filter iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?fstate ] .
-                                #?this iff:inUseUntil [ <https://uri.etsi.org/ngsi-ld/hasValue> ?old ] .
                                 bind(xsd:dateTime(now()) as ?ts)
                                 FILTER(?cstate = iff:state_PROCESSING && ?fstate = iff:state_ON)
 			}

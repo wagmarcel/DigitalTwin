@@ -72,7 +72,7 @@ kafka:
       cpu: 200m
     limits:
       memory: 800Mi
-      cpu: 400m
+      cpu: 500m
   jvmOptions:
     "-Xmx": "400m"
   name: my-cluster
@@ -80,18 +80,17 @@ kafka:
 kafkaBridge:
   debezium:
     replicaCount: 1
-    listenTopicRetention: 28800000
-    entityTopicRetention: 28800000
-    attributesTopicRetention: 28800000
-
+    listenTopicRetention: 3600000
+    entityTopicRetention: 3600000
+    attributesTopicRetention: 3600000
   alerta:
     replicaCount: 1
     bulkTopicRetention: 300000
-    listenTopicRetention: 28800000
+    listenTopicRetention: 3600000
   ngsildUpdates:
     replicaCount: 1
     tokenRefreshInterval: 200
-    listenTopicRetention: 28800000
+    listenTopicRetention: 3600000
 
 velero:
   backupBucket: velero-backup
