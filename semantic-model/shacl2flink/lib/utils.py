@@ -293,7 +293,7 @@ def create_statementset(object_name, table_object_names,
             {"state.backend.rocksdb.writebuffer.size": "64 kb"},
             {"state.backend.rocksdb.use-bloom-filter": "true"},
             {"execution.checkpointing.interval": "{{ .Values.flink.checkpointInterval }}"},
-
+            {"table.exec.sink.upsert-materialize": "none"},
             {"state.backend": "rocksdb"},
             {"execution.savepoint.ignore-unclaimed-state": "true"},
             {"pipeline.object-reuse": "true"},

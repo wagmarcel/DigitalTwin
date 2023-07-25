@@ -650,6 +650,7 @@ iff:OeeTemplateShape
             PREFIX iff: <https://industry-fusion.com/types/v0.9/>
             PREFIX oee: <https://industry-fusion.com/oee/v0.9/>
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX ifa: <https://industry-fusion.com/aggregators/v0.9/>
             PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 			CONSTRUCT {
                 $this oee:availabilityTimeAgg [ <https://uri.etsi.org/ngsi-ld/hasValue> ?availabilityStateAgg ] .
@@ -660,7 +661,8 @@ iff:OeeTemplateShape
                     $this oee:hasReferenceMachine [ <https://uri.etsi.org/ngsi-ld/hasObject> ?machine ] .
                     ?machine oee:availabilityState [ <https://uri.etsi.org/ngsi-ld/hasValue> ?state ] .
                     ?machine oee:availabilityState [ <https://uri.etsi.org/ngsi-ld/observedAt> ?stateTs ] .
-                    bind(SUM(xsd:integer(?state))*5 as ?availabilityStateAgg) .
+                    bind(ifa:statetime(xsd:integer(?state), ?stateTs) as ?availabilityStateAgg) .
+                    #bind(SUM(xsd:integer(?state))*5 as ?availabilityStateAgg) .
                     FILTER(?stateTs > xsd:dateTime(?startTime) && ?stateTs < xsd:dateTime(?endTime))
 			}
             GROUP BY $this ?machine
