@@ -49,16 +49,20 @@ def main(shaclfile, output_folder='output'):
             if stripped_class not in tables:
                 table = []
                 tables[stripped_class] = table
+                table.append({sq("id"): "STRING"})
+                table.append({sq("type"): "STRING"})
+                table.append({sq("ts"): "TIMESTAMP(3) METADATA FROM 'timestamp'"})
+                table.append({"watermark": "FOR `ts` AS `ts`"})
             else:
                 table = tables[stripped_class]
-            table.append({sq("id"): "STRING"})
-            table.append({sq("type"): "STRING"})
+
 
             for _, _, target_property in g.triples((s, sh.property, None)):
                 target_path = g.value(target_property, sh.path)
-                table.append({sq(f'{target_path}'): "STRING"})
-            table.append({sq("ts"): "TIMESTAMP(3) METADATA FROM 'timestamp'"})
-            table.append({"watermark": "FOR `ts` AS `ts`"})
+                row = {sq(f'{target_path}'): "STRING"}
+                if row not in table:
+                    table.append({sq(f'{target_path}'): "STRING"})
+
 
     # Kafka topic object for RDF
     config = {}
