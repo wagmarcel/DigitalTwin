@@ -11,92 +11,394 @@ iff:plasmacutter_test rdfs:subClassOf iff:cutter_test ;
     a iff:class .
 ### End of Test Content
 
-iff:entity a iff:class ;
-    a rdfs:class .
-iff:machine a iff:class ; 
-    a rdfs:class .
-iff:filter rdfs:subClassOf iff:machine ;
-    a iff:class .
-iff:plasmacutter rdfs:subClassOf iff:cutter ;
-    a iff:class .
-iff:lasercutter rdfs:subClassOf iff:cutter;
-    a iff:class .
-iff:cutter rdfs:subClassOf iff:machine ;
-    a iff:class .
-iff:workpiece rdfs:subClassOf iff:entity ;
-    a iff:class .
-iff:filterCartridge rdfs:subClassOf iff:entity ;
-    a iff:class .
 
+####################
+# IFF base
+####################
+@prefix : <https://industry-fusion.com/types/v0.9/> .
+@prefix ift: <https://industry-fusion.com/types/v0.9/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-iff:scheduleEntity a iff:class .
-iff:oeeTemplate rdfs:subClassOf iff:scheduleEntity .
+ift:WC0
+  rdf:type ift:wasteclass ;
+.
+ift:WC1
+  rdf:type ift:wasteclass ;
+  ift:higherHazardLevel ift:WC0 ;
+.
+ift:WC2
+  rdf:type ift:wasteclass ;
+  ift:higherHazardLevel ift:WC1 ;
+.
+ift:WC3
+  rdf:type ift:wasteclass ;
+  ift:higherHazardLevel ift:WC2 ;
+.
+ift:cutter
+  rdf:type rdfs:Class ;
+  rdfs:subClassOf ift:machine ;
+.
+ift:entity
+  rdf:type rdfs:Class ;
+.
+ift:filter
+  rdf:type rdfs:Class ;
+  rdfs:subClassOf ift:machine ;
+.
+ift:filterCartridge
+  rdf:type rdfs:Class ;
+  rdfs:subClassOf ift:entity ;
+.
+ift:higherHazardLevel
+  rdf:type rdf:Property ;
+  rdf:type owl:TransitiveProperty ;
+  rdfs:domain ift:wasteclass ;
+  rdfs:range ift:wasteclass ;
+.
+ift:lasercutter
+  rdf:type rdfs:Class ;
+  rdfs:subClassOf ift:cutter ;
+.
+ift:machine
+  rdf:type rdfs:Class ;
+.
+ift:machinestate
+  rdf:type rdfs:Class ;
+.
+ift:plasmacutter
+  rdf:type rdfs:Class ;
+  rdfs:subClassOf ift:cutter ;
+.
+ift:severityClass
+  rdf:type rdfs:Class ;
+.
+ift:severityCode
+  rdf:type rdf:Property ;
+  rdfs:domain ift:severityClass ;
+  rdfs:range xsd:string ;
+.
+ift:severityCritical
+  rdf:type ift:severityClass ;
+  ift:severityCode "critical" ;
+.
+ift:severityWarning
+  rdf:type ift:severityClass ;
+  ift:severityCode "warning" ;
+.
+ift:stateValidFor
+  rdf:type rdf:Property ;
+  rdfs:domain ift:machinestate ;
+  rdfs:range ift:machine ;
+.
+ift:state_CLEANING
+  rdf:type ift:machinestate ;
+  rdfs:label "CLEANING" ;
+  ift:stateValidFor ift:filter ;
+.
+ift:state_CLEARING
+  rdf:type ift:machinestate ;
+  rdfs:label "CLEARING" ;
+  ift:stateValidFor ift:cutter ;
+.
+ift:state_ERROR
+  rdf:type ift:machinestate ;
+  rdfs:label "ERROR" ;
+  ift:stateValidFor ift:cutter ;
+  ift:stateValidFor ift:filter ;
+.
+ift:state_OFF
+  rdf:type ift:machinestate ;
+  rdfs:label "OFF" ;
+  ift:stateValidFor ift:cutter ;
+  ift:stateValidFor ift:filter ;
+.
+ift:state_ON
+  rdf:type ift:machinestate ;
+  rdfs:label "ON" ;
+  ift:stateValidFor ift:cutter ;
+  ift:stateValidFor ift:filter ;
+.
+ift:state_PREPARING
+  rdf:type ift:machinestate ;
+  rdfs:label "PREPARING" ;
+  ift:stateValidFor ift:cutter ;
+.
+ift:state_PROCESSING
+  rdf:type ift:machinestate ;
+  rdfs:label "PROCESSING" ;
+  ift:stateValidFor ift:cutter ;
+.
+ift:wasteclass
+  rdf:type rdfs:Class ;
+.
+ift:workpiece
+  rdf:type rdfs:Class ;
+  rdfs:subClassOf ift:entity ;
+.
 
-### Machine states
-iff:machineState a rdfs:class .
-iff:state_OFF a iff:machineState .
-iff:state_OFF iff:stateValidFor iff:filter, iff:cutter .
-iff:state_ON a iff:machineState  .
-iff:state_ON iff:stateValidFor iff:filter, iff:cutter .
-iff:state_PREPARING a iff:machineState  .
-iff:state_PREPARING iff:stateValidFor iff:cutter .
-iff:state_PROCESSING a iff:machineState  .
-iff:state_PROCESSING iff:stateValidFor iff:cutter .
-iff:state_CLEARING a iff:machineState .
-iff:state_CLEARING iff:stateValidFor iff:cutter .
-iff:state_CLEANING a iff:machineState .
-iff:state_CLEANING iff:stateValidFor iff:filter .
-iff:state_ERROR a iff:machineState .
-iff:state_ERROR iff:stateValidFor iff:filter, iff:cutter .
+########################
+# Material
+########################
 
-### OEE definitions: What state defines availability
-iff:state_PROCESSING oee:availability "1" .
-iff:state_PREPARING oee:availability "0" .
+@prefix : <https://material.org/v0.9/material/> .
+@prefix iff: <https://industry-fusion.com/types/v0.9/> .
+@prefix mat: <https://material.org/v0.9/material/> .
+@prefix om: <http://www.wurvoc.org/vocabularies/om-1.8/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-# labels for states
-iff:state_ON rdfs:label "ON" .
-iff:state_OFF rdfs:label "OFF" .
-iff:state_PREPARING rdfs:label "PREPARING" .
-iff:state_PROCESSING rdfs:label "PROCESSING" .
-iff:state_CLEARING rdfs:label "ON" .
-iff:state_ERROR rdfs:label "ERROR" .
-
-iff:WC0 a iff:WC .
-iff:WC1 a iff:WC .
-iff:WC2 a iff:WC .
-iff:WC3 a iff:WC .
-iff:higherHazardLevel a owl:TransitiveProperty .
-iff:WC3 iff:higherHazardLevel iff:WC2 .
-iff:WC2 iff:higherHazardLevel iff:WC1 .
-iff:WC1 iff:higherHazardLevel iff:WC0 .
-#iff:WC1 a rdf:Bag .
-iff:WC1 iff:containsMaterialNumber [
-    a rdf:Bag ;
-    rdf:_1 "1.4301" ;
-    rdf:_2 "1.4302" ;
-    rdf:_3 "1.4303" ;
-    rdf:_4 "1.4304" ;
-    rdf:_5 "1.4305" ;
-] .
-iff:WC2 iff:containsMaterialNumber [
-    a rdf:Bag ;
-    rdf:_1 "1.3301" ;
-    rdf:_2 "1.3302" ;
-    rdf:_3 "1.3303" ;
-    rdf:_4 "1.3304" ;
-    rdf:_5 "1.3305" ;
- ] .
-iff:WC3 iff:containsMaterialNumber [
-    a rdf:Bag ;
-    rdf:_1 "1.5301" ;
-    rdf:_2 "1.5302" ;
-    rdf:_3 "1.5303" ;
-    rdf:_4 "1.5304" ;
-    rdf:_5 "1.5305" ;
- ] .
-
-# Severity
-iff:severityCritical a iff:severityClass .
-iff:SeverityWarning a iff:severityClass .
-iff:severityCritical iff:severityCode "critical" .
-iff:severityWarning iff:severityCode "warning" .
+iff:Workpiece
+  rdf:type rdfs:Class ;
+  rdfs:subClassOf rdfs:Class ;
+.
+mat:
+  rdf:type owl:Ontology ;
+.
+mat:AlloyType
+  rdf:type rdfs:Class ;
+  rdfs:subClassOf rdfs:Class ;
+.
+mat:ChemicalElement
+  rdf:type rdfs:Class ;
+  rdfs:subClassOf rdfs:Class ;
+.
+mat:EN_number
+  rdf:type rdf:Property ;
+.
+mat:Material
+  rdf:type rdfs:Class ;
+  rdfs:subClassOf rdfs:Class ;
+.
+<https://material.org/v0.9/material/Material_EN1.3401>
+  rdf:type mat:Material ;
+  mat:EN_number "1.5301" ;
+  mat:contains [
+      mat:isChemicalElement mat:carbon ;
+      mat:maxPercent "1.5" ;
+      mat:minPercent "0.9" ;
+    ] ;
+  mat:contains [
+      mat:isChemicalElement mat:chromium ;
+      mat:maxPercent "1.0" ;
+    ] ;
+  mat:contains [
+      mat:isChemicalElement mat:mangan ;
+      mat:maxPercent "15.0" ;
+      mat:minPercent "11.5" ;
+    ] ;
+  mat:contains [
+      mat:isChemicalElement mat:nickel ;
+      mat:maxPercent "1.0" ;
+    ] ;
+  mat:contains [
+      mat:isChemicalElement mat:phosphorus ;
+      mat:maxPercent "0.12" ;
+    ] ;
+  mat:contains [
+      mat:isChemicalElement mat:silicon ;
+      mat:maxPercent "1.0" ;
+      mat:minPercent "0.3" ;
+    ] ;
+  mat:contains [
+      mat:isChemicalElement mat:sulfur ;
+      mat:maxPercent "0.05" ;
+    ] ;
+  mat:evaporationTemperature "1100" ;
+  mat:hasAlloyType mat:lowAlloy ;
+  mat:hasWasteclass iff:WC1 ;
+.
+<https://material.org/v0.9/material/Material_EN1.4922>
+  rdf:type mat:Material ;
+  mat:EN_number "1.4922" ;
+  mat:contains [
+      rdf:type rdfs:Blank ;
+      mat:maxPercent "0.3" ;
+      mat:minPercent "0.15" ;
+    ] ;
+  mat:contains [
+      mat:isChemicalElement mat:carbon ;
+      mat:maxPercent "0.23" ;
+      mat:minPercent "0.17" ;
+    ] ;
+  mat:contains [
+      mat:isChemicalElement mat:chromium ;
+      mat:maxPercent "12.5" ;
+      mat:minPercent "10.5" ;
+    ] ;
+  mat:contains [
+      mat:isChemicalElement mat:mangan ;
+      mat:maxPercent "0.9" ;
+      mat:minPercent "0.5" ;
+    ] ;
+  mat:contains [
+      mat:isChemicalElement mat:molybdenum ;
+      mat:maxPercent "0.7" ;
+      mat:minPercent "0.5" ;
+    ] ;
+  mat:contains [
+      mat:isChemicalElement mat:nickel ;
+      mat:maxPercent "0.5" ;
+      mat:minPercent "0.9" ;
+    ] ;
+  mat:contains [
+      mat:isChemicalElement mat:phosphorus ;
+      mat:maxPercent "0.03" ;
+    ] ;
+  mat:contains [
+      mat:isChemicalElement mat:silicon ;
+      mat:maxPercent "0.6" ;
+      mat:minPercent "0.2" ;
+    ] ;
+  mat:contains [
+      mat:isChemicalElement mat:sulfur ;
+      mat:maxPercent "0.025" ;
+    ] ;
+  mat:contains [
+      mat:maxPercent "1.1" ;
+      mat:minPercent "0.7" ;
+    ] ;
+  mat:evaporationTemperature "1080" ;
+  mat:hasAlloyType mat:lowAlloy ;
+  mat:hasWasteclass iff:WC2 ;
+.
+<https://material.org/v0.9/material/Material_EN1.5301>
+  rdf:type mat:Material ;
+  mat:EN_number "1.5301" ;
+  mat:contains [
+      mat:isChemicalElement mat:carbon ;
+      mat:maxPercent "0.08" ;
+    ] ;
+  mat:contains [
+      mat:isChemicalElement mat:chromium ;
+      mat:maxPercent "19.0" ;
+      mat:minPercent "17.0" ;
+    ] ;
+  mat:contains [
+      mat:isChemicalElement mat:mangan ;
+      mat:maxPercent "2.0" ;
+    ] ;
+  mat:contains [
+      mat:isChemicalElement mat:nickel ;
+      mat:maxPercent "12.0" ;
+      mat:minPercent "12.0" ;
+    ] ;
+  mat:contains [
+      mat:isChemicalElement mat:phosphorus ;
+      mat:maxPercent "0.045" ;
+    ] ;
+  mat:contains [
+      mat:isChemicalElement mat:silicon ;
+      mat:maxPercent "1.0" ;
+    ] ;
+  mat:contains [
+      mat:isChemicalElement mat:sulfur ;
+      mat:maxPercent "0.030" ;
+    ] ;
+  mat:contains [
+      mat:isChemicalElement mat:titan ;
+      mat:maxPercent "0.7" ;
+      mat:minPercent "17.0" ;
+    ] ;
+  mat:evaporationTemperature "1200" ;
+  mat:hasAlloyType mat:highAlloy ;
+  mat:hasWasteclass iff:WC3 ;
+.
+mat:Test
+  rdf:type rdfs:Class ;
+  rdfs:subClassOf rdfs:Class ;
+.
+mat:carbon
+  rdf:type mat:ChemicalElement ;
+  mat:hasChemicalSymbol "C" ;
+.
+mat:chromium
+  rdf:type mat:ChemicalElement ;
+  mat:hasChemicalSymbol "Cr" ;
+.
+mat:contains
+  rdf:type rdf:Property ;
+  rdfs:domain mat:Material ;
+  rdfs:range rdfs:Blank ;
+.
+mat:evaporationTemperature
+  rdf:type rdf:Property ;
+.
+mat:hasAlloyType
+  rdf:type rdf:Property ;
+  rdfs:domain mat:Material ;
+  rdfs:range mat:AlloyType ;
+.
+mat:hasChemicalSymbol
+  rdfs:domain mat:ChemicalElement ;
+  rdfs:range rdf:Literal ;
+.
+mat:hasWasteclass
+  rdf:type rdf:Property ;
+  rdfs:domain mat:Material ;
+  rdfs:range iff:wasteclass ;
+.
+mat:highAlloy
+  rdf:type mat:AlloyType ;
+.
+mat:isChemicalElement
+  rdf:type rdf:Property ;
+  rdfs:range mat:ChemicalElement ;
+.
+mat:lowAlloy
+  rdf:type mat:AlloyType ;
+.
+mat:manganese
+  rdf:type mat:ChemicalElement ;
+  mat:hasChemicalSymbol "Mn" ;
+.
+mat:maxPercent
+  rdf:type rdf:Property ;
+  rdfs:range xsd:string ;
+.
+mat:microAlloy
+  rdf:type mat:AlloyType ;
+.
+mat:minPercent
+  rdf:type rdf:Property ;
+  rdfs:range xsd:string ;
+.
+mat:molybdenum
+  rdf:type mat:ChemicalElement ;
+  mat:hasChemicalSymbol "Mo" ;
+.
+mat:nickel
+  rdf:type mat:ChemicalElement ;
+  mat:hasChemicalSymbol "Ni" ;
+.
+mat:noAlloy
+  rdf:type mat:AlloyType ;
+.
+mat:phosphorus
+  rdf:type mat:ChemicalElement ;
+  mat:hasChemicalSymbol "P" ;
+.
+mat:silicon
+  rdf:type mat:ChemicalElement ;
+  mat:hasChemicalSymbol "Si" ;
+.
+mat:sulfur
+  rdf:type mat:ChemicalElement ;
+  mat:hasChemicalSymbol "S" ;
+.
+mat:titan
+  rdf:type mat:ChemicalElement ;
+  mat:hasChemicalSymbol "Ti" ;
+.
+mat:tungsten
+  rdf:type mat:ChemicalElement ;
+  mat:hasChemicalSymbol "W" ;
+.
+mat:vanadium
+  rdf:type mat:ChemicalElement ;
+  mat:hasChemicalSymbol "V" ;
+.

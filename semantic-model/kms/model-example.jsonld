@@ -85,8 +85,7 @@
     "https://industry-fusion.com/types/v0.9/material": {
       "type": "Property",
       "value": {
-        "@type": "https://industry-fusion.com/types/v0.9/steelGrade",
-        "@value": "1.4301"
+        "@id": "https://material.org/v0.9/material/Material_EN1.3401"
       }
     },
     "https://schema.org/depth": {
@@ -117,8 +116,7 @@
     "https://industry-fusion.com/types/v0.9/material": {
       "type": "Property",
       "value": {
-        "@type": "https://industry-fusion.com/types/v0.9/steelGrade",
-        "@value": "1.4301"
+        "@id": "https://material.org/v0.9/material/Material_EN1.3401"
       }
     },
     "https://industry-fusion.com/types/v0.9/qualityCheck": [

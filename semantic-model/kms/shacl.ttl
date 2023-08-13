@@ -1,13 +1,13 @@
 @prefix dash: <http://datashapes.org/dash#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix schema: <http://schema.org/> .
+@prefix schema: <https://schema.org/> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix iff: <https://industry-fusion.com/types/v0.9/> .
 @prefix oee: <https://industry-fusion.com/oee/v0.9/> .
 PREFIX ex: <http://example.com/ns#>
-
+@prefix mat: <https://material.org/v0.9/material/> .
 
 
 ###################################
@@ -147,13 +147,10 @@ iff:WorkpieceShape
         sh:maxCount 1 ;
         sh:property [
             sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
-            sh:nodeKind sh:Literal;
-            sh:minLength 6 ;
-            sh:maxLength 7 ;
-            sh:pattern "^1\\.\\d{4,5}" ;
+            sh:nodeKind sh:IRI ;
+            sh:class mat:Material ;
             sh:minCount 1 ;
             sh:maxCount 1 ;
-            sh:datatype <https://industry-fusion.com/types/v0.9/steelGrade>
         ] ;
         sh:property [
             sh:path rdf:type ;
@@ -479,6 +476,7 @@ iff:ChangeWasteClassRulesShape
 		a sh:SPARQLRule ;
 		sh:construct """
             PREFIX iff: <https://industry-fusion.com/types/v0.9/>
+            PREFIX mat: <https://material.org/v0.9/material/>
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 			CONSTRUCT {
@@ -490,9 +488,20 @@ iff:ChangeWasteClassRulesShape
                 ?cutter iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?cutter_state ] .
                 ?filter iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?filter_state ] .
                 ?cutter iff:hasInWorkpiece [ <https://uri.etsi.org/ngsi-ld/hasObject> ?workpiece ] .
-                ?workpiece iff:material [ <https://uri.etsi.org/ngsi-ld/hasValue> ?materialnr ] .
+                ?workpiece iff:material [ <https://uri.etsi.org/ngsi-ld/hasValue> ?material ] .
+                #?material mat:contains [ mat:isChemicalElement mat:chromium ; mat:maxPercent ?chromium_max ] .
+                #?material mat:contains [ mat:isChemicalElement mat:nickel ; mat:maxPercent ?nickel_max ] .
                 $this iff:wasteClass [ <https://uri.etsi.org/ngsi-ld/hasValue> ?cur_wasteclass ] .
-                ?wc iff:containsMaterialNumber [ rdfs:member ?materialnr ] .
+                ?material mat:hasWasteclass ?wc .
+                #bind(IF( xsd:float(?chromium_max) > 1.0 && xsd:float(?nickel_max) > 1.0, iff:WC3,
+                #    IF( xsd:float(?chromium_max) > 1.0, iff:WC2,
+                #        IF( xsd:float(?nickel_max) > 1.0, iff:WC3,
+                #            IF(xsd_float(?chromium_max) > 1.0, iff:WC2,
+                #                iff:WC1
+                #            )
+                #        )
+                #   )
+                #) as ?wc) .
                 FILTER(?filter_state = iff:state_ON && ?cutter_state = iff:state_PROCESSING && ?cur_wasteclass != ?wc)
                 FILTER NOT EXISTS {
                         ?cur_wasteclass iff:higherHazardLevel ?wc .
