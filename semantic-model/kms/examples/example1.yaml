@@ -1,6 +1,7 @@
 question: |
   Create the rules for an object describing a plasmacutter. The object is an NGSI-LD object, i.e. it has a type and an id. And it has one property, 
-  called iff:state. iff stands for an rdfs prefix. The plasmacutter object must have exactly one iff:state property. the value must be a string literal.
+  called iff:state. iff stands for an rdfs prefix. The plasmacutter object must have exactly one iff:state property. the value must be a string literal 
+  with minimal length of 2 and maximal length of 6.
   Create the shacl.tll file for this object and three ngsi-ld example objects. object1.jsonld is compliant, object2.jsonld has a wrong Literal and 
   object3.jsonld has wrong cardinality of iff:state field.
 object1.jsonld: |
@@ -23,7 +24,7 @@ object2.jsonld: |
       "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
       "https://industry-fusion.com/types/v0.9/state": {
         "type": "Property",
-        "value": true
+        "value": "ONNNNNNNN"
       }
     }
   ]
@@ -32,19 +33,19 @@ object3.jsonld: |
     {
       "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
       "id": "urn:plasmacutter:1",
-      "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
-      "https://industry-fusion.com/types/v0.9/state": {
-        "type": "Property",
-        "value": "ON"
-      }
+      "type": "https://industry-fusion.com/types/v0.9/plasmacutter"
     }
   ]
 shacl.ttl: |
-  <https://industry-fusion.com/types/v0.9/CutterShape>
+  PREFIX sh: <http://www.w3.org/ns/shacl#>
+  PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+  PREFIX iff: <https://industry-fusion.com/types/v0.9/>
+  iff:CutterShape
       a sh:NodeShape ;
-      sh:targetClass <https://industry-fusion.com/types/v0.9/plasmacutter> ;
+      sh:targetClass iff:plasmacutter ;
       sh:property [
-          sh:path <https://industry-fusion.com/types/v0.9/state> ;
+          sh:path iff:state ;
           sh:order 1 ;
           sh:nodeKind sh:BlankNode;
           sh:minCount 1 ;
@@ -52,6 +53,9 @@ shacl.ttl: |
           sh:property [
               sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
               sh:nodeKind sh:Literal;
+              sh:minLength 2 ;
+              sh:maxLength 6 ;
+
               sh:minCount 1 ;
               sh:maxCount 1 ;
           ] ;
