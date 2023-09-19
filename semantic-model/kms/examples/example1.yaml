@@ -1,0 +1,64 @@
+question: |
+  Create the rules for an object describing a plasmacutter. The object is an NGSI-LD object, i.e. it has a type and an id. And it has one property, 
+  called iff:state. iff stands for an rdfs prefix. The plasmacutter object must have exactly one iff:state property. the value must be a string literal.
+  Create the shacl.tll file for this object and three ngsi-ld example objects. object1.jsonld is compliant, object2.jsonld has a wrong Literal and 
+  object3.jsonld has wrong cardinality of iff:state field.
+object1.jsonld: |
+  [
+    {
+      "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+      "id": "urn:plasmacutter:1",
+      "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
+      "https://industry-fusion.com/types/v0.9/state": {
+        "type": "Property",
+        "value": "ON"
+      }
+    }
+  ]
+object2.jsonld: |
+  [
+    {
+      "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+      "id": "urn:plasmacutter:1",
+      "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
+      "https://industry-fusion.com/types/v0.9/state": {
+        "type": "Property",
+        "value": true
+      }
+    }
+  ]
+object3.jsonld: |
+  [
+    {
+      "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+      "id": "urn:plasmacutter:1",
+      "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
+      "https://industry-fusion.com/types/v0.9/state": {
+        "type": "Property",
+        "value": "ON"
+      }
+    }
+  ]
+shacl.ttl: |
+  <https://industry-fusion.com/types/v0.9/CutterShape>
+      a sh:NodeShape ;
+      sh:targetClass <https://industry-fusion.com/types/v0.9/plasmacutter> ;
+      sh:property [
+          sh:path <https://industry-fusion.com/types/v0.9/state> ;
+          sh:order 1 ;
+          sh:nodeKind sh:BlankNode;
+          sh:minCount 1 ;
+          sh:maxCount 1 ;
+          sh:property [
+              sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+              sh:nodeKind sh:Literal;
+              sh:minCount 1 ;
+              sh:maxCount 1 ;
+          ] ;
+          sh:property [
+              sh:path rdf:type ;
+              sh:hasValue <https://uri.etsi.org/ngsi-ld/Property> ;
+              sh:minCount 1 ;
+          ] ;
+      ] ;
+  .
