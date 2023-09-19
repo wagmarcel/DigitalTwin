@@ -4,7 +4,7 @@ question: |
   with minimal length of 2 and maximal length of 6.
   Create the shacl.tll file for this object and three ngsi-ld example objects. object1.jsonld is compliant, object2.jsonld has a wrong Literal and 
   object3.jsonld has wrong cardinality of iff:state field.
-object1.jsonld: |
+model1.jsonld: |
   [
     {
       "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
@@ -16,7 +16,7 @@ object1.jsonld: |
       }
     }
   ]
-object2.jsonld: |
+model2.jsonld: |
   [
     {
       "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
@@ -28,7 +28,7 @@ object2.jsonld: |
       }
     }
   ]
-object3.jsonld: |
+model3.jsonld: |
   [
     {
       "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",

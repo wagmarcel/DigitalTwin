@@ -37,7 +37,7 @@ for file in example*.yaml; do
     eval $(echo "yq ${QUOTE}.\"${SHACL}\"${QUOTE}" ${file}) > ${OUTPUTDIR}/${SHACL}
     fields=$(yq eval 'keys | .[] ' example1.yaml)
     for field in $fields; do
-        if [[ "$field" =~ object* ]]; then
+        if [[ "$field" =~ model* ]]; then
             echo Processing $field
             eval $(echo "yq ${QUOTE}.\"${field}\"${QUOTE}" example1.yaml) > ${OUTPUTDIR}/${field}
             evaluate "${OUTPUTDIR}/$field"
