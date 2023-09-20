@@ -1,0 +1,102 @@
+question: |
+  Create the rules for an object describing a plasmacutter. The object is an NGSI-LD object, i.e. it has a type and an id. And it has one relationship 
+  to to a workpiece of type iff:workpiece, called iff:hasWorkpiece. iff stands for an rdfs prefix. The plasmacutter object can have at most one iff:hasWorkpiece 
+  relationship.
+  Create the shacl.tll file for this object and three ngsi-ld example models. model1.jsonld is compliant and linkes to an existing object of type iff:workpiece,
+  model2.jsonld has a non existing relationship and model3.jsonld has wrong cardinality of iff:hasWorkpiece relationship.
+  Create also the referenced workpiece shape wich describes a filter with unrelated properties.
+model1.jsonld: |
+  [
+    {
+      "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+      "id": "urn:plasmacutter:1",
+      "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
+      "https://industry-fusion.com/types/v0.9/hasWorkpiece": {
+        "type": "Relationship",
+        "object": "urn:workpiece:1"
+      }
+    },
+    {
+      "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+      "id": "urn:workpiece:1",
+      "type": "https://industry-fusion.com/types/v0.9/workpiece"
+    }
+  ]
+model2.jsonld: |
+  [
+    {
+      "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+      "id": "urn:plasmacutter:1",
+      "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
+      "https://industry-fusion.com/types/v0.9/hasWorkpiece": {
+        "type": "Relationship",
+        "object": "urn:wp:xxx"
+      }
+    },
+    {
+      "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+      "id": "urn:workpiece:1",
+      "type": "https://industry-fusion.com/types/v0.9/workpiece"
+    }
+  ]
+model3.jsonld: |
+  [
+    {
+      "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+      "id": "urn:plasmacutter:1",
+      "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
+      "https://industry-fusion.com/types/v0.9/hasWorkpiece": [
+        {
+        "type": "Relationship",
+        "object": "urn:workpiece:1",
+        "datasetId": 0
+        },
+        {
+        "type": "Relationship",
+        "object": "urn:workpiece:1",
+        "datasetId": 1
+        }
+      ]
+    },
+    {
+      "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+      "id": "urn:workpiece:1",
+      "type": "https://industry-fusion.com/types/v0.9/workpiece"
+    }
+  ]
+shacl.ttl: |
+  PREFIX sh: <http://www.w3.org/ns/shacl#>
+  PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+  PREFIX iff: <https://industry-fusion.com/types/v0.9/>
+  iff:CutterShape
+      a sh:NodeShape ;
+      sh:targetClass iff:plasmacutter ;
+      sh:property [
+          sh:path iff:hasWorkpiece ;
+          sh:order 1 ;
+          sh:nodeKind sh:BlankNode;
+          sh:minCount 0 ;
+          sh:maxCount 1 ;
+          sh:property [
+              sh:path <https://uri.etsi.org/ngsi-ld/hasObject> ;
+              sh:nodeKind sh:IRI ;
+              sh:class iff:workpiece;
+              sh:minCount 1 ;
+              sh:maxCount 1 ;
+          ] ;
+      ] ;
+  .
+  iff:FilterShape
+      a sh:NodeShape ;
+      sh:targetClass iff:workpiece ;
+      sh:property [
+          sh:path iff:unrelatedProperty ;
+          sh:order 1 ;
+          sh:nodeKind sh:BlankNode;
+          sh:property [
+              sh:path <https://uri.etsi.org/ngsi-ld/hasObject> ;
+              sh:nodeKind sh:Literal ;
+          ] ;
+      ] ;
+  .

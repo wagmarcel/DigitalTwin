@@ -21,15 +21,21 @@ evaluate() {
 }
 
 get_results() {
-    echo Test with sqlite
     cat ${sqlite_files} | ${SQLITE3} ${SQLITEDB}
-    echo "Alerts"
-    echo ------------------------------------------------
     echo 'select * from alerts_bulk;'| sqlite3 ${SQLITEDB}
 
 }
 
-for file in example*.yaml; do
+files="$@"
+if [ -z "$files" ]; then
+    files=$(ls example*.yaml)
+fi
+for file in $files; do
+    echo ----------------------------------
+    echo ----------------------------------
+    echo Testing file $file
+    echo ----------------------------------
+    echo ----------------------------------
     rm -rf ${OUTPUTDIR}
     mkdir -p ${OUTPUTDIR}
 
@@ -38,10 +44,21 @@ for file in example*.yaml; do
     fields=$(yq eval 'keys | .[] ' example1.yaml)
     for field in $fields; do
         if [[ "$field" =~ model* ]]; then
+            echo -----------------------
             echo Processing $field
-            eval $(echo "yq ${QUOTE}.\"${field}\"${QUOTE}" example1.yaml) > ${OUTPUTDIR}/${field}
+            echo -----------------------
+            eval $(echo "yq ${QUOTE}.\"${field}\"${QUOTE}" ${file}) > ${OUTPUTDIR}/${field}
             evaluate "${OUTPUTDIR}/$field"
             get_results
+            if [ ! -z "$DEBUG" ]; then
+                echo "Do you wish to continue?"
+                    select yn in "Yes" "No"; do
+                        case $yn in
+                            Yes ) break;;
+                            No ) exit;;
+                        esac
+                    done
+            fi
         fi
     done
 done

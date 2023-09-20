@@ -1,0 +1,85 @@
+question: |
+  Create the rules for an object describing a plasmacutter. The object is an NGSI-LD object, i.e. it has a type and an id. And it has one relationship 
+  to to another object of type iff:filter, called iff:hasFilter. iff stands for an rdfs prefix. The plasmacutter object must have exactly one iff:hasFilter 
+  relationship. 
+  Create the shacl.tll file for this object and three ngsi-ld example models. model1.jsonld is compliant and linkes to an existing object of type iff:filter,
+  model2.jsonld has a non existing relationship and model3.jsonld has wrong cardinality of iff:hasFilter field.
+  Create also the referenced filter shape wich describes a filter with unrelated properties.
+model1.jsonld: |
+  [
+    {
+      "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+      "id": "urn:plasmacutter:1",
+      "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
+      "https://industry-fusion.com/types/v0.9/hasFilter": {
+        "type": "Relationship",
+        "object": "urn:filter:1"
+      }
+    },
+    {
+      "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+      "id": "urn:filter:1",
+      "type": "https://industry-fusion.com/types/v0.9/filter"
+    }
+  ]
+model2.jsonld: |
+  [
+    {
+      "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+      "id": "urn:plasmacutter:1",
+      "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
+      "https://industry-fusion.com/types/v0.9/hasFilter": {
+        "type": "Relationship",
+        "object": "urn:filter:2000"
+      }
+    },
+    {
+      "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+      "id": "urn:filter:1",
+      "type": "https://industry-fusion.com/types/v0.9/filter"
+    }
+  ]
+model3.jsonld: |
+  [
+    {
+      "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+      "id": "urn:plasmacutter:1",
+      "type": "https://industry-fusion.com/types/v0.9/plasmacutter"
+    }
+  ]
+shacl.ttl: |
+  PREFIX sh: <http://www.w3.org/ns/shacl#>
+  PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+  PREFIX iff: <https://industry-fusion.com/types/v0.9/>
+  iff:CutterShape
+      a sh:NodeShape ;
+      sh:targetClass iff:plasmacutter ;
+      sh:property [
+          sh:path iff:hasFilter ;
+          sh:order 1 ;
+          sh:nodeKind sh:BlankNode;
+          sh:minCount 1 ;
+          sh:maxCount 1 ;
+          sh:property [
+              sh:path <https://uri.etsi.org/ngsi-ld/hasObject> ;
+              sh:nodeKind sh:IRI ;
+              sh:class iff:filter;
+              sh:minCount 1 ;
+              sh:maxCount 1 ;
+          ] ;
+      ] ;
+  .
+  iff:FilterShape
+      a sh:NodeShape ;
+      sh:targetClass iff:filter ;
+      sh:property [
+          sh:path iff:unrelatedProperty ;
+          sh:order 1 ;
+          sh:nodeKind sh:BlankNode;
+          sh:property [
+              sh:path <https://uri.etsi.org/ngsi-ld/hasObject> ;
+              sh:nodeKind sh:Literal ;
+          ] ;
+      ] ;
+  .
