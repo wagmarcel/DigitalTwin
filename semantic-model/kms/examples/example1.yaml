@@ -2,8 +2,8 @@ question: |
   Create the rules for an object describing a plasmacutter. The object is an NGSI-LD object, i.e. it has a type and an id. And it has one property, 
   called iff:state. iff stands for an rdfs prefix. The plasmacutter object must have exactly one iff:state property. the value must be a string literal 
   with minimal length of 2 and maximal length of 6.
-  Create the shacl.tll file for this object and three ngsi-ld example objects. object1.jsonld is compliant, object2.jsonld has a wrong Literal and 
-  object3.jsonld has wrong cardinality of iff:state field.
+  Create the shacl.tll file for this object and three ngsi-ld example models. model1.jsonld is compliant, model2.jsonld has a wrong Literal and 
+  model3.jsonld has wrong cardinality of iff:state field.
 model1.jsonld: |
   [
     {
