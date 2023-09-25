@@ -1,0 +1,190 @@
+question: |
+  Create the rules for an object describing a metal workpiece. The object is an NGSI-LD object, i.e. it has a type and an id. It has properties which describe height,
+  and length in Millimeter. It has another property, weight, which contains the weight in Gram. Finally, it contains a property describing the materialnr which is 
+  defined according to EN 10027-2. The workpiece must have exaclty one of each of the properties. The maximal width and length are 2 Meters. The maximal height is
+  5 Centimeters. The maximal weight is 100 Kilogram. The correctnes of the material number must be checked. Reuse existing ontologies where possible, 
+  e.g. height, width, length, weight can be taken from http://schema.org/.
+  Create the shacl.tll file for this object and three ngsi-ld example objects. model1.jsonld is compliant, in model2.jsonld height has a too high value, 
+  and model3.jsonld provides a wrong material number.
+model1.jsonld: |
+  [
+    {
+        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+        "id": "urn:workpiece:1",
+        "type": "https://industry-fusion.com/types/v0.9/workpiece",
+        "https://industry-fusion.com/types/v0.9/materialNumber": {
+          "type": "Property",
+          "value": "1.4301"
+        },
+        "http://schema.org/height": {
+          "type": "Property",
+          "unitCode": "MMT",
+          "value": 40
+        },
+        "http://schema.org/width": {
+          "type": "Property",
+          "value": "1000",
+          "unitCode": "MMT"
+        },
+        "http://schema.org/weight": {
+          "type": "Property",
+          "value": "10000",
+          "unitCode": "GRM"
+        },
+        "http://schema.org/length": {
+          "type": "Property",
+          "value": "1000",
+          "unitCode": "MMT"
+        }
+      }
+  ]
+model2.jsonld: |
+  [
+    {
+        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+        "id": "urn:workpiece:1",
+        "type": "https://industry-fusion.com/types/v0.9/workpiece",
+        "https://industry-fusion.com/types/v0.9/materialNumber": {
+          "type": "Property",
+          "value": "1.4301"
+        },
+        "http://schema.org/height": {
+          "type": "Property",
+          "unitCode": "MMT",
+          "value": 60
+        },
+        "http://schema.org/width": {
+          "type": "Property",
+          "value": "1000",
+          "unitCode": "MMT"
+        },
+        "http://schema.org/weight": {
+          "type": "Property",
+          "value": "10000",
+          "unitCode": "GRM"
+        },
+        "http://schema.org/length": {
+          "type": "Property",
+          "value": "1000",
+          "unitCode": "MMT"
+        }
+      }
+  ]
+model3.jsonld: |
+  [
+    {
+        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+        "id": "urn:workpiece:1",
+        "type": "https://industry-fusion.com/types/v0.9/workpiece",
+        "https://industry-fusion.com/types/v0.9/materialNumber": {
+          "type": "Property",
+          "value": "1.x4301"
+        },
+        "http://schema.org/height": {
+          "type": "Property",
+          "unitCode": "MMT",
+          "value": 40
+        },
+        "http://schema.org/width": {
+          "type": "Property",
+          "value": "1000",
+          "unitCode": "MMT"
+        },
+        "http://schema.org/weight": {
+          "type": "Property",
+          "value": "10000",
+          "unitCode": "GRM"
+        },
+        "http://schema.org/length": {
+          "type": "Property",
+          "value": "1000",
+          "unitCode": "MMT"
+        }
+      }
+  ]
+
+shacl.ttl: |
+  PREFIX sh: <http://www.w3.org/ns/shacl#>
+  PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+  PREFIX iff: <https://industry-fusion.com/types/v0.9/>
+  iff:WorkpieceShape
+    a sh:NodeShape ;
+    sh:targetClass iff:workpiece ;
+    sh:property [
+        sh:path iff:materialNumber ;
+        sh:order 10 ;
+        sh:nodeKind sh:BlankNode;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:property [
+            sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+            sh:nodeKind sh:Literal;
+            sh:minLength 6 ;
+            sh:maxLength 7 ;
+            sh:pattern "^1\\.\\d{4,5}" ;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+        ] ;
+    ] ;
+    sh:property [
+        sh:path <http://schema.org/height> ;
+        sh:order 20 ;
+        sh:nodeKind sh:BlankNode;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:property [
+            sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+            sh:nodeKind sh:Literal ;
+            sh:maxInclusive 50.0 ;
+            sh:minExclusive 0.0 ;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+        ] ;
+    ] ;
+    sh:property [
+        sh:path <http://schema.org/width> ;
+        sh:order 30 ;
+        sh:nodeKind sh:BlankNode;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:property [
+            sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+            sh:nodeKind sh:Literal ;
+            sh:maxInclusive 2000.0 ;
+            sh:minExclusive 0.0 ;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+        ] ;
+      ] ;
+    sh:property [
+        sh:path <http://schema.org/length> ;
+        sh:order 40 ;
+        sh:nodeKind sh:BlankNode;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:property [
+            sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+            sh:nodeKind sh:Literal ;
+            sh:maxInclusive 2000.0 ;
+            sh:minExclusive 0.0 ;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+        ] ;
+    ] ;
+    sh:property [
+        sh:path <http://schema.org/weight> ;
+        sh:order 50 ;
+        sh:nodeKind sh:BlankNode;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:property [
+            sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+            sh:nodeKind sh:Literal ;
+            sh:maxInclusive 100000.0 ;
+            sh:minExclusive 0.0 ;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+        ] ;
+    ] ;
+    .
