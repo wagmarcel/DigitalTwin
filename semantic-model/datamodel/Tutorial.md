@@ -239,7 +239,7 @@ In the following execise the JSON-LD object is expanded:
 ```
 node ./jsonldConverter.js -x ../examples/simple_plasmacutter_data.json
 ```
-```
+```json
 # Result:
 [
   {
@@ -259,7 +259,7 @@ The inverse operation of *expansion* is a *compaction*. One problem of the *comp
 ```
 node ./jsonldConverter.js -n ../examples/simple_plasmacutter_data_expanded.json -c https://industryfusion.github.io/contexts/v0.1/context.jsonld
 ```
-```
+```json
 # Result
 [
   {
@@ -270,13 +270,193 @@ node ./jsonldConverter.js -n ../examples/simple_plasmacutter_data_expanded.json 
 ]
 ```
 
-### NGSI-LD
+### NGSI-LD (Next Generation Services Interface for Linked Data)
 
+Building upon the foundation laid by JSON-LD , NGSI-LD (Next Generation Services Interface for Linked Data) further extends the capabilities of linked data, offering a standardized framework for representing and exchanging information in the context of smart domain applications. Developed by the European Telecommunications Standards Institute (ETSI), NGSI-LD leverages the principles of RDF (Resource Description Framework) and JSON-LD to enhance the interoperability of data in a sharable format.
+Key Aspects of NGSI-LD:
+
+- **Semantic Interoperability:** NGSI-LD introduces a standardized way to model and express information about entities in a semantic format. This facilitates seamless communication and understanding between diverse systems, applications, and devices.
+
+- **Contextualized Data:** NGSI-LD emphasizes the importance of contextual information. It allows for the representation of data not only with its raw values but also within the context of time, location, and logical dependencies, providing a richer and more meaningful representation of the data.
+
+- **Standardized APIs:** NGSI-LD defines standardized Application Programming Interfaces (APIs) for managing linked data entities. This enables developers to create, read, update, and delete entities consistently, fostering a unified approach to data interaction.
+
+- **Compatibility with RDF:** NGSI-LD aligns with RDF and embraces the concepts of linked data, ensuring compatibility with the broader Semantic Web. This allows for seamless integration with existing RDF-based systems and tools.
+
+- **Flexible Entity-Relationship Model:** NGSI-LD is structured to allow flexible Entity-Relationship modelling. That makes it very suitable for Data Exchange.
+
+NGSI-LD provides two normal forms, the *concise* and the *normalized* form.
+
+An example for the *concise* form is shown below:
+
+```json
+{
+    "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
+    "id": "urn:iff:abc123",
+    "type": "eclass:0173-1#01-AKJ975#017",
+    "hasFilter": {
+        "object": "urn:iff:filter:1"
+    },
+    "machine_state": "Testing"
+}
+```
+
+To convert it into the *normalized* form, the `jsonldConverter.js` tool can be used.
+
+```
+node ./jsonldConverter.js -r ../examples/plasmacutter_data.json
+```
+```json
+# Result:
+[
+  {
+    "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
+    "id": "urn:iff:abc123",
+    "type": "eclass:0173-1#01-AKJ975#017",
+    "hasFilter": {
+      "type": "Relationship",
+      "object": "urn:iff:filter:1"
+    },
+    "machine_state": {
+      "type": "Property",
+      "value": "Testing"
+    }
+  }
+]
+```
+
+In order to convert a *normalized* form into a *concise* form, the same tool can be used:
+
+```
+node ./jsonldConverter.js -n ../examples/plasmacutter_data_normalized.json
+```
+```json
+# Result
+[
+  {
+    "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
+    "id": "urn:iff:abc123",
+    "type": "eclass:0173-1#01-AKJ975#017",
+    "hasFilter": {
+      "object": "urn:iff:filter:1"
+    },
+    "machine_state": "Testing"
+  }
+]
+```
 ## Generate SHACL constraints from JSON-Schemas
+In this part of the tutorial we will take a look at JSON-Schemas and how they relate to NGSI-LD and SHACL.
+
 
 ### JSON-Schema
 
-### SHACL Constraints
+More on JSON-Schema can be found [here](https://json-schema.org/). As described in the PDT [specification](./README.md), not all keywoards are allowed and some additinal keywords have been defined.
+The object `urn:iif:abc123` above, can be validated with the following JSON-schema:
+```
+[
+    {
+        "$schema":  "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://industry-fusion.org/eclass%230173-1%2301-AKJ975%23017",
+        "title": "Cutter",
+        "description": "Cutter template for IFF",
+        "type": "object",
+        "properties": {
+           "type": {
+            "const": "eclass:0173-1#01-AKJ975#017"
+            },
+            "id": {
+              "type": "string",
+              "pattern": "^urn:[a-zA-Z0-9][a-zA-Z0-9-]{1,31}:([a-zA-Z0-9()+,.:=@;$_!*'-]|%[0-9a-fA-F]{2})*$"
+            }
+        },
+        "required": ["type", "id"],
+        "allOf": [
+            {
+                "$ref": "https://industry-fusion.org/base-objects/v0.1/cutter/properties"
+            },
+            {
+                "$ref": "https://industry-fusion.org/base-objects/v0.1/cutter/relationships"
+            }
+        ]
+    },
+    {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://industry-fusion.org/base-objects/v0.1/cutter/relationships",
+        "title": "IFF template for cutter relationship",
+        "description": "Cutter template for IFF",
+        "type": "object",
+        "properties": {
+            "hasFilter": {
+                "relationship": "eclass:0173-1#01-ACK991#016",
+                "$ref": "https://industry-fusion.org/base-objects/v0.1/link"
+            }
+        }
+    },
+    {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://industry-fusion.org/base-objects/v0.1/link",
+        "title": "IFF template for cutter relationship",
+        "description": "Cutter template for IFF",
+        "type": "object",
+        "properties": {
+            "object": {
+                "type": "string",
+                "pattern": "^urn:[a-zA-Z0-9][a-zA-Z0-9-]{0,31}:[a-zA-Z0-9()+,\\-.:=@;$_!*']*[a-zA-Z0-9()+,\\-.:=@;$_!*']$"
+            }
+        },
+        "required": ["object"]
+    },
+    {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://industry-fusion.org/base-objects/v0.1/cutter/properties",
+        "title": "Cutter properties",
+        "description": "Properties for class cutter",
+        "type": "object",
+        "properties": {
+            "machine_state": {
+                "type": "string",
+                "title": "Machine Status",
+                "description": "Current status of the machine (Online_Idle, Run, Online_Error, Online_Maintenance, Setup, Testing)",
+                "enum": [
+                    "Online_Idle",
+                    "Run",
+                    "Online_Error",
+                    "Online_Maintenance",
+                    "Setup",
+                    "Testing"
+                ]
+            }
+        },
+        "required": [
+            "machine_state"
+        ]
+    }
+]
+```
+
+The validation can be executed with the `validate.js` tool as follows:
+```
+node ./validate.js -s ../examples/plasmacutter_schema.json -d ../examples/plasmacutter_data.json  -i https://industry-fusion.org/eclass#0173-1#01-AKJ975#017
+```
+```
+# Result
+The Datafile is compliant with Schema
+```
+### SHACL (Shapes Constraint Language)
+SHACL, or the Shapes Constraint Language, is a W3C standard designed for validating and describing the structural constraints of RDF (Resource Description Framework) graphs. As an essential component of the Semantic Web stack, SHACL provides a powerful mechanism for expressing and enforcing data shapes, ensuring that RDF data adheres to specified constraints.
+
+#### Key Concepts of SHACL
+1. **Shapes:** In SHACL, a shape defines a set of conditions and constraints that RDF nodes and properties within a graph must satisfy. Shapes serve as blueprints for the expected structure of data, allowing for the definition of rules and expectations.
+
+2. **Constraints:** SHACL introduces a variety of constraint types that can be applied to nodes and properties. These constraints include checks for data types, cardinality, uniqueness, and more. Constraints empower developers and data architects to express precise requirements for their data.
+
+3. **Validation:** SHACL enables the validation of RDF data against defined shapes. By applying SHACL shapes to a dataset, developers can identify non-conforming instances and ensure data quality and consistency.
+
+4. **Extensibility:** SHACL is highly extensible, allowing developers to create their own custom constraints and functions. This adaptability makes it suitable for a wide range of use cases and scenarios.
+
+5. **Rules:** SHACL allows to execute rules which can change the graph based on constraints.
+
+
 
 ### Conversion
 
