@@ -1,0 +1,34 @@
+[
+    {
+        "@context": [
+            "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+            {
+                "@vocab": "https://industry-fusion.org/base/v0.1/"
+            }
+        ],
+        "id": "urn:iff:cutter1",
+        "type": "Cutter",
+        "hasFilter": {
+            "type": "Relationship",
+            "object": "urn:iff:filter1"
+        },
+        "machine_state": {
+            "type": "Property",
+            "value": "Testing"
+        }
+    },
+    {
+        "@context": [
+            "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+            {
+                "@vocab": "https://industry-fusion.org/base/v0.1/"
+            }
+        ],
+        "id": "urn:iff:filter1",
+        "type": "Filter",
+        "machine_state": {
+            "type": "Property",
+            "value": "Testing"
+        }
+    }
+]
