@@ -56,7 +56,8 @@ Note that in the Expanded form, the *context* is missing, but everything is now 
 The expanded form can easiliy be transformed into a *Semantic Web* graph representation:
 
 ```mermaid
-A(https://iri/max.mustermann) -- http://schema.org/name --> B("Max Mustermann")
+flowchart LR
+   A(https://iri/max.mustermann) -- http://schema.org/name --> B("Max Mustermann")
 ```
 
 which can also be serialized as turtle graph:
