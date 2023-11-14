@@ -2,7 +2,7 @@
 
 The following motivates, descibes and defines version 0.1 of the Datamodel. It is in alpha stage and subject to changes.
 
-## JSON-LD (Linked Data)
+## [JSON-LD](https://json-ld.org/) (JSON for Linked Data)
 
 JSON-LD, which stands for "JavaScript Object Notation for Linked Data," is a powerful data serialization format that extends the capabilities of traditional JSON. Its strength lies in its ability to represent structured data in a way that is both human-readable and machine-understandable. JSON-LD is particularly well-suited for the web and semantic data integration for several key reasons:
 
@@ -22,7 +22,7 @@ In summary, JSON-LD is a versatile and powerful tool for structuring data with s
 
 ## JSON-LD Forms
 
-Since JSON-LD represents graph data, it can become very explicit and details. However, In many cases aspects of a graph can also be simplified and described implicitly.
+Since JSON-LD represents graph data, it can become very explicit and detailed. However, In many cases aspects of a graph can also be simplified and described implicitly.
 
 The following shows a so called *compacted* JSON-LD expression. It contains a *context* and a minimized key *name*:
 
@@ -38,16 +38,24 @@ The following shows a so called *compacted* JSON-LD expression. It contains a *c
 
 This is an implicit representation of a *expanded* form
 ```
-[{
-  "@id": "https://iri/max.mustermann",
-  "http://schema.org/name": [{"@value": "Max Mustermann"}]
-}]
+[
+  {
+    "@id": "https://iri/max.mustermann",
+    "http://schema.org/name": [
+      {
+        "@value": "Max Mustermann"
+      }
+    ]
+  }
+]
 ```
+Try [here](https://json-ld.org/playground/#startTab=tab-expanded&json-ld=%7B%22%40context%22%3A%7B%22name%22%3A%22http%3A%2F%2Fschema.org%2Fname%22%7D%2C%22%40id%22%3A%22https%3A%2F%2Firi%2Fmax.mustermann%22%2C%22name%22%3A%22Max%20Mustermann%22%7D).
 
-Note that in the Expanded form, the *context* is missing, but everything is now provided with *namespaces* and *@value* which indicates that "Max Mustermann" is a *literal*, i.e. string, number or boolean.
+
+Note that in the Expanded form, the *context* is missing, but everything is now provided with *namespaces* and *@value* which indicates that "Max Mustermann" is a *Literal*, i.e. string, number or boolean.
 The expanded form can easiliy be transformed into a *Semantic Web* graph representation:
 
-```meermaid
+```mermaid
 A(https://iri/max.mustermann) -- http://schema.org/name --> B("Max Mustermann")
 ```
 
