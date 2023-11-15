@@ -458,12 +458,159 @@ SHACL, or the Shapes Constraint Language, is a W3C standard designed for validat
 
 
 
-### Conversion
+Shacl validation can be done with `pyshacl`:
+```
+pyshacl -s ../examples/plasmacutter_shacl.ttl -df json-ld ../examples/plasmacutter_and_filter_data.json
+```
+```
+# Result:
+Validation Report
+Conforms: True
+
+```
+where option '-s' specifies the shacl file, '-df' the format of the input data file and the last parameter is the input data file which is validated against the shapes.
+
+#### Conversion from JSON-Schema to SHACL
+Basic SHACL shapes can be created from JSON-Schema by using the `jsonschema2shacl.js` tool.
+For instace, the JSON-Schema for the plasmacutter above, can be converted by providing the schema to convert by option `-s`, the id of the single object by option '-i' and a context by option '-c':
+
+```
+node ./jsonschema2shacl.js -s ../examples/plasmacutter_schema.json -i  https://industry-fusion.org/eclass#0173-1#01-AKJ975#017 -c https://industryfusion.github.io/contexts/v0.1/context.jsonld
+```
+```
+# Result:
+@prefix iffb: <https://industry-fusion.org/base/v0.1/>.
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/>.
+
+<https://industry-fusion.org/knowledge/v0.1/0173-1#01-AKJ975#017Shape>
+    a sh:NodeShape;
+    sh:property
+            [
+                sh:maxCount 1;
+                sh:minCount 0;
+                sh:nodeKind sh:BlankNode;
+                sh:path iffb:hasFilter;
+                sh:property
+                        [
+                            sh:class
+                                <https://industry-fusion.org/eclass#0173-1#01-ACK991#016>;
+                            sh:maxCount 1;
+                            sh:minCount 1;
+                            sh:nodeKind sh:IRI;
+                            sh:path ngsi-ld:hasObject
+                        ]
+            ],
+            [
+                sh:maxCount 1;
+                sh:minCount 1;
+                sh:nodeKind sh:BlankNode;
+                sh:path iffb:machine_state;
+                sh:property
+                        [
+                            sh:in
+                                    ( "Online_Idle" "Run" "Online_Error"
+                                    "Online_Maintenance" "Setup" "Testing" );
+                            sh:maxCount 1;
+                            sh:minCount 1;
+                            sh:nodeKind sh:Literal;
+                            sh:path ngsi-ld:hasValue
+                        ]
+            ];
+    sh:targetClass <https://industry-fusion.org/eclass#0173-1#01-AKJ975#017>.
+
+```
 
 ## Validate objects
 
+Finally we can describe the steps described in the first section.
+1. Simplify the problem: Handle with JSON-Schema only single objects, e.g. only a *Cutter* or *Filter* object. For instance the [plasmacutter](./examples/plasmacutter_data.json) or [filter](./examples/filter_data.json) files in the [examples](./examples) directory.
+2. Transform the JSON-LD object into a canonical normal form which ensures that same (sub-)graphs are represented by identical objects.
+
+    We have introduced two canonical forms which are used for validation. The *concise* form is used for JSON-Schema validation. The *normalized* form is used for SHACL validation. The `jsonldConverter.js` tool can be used to transform on into another form.
+3. Generate the SHACL constraints from JSON-Schemas
+
+    For instance, the SHACL constraints for the plasmacutter and filter above can be generate by:
+    ```
+    node ./jsonschema2shacl.js -s ../examples/plasmacutter_and_filter_schema.json -i  https://industry-fusion.org/eclass#0173-1#01-AKJ975#017 -c https://industryfusion.github.io/contexts/v0.1/context.jsonld
+    ```
+    and
+    ```
+    node ./jsonschema2shacl.js -s ../examples/plasmacutter_and_filter_schema.json -i  https://industry-fusion.org/eclass#0173-1#01-ACK991#016 -c https://industryfusion.github.io/contexts/v0.1/context.jsonld
+    ```
+    respectively.
+4. Validate single objects with JSON-Schema and linked objects with SHACL
+
+    Validation of single object for plasmacutter with JSON-Schema works as follows:
+    ```
+    node ./validate.js -s ../examples/plasmacutter_and_filter_schema.json -d ../examples/plasmacutter_data.json  -i https://industry-fusion.org/eclass#0173-1#01-AKJ975#017
+    ```
+    ```
+    # Result
+    The Datafile is compliant with Schema
+    ```
+
+    Validation of single object with SHACL is possible but will always lead to an error when connected data is invovled. Let's look at the follwing example. Let's first create the SHACL file for the plasmacutter from the respective JSON-Schema and write it into `/tmp/shacl.ttl`:
+
+    ```
+    node ./jsonschema2shacl.js -s ../examples/plasmacutter_and_filter_schema.json -i  https://industry-fusion.org/eclass#0173-1#01-AKJ975#017 -c https://industryfusion.github.io/contexts/v0.1/context.jsonld >/tmp/shacl.ttl
+    ```
+    Then convert the *concise* plasmacutter object into a *normalized* form and dump it into `/tmp/plasmacutter_normalized.json`
+    ```
+    node ./jsonldConverter.js -r ../examples/plasmacutter_data.json  > /tmp/plasmacutter.json
+    ```
+    Let's now validate it with `pyshacl`:
+
+    ```
+    pyshacl -s /tmp/shacl.ttl -df json-ld /tmp/plasmacutter.json -f table
+    ```
+<font size="0">
+
+```
+# Result:
++----------+
+| Conforms |
++----------+
+|  False   |
++----------+
+
++-----+-----------+---------------------------+---------------------------+---------------------------+--------------------------+---------------------------+------------------+
+| No. | Severity  | Focus Node                | Result Path               | Message                   | Component                | Shape                     | Value            |
++-----+-----------+---------------------------+---------------------------+---------------------------+--------------------------+---------------------------+------------------+
+| 1   | Violation | Nc36a2a6f817a4801b2e11272 | https://uri.etsi.org/ngsi | Value does not have class | ClassConstraintComponent | n7a12443b3e1e4af981d55f56 | urn:iff:filter:1 |
+|     |           | 7281841b                  | -ld/hasObject             |  <https://industry-fusion |                          | 7bca47abb2                |                  |
+|     |           |                           |                           | .org/eclass#0173-1#01-ACK |                          |                           |                  |
+|     |           |                           |                           | 991#016>                  |                          |                           |                  |
+|     |           |                           |                           |                           |                          |                           |                  |
++-----+-----------+---------------------------+---------------------------+---------------------------+--------------------------+---------------------------+------------------+
+```
+</font>
+
+The validation reports one error. The problem is that the link `hasFilter` must be linked to an object with a type `<https://industry-fusion.org/eclass#0173-1#01-ACK991#016>`. This cannot be fullfilled in a single object. But when we apply the same procedure to a JSON-LD list of objects which contain a plasmacutter AND a filter with linked ids, the validation will show that the resulting graph is conform with the Shacl SHAPE. This can be shown as follows:
+
+First create the **normalized** form of the joint plasmacutter and filter object.
+```
+node ./jsonldConverter.js -r ../examples/plasmacutter_and_filter_data.json  > /tmp/plasmacutter_and_filter.json
+```
+Then validate it with pyshacl and the plasmacutter only shema:
+```
+node ./jsonschema2shacl.js -s ../examples/plasmacutter_and_filter_schema.json -i  https://industry-fusion.org/eclass#0173-1#01-AKJ975#017 -c https://industryfusion.github.io/contexts/v0.1/context.jsonld >/tmp/shacl.ttl
+```
+Finally, use `pyshacl` to validate:
+```
+pyshacl -s /tmp/shacl.ttl -df json-ld /tmp/plasmacutter_and_filter.json -f table
+```
+```
+# Result:
++----------+
+| Conforms |
++----------+
+|   True   |
++----------+
+
+```
 ### Validate Single Objects with JSON-schema and SHACL
-### VAlidate connected Object with SHACL
+### Validate connected Object with SHACL
 
 ```
 
