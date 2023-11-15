@@ -6,14 +6,9 @@ A fundamental difference between JSON-LD and JSON is, that JSON describe generic
 ```json
 [
     {
-        "@context": [
-            "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
-            {
-                "@vocab": "https://industry-fusion.org/base/v0.1/"
-            }
-        ],
+        "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
         "id": "urn:iff:cutter1",
-        "type": "Cutter",
+        "type": "eclass:0173-1#01-AKJ975#017",
         "hasFilter": {
             "type": "Relationship",
             "object": "urn:iff:filter1"
@@ -24,14 +19,9 @@ A fundamental difference between JSON-LD and JSON is, that JSON describe generic
         }
     },
     {
-        "@context": [
-            "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
-            {
-                "@vocab": "https://industry-fusion.org/base/v0.1/"
-            }
-        ],
+        "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
         "id": "urn:iff:filter1",
-        "type": "Filter",
+        "type": "eclass:0173-1#01-ACK991#016",
         "machine_state": {
             "type": "Property",
             "value": "Testing"
@@ -61,8 +51,8 @@ graph LR;
     J--value-->K(("#quot;Testing#quot;"));
     end;
     subgraph "Other Definitions"
-    A(urn:iff:cutter1)--type-->B(Cutter);
-    D--"type"-->I(Filter);
+    A(urn:iff:cutter1)--type-->B(eclass:0173-1#01-AKJ975#017);
+    D--"type"-->I(eclass:0173-1#01-ACK991#016);
     end;
     J--type-->H;
     subgraph "Legend";
@@ -75,19 +65,14 @@ The same graph can, however, be represented by different JSON-LD structures. For
 ```json
 [
     {
-        "@context": [
-            "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
-            {
-                "@vocab": "https://industry-fusion.org/base/v0.1/"
-            }
-        ],
+        "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
         "id": "urn:iff:cutter1",
-        "type": "Cutter",
+        "type": "eclass:0173-1#01-AKJ975#017",
         "hasFilter": {
             "type": "Relationship",
             "object": {
                 "id": "urn:iff:filter1",
-                "type": "Filter",
+                "type": "eclass:0173-1#01-ACK991#016",
                 "machine_state": {
                     "type": "Property",
                     "value": "Testing"
@@ -158,7 +143,7 @@ First exercise is to transform JSON-LD into RDF/turtle data:
 # JSON-LD Data:
 {
     "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
-    "id": "urn:iff:abc123",
+    "id": "urn:iff:cutter1",
     "type": "eclass:0173-1#01-AKJ975#017"
 }
 
@@ -243,7 +228,7 @@ node ./jsonldConverter.js -x ../examples/simple_plasmacutter_data.json
 # Result:
 [
   {
-    "@id": "urn:iff:abc123",
+    "@id": "urn:iff:cutter1",
     "@type": [
       "https://industry-fusion.org/eclass#0173-1#01-AKJ975#017"
     ]
@@ -264,7 +249,7 @@ node ./jsonldConverter.js -n ../examples/simple_plasmacutter_data_expanded.json 
 [
   {
     "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
-    "id": "urn:iff:abc123",
+    "id": "urn:iff:cutter1",
     "type": "eclass:0173-1#01-AKJ975#017"
   }
 ]
@@ -292,7 +277,7 @@ An example for the *concise* form is shown below:
 ```json
 {
     "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
-    "id": "urn:iff:abc123",
+    "id": "urn:iff:cutter1",
     "type": "eclass:0173-1#01-AKJ975#017",
     "hasFilter": {
         "object": "urn:iff:filter:1"
@@ -311,7 +296,7 @@ node ./jsonldConverter.js -r ../examples/plasmacutter_data.json
 [
   {
     "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
-    "id": "urn:iff:abc123",
+    "id": "urn:iff:cutter1",
     "type": "eclass:0173-1#01-AKJ975#017",
     "hasFilter": {
       "type": "Relationship",
@@ -335,7 +320,7 @@ node ./jsonldConverter.js -n ../examples/plasmacutter_data_normalized.json
 [
   {
     "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
-    "id": "urn:iff:abc123",
+    "id": "urn:iff:cutter1",
     "type": "eclass:0173-1#01-AKJ975#017",
     "hasFilter": {
       "object": "urn:iff:filter:1"
@@ -351,8 +336,8 @@ In this part of the tutorial we will take a look at JSON-Schemas and how they re
 ### JSON-Schema
 
 More on JSON-Schema can be found [here](https://json-schema.org/). As described in the PDT [specification](./README.md), not all keywoards are allowed and some additinal keywords have been defined.
-The object `urn:iif:abc123` above, can be validated with the following JSON-schema:
-```
+The object `urn:iif:cutter1` above, can be validated with the following JSON-schema:
+```json
 [
     {
         "$schema":  "https://json-schema.org/draft/2020-12/schema",
@@ -607,11 +592,5 @@ pyshacl -s /tmp/shacl.ttl -df json-ld /tmp/plasmacutter_and_filter.json -f table
 +----------+
 |   True   |
 +----------+
-
-```
-### Validate Single Objects with JSON-schema and SHACL
-### Validate connected Object with SHACL
-
-```
 
 ```
