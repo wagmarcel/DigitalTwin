@@ -132,6 +132,10 @@ class DbManager {
       });
     });
   }
+
+  isEnabled () {
+    return this.enabled;
+  }
 }
 
 module.exports = DbManager;

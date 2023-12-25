@@ -24,7 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 'use strict';
 const validator = require('json-schema');
-let logger = require('../logger').init();
+let logger = require('./logger').init();
 /**
  *
  * @param obj

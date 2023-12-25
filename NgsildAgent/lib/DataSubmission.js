@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 'use strict';
 const schemaValidation = require('./schema-validator');
+const dataSchema = require('./schemas/data');
 const config = require('../config');
 const DbManager = require('./DbManager');
 
@@ -40,7 +41,7 @@ class DataSubmission {
   constructor (connector, logger) {
     this.logger = logger;
     this.connector = connector;
-    this.validator = schemaValidation.validateSchema(schemaValidation.schemas.data.SUBMIT);
+    this.validator = schemaValidation.validateSchema(dataSchema);
     this.sessionIsOnline = 1;
   }
 
@@ -93,7 +94,7 @@ class DataSubmission {
       } else {
         me.sessionIsOnline = 0;
       }
-      if (me.sessionIsOnline === 2) {
+      if (me.sessionIsOnline === 2 && me.dbManager.isEnabled()) {
         // We are in the catch-up mode
         // All relevant should be in database,
         // so fetch it and ignore original messages.
