@@ -22,40 +22,38 @@
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-var net = require('net');
+const net = require('net');
 
-exports.init = function(conf, logger, onMessage) {
+exports.init = function (conf, logger, onMessage) {
+  const tcpServerPort = conf.tcp_port || 7070;
+  const tcpServerHost = '127.0.0.1';
 
-    var tcpServerPort = conf.tcp_port || 7070;
-    var tcpServerHost = "127.0.0.1";
+  function processMessage (data) {
+    try {
+      onMessage(data);
+    } catch (ex) {
+      logger.error('TCP Error on message: ' + ex.message);
+      logger.error(ex.stack);
+    }
+  }
 
-    function processMessage(data) {
-        try {
-            onMessage(data);
-        } catch (ex) {
-            logger.error('TCP Error on message: ' + ex.message);
-            logger.error(ex.stack);
-        }
+  const server = net.createServer();
+  server.listen(tcpServerPort, tcpServerHost);
+
+  server.on('connection', function (socket) {
+    logger.debug(`TCP connection from ${socket.remoteAddress}:${socket.remotePort}%d`);
+    if (socket.remoteAddress !== '127.0.0.1') {
+      logger.debug('Ignoring remote connection from ' + socket.remoteAddress);
+      return;
     }
 
-    var server = net.createServer();
-    server.listen(tcpServerPort, tcpServerHost);
-
-    server.on('connection', function(socket) {
-        logger.debug(`TCP connection from ${socket.remoteAddress}:${socket.remotePort}%d`);
-        if(socket.remoteAddress !== "127.0.0.1") {
-            logger.debug("Ignoring remote connection from " + socket.remoteAddress);
-            return;
-        }
-
-        socket.on('data', function(msg) {
-            var data = JSON.parse(msg);
-            logger.debug("Data arrived: " + JSON.stringify(data));
-            processMessage(data);
-        });
+    socket.on('data', function (msg) {
+      const data = JSON.parse(msg);
+      logger.debug('Data arrived: ' + JSON.stringify(data));
+      processMessage(data);
     });
+  });
 
-    logger.info("TCP listener started on port: " + tcpServerPort);
-    return server;
-
+  logger.info('TCP listener started on port: ' + tcpServerPort);
+  return server;
 };

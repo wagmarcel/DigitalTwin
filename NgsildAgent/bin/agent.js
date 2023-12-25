@@ -22,45 +22,45 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-"use strict";
-var logger = require('../lib/logger').init(),
-    CloudProxy = require("../lib/CloudProxy"),
-    DataSubmission = require('../lib/DataSubmission'),
-    udpServer = require('../lib/server/udp'),
-    tcpServer = require("../lib/server/tcp"),
-    utils = require("../lib/utils").init(),
-    conf = require('../config');
+'use strict';
+const logger = require('../lib/logger').init();
+const CloudProxy = require('../lib/CloudProxy');
+const DataSubmission = require('../lib/DataSubmission');
+const udpServer = require('../lib/server/udp');
+const tcpServer = require('../lib/server/tcp');
+const utils = require('../lib/utils').init();
+const conf = require('../config');
 
-process.on("uncaughtException", function(err) {
-    logger.error("UncaughtException:", err.message);
-    logger.error(err.stack);
-    // let the process exit so that k8s can restart is
-    process.exit(1);
+process.on('uncaughtException', function (err) {
+  logger.error('UncaughtException:', err.message);
+  logger.error(err.stack);
+  // let the process exit so that k8s can restart is
+  process.exit(1);
 });
 
 const id = utils.getDeviceId();
 (async () => {
-    var cloudProxy = new CloudProxy(logger, id);
-    var udp = udpServer.singleton(conf.listeners.udp_port, logger);
-    var dataSubmission = new DataSubmission(cloudProxy, logger);
-    await dataSubmission.init();
-    logger.info("Starting listeners...");
-    udp.listen(dataSubmission.getSubmissionCallback());
-    tcpServer.init(conf.listeners, logger, dataSubmission.getSubmissionCallback());
-    
-    let res = await cloudProxy.init();
-    if (res == 1) {
-        setTimeout(async () => {
-            let res = await cloudProxy.init();
-            if (res) {
-                console.error("Could not setup the Proxy. Please check logs and settings.")
-                process.exit(1)
-            }
-        }
-            , 1000);
+  const cloudProxy = new CloudProxy(logger, id);
+  const udp = udpServer.singleton(conf.listeners.udp_port, logger);
+  const dataSubmission = new DataSubmission(cloudProxy, logger);
+  await dataSubmission.init();
+  logger.info('Starting listeners...');
+  udp.listen(dataSubmission.getSubmissionCallback());
+  tcpServer.init(conf.listeners, logger, dataSubmission.getSubmissionCallback());
+
+  const res = await cloudProxy.init();
+  if (res === 1) {
+    setTimeout(async () => {
+      const res = await cloudProxy.init();
+      if (res) {
+        console.error('Could not setup the Proxy. Please check logs and settings.');
+        process.exit(1);
+      }
     }
-    if (res == 2) {
-        console.error("Unrecoverable Error. Bye!")
-        process.exit(1)
-    }
+    , 1000);
+  }
+  if (res === 2) {
+    console.error('Unrecoverable Error. Bye!');
+    process.exit(1);
+  }
 })();

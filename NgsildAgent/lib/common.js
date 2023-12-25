@@ -22,25 +22,25 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-"use strict";
-var fs = require('fs'),
-    path = require('path'),
-    config = require("../config"),
-    logger = require('./logger').init();
+'use strict';
+const fs = require('fs');
+const path = require('path');
+const config = require('../config');
+let logger = require('./logger').init();
 /**
  * @description it will write to JSON file overwriting the current content
  * @param filename <string> the name with path where the file will be wrote.
  * @param data <object> the will be wrote to filename
  */
 module.exports.writeToJson = function (filename, data) {
-    var err = fs.writeFileSync(filename, JSON.stringify(data, null, 4));
-    if (err) {
-        logger.error("The file could not be written ", err);
-        return true;
-    } else {
-        logger.info("Object data saved to " + filename);
-        return false;
-    }
+  const err = fs.writeFileSync(filename, JSON.stringify(data, null, 4));
+  if (err) {
+    logger.error('The file could not be written ', err);
+    return true;
+  } else {
+    logger.info('Object data saved to ' + filename);
+    return false;
+  }
 };
 
 /**
@@ -49,190 +49,189 @@ module.exports.writeToJson = function (filename, data) {
  * @return <object> if the file not exist will return an empty object
  */
 module.exports.readFileToJson = function (filename) {
-    var objectFile = null;
-    if (fs.existsSync(filename)) {
-        try {
-            objectFile = fs.readFileSync(filename);
-            objectFile = JSON.parse(objectFile);
-        } catch(err) {
-            logger.error("Improper JSON format:", err.message);
-            logger.error(err.stack);
-        }
+  let objectFile = null;
+  if (fs.existsSync(filename)) {
+    try {
+      objectFile = fs.readFileSync(filename);
+      objectFile = JSON.parse(objectFile);
+    } catch (err) {
+      logger.error('Improper JSON format:', err.message);
+      logger.error(err.stack);
     }
-    logger.debug("Filename: " + filename + " Contents:", objectFile);
-    return objectFile;
+  }
+  logger.debug('Filename: ' + filename + ' Contents:', objectFile);
+  return objectFile;
 };
 
-module.exports.initializeDataDirectory = function() {
-    var defaultDirectory = path.resolve('./data/');
-    var currentDirectory = config["data_directory"];
+module.exports.initializeDataDirectory = function () {
+  const defaultDirectory = path.resolve('./data/');
+  let currentDirectory = config.data_directory;
 
-    if (!currentDirectory) {
-        currentDirectory = defaultDirectory;
-        this.saveToConfig("data_directory", defaultDirectory);
-    }
+  if (!currentDirectory) {
+    currentDirectory = defaultDirectory;
+    this.saveToConfig('data_directory', defaultDirectory);
+  }
 
-    if (!fs.existsSync(currentDirectory)) {
-        fs.mkdirSync(currentDirectory);
-    }
+  if (!fs.existsSync(currentDirectory)) {
+    fs.mkdirSync(currentDirectory);
+  }
 };
 
-module.exports.initializeFile = function(filepath, data) {
-    if (!fs.existsSync(filepath)) {
-        this.writeToJson(filepath, data);
-    }
+module.exports.initializeFile = function (filepath, data) {
+  if (!fs.existsSync(filepath)) {
+    this.writeToJson(filepath, data);
+  }
 };
 
 module.exports.init = function (logT) {
-    logger = logT;
+  logger = logT;
 };
 
-
-module.exports.isAbsolutePath = function(location) {
-    return path.resolve(location) === path.normalize(location);
+module.exports.isAbsolutePath = function (location) {
+  return path.resolve(location) === path.normalize(location);
 };
 
-module.exports.getFileFromDataDirectory = function(filename) {
-    var fullFileName = '';
-    if (config) {
-        var dataDirectory = config['data_directory'];
-        if (module.exports.isAbsolutePath(dataDirectory)) {
-            fullFileName = path.resolve(dataDirectory, filename);
-        } else {
-            fullFileName = path.resolve(__dirname, "..", dataDirectory, filename);
-        }
-    }
-    return fullFileName;
-};
-
-module.exports.getDeviceConfigName = function() {
-    var fullFileName = module.exports.getFileFromDataDirectory('device.json');
-
-    if (!fs.existsSync(fullFileName)) {
-        this.initializeDeviceConfig();
-    }
-
-    if (fs.existsSync(fullFileName)) {
-        return fullFileName;
-    } else{
-        logger.error("Failed to find device config file!");
-        process.exit(0);
-    }
-};
-
-module.exports.getDeviceConfig = function() {
-    var deviceConfig = this.readFileToJson(this.getDeviceConfigName());
-    return deviceConfig;
-};
-
-module.exports.initializeDeviceConfig = function() {
-    if(config) {
-        var dataDirectory = config['data_directory'];
-        var deviceConfig = path.resolve(dataDirectory, "device.json");
-        if (!fs.existsSync(deviceConfig)) {
-            var dataFile = {
-                "activation_retries": 10,
-                "activation_code": null,
-                "device_id": false,
-                "device_name": false,
-                "device_loc": [
-                    88.34,
-                    64.22047,
-                    0
-                ],
-                "gateway_id": false,
-                "device_token": "",
-                "refresh_token": "",
-                "device_token_expire": new Date().getTime(),
-                "account_id": "",
-                "sensor_list": [],
-                "last_actuations_pull_time": false
-            };
-
-            this.writeToJson(deviceConfig, dataFile);
-        }
-    }
-};
-
-module.exports.readConfig = function(fileName) {
-    return this.readFileToJson(fileName);
-};
-
-module.exports.writeConfig = function(fileName, data) {
-    this.writeToJson(fileName, data);
-};
-
-module.exports.saveToConfig = function(key, value) {
-    var fileName = config.getConfigName();
-    this.saveConfig(fileName, key, value);
-};
-
-module.exports.saveToDeviceConfig = function(key, value) {
-    var fileName = this.getDeviceConfigName();
-    this.saveConfig(fileName, key, value);
-};
-
-module.exports.saveConfig = function() {
-    if (arguments.length < 2) {
-        logger.error("Not enough arguments : ", arguments);
-        process.exit(1);
-    }
-
-    var fileName = arguments[0];
-    var key = arguments[1];
-    var value = arguments[2];
-    var data = this.readConfig(fileName);
-    var keys = key.split('.');
-    var configSaver = function (data, keys) {
-        while(keys.length > 1) {
-            var subtree = {};
-            subtree[keys.pop()] = value;
-            value = subtree;
-        }
-        data[keys.pop()] = value;
-        return data;
-    };
-    data = configSaver(data, keys);
-    if (data) {
-        this.writeConfig(fileName, data);
-    }
-    return true;
-};
-
-module.exports.initializeCatalog = function() {
-    if (config) {
-        var dataDirectory = config['data_directory'];
-        var catalogFile = path.resolve(dataDirectory, "catalog.json");
-        if (!fs.existsSync(catalogFile)) {
-            var data = []
-            this.writeToJson(catalogFile, data);
-        }
-    }
-};
-
-module.exports.getCatalogName = function() {
-    var fullFileName = this.getFileFromDataDirectory('catalog.json');
-
-    if (!fs.existsSync(fullFileName)) {
-        this.initializeCatalog();
-    }
-
-    if (fs.existsSync(fullFileName)) {
-        return fullFileName;
+module.exports.getFileFromDataDirectory = function (filename) {
+  let fullFileName = '';
+  if (config) {
+    const dataDirectory = config.data_directory;
+    if (module.exports.isAbsolutePath(dataDirectory)) {
+      fullFileName = path.resolve(dataDirectory, filename);
     } else {
-        logger.error("Failed to find catalog file!");
-        process.exit(0);
+      fullFileName = path.resolve(__dirname, '..', dataDirectory, filename);
     }
+  }
+  return fullFileName;
 };
 
-module.exports.getCatalog = function() {
-    var catalog = this.readFileToJson(this.getCatalogName());
-    return catalog;
+module.exports.getDeviceConfigName = function () {
+  const fullFileName = module.exports.getFileFromDataDirectory('device.json');
+
+  if (!fs.existsSync(fullFileName)) {
+    this.initializeDeviceConfig();
+  }
+
+  if (fs.existsSync(fullFileName)) {
+    return fullFileName;
+  } else {
+    logger.error('Failed to find device config file!');
+    process.exit(0);
+  }
 };
 
-module.exports.writeCatalog = function(data) {
-    var fileName = this.getCatalogName();
-    this.writeToJson(fileName, data);
+module.exports.getDeviceConfig = function () {
+  const deviceConfig = this.readFileToJson(this.getDeviceConfigName());
+  return deviceConfig;
+};
+
+module.exports.initializeDeviceConfig = function () {
+  if (config) {
+    const dataDirectory = config.data_directory;
+    const deviceConfig = path.resolve(dataDirectory, 'device.json');
+    if (!fs.existsSync(deviceConfig)) {
+      const dataFile = {
+        activation_retries: 10,
+        activation_code: null,
+        device_id: false,
+        device_name: false,
+        device_loc: [
+          88.34,
+          64.22047,
+          0
+        ],
+        gateway_id: false,
+        device_token: '',
+        refresh_token: '',
+        device_token_expire: new Date().getTime(),
+        account_id: '',
+        sensor_list: [],
+        last_actuations_pull_time: false
+      };
+
+      this.writeToJson(deviceConfig, dataFile);
+    }
+  }
+};
+
+module.exports.readConfig = function (fileName) {
+  return this.readFileToJson(fileName);
+};
+
+module.exports.writeConfig = function (fileName, data) {
+  this.writeToJson(fileName, data);
+};
+
+module.exports.saveToConfig = function (key, value) {
+  const fileName = config.getConfigName();
+  this.saveConfig(fileName, key, value);
+};
+
+module.exports.saveToDeviceConfig = function (key, value) {
+  const fileName = this.getDeviceConfigName();
+  this.saveConfig(fileName, key, value);
+};
+
+module.exports.saveConfig = function () {
+  if (arguments.length < 2) {
+    logger.error('Not enough arguments : ', arguments);
+    process.exit(1);
+  }
+
+  const fileName = arguments[0];
+  const key = arguments[1];
+  let value = arguments[2];
+  let data = this.readConfig(fileName);
+  const keys = key.split('.');
+  const configSaver = function (data, keys) {
+    while (keys.length > 1) {
+      const subtree = {};
+      subtree[keys.pop()] = value;
+      value = subtree;
+    }
+    data[keys.pop()] = value;
+    return data;
+  };
+  data = configSaver(data, keys);
+  if (data) {
+    this.writeConfig(fileName, data);
+  }
+  return true;
+};
+
+module.exports.initializeCatalog = function () {
+  if (config) {
+    const dataDirectory = config.data_directory;
+    const catalogFile = path.resolve(dataDirectory, 'catalog.json');
+    if (!fs.existsSync(catalogFile)) {
+      const data = [];
+      this.writeToJson(catalogFile, data);
+    }
+  }
+};
+
+module.exports.getCatalogName = function () {
+  const fullFileName = this.getFileFromDataDirectory('catalog.json');
+
+  if (!fs.existsSync(fullFileName)) {
+    this.initializeCatalog();
+  }
+
+  if (fs.existsSync(fullFileName)) {
+    return fullFileName;
+  } else {
+    logger.error('Failed to find catalog file!');
+    process.exit(0);
+  }
+};
+
+module.exports.getCatalog = function () {
+  const catalog = this.readFileToJson(this.getCatalogName());
+  return catalog;
+};
+
+module.exports.writeCatalog = function (data) {
+  const fileName = this.getCatalogName();
+  this.writeToJson(fileName, data);
 };
 
 /**
@@ -243,34 +242,34 @@ module.exports.writeCatalog = function(data) {
  * @returns {*}
  */
 module.exports.buildPath = function (path, data) {
-    var re = /{\w+}/;
-    var pathReplace = path;
-    if (Array.isArray(data)) {
-        data.forEach(function (value) {
-            pathReplace = pathReplace.replace(re, value);
-        });
-    } else {
-        pathReplace = pathReplace.replace(re, data);
-    }
-    return pathReplace;
+  const re = /{\w+}/;
+  let pathReplace = path;
+  if (Array.isArray(data)) {
+    data.forEach(function (value) {
+      pathReplace = pathReplace.replace(re, value);
+    });
+  } else {
+    pathReplace = pathReplace.replace(re, data);
+  }
+  return pathReplace;
 };
 
-module.exports.isAbsolutePath = function(location) {
-    return path.resolve(location) === path.normalize(location);
+module.exports.isAbsolutePath = function (location) {
+  return path.resolve(location) === path.normalize(location);
 };
 
-module.exports.isBinary = function(object) {
-    if ( Buffer.isBuffer(object) ) {
+module.exports.isBinary = function (object) {
+  if (Buffer.isBuffer(object)) {
+    return true;
+  }
+  const keys = Object.keys(object);
+  for (const index in keys) {
+    const key = keys[index];
+    if (typeof object[key] === 'object') {
+      if (this.isBinary(object[key])) {
         return true;
+      }
     }
-    var keys = Object.keys(object);
-    for(var index in keys) {
-        var key = keys[index];
-        if(typeof object[key] == 'object') {
-            if( this.isBinary(object[key]) ) {
-                return true;
-            }
-        }
-    }
-    return false;
+  }
+  return false;
 };

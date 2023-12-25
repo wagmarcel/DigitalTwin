@@ -21,8 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-"use strict";
-
+'use strict';
 
 /**
  * errno:
@@ -31,11 +30,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 2: other
  */
 class ConnectionError extends Error {
-    constructor(message, errno) {
-        super(message)
-        this.name = 'ConnectorError'
-        this.errno = errno;
-      }
+  constructor (message, errno) {
+    super(message);
+    this.name = 'ConnectorError';
+    this.errno = errno;
+  }
 }
 
 module.exports = ConnectionError;

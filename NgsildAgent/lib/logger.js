@@ -21,31 +21,30 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-"use strict";
-var winston = require('winston'),
-    path = require('path'),
-    conf = require("../config");
+'use strict';
+const winston = require('winston');
+const path = require('path');
+const conf = require('../config');
 
-exports.init = function() {
+exports.init = function () {
+  const logTransports = [
+    new winston.transports.Console({
+      level: conf.logger.level || 'debug',
+      format: winston.format.json()
 
-    var logTransports = [
-        new winston.transports.Console({
-            level: conf.logger.level || 'debug',
-            format: winston.format.json()
-            
-        }),
-        new winston.transports.File({
-            filename: path.join((process.platform ==='win32' ? process.env.temp : conf.logger.path), 'oisp-iot-agent.log'),
-            level: conf.logger.level || 'info',
-            maxsize: conf.logger.max_size,
-            maxFiles: 1,
-            format: winston.format.json()
-            
-        })
-    ];
+    }),
+    new winston.transports.File({
+      filename: path.join((process.platform === 'win32' ? process.env.temp : conf.logger.path), 'oisp-iot-agent.log'),
+      level: conf.logger.level || 'info',
+      maxsize: conf.logger.max_size,
+      maxFiles: 1,
+      format: winston.format.json()
 
-    return new winston.createLogger({
-        transports: logTransports,
-        exitOnError: false
-    });
-};  
+    })
+  ];
+
+  return winston.createLogger({
+    transports: logTransports,
+    exitOnError: false
+  });
+};
