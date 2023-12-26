@@ -146,7 +146,6 @@ EOF
 # compare entity with reference
 # $1: file to compare with
 compare_pgrest_result2() {
-    echo hello
     cat << EOF | jq | diff "$1" - >&3
 [
   {
@@ -172,6 +171,114 @@ compare_pgrest_result2() {
 ]
 EOF
 }
+
+compare_pgrest_result3() {
+    cat << EOF | jq | diff "$1" - >&3
+[
+  {
+    "attributeId": "http://example.com/property1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "5",
+    "valueType": null
+  },
+  {
+    "attributeId": "http://example.com/property1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "3",
+    "valueType": null
+  },
+  {
+    "attributeId": "http://example.com/property2",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property2",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "4",
+    "valueType": null
+  }
+]
+EOF
+}
+
+
+compare_pgrest_result4() {
+    echo hello
+    cat << EOF | jq | diff "$1" - >&3
+[
+  {
+    "attributeId": "http://example.com/property1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "8",
+    "valueType": null
+  },
+
+  { 
+    "attributeId": "http://example.com/property2",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property2",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "9",
+    "valueType": null
+  },
+  { 
+    "attributeId": "http://example.com/property1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "6",
+    "valueType": null
+  },
+  { 
+    "attributeId": "http://example.com/property2",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property2",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "7",
+    "valueType": null
+  },
+  {
+    "attributeId": "http://example.com/property1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "4",
+    "valueType": null
+  },
+  {
+    "attributeId": "http://example.com/property2",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property2",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "5",
+    "valueType": null
+  }
+]
+EOF
+}
+
 
 setup() {
     # shellcheck disable=SC2086
@@ -247,7 +354,7 @@ setup() {
 }
 
 @test "test agent starting up and sending data array" {
-    #$SKIP
+    $SKIP
     init_device_file
     password=$(get_password)
     token=$(get_token "$password")
@@ -262,5 +369,50 @@ setup() {
     pkill -f iff-agent
     get_tsdb_samples "${DEVICE_ID}" 2 "${token}" > ${PGREST_RESULT}
     run compare_pgrest_result2 ${PGREST_RESULT}
+    [ "${status}" -eq "0" ]
+}
+
+@test "sending data over tcp" {
+    $SKIP
+    init_device_file
+    password=$(get_password)
+    token=$(get_token "$password")
+    echo $token Marcel $password
+    (cd ${NGSILD_AGENT_DIR}/util && bash ./get-onboarding-token.sh -p $password ${USER})
+    (cd ${NGSILD_AGENT_DIR}/util && bash ./activate.sh -f)
+    cp ${AGENT_CONFIG1} ${NGSILD_AGENT_DIR}/config/config.json
+    (cd ${NGSILD_AGENT_DIR} && exec stdbuf -oL node ./iff-agent.js) &
+    sleep 2
+    (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -at "${PROPERTY1}" 3 "${PROPERTY2}" 4 )
+    sleep 1
+    (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -t "${PROPERTY1}" 5 )
+    sleep 1
+    pkill -f iff-agent
+    get_tsdb_samples "${DEVICE_ID}" 3 "${token}" > ${PGREST_RESULT}
+    run compare_pgrest_result3 ${PGREST_RESULT}
+    [ "${status}" -eq "0" ]
+}
+
+@test "sending data without utils directly to TCP/UDP API" {
+    #$SKIP
+    init_device_file
+    password=$(get_password)
+    token=$(get_token "$password")
+    echo $token Marcel $password
+    (cd ${NGSILD_AGENT_DIR}/util && bash ./get-onboarding-token.sh -p $password ${USER})
+    (cd ${NGSILD_AGENT_DIR}/util && bash ./activate.sh -f)
+    cp ${AGENT_CONFIG1} ${NGSILD_AGENT_DIR}/config/config.json
+    (cd ${NGSILD_AGENT_DIR} && exec stdbuf -oL node ./iff-agent.js) &
+    sleep 2
+    echo -n '[{"n": "'$PROPERTY1'", "v": "4"},{"n": "'$PROPERTY2'", "v": "5"}]' >/dev/tcp/127.0.0.1/7070
+    sleep 1
+    echo -n '[{"n": "'$PROPERTY1'", "v": "6"},{"n": "'$PROPERTY2'", "v": "7"}]' >/dev/udp/127.0.0.1/41234
+    sleep 1
+    echo -n '{"n": "'$PROPERTY1'", "v": "8"}' >/dev/tcp/127.0.0.1/7070
+    echo '{"n": "'$PROPERTY2'", "v": "9"}' >/dev/udp/127.0.0.1/41234
+    sleep 1
+    pkill -f iff-agent
+    get_tsdb_samples "${DEVICE_ID}" 6 "${token}" > ${PGREST_RESULT}
+    run compare_pgrest_result4 ${PGREST_RESULT}
     [ "${status}" -eq "0" ]
 }
