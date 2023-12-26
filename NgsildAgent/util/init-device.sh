@@ -17,7 +17,7 @@ set -e
 
 . common.sh
 
-keycloakurl="http://keycloak.local/auth/realms/iff"
+keycloakurl="http://keycloak.local/auth/realms"
 realmid="iff"
 usage="Usage: $(basename $0) <deviceId> <gatewayId> [-k keycloakurl] [-r realmId]\nDefaults: \nkeycloakurl=${keycloakurl}\nrealmid=${realmid}\n"
 while getopts 'k:r:h' opt; do

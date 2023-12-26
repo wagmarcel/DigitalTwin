@@ -77,9 +77,10 @@ fi
 
 
 keycloakurl=$(jq -r '.keycloak_url' "$DEVICE_FILE")
+realmid=$(jq -r '.realm_id' "$DEVICE_FILE")
 
 
-ONBOARDING_TOKEN_ENDPOINT="$keycloakurl/protocol/openid-connect/token"
+ONBOARDING_TOKEN_ENDPOINT="$keycloakurl/${realmid}/protocol/openid-connect/token"
 
 response_token=$(curl -X POST "$ONBOARDING_TOKEN_ENDPOINT"  -d "client_id=device" \
 -d "grant_type=password" -d "password=${password}" -d "username=${username}" 2>/dev/null | jq '.')

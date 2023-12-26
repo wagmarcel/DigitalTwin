@@ -17,11 +17,14 @@ set +e
 
 . common.sh
 
-usage="Usage: $(basename $0) [-a] [<propertyname> <value>]+ \n"
-while getopts 'ah' opt; do
+usage="Usage: $(basename $0) [-a] [-t] [<propertyname> <value>]+ \n"
+while getopts 'ath' opt; do
   case "$opt" in
     a)
       array=true
+      ;;
+    t)
+      tcp=true
       ;;
     ?|h)
       printf "$usage"
@@ -60,11 +63,22 @@ if [ -z "$CONFIG_FILE" ]; then
   echo "$CONFIG_FILE does not exists. Please prepare it!"
   exit 1
 fi
-udpPort=$(jq '.listeners.udp_port' $CONFIG_FILE)
+if [ -z "$tcp" ]; then
+  udpPort=$(jq '.listeners.udp_port' $CONFIG_FILE)
 
-if [ -z $udpPort ]; then
-  echo "No udp Port found. Please check $CONFIG_FILE"
+  if [ -z $udpPort ]; then
+    echo "No UDP Port found. Please check $CONFIG_FILE"
+  fi
+
+  echo "sending $payload to local UDP port ${udpPort}"
+  echo -n "$payload"  > /dev/udp/127.0.0.1/${udpPort}
+else
+  tcpPort=$(jq '.listeners.tcp_port' $CONFIG_FILE)
+
+  if [ -z $tcpPort ]; then
+    echo "No TCP Port found. Please check $CONFIG_FILE"
+  fi
+
+  echo "sending $payload to local TCP port ${tcpPort}"
+  echo -n "$payload"  > /dev/tcp/127.0.0.1/${tcpPort}
 fi
-
-echo "sending $payload to udp port ${udpPort}"
-echo -n "$payload"  > /dev/udp/127.0.0.1/${udpPort}

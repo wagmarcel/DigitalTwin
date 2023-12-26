@@ -1,11 +1,20 @@
-#!/usr/bin/env bats
-# shellcheck disable=SC2005
-# if [ -z "${SELF_HOSTED_RUNNER}" ]; then
-#    SUDO="sudo -E"
-# fi
+# Copyright (c) 2023 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 
 DEBUG=${DEBUG:-false}
-SKIP=skip
+SKIP=
 NAMESPACE=iff
 USER_SECRET=secret/credential-iff-realm-user-iff
 USER=realm_user
@@ -39,7 +48,7 @@ PROPERTY1="http://example.com/property1"
 PROPERTY2="http://example.com/property2"
 PGREST_URL="http://pgrest.local/entityhistory"
 PGREST_RESULT=/tmp/PGREST_RESULT
-
+EMQX_INGRESS=$(kubectl -n iff get svc/emqx-listeners -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 
 
 cat << EOF > ${AGENT_CONFIG1}
@@ -62,7 +71,7 @@ cat << EOF > ${AGENT_CONFIG1}
         },
         "connector": {
                 "mqtt": {
-                        "host": "emqx-listeners",
+                        "host": "${EMQX_INGRESS}",
                         "port": 1883,
                         "websockets": false,
                         "qos": 1,
@@ -394,7 +403,7 @@ setup() {
 }
 
 @test "sending data without utils directly to TCP/UDP API" {
-    #$SKIP
+    $SKIP
     init_device_file
     password=$(get_password)
     token=$(get_token "$password")

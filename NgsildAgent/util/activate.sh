@@ -93,17 +93,18 @@ if [ -z "$refresh_token" ]; then
 fi
 
 keycloakurl=$(jq -r '.keycloak_url' "$DEVICE_FILE")
+realmid=$(jq -r '.realm_id' "$DEVICE_FILE")
 gatewayid=$(jq -r '.gateway_id' "$DEVICE_FILE")
 deviceid=$(jq -r '.device_id' "$DEVICE_FILE")
 
 # Check if the file exists
-if [ -z "$keycloakurl" ] || [ -z "$gatewayid" ] ||[ -z "$deviceid" ]; then
+if [ -z "$keycloakurl" ] || [ -z "$gatewayid" ] || [ -z "$deviceid" ] || [ -z "$realmid" ]; then
     echo "device json file doesnot contain required item, please do initialize device."
     exit 1
 fi
 
 # Define the API endpoint
-DEVICE_TOKEN_ENDPOINT="$keycloakurl/protocol/openid-connect/token"
+DEVICE_TOKEN_ENDPOINT="$keycloakurl/${realmid}/protocol/openid-connect/token"
 echo "API endpoint is :" $DEVICE_TOKEN_ENDPOINT
 # Make the curl request with access token as a header and store the response in the temporary file
 device_token=$(curl -X POST "$DEVICE_TOKEN_ENDPOINT"  -d "client_id=device" \
