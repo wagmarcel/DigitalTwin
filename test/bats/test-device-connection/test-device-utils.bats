@@ -36,6 +36,7 @@ MQTT_RESULT=/tmp/MQTT_RES
 SECRET_FILENAME=/tmp/SECRET
 AGENT_CONFIG1=/tmp/AGENT_CONFIG1
 PROPERTY1="http://example.com/property1"
+PROPERTY2="http://example.com/property2"
 PGREST_URL="http://pgrest.local/entityhistory"
 PGREST_RESULT=/tmp/PGREST_RESULT
 
@@ -120,7 +121,7 @@ get_tsdb_samples() {
     entityId=$1
     limit=$2
     token=$3
-    curl  -H "Authorization: Bearer $token" "${PGREST_URL}?limit=${limit}&order=observedAt.desc&entityId=eq.${entityId}" 2>/dev/null | jq -S 'map(del(.modifiedAt, .observedAt))'
+    curl  -H "Authorization: Bearer $token" "${PGREST_URL}?limit=${limit}&order=observedAt.desc,attributeId.asc&entityId=eq.${entityId}" 2>/dev/null | jq -S 'map(del(.modifiedAt, .observedAt))'
 }
 
 # compare entity with reference
@@ -136,6 +137,36 @@ compare_pgrest_result1() {
     "index": 0,
     "nodeType": "@value",
     "value": "0",
+    "valueType": null
+  }
+]
+EOF
+}
+
+# compare entity with reference
+# $1: file to compare with
+compare_pgrest_result2() {
+    echo hello
+    cat << EOF | jq | diff "$1" - >&3
+[
+  {
+    "attributeId": "http://example.com/property1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "1",
+    "valueType": null
+  },
+  {
+    "attributeId": "http://example.com/property2",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property2",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "2",
     "valueType": null
   }
 ]
@@ -198,11 +229,10 @@ setup() {
 }
 
 @test "test agent starting up and sending data" {
-    #$SKIP
+    $SKIP
     init_device_file
     password=$(get_password)
     token=$(get_token "$password")
-    echo $token Marcel $password
     (cd ${NGSILD_AGENT_DIR}/util && bash ./get-onboarding-token.sh -p $password ${USER})
     (cd ${NGSILD_AGENT_DIR}/util && bash ./activate.sh -f)
     cp ${AGENT_CONFIG1} ${NGSILD_AGENT_DIR}/config/config.json
@@ -213,6 +243,24 @@ setup() {
     pkill -f iff-agent
     get_tsdb_samples "${DEVICE_ID}" 1 "${token}" > ${PGREST_RESULT}
     run compare_pgrest_result1 ${PGREST_RESULT}
-    #false
+    [ "${status}" -eq "0" ]
+}
+
+@test "test agent starting up and sending data array" {
+    #$SKIP
+    init_device_file
+    password=$(get_password)
+    token=$(get_token "$password")
+    echo $token Marcel $password
+    (cd ${NGSILD_AGENT_DIR}/util && bash ./get-onboarding-token.sh -p $password ${USER})
+    (cd ${NGSILD_AGENT_DIR}/util && bash ./activate.sh -f)
+    cp ${AGENT_CONFIG1} ${NGSILD_AGENT_DIR}/config/config.json
+    (cd ${NGSILD_AGENT_DIR} && exec stdbuf -oL node ./iff-agent.js) &
+    sleep 2
+    (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -a "${PROPERTY1}" 1 "${PROPERTY2}" 2 )
+    sleep 2
+    pkill -f iff-agent
+    get_tsdb_samples "${DEVICE_ID}" 2 "${token}" > ${PGREST_RESULT}
+    run compare_pgrest_result2 ${PGREST_RESULT}
     [ "${status}" -eq "0" ]
 }
