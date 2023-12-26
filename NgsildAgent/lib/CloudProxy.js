@@ -44,7 +44,7 @@ function updateSecrets (me) {
   me.secret = {
     deviceToken: deviceConf.device_token,
     refreshToken: deviceConf.refresh_token,
-    refreshUrl: deviceConf.keycloak_url,
+    refreshUrl: deviceConf.keycloak_url + '/' + deviceConf.realm_id,
     deviceTokenExpire: deviceConf.device_token_expire
   };
   return deviceConf;
@@ -108,7 +108,7 @@ class CloudProxy {
     this.secret = {
       deviceToken: deviceConf.device_token,
       refreshToken: deviceConf.refresh_token,
-      refreshUrl: deviceConf.keycloak_url,
+      refreshUrl: deviceConf.keycloak_url + '/' + deviceConf.realm_id,
       deviceTokenExpire: deviceConf.device_token_expire
     };
     this.max_retries = deviceConf.activation_retries || 10;
