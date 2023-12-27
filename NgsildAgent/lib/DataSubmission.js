@@ -89,7 +89,11 @@ class DataSubmission {
       const isOnline = await me.connector.checkOnlineState();
       if (isOnline) {
         if (me.sessionIsOnline === 0) { // if session was offline, go into catch-up mode
-          me.sessionIsOnline = 2; // 2 means online but catch up
+          if (me.dbManager.isEnabled()) {
+            me.sessionIsOnline = 2; // 2 means online but catch up
+          } else {
+            me.sessionIsOnline = 1;
+          }
         }
       } else {
         me.sessionIsOnline = 0;

@@ -13,8 +13,17 @@
 # limitations under the License.
 #
 
+load "../lib/utils"
+load "../lib/detik"
+# shellcheck disable=SC2034 # these variables are used by detik
+DETIK_CLIENT_NAME="kubectl"
+# shellcheck disable=SC2034
+DETIK_CLIENT_NAMESPACE="iff"
+# shellcheck disable=SC2034
+DETIK_DEBUG="true"
+
 DEBUG=${DEBUG:-false}
-SKIP=
+SKIP=skip
 NAMESPACE=iff
 USER_SECRET=secret/credential-iff-realm-user-iff
 USER=realm_user
@@ -44,11 +53,12 @@ MQTT_SUB=/tmp/MQTT_SUB
 MQTT_RESULT=/tmp/MQTT_RES
 SECRET_FILENAME=/tmp/SECRET
 AGENT_CONFIG1=/tmp/AGENT_CONFIG1
+AGENT_CONFIG2=/tmp/AGENT_CONFIG2
 PROPERTY1="http://example.com/property1"
 PROPERTY2="http://example.com/property2"
 PGREST_URL="http://pgrest.local/entityhistory"
 PGREST_RESULT=/tmp/PGREST_RESULT
-EMQX_INGRESS=$(kubectl -n iff get svc/emqx-listeners -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+EMQX_INGRESS=$(kubectl -n ${NAMESPACE} get svc/emqx-listeners -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 
 
 cat << EOF > ${AGENT_CONFIG1}
@@ -68,6 +78,42 @@ cat << EOF > ${AGENT_CONFIG1}
                 "retentionInSeconds": 3600,
                 "housekeepingIntervalInSeconds": 60,
                 "enabled": false
+        },
+        "connector": {
+                "mqtt": {
+                        "host": "${EMQX_INGRESS}",
+                        "port": 1883,
+                        "websockets": false,
+                        "qos": 1,
+                        "retain": false,
+                        "secure": false,
+                        "retries": 5,
+                        "strictSSL": false,
+                        "sparkplugB": true,
+                        "version": "spBv1.0"          
+                }
+        }
+}
+EOF
+
+
+cat << EOF > ${AGENT_CONFIG2}
+{
+        "data_directory": "./data",
+        "listeners": {
+                "udp_port": 41234,
+                "tcp_port": 7070
+        },
+        "logger": {
+                "level": "info",
+                "path": "/tmp/",
+                "max_size": 134217728
+        },
+        "dbManager": {
+                "file": "metrics.db",
+                "retentionInSeconds": 3600,
+                "housekeepingIntervalInSeconds": 600,
+                "enabled": true
         },
         "connector": {
                 "mqtt": {
@@ -289,6 +335,44 @@ EOF
 }
 
 
+compare_pgrest_result4() {
+    echo hello
+    cat << EOF | jq | diff "$1" - >&3
+[
+  {
+    "attributeId": "http://example.com/property1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "12",
+    "valueType": null
+  },
+  {
+    "attributeId": "http://example.com/property1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "10",
+    "valueType": null
+  },
+  {
+    "attributeId": "http://example.com/property2",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property2",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "11",
+    "valueType": null
+  }
+]
+EOF
+}
+
 setup() {
     # shellcheck disable=SC2086
     if [ "$DEBUG" != "true" ]; then
@@ -422,6 +506,62 @@ setup() {
     sleep 1
     pkill -f iff-agent
     get_tsdb_samples "${DEVICE_ID}" 6 "${token}" > ${PGREST_RESULT}
+    run compare_pgrest_result4 ${PGREST_RESULT}
+    [ "${status}" -eq "0" ]
+}
+
+@test "Test agent reconnects" {
+    #$SKIP
+    init_device_file
+    password=$(get_password)
+    token=$(get_token "$password")
+    echo $token Marcel $password
+    (cd ${NGSILD_AGENT_DIR}/util && bash ./get-onboarding-token.sh -p $password ${USER})
+    (cd ${NGSILD_AGENT_DIR}/util && bash ./activate.sh -f)
+    cp ${AGENT_CONFIG1} ${NGSILD_AGENT_DIR}/config/config.json
+    (cd ${NGSILD_AGENT_DIR} && exec stdbuf -oL node ./iff-agent.js) &
+    sleep 2
+    (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -at "${PROPERTY1}" 10 "${PROPERTY2}" 11 )
+    sleep 1
+    kubectl -n${NAMESPACE} -l apps.emqx.io/instance=emqx delete pod
+    run try "at most 30 times every 5s to find 1 pod named 'emqx-core' with 'status.containerStatuses[0].ready' being 'true'"
+    [ "${status}" -eq "0" ]
+    sleep 5
+    (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -t "${PROPERTY1}" 12 )
+    sleep 1
+    pkill -f iff-agent
+    get_tsdb_samples "${DEVICE_ID}" 3 "${token}" > ${PGREST_RESULT}
+    run compare_pgrest_result4 ${PGREST_RESULT}
+    [ "${status}" -eq "0" ]
+}
+
+@test "Test agent reconnects with offline storage" {
+    $SKIP
+    init_device_file
+    password=$(get_password)
+    token=$(get_token "$password")
+    echo $token Marcel $password
+    (cd ${NGSILD_AGENT_DIR}/util && bash ./get-onboarding-token.sh -p $password ${USER})
+    (cd ${NGSILD_AGENT_DIR}/util && bash ./activate.sh -f)
+    cp ${AGENT_CONFIG2} ${NGSILD_AGENT_DIR}/config/config.json
+    (cd ${NGSILD_AGENT_DIR} && exec stdbuf -oL node ./iff-agent.js) &
+    sleep 2
+    (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -at "${PROPERTY1}" 13 "${PROPERTY2}" 14 )
+    sleep 1
+    kubectl -n${NAMESPACE} -l apps.emqx.io/instance=emqx delete pod
+    sleep 2
+    (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -at "${PROPERTY1}" 15 "${PROPERTY2}" 16)
+    sleep 1
+    (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -t "${PROPERTY1}" 17 )
+    sleep 1
+    (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -t "${PROPERTY1}" 18 )
+    run try "at most 30 times every 5s to find 1 pod named 'emqx-core' with 'status.containerStatuses[0].ready' being 'true'"
+    [ "${status}" -eq "0" ]
+    sleep 10
+    (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -t "${PROPERTY1}" 19 )
+    sleep 1
+    pkill -f iff-agent
+    get_tsdb_samples "${DEVICE_ID}" 3 "${token}" > ${PGREST_RESULT}
     run compare_pgrest_result4 ${PGREST_RESULT}
     [ "${status}" -eq "0" ]
 }
