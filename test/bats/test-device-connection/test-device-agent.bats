@@ -59,6 +59,7 @@ PROPERTY2="http://example.com/property2"
 PGREST_URL="http://pgrest.local/entityhistory"
 PGREST_RESULT=/tmp/PGREST_RESULT
 EMQX_INGRESS=$(kubectl -n ${NAMESPACE} get svc/emqx-listeners -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+MQTT_BRIDGE_DEPLOYMENT="deployment/mqtt-bridge"
 
 
 cat << EOF > ${AGENT_CONFIG1}
@@ -149,6 +150,7 @@ init_device_file() {
 get_password() {
     kubectl -n ${NAMESPACE} get ${USER_SECRET} -o jsonpath='{.data.password}' | base64 -d
 }
+
 
 check_onboarding_token() {
     access_token=$(jq '.access_token' ${NGSILD_AGENT_DIR}/data/${ONBOARDING_TOKEN} | tr -d '"')
@@ -511,7 +513,7 @@ setup() {
 }
 
 @test "Test agent reconnects" {
-    #$SKIP
+    $SKIP
     init_device_file
     password=$(get_password)
     token=$(get_token "$password")
@@ -526,7 +528,7 @@ setup() {
     kubectl -n${NAMESPACE} -l apps.emqx.io/instance=emqx delete pod
     run try "at most 30 times every 5s to find 1 pod named 'emqx-core' with 'status.containerStatuses[0].ready' being 'true'"
     [ "${status}" -eq "0" ]
-    sleep 5
+    sleep 15 # give mqtt-bridge time to settle
     (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -t "${PROPERTY1}" 12 )
     sleep 1
     pkill -f iff-agent
@@ -536,7 +538,7 @@ setup() {
 }
 
 @test "Test agent reconnects with offline storage" {
-    $SKIP
+    #$SKIP
     init_device_file
     password=$(get_password)
     token=$(get_token "$password")
@@ -557,7 +559,7 @@ setup() {
     (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -t "${PROPERTY1}" 18 )
     run try "at most 30 times every 5s to find 1 pod named 'emqx-core' with 'status.containerStatuses[0].ready' being 'true'"
     [ "${status}" -eq "0" ]
-    sleep 10
+    sleep 15
     (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -t "${PROPERTY1}" 19 )
     sleep 1
     pkill -f iff-agent

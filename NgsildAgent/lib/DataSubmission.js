@@ -104,10 +104,11 @@ class DataSubmission {
         // so fetch it and ignore original messages.
         try {
           const result = await me.dbManager.mostRecentPropertyUpdateStrategy();
-          msgs = result.msgs;
+          msgs = [];
           msgKeys = [];
-          for (const msg of msgs) {
+          for (const msg of result.msgs) {
             msgKeys.push({ n: msg.n, on: msg.on });
+            msgs.push({ n: msg.t + '/' + msg.n, on: msg.on, v: msg.v });
           }
           if (result.finished) {
             me.sessionIsOnline = 1;
