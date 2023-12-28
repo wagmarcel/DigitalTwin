@@ -9,4 +9,3 @@ REALM_ID=iff
 KEYCLOAK_URL="http://keycloak.local/auth/realms"
 MQTT_URL=emqx-listeners:1883
 KAFKA_BOOTSTRAP=my-cluster-kafka-bootstrap:9092
-EMQX_INGRESS=$(kubectl -n ${NAMESPACE} get svc/emqx-listeners -o jsonpath='{.status.loadBalancer.ingress[0].ip}')

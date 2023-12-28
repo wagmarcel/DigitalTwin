@@ -17,6 +17,7 @@ load "../lib/utils"
 load "../lib/detik"
 load "../lib/config.sh"
 load "../lib/db.sh"
+load "../lib/mqtt.sh"
 # shellcheck disable=SC2034 # these variables are used by detik
 DETIK_CLIENT_NAME="kubectl"
 # shellcheck disable=SC2034
@@ -80,7 +81,7 @@ cat << EOF > ${AGENT_CONFIG1}
         },
         "connector": {
                 "mqtt": {
-                        "host": "${EMQX_INGRESS}",
+                        "host": "${MQTT_SERVICE}",
                         "port": 1883,
                         "websockets": false,
                         "qos": 1,
@@ -116,7 +117,7 @@ cat << EOF > ${AGENT_CONFIG2}
         },
         "connector": {
                 "mqtt": {
-                        "host": "${EMQX_INGRESS}",
+                        "host": "${MQTT_SERVICE}",
                         "port": 1883,
                         "websockets": false,
                         "qos": 1,
@@ -434,6 +435,16 @@ compare_pgrest_result7() {
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@id",
+    "value": "urn:iff:testdevice11",
+    "valueType": null
+  },
+  { 
+    "attributeId": "http://example.com/relationship1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Relationship",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/relationship1",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@id",
     "value": "urn:iff:testdevice10",
     "valueType": null
   },
@@ -496,19 +507,8 @@ compare_pgrest_result7() {
     "nodeType": "@id",
     "value": "urn:iff:testdevice:9",
     "valueType": null
-  },
-  { 
-    "attributeId": "http://example.com/relationship1",
-    "attributeType": "https://uri.etsi.org/ngsi-ld/Relationship",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/relationship1",
-    "entityId": "urn:iff:testdevice:1",
-    "index": 0,
-    "nodeType": "@id",
-    "value": "urn:iff:testdevice10",
-    "valueType": null
   }
 ]
-
 EOF
 }
 
@@ -571,6 +571,7 @@ setup() {
     $SKIP
     init_device_file
     delete_tmp
+    mqtt_setup_service
     password=$(get_password)
     token=$(get_token "$password")
     (cd ${NGSILD_AGENT_DIR}/util && bash ./get-onboarding-token.sh -p $password ${USER})
@@ -581,6 +582,7 @@ setup() {
     (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh "${PROPERTY1}" 0 )
     sleep 2
     pkill -f iff-agent
+    mqtt_delete_service
     get_tsdb_samples "${DEVICE_ID}" 1 "${token}" > ${PGREST_RESULT}
     run compare_pgrest_result1 ${PGREST_RESULT}
     [ "${status}" -eq "0" ]
@@ -590,6 +592,7 @@ setup() {
     $SKIP
     init_device_file
     delete_tmp
+    mqtt_setup_service
     password=$(get_password)
     token=$(get_token "$password")
     echo $token Marcel $password
@@ -601,6 +604,7 @@ setup() {
     (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -a "${PROPERTY1}" 1 "${PROPERTY2}" 2 )
     sleep 2
     pkill -f iff-agent
+    mqtt_delete_service
     get_tsdb_samples "${DEVICE_ID}" 2 "${token}" > ${PGREST_RESULT}
     run compare_pgrest_result2 ${PGREST_RESULT}
     [ "${status}" -eq "0" ]
@@ -610,6 +614,7 @@ setup() {
     $SKIP
     init_device_file
     delete_tmp
+    mqtt_setup_service
     password=$(get_password)
     token=$(get_token "$password")
     echo $token Marcel $password
@@ -623,6 +628,7 @@ setup() {
     (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -t "${PROPERTY1}" 5 )
     sleep 1
     pkill -f iff-agent
+    mqtt_delete_service
     get_tsdb_samples "${DEVICE_ID}" 3 "${token}" > ${PGREST_RESULT}
     run compare_pgrest_result3 ${PGREST_RESULT}
     [ "${status}" -eq "0" ]
@@ -632,6 +638,7 @@ setup() {
     $SKIP
     init_device_file
     delete_tmp
+    mqtt_setup_service
     password=$(get_password)
     token=$(get_token "$password")
     echo $token Marcel $password
@@ -648,15 +655,17 @@ setup() {
     echo '{"n": "'$PROPERTY2'", "v": "9"}' >/dev/udp/127.0.0.1/41234
     sleep 1
     pkill -f iff-agent
+    mqtt_delete_service
     get_tsdb_samples "${DEVICE_ID}" 6 "${token}" > ${PGREST_RESULT}
     run compare_pgrest_result4 ${PGREST_RESULT}
     [ "${status}" -eq "0" ]
 }
 
-@test "Test agent reconnects" {
+@test "Test agent reconnects after service interruption" {
     $SKIP
     init_device_file
     delete_tmp
+    mqtt_setup_service
     password=$(get_password)
     token=$(get_token "$password")
     echo $token Marcel $password
@@ -667,22 +676,24 @@ setup() {
     sleep 2
     (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -at "${PROPERTY1}" 10 "${PROPERTY2}" 11 )
     sleep 1
-    kubectl -n${NAMESPACE} -l apps.emqx.io/instance=emqx delete pod
-    run try "at most 30 times every 5s to find 1 pod named 'emqx-core' with 'status.containerStatuses[0].ready' being 'true'"
-    [ "${status}" -eq "0" ]
-    sleep 15 # give mqtt-bridge time to settle
+    mqtt_delete_service
+    sleep 10
+    mqtt_setup_service
+    sleep 2
     (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -t "${PROPERTY1}" 12 )
     sleep 1
     pkill -f iff-agent
+    mqtt_delete_service
     get_tsdb_samples "${DEVICE_ID}" 3 "${token}" > ${PGREST_RESULT}
     run compare_pgrest_result5 ${PGREST_RESULT}
     [ "${status}" -eq "0" ]
 }
 
-@test "Test agent reconnects with offline storage" {
+@test "Test agent reconnects with synchronizing offline storage" {
     $SKIP
     init_device_file
     delete_tmp
+    mqtt_setup_service
     password=$(get_password)
     token=$(get_token "$password")
     echo $token Marcel $password
@@ -693,19 +704,19 @@ setup() {
     sleep 2
     (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -at "${PROPERTY1}" 13 "${PROPERTY2}" 14 )
     sleep 1
-    kubectl -n${NAMESPACE} -l apps.emqx.io/instance=emqx delete pod
+    mqtt_delete_service
     sleep 2
     (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -at "${PROPERTY1}" 15 "${PROPERTY2}" 16)
     sleep 1
     (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -t "${PROPERTY1}" 17 )
     sleep 1
     (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -t "${PROPERTY1}" 18 )
-    run try "at most 30 times every 5s to find 1 pod named 'emqx-core' with 'status.containerStatuses[0].ready' being 'true'"
-    [ "${status}" -eq "0" ]
-    sleep 15
+    mqtt_setup_service
+    sleep 2
     (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -t "${PROPERTY1}" 19 )
     sleep 1
     pkill -f iff-agent
+    mqtt_delete_service
     get_tsdb_samples "${DEVICE_ID}" 4 "${token}" > ${PGREST_RESULT}
     run compare_pgrest_result6 ${PGREST_RESULT}
     [ "${status}" -eq "0" ]
@@ -715,6 +726,7 @@ setup() {
     $SKIP
     init_device_file
     delete_tmp
+    mqtt_setup_service
     password=$(get_password)
     token=$(get_token "$password")
     echo $token Marcel $password
@@ -728,9 +740,11 @@ setup() {
     echo -n '[{"n": "'$PROPERTY1'", "v": "22"},{"n": "'$RELATIONSHIP1'", "v": "urn:iff:testdevice:8", "t": "Relationship"}, {"n": "'$PROPERTY2'", "v": "23", "t": "Property"}]' >/dev/udp/127.0.0.1/41234
     sleep 1
     echo -n '{"n": "'$RELATIONSHIP1'", "v": "urn:iff:testdevice10", "t": "Relationship"}' >/dev/tcp/127.0.0.1/7070
+    sleep 1
     echo -n '{"n": "'$RELATIONSHIP1'", "v": "urn:iff:testdevice11", "t": "Relationship"}' >/dev/udp/127.0.0.1/41234
     sleep 1
     pkill -f iff-agent
+    mqtt_delete_service
     get_tsdb_samples "${DEVICE_ID}" 8 "${token}" > ${PGREST_RESULT}
     run compare_pgrest_result7 ${PGREST_RESULT}
     [ "${status}" -eq "0" ]
@@ -742,6 +756,7 @@ setup() {
     init_device_file
     delete_tmp
     db_setup_service
+    mqtt_setup_service
     password=$(get_password)
     token=$(get_token "$password")
     echo $token Marcel $password
@@ -764,6 +779,7 @@ setup() {
     echo -n ${send_array} >/dev/tcp/127.0.0.1/7070
     sleep 1
     pkill -f iff-agent
+    mqtt_delete_service
     run try "at most 30 times every 5s to find 1 service named '${DB_SERVICE}'"
     query="SELECT SUM(CAST(value as INTEGER)) AS total FROM (SELECT value FROM ${TSDB_TABLE} ORDER BY \"observedAt\" DESC LIMIT 1000) AS subquery;"
     result=$(db_query "$query" "$NAMESPACE" "$POSTGRES_SECRET" "$TSDB_DATABASE" "$DBUSER")
