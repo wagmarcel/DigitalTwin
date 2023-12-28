@@ -23,7 +23,7 @@ DETIK_CLIENT_NAMESPACE="iff"
 DETIK_DEBUG="true"
 
 DEBUG=${DEBUG:-false}
-SKIP=skip
+SKIP=
 NAMESPACE=iff
 USER_SECRET=secret/credential-iff-realm-user-iff
 USER=realm_user
@@ -268,7 +268,6 @@ EOF
 
 
 compare_pgrest_result4() {
-    echo hello
     cat << EOF | jq | diff "$1" - >&3
 [
   {
@@ -337,8 +336,7 @@ EOF
 }
 
 
-compare_pgrest_result4() {
-    echo hello
+compare_pgrest_result5() {
     cat << EOF | jq | diff "$1" - >&3
 [
   {
@@ -374,6 +372,56 @@ compare_pgrest_result4() {
 ]
 EOF
 }
+
+compare_pgrest_result6() {
+    echo hello
+    cat << EOF | jq | diff "$1" - >&3
+[
+  {
+    "attributeId": "http://example.com/property1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "19",
+    "valueType": null
+  },
+  {
+    "attributeId": "http://example.com/property2",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property2",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "16",
+    "valueType": null
+  },
+  {
+    "attributeId": "http://example.com/property1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "13",
+    "valueType": null
+  },
+  {
+    "attributeId": "http://example.com/property2",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property2",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "14",
+    "valueType": null
+  }
+]
+
+EOF
+}
+
 
 setup() {
     # shellcheck disable=SC2086
@@ -489,7 +537,7 @@ setup() {
 }
 
 @test "sending data without utils directly to TCP/UDP API" {
-    $SKIP
+    #$SKIP
     init_device_file
     password=$(get_password)
     token=$(get_token "$password")
@@ -533,12 +581,12 @@ setup() {
     sleep 1
     pkill -f iff-agent
     get_tsdb_samples "${DEVICE_ID}" 3 "${token}" > ${PGREST_RESULT}
-    run compare_pgrest_result4 ${PGREST_RESULT}
+    run compare_pgrest_result5 ${PGREST_RESULT}
     [ "${status}" -eq "0" ]
 }
 
 @test "Test agent reconnects with offline storage" {
-    #$SKIP
+    $SKIP
     init_device_file
     password=$(get_password)
     token=$(get_token "$password")
@@ -563,7 +611,7 @@ setup() {
     (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -t "${PROPERTY1}" 19 )
     sleep 1
     pkill -f iff-agent
-    get_tsdb_samples "${DEVICE_ID}" 3 "${token}" > ${PGREST_RESULT}
-    run compare_pgrest_result4 ${PGREST_RESULT}
+    get_tsdb_samples "${DEVICE_ID}" 4 "${token}" > ${PGREST_RESULT}
+    run compare_pgrest_result6 ${PGREST_RESULT}
     [ "${status}" -eq "0" ]
 }
