@@ -37,7 +37,7 @@ const startListener = async function () {
   // SparkplugB connector
   const sparkplugapiDataConnector = new SparkplugApiData(config);
   sparkplugapiDataConnector.init();
-  await sparkplugapiDataConnector.bind(brokerConnector, sparkplugapiDataConnector);
+  sparkplugapiDataConnector.bind(brokerConnector, sparkplugapiDataConnector);
   errorTypes.map(type =>
     process.on(type, async e => {
       try {
@@ -53,7 +53,6 @@ const startListener = async function () {
     process.once(type, async () => {
       process.kill(process.pid, type);
     }));
-  logger.info('Looks like I am ready.');
   try {
     fs.writeFileSync('/tmp/ready', 'ready');
     fs.writeFileSync('/tmp/healthy', 'healthy');

@@ -90,8 +90,7 @@ function Broker (conf, logger) {
           me.logger.info('Non Secure Connection to ' + me.host + ':' + me.port);
           me.client = mqtt.connect('mqtt://' + me.host + ':' + me.port, {
             username: me.crd.username,
-            password: me.crd.password,
-            protocolVersion: 5
+            password: me.crd.password
           });
         } else {
           me.logger.debug('Trying with Secure Connection to' + me.host + ':' + me.port);
@@ -181,38 +180,41 @@ function Broker (conf, logger) {
       }
     }
   };
-  me.bind = async function (topic, handler, context) {
+  me.bind = function (topic, handler, context, callback) {
     /**
          * since the bind and publish connect automatically,
          * it is require to chain the callbacks
          */
-    return new Promise((resolve, reject) => {
-      function connectCallback () {
-        me.logger.debug('Subscribing to: ' + topic);
-        me.client.subscribe(topic, { qos: 1 }, function (err, granted) {
-          if (err) {
-            reject(new Error('Cannot bind handler.'));
+    const toCallBack = callback;
+    function connectCallback () {
+      me.logger.debug('Subscribing to: ' + topic);
+      me.client.subscribe(topic, { qos: 1 }, function (err, granted) {
+        if (err) {
+          throw new Error('Cannot bind handler.');
+        }
+        me.logger.debug('grant ' + JSON.stringify(granted));
+        const topicAsPattern = granted[0].topic.replace(/\+/g, '[^<>]*');
+        me.logger.info('Topic Pattern :' + topicAsPattern);
+        me.attach(topicAsPattern, handler, context);
+        if (toCallBack) {
+          toCallBack();
+        }
+      });
+    }
+    if (!me.connected()) {
+      me.connect(function (err) {
+        if (!err) {
+          connectCallback();
+        } else {
+          me.logger.error(err);
+          if (toCallBack) {
+            toCallBack(err);
           }
-          me.logger.debug('grant ' + JSON.stringify(granted));
-          const topicAsPattern = granted[0].topic.replace(/\+/g, '[^<>]*');
-          me.logger.info('Topic Pattern :' + topicAsPattern);
-          me.attach(topicAsPattern, handler, context);
-          resolve();
-        });
-      }
-      if (!me.connected()) {
-        me.connect(function (err) {
-          if (!err) {
-            connectCallback();
-          } else {
-            me.logger.error(err);
-            reject(err);
-          }
-        });
-      } else {
-        connectCallback();
-      }
-    });
+        }
+      });
+    } else {
+      connectCallback();
+    }
   };
   me.unbind = function (topic, callback) {
     me.logger.debug('Unbinding from Topic ' + topic);

@@ -315,12 +315,14 @@ describe(fileToTest, function () {
       a: 1,
       c: 2
     };
+    let callHandler = null;
     const client = new mqtt.MqttClient();
 
     client.on = function (event, handler) {
       assert.isFunction(handler, 'The handle shall be a function');
       assert.isString(event, 'The event shall be string');
       // assert.equal(event, "message", "Invalid event listeneter");
+      callHandler = handler;
     };
 
     const myBroker = toTest.singleton(config, logger);
@@ -340,10 +342,10 @@ describe(fileToTest, function () {
       const granted = [{ topic: vtopic }];
       cb(null, granted);
     };
-    myBroker.connect(async function (err) {
+    myBroker.connect(function (err) {
       assert.isNull(err, 'None error shall returned');
-      await myBroker.bind(topicPattern, topicHandler);
-      done();
+      myBroker.bind(topicPattern, topicHandler);
+      callHandler('dev/' + id + '/act', JSON.stringify(msg));
     });
   });
   it('Shall Listen to on Message > discard improper message format >', function (done) {
@@ -404,10 +406,12 @@ describe(fileToTest, function () {
       a: 1,
       c: 2
     };
+    let callHandler = null;
     const client = new mqtt.MqttClient();
     client.on = function (event, handler) {
       assert.isFunction(handler, 'The handle shall be a function');
       assert.isString(event, 'The event shall be string');
+      callHandler = handler;
     };
 
     const myBroker = toTest.singleton(config, logger);
@@ -427,10 +431,12 @@ describe(fileToTest, function () {
       const granted = [{ topic: vtopic }];
       cb(null, granted);
     };
-    myBroker.connect(async function (err) {
+    myBroker.connect(function (err) {
       assert.isNull(err, 'None error shall returned');
-      await myBroker.bind(topicPattern, topicHandler, null);
-      done();
+      myBroker.bind(topicPattern, topicHandler, null, function () {
+        callHandler('dev/' + id + '/act', JSON.stringify(msg));
+      });
+      // myBroker.onMessage(realTopic, msg);
     });
   });
   it('Shall Disconnect from Broker>', function (done) {
@@ -542,10 +548,7 @@ describe(fileToTest, function () {
     const callback = function () {
       done();
     };
-    (async () => {
-      await myBroker.bind(topicPattern, topicHandler, null);
-      callback();
-    })();
+    myBroker.bind(topicPattern, topicHandler, null, callback);
   });
   it('Shall unbind and detach topic', function (done) {
     toTest.__set__('mqtt', mqtt);

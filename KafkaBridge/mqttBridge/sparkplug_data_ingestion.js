@@ -310,9 +310,22 @@ module.exports = class SparkplugHandler {
     }
   };
 
-  async connectTopics (context) {
-    await this.broker.bind(this.topics_subscribe.sparkplugb_data_ingestion, this.processDataIngestion, context);
+  connectTopics (context) {
+    this.broker.bind(this.topics_subscribe.sparkplugb_data_ingestion, this.processDataIngestion, context);
     return true;
+  };
+
+  handshake () {
+    if (this.broker) {
+      this.broker.on('reconnect', function () {
+        this.logger.debug('Reconnect topics');
+        this.broker.unbind(this.topics_subscribe.sparkplugb_data_ingestion, function () {
+          this.token = null;
+          this.connectTopics();
+          this.sessionObject = {};
+        });
+      });
+    }
   };
 
   // setup channel to provide error feedback to device agent
@@ -325,8 +338,9 @@ module.exports = class SparkplugHandler {
     * @description It's bind to the MQTT topics
     * @param broker
     */
-  async bind (broker, context) {
+  bind (broker, context) {
     this.broker = broker;
-    await this.connectTopics(context);
+    this.handshake();
+    this.connectTopics(context);
   };
 };
