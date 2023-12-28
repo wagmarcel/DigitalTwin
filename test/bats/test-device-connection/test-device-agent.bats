@@ -15,6 +15,8 @@
 
 load "../lib/utils"
 load "../lib/detik"
+load "../lib/config.sh"
+load "../lib/db.sh"
 # shellcheck disable=SC2034 # these variables are used by detik
 DETIK_CLIENT_NAME="kubectl"
 # shellcheck disable=SC2034
@@ -24,11 +26,8 @@ DETIK_DEBUG="true"
 
 DEBUG=${DEBUG:-false}
 SKIP=
-NAMESPACE=iff
-USER_SECRET=secret/credential-iff-realm-user-iff
-USER=realm_user
-REALM_ID=iff
-KEYCLOAK_URL="http://keycloak.local/auth/realms"
+
+
 TEST_DIR="$(dirname $BATS_TEST_FILENAME)"
 DEVICE_CLIENT_ID="device"
 CLIENT_ID=scorpio
@@ -43,10 +42,8 @@ DEVICE_ID2="testdevice2"
 DEVICE_TOKEN_SCOPE="device_id gateway mqtt-broker offline_access"
 DEVICE_TOKEN_AUDIENCE_FROM_EXCHANGE='["device","mqtt-broker","oisp-frontend"]'
 DEVICE_TOKEN_AUDIENCE_FROM_DIRECT='mqtt-broker'
-MQTT_URL=emqx-listeners:1883
 MQTT_TOPIC_NAME="spBv1.0/${NAMESPACE}/DDATA/${GATEWAY_ID}/${DEVICE_ID}"
 MQTT_MESSAGE='{"timestamp":1655974018778,"metrics":[{ "name":"Property/https://industry-fusion.com/types/v0.9/state","timestamp":1655974018777,"dataType":"string","value":"https://industry-fusion.com/types/v0.9/state_OFF"}],"seq":1}'
-KAFKA_BOOTSTRAP=my-cluster-kafka-bootstrap:9092
 KAFKACAT_ATTRIBUTES=/tmp/KAFKACAT_ATTRIBUTES
 KAFKACAT_ATTRIBUTES_TOPIC=iff.ngsild.attributes
 MQTT_SUB=/tmp/MQTT_SUB
@@ -56,10 +53,11 @@ AGENT_CONFIG1=/tmp/AGENT_CONFIG1
 AGENT_CONFIG2=/tmp/AGENT_CONFIG2
 PROPERTY1="http://example.com/property1"
 PROPERTY2="http://example.com/property2"
+RELATIONSHIP1="http://example.com/relationship1"
 PGREST_URL="http://pgrest.local/entityhistory"
 PGREST_RESULT=/tmp/PGREST_RESULT
-EMQX_INGRESS=$(kubectl -n ${NAMESPACE} get svc/emqx-listeners -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 MQTT_BRIDGE_DEPLOYMENT="deployment/mqtt-bridge"
+
 
 
 cat << EOF > ${AGENT_CONFIG1}
@@ -145,6 +143,10 @@ check_device_file_contains() {
 init_device_file() {
     (cd ${NGSILD_AGENT_DIR}/data && pwd && rm -f ${DEVICE_FILE})
     (cd ${NGSILD_AGENT_DIR}/util && bash ./init-device.sh "${DEVICE_ID}" "${GATEWAY_ID}")
+}
+
+delete_tmp() {
+  rm -f ${PGREST_RESULT}
 }
 
 get_password() {
@@ -374,7 +376,6 @@ EOF
 }
 
 compare_pgrest_result6() {
-    echo hello
     cat << EOF | jq | diff "$1" - >&3
 [
   {
@@ -422,6 +423,94 @@ compare_pgrest_result6() {
 EOF
 }
 
+
+compare_pgrest_result7() {
+    cat << EOF | jq | diff "$1" - >&3
+[ 
+  { 
+    "attributeId": "http://example.com/relationship1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Relationship",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/relationship1",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@id",
+    "value": "urn:iff:testdevice10",
+    "valueType": null
+  },
+  { 
+    "attributeId": "http://example.com/property1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "22",
+    "valueType": null
+  },
+  { 
+    "attributeId": "http://example.com/property2",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property2",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "23",
+    "valueType": null
+  },
+  { 
+    "attributeId": "http://example.com/relationship1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Relationship",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/relationship1",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@id",
+    "value": "urn:iff:testdevice:8",
+    "valueType": null
+  },
+  { 
+    "attributeId": "http://example.com/property1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "20",
+    "valueType": null
+  },
+  { 
+    "attributeId": "http://example.com/property2",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property2",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "21",
+    "valueType": null
+  },
+  { 
+    "attributeId": "http://example.com/relationship1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Relationship",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/relationship1",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@id",
+    "value": "urn:iff:testdevice:9",
+    "valueType": null
+  },
+  { 
+    "attributeId": "http://example.com/relationship1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Relationship",
+    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/relationship1",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@id",
+    "value": "urn:iff:testdevice10",
+    "valueType": null
+  }
+]
+
+EOF
+}
 
 setup() {
     # shellcheck disable=SC2086
@@ -481,6 +570,7 @@ setup() {
 @test "test agent starting up and sending data" {
     $SKIP
     init_device_file
+    delete_tmp
     password=$(get_password)
     token=$(get_token "$password")
     (cd ${NGSILD_AGENT_DIR}/util && bash ./get-onboarding-token.sh -p $password ${USER})
@@ -499,6 +589,7 @@ setup() {
 @test "test agent starting up and sending data array" {
     $SKIP
     init_device_file
+    delete_tmp
     password=$(get_password)
     token=$(get_token "$password")
     echo $token Marcel $password
@@ -518,6 +609,7 @@ setup() {
 @test "sending data over tcp" {
     $SKIP
     init_device_file
+    delete_tmp
     password=$(get_password)
     token=$(get_token "$password")
     echo $token Marcel $password
@@ -537,8 +629,9 @@ setup() {
 }
 
 @test "sending data without utils directly to TCP/UDP API" {
-    #$SKIP
+    $SKIP
     init_device_file
+    delete_tmp
     password=$(get_password)
     token=$(get_token "$password")
     echo $token Marcel $password
@@ -563,6 +656,7 @@ setup() {
 @test "Test agent reconnects" {
     $SKIP
     init_device_file
+    delete_tmp
     password=$(get_password)
     token=$(get_token "$password")
     echo $token Marcel $password
@@ -588,6 +682,7 @@ setup() {
 @test "Test agent reconnects with offline storage" {
     $SKIP
     init_device_file
+    delete_tmp
     password=$(get_password)
     token=$(get_token "$password")
     echo $token Marcel $password
@@ -614,4 +709,64 @@ setup() {
     get_tsdb_samples "${DEVICE_ID}" 4 "${token}" > ${PGREST_RESULT}
     run compare_pgrest_result6 ${PGREST_RESULT}
     [ "${status}" -eq "0" ]
+}
+
+@test "sending relationships and property mixed" {
+    $SKIP
+    init_device_file
+    delete_tmp
+    password=$(get_password)
+    token=$(get_token "$password")
+    echo $token Marcel $password
+    (cd ${NGSILD_AGENT_DIR}/util && bash ./get-onboarding-token.sh -p $password ${USER})
+    (cd ${NGSILD_AGENT_DIR}/util && bash ./activate.sh -f)
+    cp ${AGENT_CONFIG1} ${NGSILD_AGENT_DIR}/config/config.json
+    (cd ${NGSILD_AGENT_DIR} && exec stdbuf -oL node ./iff-agent.js) &
+    sleep 2
+    echo -n '[{"n": "'$PROPERTY1'", "v": "20"},{"n": "'$RELATIONSHIP1'", "v": "urn:iff:testdevice:9", "t": "Relationship"}, {"n": "'$PROPERTY2'", "v": "21", "t": "Property"}]' >/dev/tcp/127.0.0.1/7070
+    sleep 1
+    echo -n '[{"n": "'$PROPERTY1'", "v": "22"},{"n": "'$RELATIONSHIP1'", "v": "urn:iff:testdevice:8", "t": "Relationship"}, {"n": "'$PROPERTY2'", "v": "23", "t": "Property"}]' >/dev/udp/127.0.0.1/41234
+    sleep 1
+    echo -n '{"n": "'$RELATIONSHIP1'", "v": "urn:iff:testdevice10", "t": "Relationship"}' >/dev/tcp/127.0.0.1/7070
+    echo -n '{"n": "'$RELATIONSHIP1'", "v": "urn:iff:testdevice11", "t": "Relationship"}' >/dev/udp/127.0.0.1/41234
+    sleep 1
+    pkill -f iff-agent
+    get_tsdb_samples "${DEVICE_ID}" 8 "${token}" > ${PGREST_RESULT}
+    run compare_pgrest_result7 ${PGREST_RESULT}
+    [ "${status}" -eq "0" ]
+}
+
+
+@test "sending large array" {
+    $SKIP
+    init_device_file
+    delete_tmp
+    db_setup_service
+    password=$(get_password)
+    token=$(get_token "$password")
+    echo $token Marcel $password
+    (cd ${NGSILD_AGENT_DIR}/util && bash ./get-onboarding-token.sh -p $password ${USER})
+    (cd ${NGSILD_AGENT_DIR}/util && bash ./activate.sh -f)
+    cp ${AGENT_CONFIG1} ${NGSILD_AGENT_DIR}/config/config.json
+    (cd ${NGSILD_AGENT_DIR} && exec stdbuf -oL node ./iff-agent.js) &
+    send_array="["
+    first=true
+    for i in {24..1023}; do
+      if [ "$first" = "true" ]; then
+        first=false
+      else
+        send_array="${send_array},"
+      fi
+      send_array="${send_array} {\"n\": \"${PROPERTY1}$i\", \"v\":\"$i\"}"
+    done
+    send_array="${send_array}]"
+    sleep 2 
+    echo -n ${send_array} >/dev/tcp/127.0.0.1/7070
+    sleep 1
+    pkill -f iff-agent
+    run try "at most 30 times every 5s to find 1 service named '${DB_SERVICE}'"
+    query="SELECT SUM(CAST(value as INTEGER)) AS total FROM (SELECT value FROM ${TSDB_TABLE} ORDER BY \"observedAt\" DESC LIMIT 1000) AS subquery;"
+    result=$(db_query "$query" "$NAMESPACE" "$POSTGRES_SECRET" "$TSDB_DATABASE" "$DBUSER")
+    [ "$result" = "523500" ] || { echo "wrong aggregator result"; false ; }
+    db_delete_service
 }

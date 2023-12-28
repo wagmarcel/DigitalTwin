@@ -14,13 +14,18 @@
 #
 
 
-# $1 query
-# $2 namespace
-# $3 postgres_secret
+
 DB_SERVICE=my-db-service
 DB_SERVICE_PORT=5432
 DB_SPILO_SELECTOR="application: spilo"
 DB_SERVICE_URL=${DB_SERVICE}:${DB_SERVICE_PORT}
+
+
+# $1 query
+# $2 namespace
+# $3 postgres_secret
+# $4 database name
+# $5 username for access to database
 db_query() {
     query=$1
     namespace=$2
