@@ -1,3 +1,4 @@
+#!/usr/bin/env bats
 # Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +20,8 @@ MQTT_EMQX_SELECTOR="apps.emqx.io/instance: emqx"
 MQTT_SERVICE_PORT=1883
 
 mqtt_setup_service() {
-     cat << EOF  | kubectl -n ${NAMESPACE} apply -f -
+    # shellcheck disable=SC2153
+    cat << EOF  | kubectl -n "${NAMESPACE}" apply -f -
 apiVersion: v1
 kind: Service
 metadata:
@@ -36,5 +38,5 @@ run try "at most 30 times every 5s to find 1 service named '${MQTT_SERVICE}'"
 }
 
 mqtt_delete_service() {
-    kubectl -n ${NAMESPACE} delete svc ${MQTT_SERVICE}
+    kubectl -n "${NAMESPACE}" delete svc "${MQTT_SERVICE}"
 }

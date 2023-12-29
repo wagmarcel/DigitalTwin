@@ -1,3 +1,4 @@
+#!/usr/bin/env bats
 # Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,11 +15,10 @@
 #
 
 
-
 DB_SERVICE=my-db-service
 DB_SERVICE_PORT=5432
 DB_SPILO_SELECTOR="application: spilo"
-DB_SERVICE_URL=${DB_SERVICE}:${DB_SERVICE_PORT}
+export DB_SERVICE_URL=${DB_SERVICE}:${DB_SERVICE_PORT}
 
 
 # $1 query
@@ -32,13 +32,14 @@ db_query() {
     postgres_secret=$3
     database=$4
     username=$5
-    password=$(kubectl -n ${namespace} get secret/${postgres_secret} -o jsonpath='{.data.password}'| base64 -d)
-    echo  $query | \
-        PGPASSWORD=${password} psql -t -h ${DB_SERVICE} -U "${username}" -d "${database}" -A
+    password=$(kubectl -n "${namespace}" get secret/"${postgres_secret}" -o jsonpath='{.data.password}'| base64 -d)
+    echo  "$query" | \
+        PGPASSWORD="${password}" psql -t -h "${DB_SERVICE}" -U "${username}" -d "${database}" -A
 }
 
 db_setup_service() {
-     cat << EOF  | kubectl -n ${NAMESPACE} apply -f -
+    # shellcheck disable=SC2153
+    cat << EOF  | kubectl -n "${NAMESPACE}" apply -f -
 apiVersion: v1
 kind: Service
 metadata:
@@ -55,5 +56,5 @@ run try "at most 30 times every 5s to find 1 service named '${DB_SERVICE}'"
 }
 
 db_delete_service() {
-    kubectl -n ${NAMESPACE} delete svc ${DB_SERVICE}
+    kubectl -n "${NAMESPACE}" delete svc "${DB_SERVICE}"
 }
