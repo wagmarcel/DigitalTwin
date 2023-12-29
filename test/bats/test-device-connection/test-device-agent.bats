@@ -30,26 +30,14 @@ DEBUG=${DEBUG:-false}
 SKIP=
 
 
-TEST_DIR="$(dirname $BATS_TEST_FILENAME)"
-DEVICE_CLIENT_ID="device"
+TEST_DIR="$(dirname "$BATS_TEST_FILENAME")"
 CLIENT_ID=scorpio
 GATEWAY_ID="testgateway"
-GATEWAY_ID2="testgateway2"
 DEVICE_ID="urn:iff:testdevice:1"
 DEVICE_FILE="device.json"
-DEVICES_NAMESPACE=devices
 ONBOARDING_TOKEN="onboard-token.json"
 NGSILD_AGENT_DIR=${TEST_DIR}/../../../NgsildAgent
 DEVICE_ID2="testdevice2"
-DEVICE_TOKEN_SCOPE="device_id gateway mqtt-broker offline_access"
-DEVICE_TOKEN_AUDIENCE_FROM_EXCHANGE='["device","mqtt-broker","oisp-frontend"]'
-DEVICE_TOKEN_AUDIENCE_FROM_DIRECT='mqtt-broker'
-MQTT_TOPIC_NAME="spBv1.0/${NAMESPACE}/DDATA/${GATEWAY_ID}/${DEVICE_ID}"
-MQTT_MESSAGE='{"timestamp":1655974018778,"metrics":[{ "name":"Property/https://industry-fusion.com/types/v0.9/state","timestamp":1655974018777,"dataType":"string","value":"https://industry-fusion.com/types/v0.9/state_OFF"}],"seq":1}'
-KAFKACAT_ATTRIBUTES=/tmp/KAFKACAT_ATTRIBUTES
-KAFKACAT_ATTRIBUTES_TOPIC=iff.ngsild.attributes
-MQTT_SUB=/tmp/MQTT_SUB
-MQTT_RESULT=/tmp/MQTT_RES
 SECRET_FILENAME=/tmp/SECRET
 AGENT_CONFIG1=/tmp/AGENT_CONFIG1
 AGENT_CONFIG2=/tmp/AGENT_CONFIG2
@@ -58,7 +46,6 @@ PROPERTY2="http://example.com/property2"
 RELATIONSHIP1="http://example.com/relationship1"
 PGREST_URL="http://pgrest.local/entityhistory"
 PGREST_RESULT=/tmp/PGREST_RESULT
-MQTT_BRIDGE_DEPLOYMENT="deployment/mqtt-bridge"
 
 
 
@@ -134,40 +121,40 @@ cat << EOF > ${AGENT_CONFIG2}
 EOF
 
 check_device_file_contains() {
-    deviceid=$(jq '.device_id' ${NGSILD_AGENT_DIR}/data/${DEVICE_FILE} | tr -d '"')
-    gatewayid=$(jq '.gateway_id' ${NGSILD_AGENT_DIR}/data/${DEVICE_FILE} | tr -d '"')
-    realmid=$(jq '.realm_id' ${NGSILD_AGENT_DIR}/data/${DEVICE_FILE} | tr -d '"')
-    keycloakurl=$(jq '.keycloak_url' ${NGSILD_AGENT_DIR}/data/${DEVICE_FILE} | tr -d '"')
-    [ $deviceid = $1 ] && [ $gatewayid = $2 ] && [ $realmid = $3 ] && [ $keycloakurl = $4 ]
+    deviceid=$(jq '.device_id' "${NGSILD_AGENT_DIR}"/data/"${DEVICE_FILE}" | tr -d '"')
+    gatewayid=$(jq '.gateway_id' "${NGSILD_AGENT_DIR}"/data/"${DEVICE_FILE}" | tr -d '"')
+    realmid=$(jq '.realm_id' "${NGSILD_AGENT_DIR}"/data/"${DEVICE_FILE}" | tr -d '"')
+    keycloakurl=$(jq '.keycloak_url' "${NGSILD_AGENT_DIR}"/data/"${DEVICE_FILE}" | tr -d '"')
+    [ "$deviceid" = "$1" ] && [ "$gatewayid" = "$2" ] && [ "$realmid" = "$3" ] && [ "$keycloakurl" = "$4" ]
 }
 
 
 init_device_file() {
-    (cd ${NGSILD_AGENT_DIR}/data && pwd && rm -f ${DEVICE_FILE})
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./init-device.sh "${DEVICE_ID}" "${GATEWAY_ID}")
+    (cd "${NGSILD_AGENT_DIR}"/data && pwd && rm -f "${DEVICE_FILE}")
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./init-device.sh "${DEVICE_ID}" "${GATEWAY_ID}")
 }
 
 delete_tmp() {
-  rm -f ${PGREST_RESULT}
+  rm -f "${PGREST_RESULT}"
 }
 
 get_password() {
-    kubectl -n ${NAMESPACE} get ${USER_SECRET} -o jsonpath='{.data.password}' | base64 -d
+    kubectl -n "${NAMESPACE}" get "${USER_SECRET}" -o jsonpath='{.data.password}' | base64 -d
 }
 
 
 check_onboarding_token() {
-    access_token=$(jq '.access_token' ${NGSILD_AGENT_DIR}/data/${ONBOARDING_TOKEN} | tr -d '"')
-    access_exp=$(echo $access_token | tr -d '"' | jq -R 'split(".") | .[1] | @base64d | fromjson| .exp' )
+    access_token=$(jq '.access_token' "${NGSILD_AGENT_DIR}"/data/"${ONBOARDING_TOKEN}" | tr -d '"')
+    access_exp=$(echo "$access_token" | tr -d '"' | jq -R 'split(".") | .[1] | @base64d | fromjson| .exp' )
     cur_time=$(date +%s)
-    [ $access_exp -gt $cur_time ]
+    [ "$access_exp" -gt "$cur_time" ]
 }
 
 check_device_file_token() {
-    device_token=$(jq '.device_token' ${NGSILD_AGENT_DIR}/data/${DEVICE_FILE} | tr -d '"')
-    device_exp=$(echo $device_token | tr -d '"' | jq -R 'split(".") | .[1] | @base64d | fromjson| .exp' )
+    device_token=$(jq '.device_token' "${NGSILD_AGENT_DIR}"/data/"${DEVICE_FILE}" | tr -d '"')
+    device_exp=$(echo "$device_token" | tr -d '"' | jq -R 'split(".") | .[1] | @base64d | fromjson| .exp' )
     cur_time=$(date +%s)
-    [ $device_exp -gt $cur_time ]
+    [ "$device_exp" -gt "$cur_time" ]
 }
 
 get_token() {
@@ -524,17 +511,17 @@ setup() {
 
 @test "test init_device.sh" {
     $SKIP
-    (cd ${NGSILD_AGENT_DIR}/data && pwd && rm -f ${DEVICE_FILE})
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./init-device.sh ${DEVICE_ID} ${GATEWAY_ID})
-    run check_device_file_contains ${DEVICE_ID} ${GATEWAY_ID} ${REALM_ID} ${KEYCLOAK_URL}
+    (cd "${NGSILD_AGENT_DIR}"/data && pwd && rm -f "${DEVICE_FILE}")
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./init-device.sh "${DEVICE_ID}" "${GATEWAY_ID}")
+    run check_device_file_contains "${DEVICE_ID}" "${GATEWAY_ID}" "${REALM_ID}" "${KEYCLOAK_URL}"
     [ "${status}" -eq "0" ]    
 }
 
 @test "test init_device.sh with deviceid no URN" {
     $SKIP
-    (cd ${NGSILD_AGENT_DIR}/data && pwd && rm -f ${DEVICE_FILE})
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./init-device.sh ${DEVICE_ID2} ${GATEWAY_ID} || echo "failed as expected")
-    run [ ! -f ${NGSILD_AGENT_DIR}/data/${DEVICE_FILE} ]
+    (cd "${NGSILD_AGENT_DIR}"/data && pwd && rm -f "${DEVICE_FILE}")
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./init-device.sh "${DEVICE_ID2}" "${GATEWAY_ID}" || echo "failed as expected")
+    run [ ! -f "${NGSILD_AGENT_DIR}"/data/"${DEVICE_FILE}" ]
     [ "${status}" -eq "0" ]    
 }
 
@@ -542,7 +529,7 @@ setup() {
     $SKIP
     init_device_file
     password=$(get_password)
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./get-onboarding-token.sh -p $password ${USER})
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./get-onboarding-token.sh -p "$password" "${USER}")
     run check_onboarding_token
     [ "${status}" -eq "0" ]
 }
@@ -551,8 +538,8 @@ setup() {
     $SKIP
     init_device_file
     password=$(get_password)
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./get-onboarding-token.sh -p $password ${USER})
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./activate.sh -f)
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./get-onboarding-token.sh -p "$password" "${USER}")
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./activate.sh -f)
     run check_device_file_token
     [ "${status}" -eq "0" ]
 }
@@ -561,9 +548,9 @@ setup() {
     $SKIP
     init_device_file
     password=$(get_password)
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./get-onboarding-token.sh -p $password -s ${SECRET_FILENAME} ${USER})
-    kubectl apply -f ${SECRET_FILENAME}
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./activate.sh -s)
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./get-onboarding-token.sh -p "$password" -s "${SECRET_FILENAME}" "${USER}")
+    kubectl apply -f "${SECRET_FILENAME}"
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./activate.sh -s)
     run check_device_file_token
     [ "${status}" -eq "0" ]
 }
@@ -575,12 +562,12 @@ setup() {
     mqtt_setup_service
     password=$(get_password)
     token=$(get_token "$password")
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./get-onboarding-token.sh -p $password ${USER})
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./activate.sh -f)
-    cp ${AGENT_CONFIG1} ${NGSILD_AGENT_DIR}/config/config.json
-    (cd ${NGSILD_AGENT_DIR} && exec stdbuf -oL node ./iff-agent.js) &
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./get-onboarding-token.sh -p "$password" "${USER}")
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./activate.sh -f)
+    cp "${AGENT_CONFIG1}" "${NGSILD_AGENT_DIR}"/config/config.json
+    (cd "${NGSILD_AGENT_DIR}" && exec stdbuf -oL node ./iff-agent.js) &
     sleep 2
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh "${PROPERTY1}" 0 )
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh "${PROPERTY1}" 0 )
     sleep 2
     pkill -f iff-agent
     mqtt_delete_service
@@ -596,13 +583,12 @@ setup() {
     mqtt_setup_service
     password=$(get_password)
     token=$(get_token "$password")
-    echo $token Marcel $password
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./get-onboarding-token.sh -p $password ${USER})
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./activate.sh -f)
-    cp ${AGENT_CONFIG1} ${NGSILD_AGENT_DIR}/config/config.json
-    (cd ${NGSILD_AGENT_DIR} && exec stdbuf -oL node ./iff-agent.js) &
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./get-onboarding-token.sh -p "$password" "${USER}")
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./activate.sh -f)
+    cp "${AGENT_CONFIG1}" "${NGSILD_AGENT_DIR}"/config/config.json
+    (cd "${NGSILD_AGENT_DIR}" && exec stdbuf -oL node ./iff-agent.js) &
     sleep 2
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -a "${PROPERTY1}" 1 "${PROPERTY2}" 2 )
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -a "${PROPERTY1}" 1 "${PROPERTY2}" 2 )
     sleep 2
     pkill -f iff-agent
     mqtt_delete_service
@@ -618,15 +604,14 @@ setup() {
     mqtt_setup_service
     password=$(get_password)
     token=$(get_token "$password")
-    echo $token Marcel $password
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./get-onboarding-token.sh -p $password ${USER})
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./activate.sh -f)
-    cp ${AGENT_CONFIG1} ${NGSILD_AGENT_DIR}/config/config.json
-    (cd ${NGSILD_AGENT_DIR} && exec stdbuf -oL node ./iff-agent.js) &
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./get-onboarding-token.sh -p "$password" "${USER}")
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./activate.sh -f)
+    cp "${AGENT_CONFIG1}" "${NGSILD_AGENT_DIR}"/config/config.json
+    (cd "${NGSILD_AGENT_DIR}" && exec stdbuf -oL node ./iff-agent.js) &
     sleep 2
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -at "${PROPERTY1}" 3 "${PROPERTY2}" 4 )
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -at "${PROPERTY1}" 3 "${PROPERTY2}" 4 )
     sleep 1
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -t "${PROPERTY1}" 5 )
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -t "${PROPERTY1}" 5 )
     sleep 1
     pkill -f iff-agent
     mqtt_delete_service
@@ -642,11 +627,10 @@ setup() {
     mqtt_setup_service
     password=$(get_password)
     token=$(get_token "$password")
-    echo $token Marcel $password
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./get-onboarding-token.sh -p $password ${USER})
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./activate.sh -f)
-    cp ${AGENT_CONFIG1} ${NGSILD_AGENT_DIR}/config/config.json
-    (cd ${NGSILD_AGENT_DIR} && exec stdbuf -oL node ./iff-agent.js) &
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./get-onboarding-token.sh -p "$password" "${USER}")
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./activate.sh -f)
+    cp "${AGENT_CONFIG1}" "${NGSILD_AGENT_DIR}"/config/config.json
+    (cd "${NGSILD_AGENT_DIR}" && exec stdbuf -oL node ./iff-agent.js) &
     sleep 2
     echo -n '[{"n": "'$PROPERTY1'", "v": "4"},{"n": "'$PROPERTY2'", "v": "5"}]' >/dev/tcp/127.0.0.1/7070
     sleep 1
@@ -669,19 +653,18 @@ setup() {
     mqtt_setup_service
     password=$(get_password)
     token=$(get_token "$password")
-    echo $token Marcel $password
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./get-onboarding-token.sh -p $password ${USER})
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./activate.sh -f)
-    cp ${AGENT_CONFIG1} ${NGSILD_AGENT_DIR}/config/config.json
-    (cd ${NGSILD_AGENT_DIR} && exec stdbuf -oL node ./iff-agent.js) &
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./get-onboarding-token.sh -p "$password" "${USER}")
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./activate.sh -f)
+    cp "${AGENT_CONFIG1}" "${NGSILD_AGENT_DIR}"/config/config.json
+    (cd "${NGSILD_AGENT_DIR}" && exec stdbuf -oL node ./iff-agent.js) &
     sleep 2
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -at "${PROPERTY1}" 10 "${PROPERTY2}" 11 )
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -at "${PROPERTY1}" 10 "${PROPERTY2}" 11 )
     sleep 1
     mqtt_delete_service
     sleep 10
     mqtt_setup_service
     sleep 2
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -t "${PROPERTY1}" 12 )
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -t "${PROPERTY1}" 12 )
     sleep 1
     pkill -f iff-agent
     mqtt_delete_service
@@ -697,24 +680,23 @@ setup() {
     mqtt_setup_service
     password=$(get_password)
     token=$(get_token "$password")
-    echo $token Marcel $password
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./get-onboarding-token.sh -p $password ${USER})
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./activate.sh -f)
-    cp ${AGENT_CONFIG2} ${NGSILD_AGENT_DIR}/config/config.json
-    (cd ${NGSILD_AGENT_DIR} && exec stdbuf -oL node ./iff-agent.js) &
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./get-onboarding-token.sh -p "$password" "${USER}")
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./activate.sh -f)
+    cp "${AGENT_CONFIG2}" "${NGSILD_AGENT_DIR}"/config/config.json
+    (cd "${NGSILD_AGENT_DIR}" && exec stdbuf -oL node ./iff-agent.js) &
     sleep 2
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -at "${PROPERTY1}" 13 "${PROPERTY2}" 14 )
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -at "${PROPERTY1}" 13 "${PROPERTY2}" 14 )
     sleep 1
     mqtt_delete_service
     sleep 2
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -at "${PROPERTY1}" 15 "${PROPERTY2}" 16)
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -at "${PROPERTY1}" 15 "${PROPERTY2}" 16)
     sleep 1
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -t "${PROPERTY1}" 17 )
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -t "${PROPERTY1}" 17 )
     sleep 1
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -t "${PROPERTY1}" 18 )
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -t "${PROPERTY1}" 18 )
     mqtt_setup_service
     sleep 2
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./send_data.sh -t "${PROPERTY1}" 19 )
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -t "${PROPERTY1}" 19 )
     sleep 1
     pkill -f iff-agent
     mqtt_delete_service
@@ -730,11 +712,10 @@ setup() {
     mqtt_setup_service
     password=$(get_password)
     token=$(get_token "$password")
-    echo $token Marcel $password
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./get-onboarding-token.sh -p $password ${USER})
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./activate.sh -f)
-    cp ${AGENT_CONFIG1} ${NGSILD_AGENT_DIR}/config/config.json
-    (cd ${NGSILD_AGENT_DIR} && exec stdbuf -oL node ./iff-agent.js) &
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./get-onboarding-token.sh -p "$password" "${USER}")
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./activate.sh -f)
+    cp "${AGENT_CONFIG1}" "${NGSILD_AGENT_DIR}"/config/config.json
+    (cd "${NGSILD_AGENT_DIR}" && exec stdbuf -oL node ./iff-agent.js) &
     sleep 2
     echo -n '[{"n": "'$PROPERTY1'", "v": "20"},{"n": "'$RELATIONSHIP1'", "v": "urn:iff:testdevice:9", "t": "Relationship"}, {"n": "'$PROPERTY2'", "v": "21", "t": "Property"}]' >/dev/tcp/127.0.0.1/7070
     sleep 1
@@ -760,11 +741,10 @@ setup() {
     mqtt_setup_service
     password=$(get_password)
     token=$(get_token "$password")
-    echo $token Marcel $password
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./get-onboarding-token.sh -p $password ${USER})
-    (cd ${NGSILD_AGENT_DIR}/util && bash ./activate.sh -f)
-    cp ${AGENT_CONFIG1} ${NGSILD_AGENT_DIR}/config/config.json
-    (cd ${NGSILD_AGENT_DIR} && exec stdbuf -oL node ./iff-agent.js) &
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./get-onboarding-token.sh -p "$password" "${USER}")
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./activate.sh -f)
+    cp "${AGENT_CONFIG1}" "${NGSILD_AGENT_DIR}"/config/config.json
+    (cd "${NGSILD_AGENT_DIR}" && exec stdbuf -oL node ./iff-agent.js) &
     send_array="["
     first=true
     for i in {24..1023}; do
@@ -777,7 +757,7 @@ setup() {
     done
     send_array="${send_array}]"
     sleep 2 
-    echo -n ${send_array} >/dev/tcp/127.0.0.1/7070
+    echo -n "${send_array}" >/dev/tcp/127.0.0.1/7070
     sleep 1
     pkill -f iff-agent
     mqtt_delete_service
