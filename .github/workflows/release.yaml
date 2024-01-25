@@ -17,11 +17,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Prepare K3d cluster
         run: |
-          if [ -z "${SELF_HOSTED_RUNNER}" ]; then
-            ( cd ./test && bash ./prepare-platform.sh )
-          else
-            ( cd ./test && bash ./prepare-platform-for-self-hosted-runner.sh )
-          fi
+          cd ./test && bash ./prepare-platform.sh
       - name: Build Platform locally
         run: |
           cd test && bash build-local-platform.sh
