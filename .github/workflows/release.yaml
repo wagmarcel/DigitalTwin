@@ -19,6 +19,8 @@ jobs:
         run: |
           cd ./test && bash ./prepare-platform.sh
           java --version
+          sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
+          java --version
       - name: Build Platform locally
         run: |
           exit 1
