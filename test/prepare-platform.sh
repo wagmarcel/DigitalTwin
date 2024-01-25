@@ -46,24 +46,25 @@ sudo chmod +x /usr/bin/docker-compose
 printf "\033[1mSuccessfully installed docker-compose %s\033[0m\n"
 printf "\n"
 
+
+echo Installing kubectl
+echo ----------------------
+sudo apt -qq install snapd
+sudo snap install kubectl --classic
+
+echo Installing yq
+echo ----------------------
+sudo apt -qq install snapd
+sudo snap install yq --classic
+
+echo Installing K3d cluster
+echo ----------------------
+## k3d cluster with 2 nodes
+curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | TAG=v5.4.7 bash
+k3d registry create iff.localhost -p 12345
+k3d cluster create --image ${K3S_IMAGE} -a 2 --registry-use k3d-iff.localhost:12345 iff-cluster
+
 if [ -z "$BUILDONLY" ];then
-    echo Installing kubectl
-    echo ----------------------
-    sudo apt -qq install snapd
-    sudo snap install kubectl --classic
-
-    echo Installing yq
-    echo ----------------------
-    sudo apt -qq install snapd
-    sudo snap install yq --classic
-
-    echo Installing K3d cluster
-    echo ----------------------
-    ## k3d cluster with 2 nodes
-    curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | TAG=v5.4.7 bash
-    k3d registry create iff.localhost -p 12345
-    k3d cluster create --image ${K3S_IMAGE} -a 2 --registry-use k3d-iff.localhost:12345 iff-cluster
-
     echo Install Helm v3.10.3
     echo ---------------
     # helm v3.10.3
