@@ -33,7 +33,7 @@ jobs:
           echo Selected tag ${TARGET_DOCKER_TAG}
           # Tag and push passed "k3d-iff.localhost:12345" with release tag
           docker images
-          images=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep ":${TARGET_DOCKER_TAG}")
+          images=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep ":${TARGET_DOCKER_TAG}" | grep "k3d-iff.localhost")
           echo I will push the following images: ${images}
           for image in $images; do
             newimage=$(echo $image | sed -r "s/k3d-iff.localhost:12345/docker.io/g");
