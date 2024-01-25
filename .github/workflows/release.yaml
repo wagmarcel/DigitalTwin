@@ -12,7 +12,7 @@ jobs:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       DOCKER_PREFIX: ${{ secrets.DOCKER_PREFIX }}
-      SELF_HOSTED_RUNNER: true
+      BUILDONLY: true
     steps:
       - uses: actions/checkout@v2
       - name: Prepare K3d cluster
