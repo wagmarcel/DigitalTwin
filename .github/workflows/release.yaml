@@ -18,17 +18,14 @@ jobs:
       - name: Prepare K3d cluster
         run: |
           cd ./test && bash ./prepare-platform.sh
-          java --version
           sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
           java --version
       - name: Build Platform locally
         run: |
-          exit 1
           cd test && bash build-local-platform.sh
       - name: Push release images
         shell: bash
         run: |
-          exit 1
           set +o pipefail
           docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
           TARGET_DOCKER_TAG=`git describe --tags --exact-match` || exit 1
