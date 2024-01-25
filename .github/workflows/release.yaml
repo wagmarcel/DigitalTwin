@@ -25,6 +25,7 @@ jobs:
         shell: bash
         run: |
           set +o pipefail
+          exit 1
           docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
           TARGET_DOCKER_TAG=`git describe --tags --exact-match` || exit 1
           echo Selected tag ${TARGET_DOCKER_TAG}
