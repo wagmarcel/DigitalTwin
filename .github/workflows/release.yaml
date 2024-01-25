@@ -20,12 +20,12 @@ jobs:
           cd ./test && bash ./prepare-platform.sh
       - name: Build Platform locally
         run: |
+          exit 1
           cd test && bash build-local-platform.sh
       - name: Push release images
         shell: bash
         run: |
           set +o pipefail
-          exit 1
           docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
           TARGET_DOCKER_TAG=`git describe --tags --exact-match` || exit 1
           echo Selected tag ${TARGET_DOCKER_TAG}
