@@ -17,7 +17,25 @@ jobs:
       - uses: actions/checkout@v2
       - name: Prepare K3d cluster
         run: |
-          cd ./test && bash ./prepare-platform.sh
+          echo Install Java 17
+          echo ---------------
+          sudo apt update
+          sudo apt install openjdk-17-jdk openjdk-17-jre
+
+          echo Installing maven
+          echo ----------------------
+          wget https://archive.apache.org/dist/maven/maven-3/3.8.7/binaries/apache-maven-3.8.7-bin.tar.gz
+          tar -xzf apache-maven-3.8.7-bin.tar.gz
+          sudo mv apache-maven-3.8.7 /opt/
+          rm apache-maven-3.8.7-bin.tar.gz
+          touch maven.sh
+          sudo chmod 775 /etc/profile.d/maven.sh
+          echo 'M2_HOME='/opt/apache-maven-3.8.7'
+          PATH="$M2_HOME/bin:$PATH"
+          export PATH' >> maven.sh
+          sudo mv maven.sh /etc/profile.d/
+          source /etc/profile.d/maven.sh
+          mvn --version
       - name: Build Platform locally
         run: |
           exit 1
@@ -25,6 +43,7 @@ jobs:
       - name: Push release images
         shell: bash
         run: |
+          exit
           set +o pipefail
           docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
           TARGET_DOCKER_TAG=`git describe --tags --exact-match` || exit 1
