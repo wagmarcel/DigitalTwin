@@ -25,6 +25,7 @@ jobs:
           TARGET_DOCKER_TAG=`git describe --tags --exact-match` || exit 1
           echo Selected tag ${TARGET_DOCKER_TAG}
           # Tag and push passed "k3d-iff.localhost:12345" with release tag
+          docker images
           images=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep ":${TARGET_DOCKER_TAG}")
           echo I will push the following images: ${images}
           for image in $images; do
