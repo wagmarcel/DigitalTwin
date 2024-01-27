@@ -15,6 +15,7 @@
 #
 set -e
 
+. ../../.env
 . ../env.sh
 
 IMAGES=(
@@ -48,6 +49,12 @@ IMAGES=(
     docker.io/rancher/klipper-lb:v0.4.4
     docker.io/rancher/mirrored-library-traefik:2.10.5
     docker.io/rancher/mirrored-library-busybox:1.36.1
+    docker.io/ibn40/scorpio-all-in-one-runner:${DOCKER_TAG}
+    docker.io/ibn40/flink-services-operator:${DOCKER_TAG}
+    docker.io/ibn40/kafka-bridge:${DOCKER_TAG}
+    docker.io/ibn40/keycloak:${DOCKER_TAG}
+    docker.io/ibn40/flink-sql-gateway:${DOCKER_TAG}
+    docker.io/ibn40/debezium-postgresql-connector:${DOCKER_TAG}
 )
 
 for image in ${IMAGES[@]}; do 
