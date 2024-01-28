@@ -1,0 +1,67 @@
+# baseURI: https://volkswagen.org/vass/v0.9/root
+# imports: https://volkswagen.org/vass/v0.9/ontology
+
+@prefix : <https://volkswagen.org/vass/v0.9/root#> .
+@prefix ontology: <https://volkswagen.org/vass/v0.9/ontology#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ontology:Datatype
+  rdf:type rdfs:Class ;
+  rdfs:subClassOf rdfs:Class ;
+.
+ontology:HWAddress
+  rdf:type rdfs:Class ;
+  rdfs:subClassOf rdfs:Resource ;
+.
+ontology:fieldName
+  rdf:type rdf:Property ;
+  rdfs:range xsd:string ;
+.
+ontology:hasDataType
+  rdf:type rdf:Property ;
+  rdfs:domain ontology:HWAddress ;
+  rdfs:range rdfs:Datatype ;
+.
+ontology:hasType
+  rdf:type rdf:Property ;
+.
+ontology:hasVarName
+  rdf:type rdf:Property ;
+  rdfs:domain ontology:HWAddress ;
+  rdfs:range xsd:string ;
+.
+ontology:processStep1
+  ontology:retrievedBy :processStep1Address ;
+.
+ontology:processStep2
+  ontology:retrievedBy :processStep2Address ;
+.
+ontology:retrievableBy
+  rdf:type rdf:Property ;
+.
+ontology:retrievedBy
+  rdf:type rdf:Property ;
+  rdfs:domain rdfs:Resource ;
+  rdfs:range ontology:Retrievable ;
+.
+<https://volkswagen.org/vass/v0.9/root>
+  rdf:type owl:Ontology ;
+  owl:imports <https://volkswagen.org/vass/v0.9/ontology> ;
+.
+:
+  rdf:type owl:Ontology ;
+  owl:versionInfo "Created with TopBraid Composer" ;
+.
+:processStep1Address
+  rdf:type ontology:HWAddress ;
+  ontology:hasDataType xsd:boolean ;
+  ontology:hasVarName "varname1" ;
+.
+:processStep2Address
+  rdf:type ontology:HWAddress ;
+  ontology:hasDataType xsd:boolean ;
+  ontology:hasVarName "varname2" ;
+.

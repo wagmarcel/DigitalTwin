@@ -1,0 +1,45 @@
+# baseURI: https://volkswagen.org/vass/v0.9/usecase
+# imports: https://volkswagen.org/vass/v0.9/ontology
+
+@prefix : <https://volkswagen.org/vass/v0.9/usecase#> .
+@prefix knowledge: <https://volkswagen.org/vass/v0.9/knowledge#> .
+@prefix ontology: <https://volkswagen.org/vass/v0.9/ontology#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ontology:mapAttribute
+  rdfs:range rdf:Property ;
+.
+<https://volkswagen.org/vass/v0.9/usecase>
+  rdf:type owl:Ontology ;
+  owl:imports <https://volkswagen.org/vass/v0.9/ontology> ;
+  owl:versionInfo "Created with TopBraid Composer" ;
+.
+:Process
+  rdf:type rdfs:Class ;
+.
+:hasState
+  rdf:type rdf:Property ;
+.
+:hasStateMapping
+  rdf:type ontology:Mapping ;
+  ontology:getParams """SELECT distinct ?hasVarName ?hasDataType
+WHERE {
+	?processes rdfs:subClassOf* ontology:Process . 
+    ?steps ontology:appliedInProcess  ?processes .
+    ?steps ontology:retrievedBy ?addr .
+    ?addr ontology:hasVarName ?hasVarName .  
+    ?addr ontology:hasDataType ?hasDataType .
+}""" ;
+  ontology:getValues """SELECT distinct ?value
+WHERE {
+    BIND(IF(?varname1 = true && ?varname2 = false, ontology:processStep1, 
+			   IF(?varname2 = true && ?varname1 = false, ontology:processStep2, 
+                   ontology:processStepUndefined) # else
+     ) AS ?value)
+}""" ;
+  ontology:mapAttribute :hasState ;
+  ontology:mapClass :Process ;
+.
