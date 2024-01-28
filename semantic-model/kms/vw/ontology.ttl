@@ -69,33 +69,12 @@ ontology:getValues
   rdfs:domain ontology:Mapping ;
   rdfs:range xsd:string ;
 .
-ontology:hasAttribute
-  rdf:type rdf:Property ;
-  rdfs:range rdf:Property ;
-.
 ontology:hasDataType
   rdf:type rdf:Property ;
-  rdfs:domain ontology:HWAddress ;
   rdfs:range rdfs:Datatype ;
 .
-ontology:hasNumericalState
+ontology:hasOrderNumber
   rdf:type rdf:Property ;
-  rdfs:domain ontology:Process ;
-  rdfs:range xsd:string ;
-.
-ontology:hasOutput
-  rdf:type rdf:Property ;
-  rdfs:domain ontology:Process ;
-.
-ontology:hasSerialNumber
-  rdf:type rdf:Property ;
-.
-ontology:hasState
-  rdf:type rdf:Property ;
-.
-ontology:hasType
-  rdf:type rdf:Property ;
-  rdfs:range rdfs:Datatype ;
 .
 ontology:hasVarName
   rdf:type rdf:Property ;

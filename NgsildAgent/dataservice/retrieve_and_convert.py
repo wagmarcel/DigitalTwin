@@ -48,6 +48,7 @@ def evaluate(graph, param_array, values_query):
         if value is not None:
             bindings[Variable(var_name)] = value
     query = prefixes + values_query
+    #print(f"now querying {query}")
     qres = graph.query(query, initBindings=bindings)
     for row in qres:
         print(f"Evaluation result {row}")

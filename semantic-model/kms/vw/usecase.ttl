@@ -20,8 +20,15 @@ ontology:mapAttribute
 :Process
   rdf:type rdfs:Class ;
 .
+:hasNumericalState
+  rdf:type rdf:Property ;
+  rdfs:domain :Process ;
+  rdfs:range xsd:integer ;
+.
 :hasState
   rdf:type rdf:Property ;
+  rdfs:domain :Process ;
+  rdfs:range ontology:ProcessStep ;
 .
 :hasStateMapping
   rdf:type ontology:Mapping ;
@@ -41,5 +48,28 @@ WHERE {
      ) AS ?value)
 }""" ;
   ontology:mapAttribute :hasState ;
+  ontology:mapClass :Process ;
+.
+:hasStateNumericalMapping
+  rdf:type ontology:Mapping ;
+  ontology:getParams """SELECT distinct ?hasVarName ?hasDataType
+WHERE {
+	?processes rdfs:subClassOf* ontology:Process . 
+    ?steps ontology:appliedInProcess  ?processes .
+    ?steps ontology:retrievedBy ?addr .
+    ?addr ontology:hasVarName ?hasVarName .  
+    ?addr ontology:hasDataType ?hasDataType .
+}""" ;
+  ontology:getValues """SELECT distinct ?value
+WHERE {
+    OPTIONAL{ontology:processStep1 ontology:hasOrderNumber ?ord1 .}
+    OPTIONAL{ontology:processStep2 ontology:hasOrderNumber ?ord2 .}
+    OPTIONAL{ontology:processStepUndefined ontology:hasOrderNumber ?ord0 .}
+    BIND(IF(?varname1 = true && ?varname2 = false,  1, 
+			   IF(?varname2 = true && ?varname1 = false, ?ord2, 
+                   ?ord0) # else
+     ) AS ?value)
+}""" ;
+  ontology:mapAttribute :hasNumericalState ;
   ontology:mapClass :Process ;
 .
