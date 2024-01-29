@@ -56,6 +56,12 @@ ontology:appliedInProcess
   rdfs:domain ontology:ProcessStep ;
   rdfs:range ontology:Process ;
 .
+ontology:carDoor
+  rdf:type ontology:Part ;
+.
+ontology:carRoof
+  rdf:type ontology:Part ;
+.
 ontology:fieldName
   rdf:type rdf:Property ;
 .

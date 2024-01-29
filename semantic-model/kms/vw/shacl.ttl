@@ -5,13 +5,12 @@
 
 @prefix : <https://volkswagen.org/vass/v0.9/constraints#> .
 @prefix dash: <http://datashapes.org/dash#> .
-@prefix model: <https://volkswagen.org/vass/v0.9/usecase#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix root: <https://volkswagen.org/vass/v0.9/root#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
-@prefix unnamed: <https://volkswagen.org/semantic/unnamed#> .
+@prefix usecase: <https://volkswagen.org/vass/v0.9/usecase#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <https://volkswagen.org/vass/v0.9/constraints>
@@ -21,11 +20,25 @@
   owl:imports <https://volkswagen.org/vass/v0.9/usecase> ;
   owl:versionInfo "Created with TopBraid Composer" ;
 .
-:CarDoorShape
+:PartShape
   rdf:type sh:NodeShape ;
   sh:property [
       rdf:type sh:PropertyShape ;
-      sh:path <https://volkswagen.org/vass/v0.9/ontology#hasSerialNumber> ;
+      sh:path usecase:hasPartType ;
+      sh:maxCount 1 ;
+      sh:minCount 1 ;
+      sh:name "has part type" ;
+      sh:nodeKind sh:BlankNode ;
+      sh:property [
+          sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+          sh:class <https://volkswagen.org/vass/v0.9/ontology#Part> ;
+          sh:maxCount 1 ;
+          sh:minCount 1 ;
+        ] ;
+    ] ;
+  sh:property [
+      rdf:type sh:PropertyShape ;
+      sh:path usecase:hasSerialNumber ;
       sh:maxCount 1 ;
       sh:minCount 1 ;
       sh:name "serial number" ;
@@ -36,13 +49,13 @@
           sh:pattern "^\\d{5}" ;
         ] ;
     ] ;
-  sh:targetClass <https://volkswagen.org/vass/v0.9/ontology#CarDoor> ;
+  sh:targetClass usecase:Part ;
 .
 :ProcessShape
   rdf:type sh:NodeShape ;
   sh:property [
       rdf:type sh:PropertyShape ;
-      sh:path <https://volkswagen.org/vass/v0.9/ontology#hasNumericalState> ;
+      sh:path usecase:hasNumericalState ;
       sh:maxCount 1 ;
       sh:minCount 1 ;
       sh:name "has numerical state" ;
@@ -53,19 +66,19 @@
     ] ;
   sh:property [
       rdf:type sh:PropertyShape ;
-      sh:path <https://volkswagen.org/vass/v0.9/ontology#hasOutput> ;
+      sh:path usecase:hasOutput ;
       sh:maxCount 1 ;
       sh:minCount 1 ;
       sh:name "is producing" ;
       sh:nodeKind sh:BlankNode ;
       sh:property [
           sh:path <https://uri.etsi.org/ngsi-ld/hasObject> ;
-          sh:class <https://volkswagen.org/vass/v0.9/ontology#Part> ;
+          sh:class usecase:Part ;
         ] ;
     ] ;
   sh:property [
       rdf:type sh:PropertyShape ;
-      sh:path <https://volkswagen.org/vass/v0.9/ontology#hasState> ;
+      sh:path usecase:hasState ;
       sh:maxCount 1 ;
       sh:minCount 1 ;
       sh:name "process state" ;
@@ -76,5 +89,5 @@
           sh:nodeKind sh:IRI ;
         ] ;
     ] ;
-  sh:targetClass <https://volkswagen.org/vass/v0.9/ontology#Process> ;
+  sh:targetClass usecase:Process ;
 .

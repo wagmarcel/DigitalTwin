@@ -17,6 +17,9 @@ ontology:mapAttribute
   owl:imports <https://volkswagen.org/vass/v0.9/ontology> ;
   owl:versionInfo "Created with TopBraid Composer" ;
 .
+:Part
+  rdf:type rdfs:Class ;
+.
 :Process
   rdf:type rdfs:Class ;
 .
@@ -24,6 +27,21 @@ ontology:mapAttribute
   rdf:type rdf:Property ;
   rdfs:domain :Process ;
   rdfs:range xsd:integer ;
+.
+:hasOutput
+  rdf:type rdf:Property ;
+  rdfs:domain :Process ;
+  rdfs:range :Part ;
+.
+:hasPartType
+  rdf:type rdf:Property ;
+  rdfs:domain :Part ;
+  rdfs:range ontology:Part ;
+.
+:hasSerialNumber
+  rdf:type rdf:Property ;
+  rdfs:domain :Part ;
+  rdfs:range xsd:string ;
 .
 :hasState
   rdf:type rdf:Property ;

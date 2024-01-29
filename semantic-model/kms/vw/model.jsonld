@@ -2,20 +2,20 @@
 {
   "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
   "id": "urn:vw:process:1",
-  "type": "https://volkswagen.org/vass/v0.9/ontology#Process",
-  "https://volkswagen.org/vass/v0.9/ontology#hasState": [
+  "type": "https://volkswagen.org/vass/v0.9/usecase#Process",
+  "https://volkswagen.org/vass/v0.9/usecase#hasState": [
       {
           "type": "Property",
           "value": { "@id": "https://volkswagen.org/vass/v0.9/ontology#processStep1"}
       }
   ],
-  "https://volkswagen.org/vass/v0.9/ontology#hasNumericalState": [
+  "https://volkswagen.org/vass/v0.9/usecase#hasNumericalState": [
     {
         "type": "Property",
         "value": "1"
     }
 ],
-  "https://volkswagen.org/vass/v0.9/ontology#hasOutput": [{
+  "https://volkswagen.org/vass/v0.9/usecase#hasOutput": [{
     "type": "Relationship",
     "object": "urn:vw:part:1"
   }]
@@ -23,12 +23,18 @@
 {
   "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
   "id": "urn:vw:part:1",
-  "type": "https://volkswagen.org/vass/v0.9/ontology#CarRoof",
-  "https://volkswagen.org/vass/v0.9/ontology#hasSerialNumber": [
+  "type": "https://volkswagen.org/vass/v0.9/usecase#Part",
+  "https://volkswagen.org/vass/v0.9/usecase#hasSerialNumber": [
       {
           "type": "Property",
           "value": "12345"
       }
-  ]
+  ],
+  "https://volkswagen.org/vass/v0.9/usecase#hasPartType": [
+    {
+        "type": "Property",
+        "value": { "@id": "https://volkswagen.org/vass/v0.9/ontology#carRoof"}
+    }
+]
 }
 ]
