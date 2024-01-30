@@ -67,6 +67,8 @@ for image in ${IMAGES[@]}; do
     docker pull $image
     docker tag $image $tagged
     docker push $tagged
+    savename=docker-images/$(echo $image| tr '/' '_' | tr ':' '%')
+    docker save -o $savename $image
 done
 
 wget --no-clobber --directory-prefix ${OFFLINE_DIR} https://github.com/minio/operator/releases/download/v${MINIO_OPERATOR_VERSION}/kubectl-minio_${MINIO_OPERATOR_VERSION}_linux_amd64

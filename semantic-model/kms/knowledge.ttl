@@ -1,102 +1,181 @@
-PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-PREFIX oee: <https://industry-fusion.com/oee/v0.9/>
-PREFIX owl: <http://www.w3.org/2002/07/owl#>
+@prefix : <https://volkswagen.org/vass/v0.9/root#> .
+@prefix default1: <https://volkswagen.org/vass/v0.9/usecase#> .
+@prefix ontology: <https://volkswagen.org/vass/v0.9/ontology#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-### Test classes
-iff:cutter_test rdfs:subClassOf iff:machine_test ;
-    a iff:class .
-iff:plasmacutter_test rdfs:subClassOf iff:cutter_test ;
-    a iff:class .
-### End of Test Content
+ontology:CarDoorProcess a rdfs:Class,
+        ontology:Process ;
+    rdfs:subClassOf ontology:Process .
 
-iff:entity a iff:class ;
-    a rdfs:class .
-iff:machine a iff:class ; 
-    a rdfs:class .
-iff:filter rdfs:subClassOf iff:machine ;
-    a iff:class .
-iff:plasmacutter rdfs:subClassOf iff:cutter ;
-    a iff:class .
-iff:lasercutter rdfs:subClassOf iff:cutter;
-    a iff:class .
-iff:cutter rdfs:subClassOf iff:machine ;
-    a iff:class .
-iff:workpiece rdfs:subClassOf iff:entity ;
-    a iff:class .
-iff:filterCartridge rdfs:subClassOf iff:entity ;
-    a iff:class .
+ontology:CarRoofProcess a rdfs:Class,
+        ontology:Process ;
+    rdfs:subClassOf ontology:Process .
 
+ontology:Datatype a rdfs:Class ;
+    rdfs:subClassOf rdfs:Class .
 
-iff:scheduleEntity a iff:class .
-iff:oeeTemplate rdfs:subClassOf iff:scheduleEntity .
+ontology:HWAddress a rdfs:Class .
 
-### Machine states
-iff:machineState a rdfs:class .
-iff:state_OFF a iff:machineState .
-iff:state_OFF iff:stateValidFor iff:filter, iff:cutter .
-iff:state_ON a iff:machineState  .
-iff:state_ON iff:stateValidFor iff:filter, iff:cutter .
-iff:state_PREPARING a iff:machineState  .
-iff:state_PREPARING iff:stateValidFor iff:cutter .
-iff:state_PROCESSING a iff:machineState  .
-iff:state_PROCESSING iff:stateValidFor iff:cutter .
-iff:state_CLEARING a iff:machineState .
-iff:state_CLEARING iff:stateValidFor iff:cutter .
-iff:state_CLEANING a iff:machineState .
-iff:state_CLEANING iff:stateValidFor iff:filter .
-iff:state_ERROR a iff:machineState .
-iff:state_ERROR iff:stateValidFor iff:filter, iff:cutter .
+ontology:Mapping a rdfs:Class ;
+    rdfs:subClassOf rdfs:Class .
 
-### OEE definitions: What state defines availability
-iff:state_PROCESSING oee:availability "1" .
-iff:state_PREPARING oee:availability "0" .
+ontology:Part a rdfs:Class ;
+    rdfs:subClassOf rdfs:Class .
 
-# labels for states
-iff:state_ON rdfs:label "ON" .
-iff:state_OFF rdfs:label "OFF" .
-iff:state_PREPARING rdfs:label "PREPARING" .
-iff:state_PROCESSING rdfs:label "PROCESSING" .
-iff:state_CLEARING rdfs:label "ON" .
-iff:state_ERROR rdfs:label "ERROR" .
+ontology:Process a rdfs:Class ;
+    rdfs:subClassOf rdfs:Class .
 
-iff:WC0 a iff:WC .
-iff:WC1 a iff:WC .
-iff:WC2 a iff:WC .
-iff:WC3 a iff:WC .
-iff:higherHazardLevel a owl:TransitiveProperty .
-iff:WC3 iff:higherHazardLevel iff:WC2 .
-iff:WC2 iff:higherHazardLevel iff:WC1 .
-iff:WC1 iff:higherHazardLevel iff:WC0 .
-#iff:WC1 a rdf:Bag .
-iff:WC1 iff:containsMaterialNumber [
-    a rdf:Bag ;
-    rdf:_1 "1.4301" ;
-    rdf:_2 "1.4302" ;
-    rdf:_3 "1.4303" ;
-    rdf:_4 "1.4304" ;
-    rdf:_5 "1.4305" ;
-] .
-iff:WC2 iff:containsMaterialNumber [
-    a rdf:Bag ;
-    rdf:_1 "1.3301" ;
-    rdf:_2 "1.3302" ;
-    rdf:_3 "1.3303" ;
-    rdf:_4 "1.3304" ;
-    rdf:_5 "1.3305" ;
- ] .
-iff:WC3 iff:containsMaterialNumber [
-    a rdf:Bag ;
-    rdf:_1 "1.5301" ;
-    rdf:_2 "1.5302" ;
-    rdf:_3 "1.5303" ;
-    rdf:_4 "1.5304" ;
-    rdf:_5 "1.5305" ;
- ] .
+ontology:ProcessStep a rdfs:Class ;
+    rdfs:subClassOf rdfs:Class .
 
-# Severity
-iff:severityCritical a iff:severityClass .
-iff:SeverityWarning a iff:severityClass .
-iff:severityCritical iff:severityCode "critical" .
-iff:severityWarning iff:severityCode "warning" .
+ontology:Retrievable a rdfs:Class ;
+    rdfs:subClassOf rdfs:Class .
+
+default1:Part a rdfs:Class .
+
+default1:Process a rdfs:Class .
+
+ontology:appliedInProcess a rdf:Property ;
+    rdfs:domain ontology:ProcessStep ;
+    rdfs:range ontology:Process .
+
+ontology:carDoor a ontology:Part .
+
+ontology:carRoof a ontology:Part .
+
+ontology:fieldName a rdf:Property .
+
+ontology:getParams a rdf:Property ;
+    rdfs:domain ontology:Mapping ;
+    rdfs:range xsd:string .
+
+ontology:getValues a rdf:Property ;
+    rdfs:domain ontology:Mapping ;
+    rdfs:range xsd:string .
+
+ontology:hasDataType a rdf:Property ;
+    rdfs:range rdfs:Datatype .
+
+ontology:hasOrderNumber a rdf:Property ;
+    rdfs:domain ontology:ProcessStep ;
+    rdfs:range xsd:string .
+
+ontology:hasVarName a rdf:Property ;
+    rdfs:domain ontology:HWAddress ;
+    rdfs:range xsd:string .
+
+ontology:mapAttribute a rdf:Property ;
+    rdfs:domain ontology:Mapping ;
+    rdfs:range rdf:Property .
+
+ontology:mapClass a rdf:Property ;
+    rdfs:domain ontology:Mapping ;
+    rdfs:range rdfs:Class .
+
+ontology:mapRule a rdf:Property ;
+    rdfs:range xsd:string .
+
+ontology:processStep1 a ontology:ProcessStep,
+        ontology:Retrievable ;
+    ontology:appliedInProcess ontology:CarDoorProcess,
+        ontology:CarRoofProcess ;
+    ontology:hasOrderNumber "1" ;
+    ontology:retrievedBy :processStep1Address .
+
+ontology:processStep2 a ontology:ProcessStep,
+        ontology:Retrievable ;
+    ontology:appliedInProcess ontology:CarDoorProcess ;
+    ontology:hasOrderNumber "2" ;
+    ontology:retrievedBy :processStep2Address .
+
+ontology:processStepUndefined a ontology:ProcessStep ;
+    ontology:hasOrderNumber "0" .
+
+ontology:retrievedBy a rdf:Property ;
+    rdfs:domain ontology:Retrievable ;
+    rdfs:range rdfs:Resource .
+
+<https://volkswagen.org/vass/v0.9/root> a owl:Ontology ;
+    owl:imports <https://volkswagen.org/vass/v0.9/ontology> ;
+    owl:versionInfo "Created with TopBraid Composer" .
+
+<https://volkswagen.org/vass/v0.9/usecase> a owl:Ontology ;
+    owl:imports <https://volkswagen.org/vass/v0.9/ontology> ;
+    owl:versionInfo "Created with TopBraid Composer" .
+
+default1:hasOutput a rdf:Property ;
+    rdfs:domain default1:Process ;
+    rdfs:range default1:Part .
+
+default1:hasPartType a rdf:Property ;
+    rdfs:domain default1:Part ;
+    rdfs:range ontology:Part .
+
+default1:hasSerialNumber a rdf:Property ;
+    rdfs:domain default1:Part ;
+    rdfs:range xsd:string .
+
+default1:hasStateMapping a ontology:Mapping ;
+    ontology:getParams """SELECT distinct ?hasVarName ?hasDataType\r
+WHERE {\r
+	?processes rdfs:subClassOf* ontology:Process . \r
+    ?steps ontology:appliedInProcess  ?processes .\r
+    ?steps ontology:retrievedBy ?addr .\r
+    ?addr ontology:hasVarName ?hasVarName .  \r
+    ?addr ontology:hasDataType ?hasDataType .\r
+}""" ;
+    ontology:getValues """SELECT distinct ?value\r
+WHERE {\r
+    BIND(IF(?varname1 = true && ?varname2 = false, ontology:processStep1, \r
+			   IF(?varname2 = true && ?varname1 = false, ontology:processStep2, \r
+                   ontology:processStepUndefined) # else\r
+     ) AS ?value)\r
+}""" ;
+    ontology:mapAttribute default1:hasState ;
+    ontology:mapClass default1:Process .
+
+default1:hasStateNumericalMapping a ontology:Mapping ;
+    ontology:getParams """SELECT distinct ?hasVarName ?hasDataType\r
+WHERE {\r
+	?processes rdfs:subClassOf* ontology:Process . \r
+    ?steps ontology:appliedInProcess  ?processes .\r
+    ?steps ontology:retrievedBy ?addr .\r
+    ?addr ontology:hasVarName ?hasVarName .  \r
+    ?addr ontology:hasDataType ?hasDataType .\r
+}""" ;
+    ontology:getValues """SELECT distinct ?value\r
+WHERE {\r
+    OPTIONAL{ontology:processStep1 ontology:hasOrderNumber ?ord1 .}\r
+    OPTIONAL{ontology:processStep2 ontology:hasOrderNumber ?ord2 .}\r
+    OPTIONAL{ontology:processStepUndefined ontology:hasOrderNumber ?ord0 .}\r
+    BIND(IF(?varname1 = true && ?varname2 = false,  1, \r
+			   IF(?varname2 = true && ?varname1 = false, ?ord2, \r
+                   ?ord0) # else\r
+     ) AS ?value)\r
+}""" ;
+    ontology:mapAttribute default1:hasNumericalState ;
+    ontology:mapClass default1:Process .
+
+:processStep1Address a ontology:HWAddress ;
+    ontology:hasDataType xsd:boolean ;
+    ontology:hasVarName "varname1" .
+
+:processStep2Address a ontology:HWAddress ;
+    ontology:hasDataType xsd:boolean ;
+    ontology:hasVarName "varname2" .
+
+default1:hasNumericalState a rdf:Property ;
+    rdfs:domain default1:Process ;
+    rdfs:range xsd:integer .
+
+default1:hasState a rdf:Property ;
+    rdfs:domain default1:Process ;
+    rdfs:range ontology:ProcessStep .
+
+<https://volkswagen.org/vass/v0.9/ontology> a owl:Ontology ;
+    owl:imports <http://www.w3.org/ns/shacl#> ;
+    owl:versionInfo "Created with TopBraid Composer" .
+

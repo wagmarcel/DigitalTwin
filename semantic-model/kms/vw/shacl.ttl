@@ -29,11 +29,13 @@
       sh:minCount 1 ;
       sh:name "has part type" ;
       sh:nodeKind sh:BlankNode ;
+      sh:order "20"^^xsd:decimal ;
       sh:property [
           sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
           sh:class <https://volkswagen.org/vass/v0.9/ontology#Part> ;
           sh:maxCount 1 ;
           sh:minCount 1 ;
+          sh:nodeKind sh:IRI ;
         ] ;
     ] ;
   sh:property [
@@ -43,10 +45,12 @@
       sh:minCount 1 ;
       sh:name "serial number" ;
       sh:nodeKind sh:BlankNode ;
+      sh:order "10"^^xsd:decimal ;
       sh:property [
           sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
           sh:maxCount 1 ;
-          sh:pattern "^\\d{5}" ;
+          sh:nodeKind sh:Literal ;
+          sh:pattern "^\\d{5}$" ;
         ] ;
     ] ;
   sh:targetClass usecase:Part ;
@@ -60,6 +64,7 @@
       sh:minCount 1 ;
       sh:name "has numerical state" ;
       sh:nodeKind sh:BlankNode ;
+      sh:order "30"^^xsd:decimal ;
       sh:property [
           sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
         ] ;
@@ -71,6 +76,7 @@
       sh:minCount 1 ;
       sh:name "is producing" ;
       sh:nodeKind sh:BlankNode ;
+      sh:order "20"^^xsd:decimal ;
       sh:property [
           sh:path <https://uri.etsi.org/ngsi-ld/hasObject> ;
           sh:class usecase:Part ;
@@ -83,6 +89,7 @@
       sh:minCount 1 ;
       sh:name "process state" ;
       sh:nodeKind sh:BlankNode ;
+      sh:order "10"^^xsd:decimal ;
       sh:property [
           sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
           sh:class <https://volkswagen.org/vass/v0.9/ontology#ProcessStep> ;

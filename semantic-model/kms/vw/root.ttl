@@ -10,18 +10,18 @@
 
 ontology:hasOrderNumber
   rdfs:domain ontology:ProcessStep ;
-  rdfs:range xsd:integer ;
+  rdfs:range xsd:string ;
 .
 ontology:processStep1
-  ontology:hasOrderNumber 1 ;
+  ontology:hasOrderNumber "1" ;
   ontology:retrievedBy :processStep1Address ;
 .
 ontology:processStep2
-  ontology:hasOrderNumber 2 ;
+  ontology:hasOrderNumber "2" ;
   ontology:retrievedBy :processStep2Address ;
 .
 ontology:processStepUndefined
-  ontology:hasOrderNumber 0 ;
+  ontology:hasOrderNumber "0" ;
 .
 <https://volkswagen.org/vass/v0.9/root>
   rdf:type owl:Ontology ;
