@@ -23,6 +23,7 @@ unknown_ns_prefix = "ns"
 def create_prefixes(g, xml_node):
     unknown_ns_count = 0
     opcua_ns_count = 1
+    g.bind('opcua', rdf_ns['opcua'])
     for ns in xml_node:
         namespace = Namespace(ns.text)
         try:
@@ -58,6 +59,10 @@ def dump_graph(g):
         print(s, p, o)
 
 
+def write_graph(g, filename):
+    g.serialize(destination=filename)
+
+
 def add_uadatatype(g, uadatatype):
     browse_name = uadatatype.get('BrowseName')
     #nodeid = uadatatype.get('NodeId')
@@ -67,7 +72,6 @@ def add_uadatatype(g, uadatatype):
     g.add((rdf_namespace[name], RDF.type, OWL.Class))
 
     definition = uadatatype.find('opcua:Definition', xml_ns)
-    print(f"Definition {definition}")
     fields = definition.findall('opcua:Field', xml_ns)
     for field in fields:
         elementname = field.get('Name')
@@ -91,4 +95,4 @@ uadatatypes = root.findall('opcua:UADataType', xml_ns)
 for uadatatype in uadatatypes:
     add_uadatatype(g, uadatatype)
 
-dump_graph(g)
+write_graph(g, "result.ttl")
