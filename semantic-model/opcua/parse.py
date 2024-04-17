@@ -1,7 +1,7 @@
 import xml.etree.ElementTree as ET
-from rdflib import Graph, Namespace, Literal
+from rdflib import Graph, Namespace, Literal, URIRef
 from rdflib.namespace import NamespaceManager
-from rdflib.namespace import OWL, RDF
+from rdflib.namespace import OWL, RDF, RDFS
 
 
 xml_ns = {
@@ -12,13 +12,21 @@ rdf_ns = {
 }
 opcua_ns = ['http://opcfoundation.org/UA/']
 known_opcua_ns = {
-    'http://opcfoundation.org/UA/base/': 'base',
     'http://opcfoundation.org/UA/Pumps/': 'pumps',
     'http://opcfoundation.org/UA/Machinery/': 'machinery',
     'http://opcfoundation.org/UA/DI/': 'devices'
 }
-
 unknown_ns_prefix = "ns"
+versionIRI = URIRef("http://example.com/v0.1/UA/")
+ontology_name = URIRef("http://opcfoundation.org/UA/Pumps/")
+imported_ontologies = [URIRef('http://opcfoundation.org/UA/')]
+
+def create_header(g):
+    g.add((ontology_name, RDF.type, OWL.Ontology))
+    g.add((ontology_name, OWL.versionIRI, versionIRI))
+    g.add((ontology_name, OWL.versionInfo, Literal(0.1)))
+    for ontology in imported_ontologies:
+        g.add((ontology_name, OWL.imports, ontology))
 
 def create_prefixes(g, xml_node):
     unknown_ns_count = 0
@@ -65,12 +73,13 @@ def write_graph(g, filename):
 
 def add_uadatatype(g, uadatatype):
     browse_name = uadatatype.get('BrowseName')
-    #nodeid = uadatatype.get('NodeId')
+    nodeid = uadatatype.get('NodeId')
     ns_index, name = split_ns_term(browse_name)
     rdf_namespace = get_rdf_ns_from_ua_index(ns_index)
     classname = rdf_namespace[name]
-    g.add((rdf_namespace[name], RDF.type, OWL.Class))
-
+    #g.add((rdf_namespace[name], RDF.type, OWL.Class))
+    g.add((rdf_namespace[name], rdf_ns['opcua']['NodeId'], Literal(nodeid)))
+    g.add((rdf_namespace[name], RDFS.subClassOf, rdf_ns['opcua']['Enumeration']))
     definition = uadatatype.find('opcua:Definition', xml_ns)
     fields = definition.findall('opcua:Field', xml_ns)
     for field in fields:
@@ -89,6 +98,7 @@ root = tree.getroot()
 print("Root is",root)
 namespace_uris = root.find('opcua:NamespaceUris', xml_ns)
 g = Graph()
+create_header(g)
 create_prefixes(g, namespace_uris)
 
 uadatatypes = root.findall('opcua:UADataType', xml_ns)
