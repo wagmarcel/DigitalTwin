@@ -108,11 +108,27 @@ def get_reference_subtype(node):
     return subtype
             
 
-def add_nodeid_to_class(g, classiri, nodeid, namespaceid=0):
-    g.add((classiri, rdf_ns['opcua']['hasNodeId'], Literal(nodeid)))
-    namespace = opcua_ns[namespaceid]
+#def add_nodeid_to_class(g, classiri, nodeid, namespaceid=0):
+#    g.add((classiri, rdf_ns['opcua']['hasNodeId'], Literal(nodeid)))
+#    namespace = opcua_ns[namespaceid]
+#    g.add((classiri, rdf_ns['opcua']['hasNamespace'], known_ns_classes[namespace]))
+def add_nodeid_to_class(g, node, nodeclasstype):
+    nodeid = node.get('NodeId')
+    ni_index, ni_id = parse_nodeid(nodeid)
+    browsename = node.get('BrowseName')
+    bn_index, bn_name = split_ns_term(browsename)
+    index = ni_index
+    if bn_index is not None:
+        index = bn_index
+    rdf_namespace = get_rdf_ns_from_ua_index(index)
+    classiri = rdf_namespace[bn_name]
+    g.add((classiri, rdf_ns['opcua']['hasNodeId'], Literal(ni_id)))
+    namespace = opcua_ns[index]
     g.add((classiri, rdf_ns['opcua']['hasNamespace'], known_ns_classes[namespace]))
-
+    g.add((classiri, RDF.type, rdf_ns['opcua'][nodeclasstype]))
+    return get_rdf_ns_from_ua_index(index), bn_name
+    #add_nodeid_to_class(g, classiri, ni_id, index)
+                        
 
 def parse_nodeid(nodeid):
     """
@@ -136,35 +152,39 @@ def parse_nodeid(nodeid):
     return ns_index, identifier
 
 
-def add_uavariable(g, uavariable):
-    nodeid = uavariable.get('NodeId')
-    ni_index, ni_id = parse_nodeid(nodeid)
-    browsename = uavariable.get('BrowseName')
-    bn_index, bn_name = split_ns_term(browsename)
-    index = ni_index
-    if bn_index is not None:
-        index = bn_index
-    rdf_namespace = get_rdf_ns_from_ua_index(index)
-    classname = rdf_namespace[bn_name]
 
-    add_nodeid_to_class(g, classname, ni_id, index)
-    g.add((classname, RDF.type, rdf_ns['opcua']['VariableNodeClass']))
+def add_uavariable(g, uavariable):
+    add_nodeid_to_class(g, uavariable, 'VariableNodeClass')
+    # nodeid = uavariable.get('NodeId')
+    # ni_index, ni_id = parse_nodeid(nodeid)
+    # browsename = uavariable.get('BrowseName')
+    # bn_index, bn_name = split_ns_term(browsename)
+    # index = ni_index
+    # if bn_index is not None:
+    #     index = bn_index
+    # rdf_namespace = get_rdf_ns_from_ua_index(index)
+    # classname = rdf_namespace[bn_name]
+
+    # add_nodeid_to_class(g, classname, ni_id, index)
+    #g.add((classname, RDF.type, rdf_ns['opcua']['VariableNodeClass']))
 
 
 def add_uadatatype(g, uadatatype):
-    browse_name = uadatatype.get('BrowseName')
-    nodeid = uadatatype.get('NodeId')
-    ni_index, ni_id = parse_nodeid(nodeid)
-    bn_index, name = split_ns_term(browse_name)
-    index = ni_index
-    if bn_index is not None:
-        index = bn_index
-    rdf_namespace = get_rdf_ns_from_ua_index(index)
+    rdf_namespace, name = add_nodeid_to_class(g, uadatatype, 'DataTypeNodeClass')
+    # browse_name = uadatatype.get('BrowseName')
+    # nodeid = uadatatype.get('NodeId')
+    # ni_index, ni_id = parse_nodeid(nodeid)
+    # bn_index, name = split_ns_term(browse_name)
+    # index = ni_index
+    # if bn_index is not None:
+    #     index = bn_index
+    # rdf_namespace = get_rdf_ns_from_ua_index(index)
     
-    classname = rdf_namespace[name]
-    #g.add((rdf_namespace[name], RDF.type, OWL.Class))
+    # classname = rdf_namespace[name]
+    # #g.add((rdf_namespace[name], RDF.type, OWL.Class))
+    # add_nodeid_to_class(g, classname, ni_id, index)
     subtype = get_reference_subtype(uadatatype)
-    add_nodeid_to_class(g, classname, ni_id, index)
+    
     #g.add((rdf_namespace[name], rdf_ns['opcua']['hasNodeId'], Literal(nodeid)))
     if subtype is not None:
         g.add((rdf_namespace[name], RDFS.subClassOf, g.namespace_manager.expand_curie(subtype)))
@@ -176,7 +196,7 @@ def add_uadatatype(g, uadatatype):
         if symbolicname is None:
             symbolicname = elementname
         value = field.get('Value')
-        g.add((rdf_namespace[symbolicname], RDF.type, classname))
+        g.add((rdf_namespace[symbolicname], RDF.type, rdf_namespace[name]))
         g.add((rdf_namespace[symbolicname], rdf_ns['opcua']['hasValue'], Literal(str(value))))
 
 
