@@ -143,7 +143,7 @@ def add_to_nodeids(rdf_namespace, name, node):
     nodeIds[ni_index][ni_id] = rdf_namespace[name]
 
 
-def add_nodeid_to_class(g, node, nodeclasstype):
+def add_nodeid_to_class(g, node, nodeclasstype, xml_ns):
     nodeid = node.get('NodeId')
     ni_index, ni_id = parse_nodeid(nodeid)
     browsename = node.get('BrowseName')
@@ -158,6 +158,8 @@ def add_nodeid_to_class(g, node, nodeclasstype):
     g.add((classiri, rdf_ns['opcua']['hasNamespace'], known_ns_classes[namespace]))
     g.add((classiri, RDF.type, rdf_ns['opcua'][nodeclasstype]))
     nodeIds[index][ni_id] = classiri
+    displayname_node = node.find('opcua:DisplayName', xml_ns)
+    g.add((classiri, rdf_ns['opcua']['hasDisplayName'], Literal(displayname_node.text)))
     return get_rdf_ns_from_ua_index(index), bn_name
                         
 
@@ -211,6 +213,11 @@ def add_uadatatype(g, uadatatype):
         g.add((rdf_namespace[symbolicname], RDF.type, rdf_namespace[name]))
         g.add((rdf_namespace[symbolicname], rdf_ns['opcua']['hasValue'], Literal(str(value))))
 
+
+def add_uanode(g, node, type, xml_ns):
+    add_nodeid_to_class(g, node, type, xml_ns)
+
+
 def scan_aliases(alias_nodes):
     for alias in alias_nodes:
         name = alias.get('Alias')
@@ -223,23 +230,27 @@ tree = ET.parse('/home/marcel/src/UA-Nodeset/Pumps/Opc.Ua.Pumps.NodeSet2.xml')
 root = tree.getroot()
 namespace_uris = root.find('opcua:NamespaceUris', xml_ns)
 g = Graph()
-
 create_prefixes(g, namespace_uris)
 create_header(g)
 init_nodeids()
 aliases_node = root.find('opcua:Aliases', xml_ns)
 alias_nodes = aliases_node.findall('opcua:Alias', xml_ns)
 scan_aliases(alias_nodes)
-uadatatypes = root.findall('opcua:UADataType', xml_ns)
-for uadatatype in uadatatypes:
-    add_uadatatype(g, uadatatype)
+tag_names = [('opcua:UADataType', 'DataTypeNodeClass'), ('opcua:UAVariable', 'VariableNodeClass'), ('opcua:UAObjectType', 'ObjectTypeNodeClass')]
+for tag_name, type in tag_names:
+    uanodes = root.findall(tag_name, xml_ns)   
+    for uanode in uanodes:
+        add_uanode(g, uanode, type, xml_ns)
+# uadatatypes = root.findall('opcua:UADataType', xml_ns)
+# for uadatatype in uadatatypes:
+#     add_uadatatype(g, uadatatype)
 
-uavariables = root.findall('opcua:UAVariable', xml_ns)
-for uavariable in uavariables:
-    add_uavariable(g, uavariable)
+# uavariables = root.findall('opcua:UAVariable', xml_ns)
+# for uavariable in uavariables:
+#     add_uavariable(g, uavariable)
 
-uaobjecttypes = root.findall('opcua:UAObjectType', xml_ns)
-for uaobjecttype in uaobjecttypes:
-    add_uaobjecttype(g, uaobjecttype)
+# uaobjecttypes = root.findall('opcua:UAObjectType', xml_ns)
+# for uaobjecttype in uaobjecttypes:
+#     add_uaobjecttype(g, uaobjecttype)
     
 write_graph(g, "result.ttl")

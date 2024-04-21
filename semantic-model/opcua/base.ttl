@@ -15,52 +15,58 @@
 #    Object Properties
 #################################################################
 
-###  http://opcfoundation.org/UA/GeneratesEvent
-opcua:GeneratesEvent rdf:type owl:ObjectProperty .
+###  http://opcfoundation.org/UA/generatesEvent
+opcua:generatesEvent rdf:type owl:ObjectProperty .
 
 
-###  http://opcfoundation.org/UA/HasComponent
-opcua:HasComponent rdf:type owl:ObjectProperty .
+###  http://opcfoundation.org/UA/hasComponent
+opcua:hasComponent rdf:type owl:ObjectProperty .
 
 
-###  http://opcfoundation.org/UA/HasDescription
-opcua:HasDescription rdf:type owl:ObjectProperty .
+###  http://opcfoundation.org/UA/hasDisplayName
+opcua:hasDisplayName rdf:type owl:ObjectProperty .
 
 
-###  http://opcfoundation.org/UA/HasEncoding
-opcua:HasEncoding rdf:type owl:ObjectProperty .
+###  http://opcfoundation.org/UA/hasEncoding
+opcua:hasEncoding rdf:type owl:ObjectProperty .
 
 
-###  http://opcfoundation.org/UA/HasInterface
-opcua:HasInterface rdf:type owl:ObjectProperty .
+###  http://opcfoundation.org/UA/hasInterface
+opcua:hasInterface rdf:type owl:ObjectProperty .
 
 
-###  http://opcfoundation.org/UA/HasModellingRule
-opcua:HasModellingRule rdf:type owl:ObjectProperty .
-
-
-###  http://opcfoundation.org/UA/HasProperty
-opcua:HasProperty rdf:type owl:ObjectProperty .
-
-
-###  http://opcfoundation.org/UA/HasSubtype
-opcua:HasSubtype rdf:type owl:ObjectProperty .
-
-
-###  http://opcfoundation.org/UA/HasTypeDefinition
-opcua:HasTypeDefinition rdf:type owl:ObjectProperty .
+###  http://opcfoundation.org/UA/hasModellingRule
+opcua:hasModellingRule rdf:type owl:ObjectProperty .
 
 
 ###  http://opcfoundation.org/UA/hasNamespace
 opcua:hasNamespace rdf:type owl:ObjectProperty .
 
 
+###  http://opcfoundation.org/UA/hasProperty
+opcua:hasProperty rdf:type owl:ObjectProperty .
+
+
+###  http://opcfoundation.org/UA/hasSubtype
+opcua:hasSubtype rdf:type owl:ObjectProperty .
+
+
+###  http://opcfoundation.org/UA/hasTypeDefinition
+opcua:hasTypeDefinition rdf:type owl:ObjectProperty .
+
+
 #################################################################
 #    Data properties
 #################################################################
 
+###  http://opcfoundation.org/UA/hasDisplayName
+opcua:hasDisplayName rdf:type owl:DatatypeProperty ;
+                     rdfs:range xsd:string .
+
+
 ###  http://opcfoundation.org/UA/hasNodeId
 opcua:hasNodeId rdf:type owl:DatatypeProperty ;
+                rdfs:domain opcua:BaseNodeClass ;
                 rdfs:range xsd:integer .
 
 
@@ -176,6 +182,10 @@ opcua:NumericRange rdf:type owl:Class ;
                    rdfs:subClassOf opcua:Range .
 
 
+###  http://opcfoundation.org/UA/OPCUAMetaclass
+opcua:OPCUAMetaclass rdf:type owl:Class .
+
+
 ###  http://opcfoundation.org/UA/ObjectNodeClass
 opcua:ObjectNodeClass rdf:type owl:Class ;
                       rdfs:subClassOf opcua:BaseNodeClass .
@@ -248,60 +258,70 @@ opcua:BaseObjectType rdf:type owl:NamedIndividual ;
 
 
 ###  http://opcfoundation.org/UA/Boolean
-opcua:Boolean rdf:type owl:NamedIndividual ;
+opcua:Boolean rdf:type owl:NamedIndividual ,
+                       opcua:OPCUAMetaclass ;
               opcua:hasNamespace opcua:OPCUANamespace ;
               opcua:hasNodeId "1"^^xsd:int .
 
 
 ###  http://opcfoundation.org/UA/Byte
-opcua:Byte rdf:type owl:NamedIndividual ;
+opcua:Byte rdf:type owl:NamedIndividual ,
+                    opcua:OPCUAMetaclass ;
            opcua:hasNamespace opcua:OPCUANamespace ;
            opcua:hasNodeId "3"^^xsd:int .
 
 
 ###  http://opcfoundation.org/UA/ByteString
-opcua:ByteString rdf:type owl:NamedIndividual ;
+opcua:ByteString rdf:type owl:NamedIndividual ,
+                          opcua:OPCUAMetaclass ;
                  opcua:hasNamespace opcua:OPCUANamespace ;
                  opcua:hasNodeId "15"^^xsd:int .
 
 
 ###  http://opcfoundation.org/UA/DateTime
-opcua:DateTime rdf:type owl:NamedIndividual ;
+opcua:DateTime rdf:type owl:NamedIndividual ,
+                        opcua:OPCUAMetaclass ;
                opcua:hasNamespace opcua:OPCUANamespace ;
                opcua:hasNodeId "13"^^xsd:int .
 
 
 ###  http://opcfoundation.org/UA/Double
-opcua:Double rdf:type owl:NamedIndividual ;
+opcua:Double rdf:type owl:NamedIndividual ,
+                      opcua:OPCUAMetaclass ;
              opcua:hasNamespace opcua:OPCUANamespace ;
              opcua:hasNodeId "11"^^xsd:int .
 
 
 ###  http://opcfoundation.org/UA/EUInformation
-opcua:EUInformation rdf:type owl:NamedIndividual ;
+opcua:EUInformation rdf:type owl:NamedIndividual ,
+                             opcua:OPCUAMetaclass ;
                     opcua:hasNamespace opcua:OPCUANamespace ;
                     opcua:hasNodeId "887"^^xsd:int .
 
 
 ###  http://opcfoundation.org/UA/EnumValueType
-opcua:EnumValueType rdf:type owl:NamedIndividual ;
+opcua:EnumValueType rdf:type owl:NamedIndividual ,
+                             opcua:OPCUAMetaclass ;
                     opcua:hasNamespace opcua:OPCUANamespace ;
                     opcua:hasNodeId "7594"^^xsd:int .
 
 
 ###  http://opcfoundation.org/UA/Enumeration
-opcua:Enumeration rdf:type owl:NamedIndividual ;
+opcua:Enumeration rdf:type owl:NamedIndividual ,
+                           opcua:OPCUAMetaclass ;
                   opcua:hasNodeId 29 .
 
 
 ###  http://opcfoundation.org/UA/FolderType
-opcua:FolderType rdf:type owl:NamedIndividual ;
+opcua:FolderType rdf:type owl:NamedIndividual ,
+                          opcua:OPCUAMetaclass ;
                  opcua:hasNamespace opcua:OPCUANamespace ;
                  opcua:hasNodeId "61"^^xsd:int .
 
 
 ###  http://opcfoundation.org/UA/GeneratesEvent
-opcua:GeneratesEvent rdf:type owl:NamedIndividual ;
+opcua:GeneratesEvent rdf:type owl:NamedIndividual ,
+                              opcua:OPCUAMetaclass ;
                      opcua:hasNamespace opcua:OPCUANamespace ;
                      opcua:hasNodeId "41"^^xsd:int .
 
@@ -355,25 +375,29 @@ opcua:HasTypeDefinition rdf:type owl:NamedIndividual ;
 
 
 ###  http://opcfoundation.org/UA/IdType
-opcua:IdType rdf:type owl:NamedIndividual ;
+opcua:IdType rdf:type owl:NamedIndividual ,
+                      opcua:OPCUAMetaclass ;
              opcua:hasNamespace opcua:OPCUANamespace ;
              opcua:hasNodeId "256"^^xsd:int .
 
 
 ###  http://opcfoundation.org/UA/Int32
-opcua:Int32 rdf:type owl:NamedIndividual ;
+opcua:Int32 rdf:type owl:NamedIndividual ,
+                     opcua:OPCUAMetaclass ;
             opcua:hasNamespace opcua:OPCUANamespace ;
             opcua:hasNodeId "6"^^xsd:int .
 
 
 ###  http://opcfoundation.org/UA/LocalizedText
-opcua:LocalizedText rdf:type owl:NamedIndividual ;
+opcua:LocalizedText rdf:type owl:NamedIndividual ,
+                             opcua:OPCUAMetaclass ;
                     opcua:hasNamespace opcua:OPCUANamespace ;
                     opcua:hasNodeId "21"^^xsd:int .
 
 
 ###  http://opcfoundation.org/UA/NumericRange
-opcua:NumericRange rdf:type owl:NamedIndividual ;
+opcua:NumericRange rdf:type owl:NamedIndividual ,
+                            opcua:OPCUAMetaclass ;
                    opcua:hasNamespace opcua:OPCUANamespace ;
                    opcua:hasNodeId "291"^^xsd:int .
 
@@ -403,44 +427,51 @@ opcua:OPCUAPumpsNamespace rdf:type owl:NamedIndividual ,
 
 
 ###  http://opcfoundation.org/UA/OptionSet
-opcua:OptionSet rdf:type owl:NamedIndividual ;
+opcua:OptionSet rdf:type owl:NamedIndividual ,
+                         opcua:OPCUAMetaclass ;
                 opcua:hasNamespace opcua:OPCUANamespace ;
                 opcua:hasNodeId "12755"^^xsd:int .
 
 
 ###  http://opcfoundation.org/UA/Range
-opcua:Range rdf:type owl:NamedIndividual ;
+opcua:Range rdf:type owl:NamedIndividual ,
+                     opcua:OPCUAMetaclass ;
             opcua:hasNamespace opcua:OPCUANamespace ;
             opcua:hasNodeId "884"^^xsd:int ,
                             884 .
 
 
 ###  http://opcfoundation.org/UA/String
-opcua:String rdf:type owl:NamedIndividual ;
+opcua:String rdf:type owl:NamedIndividual ,
+                      opcua:OPCUAMetaclass ;
              opcua:hasNamespace opcua:OPCUANamespace ;
              opcua:hasNodeId "12"^^xsd:int .
 
 
 ###  http://opcfoundation.org/UA/Structure
-opcua:Structure rdf:type owl:NamedIndividual ;
+opcua:Structure rdf:type owl:NamedIndividual ,
+                         opcua:OPCUAMetaclass ;
                 opcua:hasNamespace opcua:OPCUANamespace ;
                 opcua:hasNodeId "22"^^xsd:int .
 
 
 ###  http://opcfoundation.org/UA/UInt16
-opcua:UInt16 rdf:type owl:NamedIndividual ;
+opcua:UInt16 rdf:type owl:NamedIndividual ,
+                      opcua:OPCUAMetaclass ;
              opcua:hasNamespace opcua:OPCUANamespace ;
              opcua:hasNodeId "5"^^xsd:int .
 
 
 ###  http://opcfoundation.org/UA/UInt32
-opcua:UInt32 rdf:type owl:NamedIndividual ;
+opcua:UInt32 rdf:type owl:NamedIndividual ,
+                      opcua:OPCUAMetaclass ;
              opcua:hasNamespace opcua:OPCUANamespace ;
              opcua:hasNodeId "7"^^xsd:int .
 
 
 ###  http://opcfoundation.org/UA/UInt64
-opcua:UInt64 rdf:type owl:NamedIndividual ;
+opcua:UInt64 rdf:type owl:NamedIndividual ,
+                      opcua:OPCUAMetaclass ;
              opcua:hasNamespace opcua:OPCUANamespace ;
              opcua:hasNodeId "9"^^xsd:int .
 
