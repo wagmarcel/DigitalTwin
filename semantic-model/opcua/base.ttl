@@ -153,6 +153,10 @@ opcua:Enumeration rdf:type owl:Class ;
                   rdfs:subClassOf opcua:BaseDataType .
 
 
+###  http://opcfoundation.org/UA/Field
+opcua:Field rdf:type owl:Class .
+
+
 ###  http://opcfoundation.org/UA/FolderType
 opcua:FolderType rdf:type owl:Class ;
                  rdfs:subClassOf opcua:BaseObjectType .
