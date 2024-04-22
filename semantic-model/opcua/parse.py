@@ -144,23 +144,25 @@ def add_to_nodeids(rdf_namespace, name, node):
 
 
 def add_nodeid_to_class(g, node, nodeclasstype, xml_ns):
-    nodeid = node.get('NodeId')
-    ni_index, ni_id = parse_nodeid(nodeid)
-    browsename = node.get('BrowseName')
-    bn_index, bn_name = split_ns_term(browsename)
-    index = ni_index
-    if bn_index is not None:
-        index = bn_index
+    # nodeid = node.get('NodeId')
+    # ni_index, ni_id = parse_nodeid(nodeid)
+    # browsename = node.get('BrowseName')
+    # bn_index, bn_name = split_ns_term(browsename)
+    # index = ni_index
+    # if bn_index is not None:
+    #     index = bn_index
+    # rdf_namespace = get_rdf_ns_from_ua_index(index)
+    nid, index, bn_name = get_nid_ns_and_name(g, node)
     rdf_namespace = get_rdf_ns_from_ua_index(index)
     classiri = rdf_namespace[bn_name]
-    g.add((classiri, rdf_ns['opcua']['hasNodeId'], Literal(ni_id)))
+    g.add((classiri, rdf_ns['opcua']['hasNodeId'], Literal(nid)))
     namespace = opcua_ns[index]
     g.add((classiri, rdf_ns['opcua']['hasNamespace'], known_ns_classes[namespace]))
     g.add((classiri, RDF.type, rdf_ns['opcua'][nodeclasstype]))
-    nodeIds[index][ni_id] = classiri
+    nodeIds[index][nid] = classiri
     displayname_node = node.find('opcua:DisplayName', xml_ns)
     g.add((classiri, rdf_ns['opcua']['hasDisplayName'], Literal(displayname_node.text)))
-    return get_rdf_ns_from_ua_index(index), bn_name
+    return rdf_namespace, bn_name
                         
 
 def parse_nodeid(nodeid):
@@ -196,12 +198,10 @@ def add_uavariable(g, uavariable):
     
 
 
-def add_uadatatype(g, uadatatype):
-    rdf_namespace, name = add_nodeid_to_class(g, uadatatype, 'DataTypeNodeClass')
-    add_subclass(g, uadatatype, rdf_namespace[name])
-    # subtype = get_reference_subtype(uadatatype) 
-    # if subtype is not None:
-    #     g.add((rdf_namespace[name], RDFS.subClassOf, g.namespace_manager.expand_curie(subtype)))
+def add_uadatatype(g, node, xml_ns):
+    _, index, name = get_nid_ns_and_name(g, node)
+    rdf_namespace = get_rdf_ns_from_ua_index(index)
+    add_subclass(g, node, rdf_namespace[name])
     definition = uadatatype.find('opcua:Definition', xml_ns)
     fields = definition.findall('opcua:Field', xml_ns)
     for field in fields:
@@ -210,12 +210,24 @@ def add_uadatatype(g, uadatatype):
         if symbolicname is None:
             symbolicname = elementname
         value = field.get('Value')
-        g.add((rdf_namespace[symbolicname], RDF.type, rdf_namespace[name]))
+        g.add((rdf_namespace[symbolicname], RDF.type, rdf_ns['opcua']['Field']))
         g.add((rdf_namespace[symbolicname], rdf_ns['opcua']['hasValue'], Literal(str(value))))
 
 
 def add_uanode(g, node, type, xml_ns):
     add_nodeid_to_class(g, node, type, xml_ns)
+
+
+def get_nid_ns_and_name(g, node):
+    nodeid = node.get('NodeId')
+    ni_index, ni_id = parse_nodeid(nodeid)
+    browsename = node.get('BrowseName')
+    bn_index, bn_name = split_ns_term(browsename)
+    index = ni_index
+    if bn_index is not None:
+        index = bn_index
+    #rdf_namespace = get_rdf_ns_from_ua_index(index)
+    return ni_id, index, bn_name
 
 
 def scan_aliases(alias_nodes):
@@ -241,9 +253,9 @@ for tag_name, type in tag_names:
     uanodes = root.findall(tag_name, xml_ns)   
     for uanode in uanodes:
         add_uanode(g, uanode, type, xml_ns)
-# uadatatypes = root.findall('opcua:UADataType', xml_ns)
-# for uadatatype in uadatatypes:
-#     add_uadatatype(g, uadatatype)
+uadatatypes = root.findall('opcua:UADataType', xml_ns)
+for uadatatype in uadatatypes:
+    add_uadatatype(g, uadatatype, xml_ns)
 
 # uavariables = root.findall('opcua:UAVariable', xml_ns)
 # for uavariable in uavariables:
