@@ -27,12 +27,22 @@ opcua:generatesEvent rdf:type owl:ObjectProperty .
 opcua:hasComponent rdf:type owl:ObjectProperty .
 
 
+###  http://opcfoundation.org/UA/hasDataType
+opcua:hasDataType rdf:type owl:ObjectProperty ;
+                  rdfs:range opcua:BaseDataType .
+
+
 ###  http://opcfoundation.org/UA/hasDisplayName
 opcua:hasDisplayName rdf:type owl:ObjectProperty .
 
 
 ###  http://opcfoundation.org/UA/hasEncoding
 opcua:hasEncoding rdf:type owl:ObjectProperty .
+
+
+###  http://opcfoundation.org/UA/hasField
+opcua:hasField rdf:type owl:ObjectProperty ;
+               rdfs:range opcua:Field .
 
 
 ###  http://opcfoundation.org/UA/hasInterface
@@ -73,6 +83,11 @@ opcua:hasDisplayName rdf:type owl:DatatypeProperty ;
                      rdfs:range xsd:string .
 
 
+###  http://opcfoundation.org/UA/hasFieldName
+opcua:hasFieldName rdf:type owl:DatatypeProperty ;
+                   rdfs:range xsd:string .
+
+
 ###  http://opcfoundation.org/UA/hasNodeId
 opcua:hasNodeId rdf:type owl:DatatypeProperty ;
                 rdfs:domain opcua:BaseNodeClass ;
@@ -81,6 +96,11 @@ opcua:hasNodeId rdf:type owl:DatatypeProperty ;
 
 ###  http://opcfoundation.org/UA/hasPrefix
 opcua:hasPrefix rdf:type owl:DatatypeProperty .
+
+
+###  http://opcfoundation.org/UA/hasSymbolicName
+opcua:hasSymbolicName rdf:type owl:DatatypeProperty ;
+                      rdfs:range xsd:string .
 
 
 ###  http://opcfoundation.org/UA/hasUri
@@ -141,6 +161,10 @@ opcua:ObjectTypeNodeClass rdf:type owl:Class ;
 ###  http://opcfoundation.org/UA/ReferenceTypeNodeClass
 opcua:ReferenceTypeNodeClass rdf:type owl:Class ;
                              rdfs:subClassOf opcua:BaseNodeClass .
+
+
+###  http://opcfoundation.org/UA/References
+opcua:References rdf:type owl:Class .
 
 
 ###  http://opcfoundation.org/UA/VariableNodeClass
