@@ -55,6 +55,9 @@ typeIds = [{}]
 ig = Graph() # graph from inputs
 g = Graph() # graph wich is currently created
 
+hasSubtypeId = 45
+hasPropertyId = 46
+
 def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
     #uagraph = Graph()
     global ig
@@ -205,6 +208,9 @@ def add_nodeid_to_class(g, node, nodeclasstype, xml_ns):
     nodeIds[index][nid] = classiri
     displayname_node = node.find('opcua:DisplayName', xml_ns)
     g.add((classiri, rdf_ns['opcua']['hasDisplayName'], Literal(displayname_node.text)))
+    symbolic_name = node.get('SymbolicName')
+    if symbolic_name is not None:
+        g.add((classiri, rdf_ns['opcua']['hasSymbolicName'], Literal(symbolic_name)))
     return rdf_namespace, classiri
                         
 
@@ -252,16 +258,26 @@ def add_uadatatype(g, node, xml_ns):
     datatypeIri = rdf_namespace[name]
     #add_subclass(g, node, datatypeIri)
     definition = uadatatype.find('opcua:Definition', xml_ns)
-    fields = definition.findall('opcua:Field', xml_ns)
-    for field in fields:
-        elementname = field.get('Name')
-        symbolicname = field.get('SymbolicName')
-        if symbolicname is None:
-            symbolicname = elementname
-        value = field.get('Value')
-        g.add((rdf_namespace[symbolicname], RDF.type, rdf_ns['opcua']['Field']))
-        g.add((rdf_namespace[symbolicname], rdf_ns['opcua']['hasValue'], Literal(str(value))))
-        g.add((rdf_namespace[symbolicname], rdf_ns['opcua']['hasField'], rdf_namespace[symbolicname]))
+    if definition is not None:
+        fields = definition.findall('opcua:Field', xml_ns)
+        for field in fields:
+            elementname = field.get('Name')
+            symbolicname = field.get('SymbolicName')
+            if symbolicname is None:
+                symbolicname = elementname
+            value = field.get('Value')
+            datatypeid = field.get('DataType')
+            datatypeiri = None
+            if datatypeid is not None:
+                datatypeid = resolve_alias(datatypeid)
+                datatype_index, datatype_id = parse_nodeid(datatypeid)
+                datatypeiri = typeIds[datatype_index][datatype_id]
+                g.add((rdf_namespace[symbolicname], rdf_ns['opcua']['hasDataType'], datatypeiri))
+            g.add((rdf_namespace[symbolicname], RDF.type, rdf_ns['opcua']['Field']))
+            if value is not None:
+                g.add((rdf_namespace[symbolicname], rdf_ns['opcua']['hasValue'], Literal(str(value))))               
+            g.add((rdf_namespace[symbolicname], rdf_ns['opcua']['hasFieldName'], Literal(str(symbolicname))))
+            g.add((datatypeIri, rdf_ns['opcua']['hasField'], rdf_namespace[symbolicname]))
         
 
 def isNodeId(nodeId):
@@ -331,7 +347,7 @@ def add_type(g, node, xml_ns):
             isforward = reference.get('IsForward')
             nodeid = resolve_alias(reftype)
             reftype_index, reftype_id = parse_nodeid(nodeid)
-            if reftype_id == 45 and reftype_index == 0:
+            if reftype_id == hasSubtypeId and reftype_index == 0:
                 # HasSubtype detected
                 subtype = reference.text    
                 break
@@ -346,6 +362,22 @@ def add_type(g, node, xml_ns):
     typeIds[ref_index][ref_id] = ref_namespace[browsename]
     return
 
+
+# def add_property(g, node, xml_ns):
+#     nodeid = node.get('NodeId')
+#     index, id = parse_nodeid(nodeid)
+#     namespace = get_rdf_ns_from_ua_index(index)
+#     classiri = nodeId_to_iri(namespace, id)
+#     references_node = node.find('opcua:References', xml_ns)
+#     references = references_node.findall('opcua:Reference', xml_ns)
+#     for reference in references:
+#         reftype = reference.get('ReferenceType')
+#         isforward = reference.get('IsForward')
+#         nodeid = resolve_alias(reftype)
+#         reftype_index, reftype_id = parse_nodeid(nodeid)
+#         if reftype_id == hasPropertyId and reftype_index == 0:
+#             property = reference.text
+            
 
 def get_nid_ns_and_name(g, node):
     nodeid = node.get('NodeId')
@@ -391,7 +423,7 @@ if __name__ == '__main__':
         ('opcua:UADataType', 'DataTypeNodeClass'),
         ('opcua:UAVariable', 'VariableNodeClass'), 
         ('opcua:UAObjectType', 'ObjectTypeNodeClass'), 
-        ('opcua:UAOjbect', 'ObjectNodeClass'),
+        ('opcua:UAObject', 'ObjectNodeClass'),
         ('opcua:UAReferenceType', 'ReferenceTypeNodeClass'),
         ('opcua:UAVariableType', 'VariableTypeNodeClass')
     ]
@@ -401,6 +433,7 @@ if __name__ == '__main__':
         ('opcua:UAReferenceType', 'ReferenceTypeNodeClass'),
         ('opcua:UAVariableType', 'VariableTypeNodeClass')
     ]
+    
     for tag_name, type in all_nodeclasses:
         uanodes = root.findall(tag_name, xml_ns)   
         for uanode in uanodes:
@@ -410,12 +443,14 @@ if __name__ == '__main__':
         uanodes = root.findall(tag_name, xml_ns)   
         for uanode in uanodes:
             add_type(g, uanode, xml_ns)
+    # Process all nodes by type
+    
     # for uatype, in type_nodeclasses:
     #     add_type(g, uatype, xml_ns)
 
-    # uadatatypes = root.findall('opcua:UADataType', xml_ns)
-    # for uadatatype in uadatatypes:
-    #     add_uadatatype(g, uadatatype, xml_ns)
+    uadatatypes = root.findall('opcua:UADataType', xml_ns)
+    for uadatatype in uadatatypes:
+        add_uadatatype(g, uadatatype, xml_ns)
 
     # uavariables = root.findall('opcua:UAVariable', xml_ns)
     # for uavariable in uavariables:
