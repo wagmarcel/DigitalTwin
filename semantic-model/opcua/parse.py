@@ -100,11 +100,11 @@ def create_header(g):
 
 
 def create_prefixes(g, xml_node):
+    g.bind('opcua', rdf_ns['opcua'])
     if xml_node is None:
         return
     unknown_ns_count = 0
     opcua_ns_count = 10
-    g.bind('opcua', rdf_ns['opcua'])
     for ns in xml_node:
         namespace = Namespace(ns.text)
         try:
@@ -315,19 +315,20 @@ def resolve_alias(nodeid):
     return alias
 
 
-def add_reference_type(g, node, xml_ns):
+def add_type(g, node, xml_ns):
     browsename = node.get('BrowseName')
     nodeid = node.get('NodeId')
     ref_index, ref_id = parse_nodeid(nodeid)
     ref_namespace = get_rdf_ns_from_ua_index(ref_index)
+    ref_classiri = nodeId_to_iri(ref_namespace, ref_id)
     references_node = node.find('opcua:References', xml_ns)
     references = references_node.findall('opcua:Reference', xml_ns)
-    if len(references) == 0:
-        g.add((ref_namespace[browsename], RDF.type, OWL.Class))
-    else:
+    g.add((ref_namespace[browsename], RDF.type, OWL.Class))
+    if len(references) > 0:
         subtype = None
         for reference in references:
             reftype = reference.get('ReferenceType')
+            isforward = reference.get('IsForward')
             nodeid = resolve_alias(reftype)
             reftype_index, reftype_id = parse_nodeid(nodeid)
             if reftype_id == 45 and reftype_index == 0:
@@ -337,8 +338,11 @@ def add_reference_type(g, node, xml_ns):
         nodeid = resolve_alias(subtype)
         subtype_index, subtype_id = parse_nodeid(subtype)
         typeiri = typeIds[subtype_index][subtype_id]
-        g.add((ref_namespace[browsename], RDF.type, OWL.Class))
-        g.add((ref_namespace[browsename], RDFS.subClassOf, typeiri))
+        if (isforward == 'false'):
+            g.add((ref_namespace[browsename], RDFS.subClassOf, typeiri))
+        else:
+            g.add((typeiri, RDFS.subClassOf, ref_namespace[browsename]))
+        g.add((ref_classiri, rdf_ns['opcua']['definesType'], ref_namespace[browsename]))
     typeIds[ref_index][ref_id] = ref_namespace[browsename]
     return
 
@@ -383,19 +387,31 @@ if __name__ == '__main__':
     aliases_node = root.find('opcua:Aliases', xml_ns)
     alias_nodes = aliases_node.findall('opcua:Alias', xml_ns)
     scan_aliases(alias_nodes)
-    tag_names = [('opcua:UADataType', 'DataTypeNodeClass'),
-                 ('opcua:UAVariable', 'VariableNodeClass'), 
-                 ('opcua:UAObjectType', 'ObjectTypeNodeClass'), 
-                 ('opcua:UAOjbect', 'ObjectNodeClass'),
-                 ('opcua:UAReferenceType', 'ReferenceTypeNodeClass'),
-                 ('opcua:UAVariableType', 'VariableTypeNodeClass')]
-    for tag_name, type in tag_names:
+    all_nodeclasses = [
+        ('opcua:UADataType', 'DataTypeNodeClass'),
+        ('opcua:UAVariable', 'VariableNodeClass'), 
+        ('opcua:UAObjectType', 'ObjectTypeNodeClass'), 
+        ('opcua:UAOjbect', 'ObjectNodeClass'),
+        ('opcua:UAReferenceType', 'ReferenceTypeNodeClass'),
+        ('opcua:UAVariableType', 'VariableTypeNodeClass')
+    ]
+    type_nodeclasses = [
+        ('opcua:UADataType', 'DataTypeNodeClass'),
+        ('opcua:UAObjectType', 'ObjectTypeNodeClass'),
+        ('opcua:UAReferenceType', 'ReferenceTypeNodeClass'),
+        ('opcua:UAVariableType', 'VariableTypeNodeClass')
+    ]
+    for tag_name, type in all_nodeclasses:
         uanodes = root.findall(tag_name, xml_ns)   
         for uanode in uanodes:
             add_uanode(g, uanode, type, xml_ns)
-    uareferencetypes = root.findall('opcua:UAReferenceType', xml_ns)
-    for uareferencetype in uareferencetypes:
-        add_reference_type(g, uareferencetype, xml_ns)
+    #uareferencetypes = root.findall('opcua:UAReferenceType', xml_ns)
+    for tag_name, _ in type_nodeclasses:
+        uanodes = root.findall(tag_name, xml_ns)   
+        for uanode in uanodes:
+            add_type(g, uanode, xml_ns)
+    # for uatype, in type_nodeclasses:
+    #     add_type(g, uatype, xml_ns)
 
     # uadatatypes = root.findall('opcua:UADataType', xml_ns)
     # for uadatatype in uadatatypes:
