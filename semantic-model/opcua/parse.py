@@ -31,6 +31,42 @@ SELECT ?nodeId ?uri ?node WHERE {
 }
 """
 
+query_types = """
+PREFIX op: <http://environment.data.gov.au/def/op#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX base: <http://opcfoundation.org/UA/Base/>
+PREFIX opcua: <http://opcfoundation.org/UA/>
+SELECT ?nodeId ?uri ?type WHERE {
+  {?type rdfs:subClassOf* opcua:BaseDataType .
+   ?node base:definesType ?type .
+   ?node base:hasNodeId ?nodeId .
+   ?node base:hasNamespace ?ns .
+   ?ns base:hasUri ?uri .
+  }
+  UNION
+  {?type rdfs:subClassOf* opcua:BaseObjectType .
+   ?node base:definesType ?type .
+   ?node base:hasNodeId ?nodeId .
+   ?node base:hasNamespace ?ns .
+   ?ns base:hasUri ?uri .
+  }
+   UNION
+  {?type rdfs:subClassOf* opcua:BaseVariableType .
+   ?node base:definesType ?type .
+   ?node base:hasNodeId ?nodeId .
+   ?node base:hasNamespace ?ns .
+   ?ns base:hasUri ?uri .
+  }
+   UNION
+  {?type rdfs:subClassOf* opcua:References .
+   ?node base:definesType ?type .
+   ?node base:hasNodeId ?nodeId .
+   ?node base:hasNamespace ?ns .
+   ?ns base:hasUri ?uri .
+  }
+}
+"""
 
 def parse_args(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='\
@@ -91,6 +127,7 @@ def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
             print(f"found {prefix}: {uri}  with namespaceclass {ns}")
             known_opcua_ns[str(uri)] = str(prefix)
             nodeIds.append({})
+            typeIds.append({})
     
     query_result = ig.query(query_nodeIds)
     uris = known_opcua_ns.keys()
@@ -101,13 +138,19 @@ def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
         ns = urimap[str(uri)]
         #nId = f'ns={ns};i={nodeId}'
         nodeIds[ns][int(nodeId)] = nodeIri
-    
+    query_result = ig.query(query_types)
+    for nodeId, uri, type in query_result:
+        ns = urimap[str(uri)]
+        typeIds[ns][int(nodeId)] = type
+
+
     rdf_ns[ontology_prefix] = Namespace(str(ontology_name))
     namespaceclass = f"{ontology_prefix.upper()}Namespace"
         
     known_ns_classes[str(ontology_name)] = rdf_ns[ontology_prefix][namespaceclass]
     known_opcua_ns[ontology_name.toPython()] = ontology_prefix
     nodeIds.append({})
+    typeIds.append({})
     g.add((rdf_ns[ontology_prefix][namespaceclass], RDF.type, rdf_ns['base']['Namespace']))
     g.add((rdf_ns[ontology_prefix][namespaceclass], rdf_ns['base']['hasUri'], Literal(ontology_name.toPython())))
     g.add((rdf_ns[ontology_prefix][namespaceclass], rdf_ns['base']['hasPrefix'], Literal(ontology_prefix)))
@@ -143,13 +186,13 @@ def create_prefixes(g, xml_node):
         print(f'Added RDF namespace {namespace} with prefix {prefix}')
 
 
-def split_ns_term(nsterm):
-    parts = nsterm.split(':', 1)
-    if len(parts) == 2:
-        ns_index, name = parts
-        return int(ns_index), name
-    else:
-        return None, nsterm
+# def split_ns_term(nsterm):
+#     parts = nsterm.split(':', 1)
+#     if len(parts) == 2:
+#         ns_index, name = parts
+#         return int(ns_index), name
+#     else:
+#         return None, nsterm
 
 
 def get_rdf_ns_from_ua_index(index):
@@ -311,6 +354,15 @@ def isNodeId(nodeId):
     return 'i=' in nodeId
 
 
+def getBrowsename(node):
+    name = node.get('BrowseName')
+    index = None
+    if ':' in name:
+        result = name.split(':', 1)
+        name = result[1]
+        index = int(result[0])
+    return index, name
+
 def get_namespaced_browsename(index, id):
     # Is it part of current or input graph?
     namespace = get_rdf_ns_from_ua_index(index)
@@ -322,29 +374,6 @@ def get_namespaced_browsename(index, id):
     subject = graph.subjects((RDF.type, rdf_ns['base']['hasNodeId'], id))[0]
     browsename = graph.object((subject, rdf_ns['base']['hasBrowseName']))[0]
     return namespace()
-
-
-# def add_references_to_class(g, node, classiri, namespace, xml_ns):
-#     references_node = node.find('opcua:References', xml_ns)
-#     references = references_node.findall('opcua:Reference', xml_ns)
-#     for reference in references:
-#         reference_name = reference.get('ReferenceType')
-#         if not isNodeId(reference_name):
-#             referenceid = aliases[referenceid]
-#         ref_index, ref_id = parse_nodeid(referenceid)
-#         rdfnode = get_rdf_node(ref_index, ref_id)
-        
-#         node_type = downcase_string(reference.get('ReferenceType'))
-#         nodeId = reference.text
-#         ni_index, ni_id = parse_nodeid(nodeId)
-#         target_namespace = get_rdf_ns_from_ua_index(ni_index)
-#         isForward = reference.get('IsForward')
-#         if isForward == 'false':
-#             print(node_type)
-#             g.add((nodeId_to_iri(target_namespace, ni_id), rdf_ns['opcua'][node_type], URIRef(classiri)))
-#         else:
-#             print(node_type)
-#             g.add((URIRef(classiri), rdf_ns['opcua'][node_type], nodeId_to_iri(target_namespace, ni_id)))
 
 
 def add_uanode(g, node, type, xml_ns):
@@ -367,14 +396,13 @@ def get_datatype(g, node, classiri):
 
 
 def add_typedef(g, node, xml_ns):
-    browsename = node.get('BrowseName')
+    _, browsename = getBrowsename(node)
     nodeid = node.get('NodeId')
     index, id = parse_nodeid(nodeid)
     namespace = get_rdf_ns_from_ua_index(index)
     classiri = nodeId_to_iri(namespace, id)
     references_node = node.find('opcua:References', xml_ns)
     references = references_node.findall('opcua:Reference', xml_ns)
-    #g.add((ref_namespace[browsename], RDF.type, OWL.Class))
     if len(references) > 0:
         typedef = None
         for reference in references:
@@ -388,24 +416,23 @@ def add_typedef(g, node, xml_ns):
                 break
         nodeid = resolve_alias(typedef)
         typedef_index, typedef_id = parse_nodeid(typedef)
-        #typedefiri = typeIds[typedef_index][typedef_id]
         if (isforward == 'false'):
             print(f"Warning: IsForward=false makes not sense here: {classiri}")
             return
-        # get typedefinition
-        #for o in g.objects((typeIds[type_index][type_id], rdf_ns['base']['definedType'])):
         g.add((classiri, RDF.type, typeIds[typedef_index][typedef_id])) 
-        #g.add((ref_classiri, rdf_ns['base']['definesType'], ref_namespace[browsename]))
-    #typeIds[ref_index][ref_id] = ref_namespace[browsename]
     get_datatype(g, node, classiri)
     return    
 
 
 def add_type(g, node, xml_ns):
-    browsename = node.get('BrowseName')
+    brindex, browsename = getBrowsename(node)
+    #browsename = node.get('BrowseName')
     nodeid = node.get('NodeId')
     ref_index, ref_id = parse_nodeid(nodeid)
     ref_namespace = get_rdf_ns_from_ua_index(ref_index)
+    br_namespace = ref_namespace
+    if brindex is not None and brindex != ref_index:
+        br_namespace = get_rdf_ns_from_ua_index(brindex)
     ref_classiri = nodeId_to_iri(ref_namespace, ref_id)
     references_node = node.find('opcua:References', xml_ns)
     references = references_node.findall('opcua:Reference', xml_ns)
@@ -425,15 +452,15 @@ def add_type(g, node, xml_ns):
         subtype_index, subtype_id = parse_nodeid(subtype)
         typeiri = typeIds[subtype_index][subtype_id]
         if (isforward == 'false'):
-            g.add((ref_namespace[browsename], RDFS.subClassOf, typeiri))
+            g.add((br_namespace[browsename], RDFS.subClassOf, typeiri))
         else:
-            g.add((typeiri, RDFS.subClassOf, ref_namespace[browsename]))
+            g.add((typeiri, RDFS.subClassOf, br_namespace[browsename]))
         
         isAbstract = node.get('IsAbstract')
         if isAbstract is not None:
-            g.add((ref_namespace[browsename], rdf_ns['base']['isAbstract'], Literal(isAbstract)))
-    typeIds[ref_index][ref_id] = ref_namespace[browsename]
-    g.add((ref_classiri, rdf_ns['base']['definesType'], ref_namespace[browsename]))
+            g.add((br_namespace[browsename], rdf_ns['base']['isAbstract'], Literal(isAbstract)))
+    typeIds[ref_index][ref_id] = br_namespace[browsename]
+    g.add((ref_classiri, rdf_ns['base']['definesType'], br_namespace[browsename]))
     get_datatype(g, node, ref_classiri)
 
     return
@@ -442,8 +469,9 @@ def add_type(g, node, xml_ns):
 def get_nid_ns_and_name(g, node):
     nodeid = node.get('NodeId')
     ni_index, ni_id = parse_nodeid(nodeid)
-    browsename = node.get('BrowseName')
-    bn_index, bn_name = split_ns_term(browsename)
+    bn_index, bn_name = getBrowsename(node)
+    #browsename = node.get('BrowseName')
+    #bn_index, bn_name = split_ns_term(browsename)
     index = ni_index
     if bn_index is not None:
         index = bn_index
