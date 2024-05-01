@@ -78,16 +78,25 @@
 
 ###  http://opcfoundation.org/UA/Base/hasBrowseName
 :hasBrowseName rdf:type owl:DatatypeProperty ;
+               rdfs:domain opcua:BaseNodeClass ;
                rdfs:range xsd:string .
 
 
 ###  http://opcfoundation.org/UA/Base/hasDataType
 :hasDataType rdf:type owl:DatatypeProperty ;
+             rdfs:domain opcua:BaseNodeClass ;
              rdfs:range :BaseDataType .
+
+
+###  http://opcfoundation.org/UA/Base/hasDescription
+:hasDescription rdf:type owl:DatatypeProperty ;
+                rdfs:domain opcua:BaseNodeClass ;
+                rdfs:range xsd:string .
 
 
 ###  http://opcfoundation.org/UA/Base/hasDisplayName
 :hasDisplayName rdf:type owl:DatatypeProperty ;
+                rdfs:domain opcua:BaseNodeClass ;
                 rdfs:range xsd:string .
 
 
@@ -98,6 +107,7 @@
 
 ###  http://opcfoundation.org/UA/Base/hasNodeId
 :hasNodeId rdf:type owl:DatatypeProperty ;
+           rdfs:domain opcua:BaseNodeClass ;
            rdfs:range xsd:integer .
 
 
@@ -107,6 +117,7 @@
 
 ###  http://opcfoundation.org/UA/Base/hasSymbolicName
 :hasSymbolicName rdf:type owl:DatatypeProperty ;
+                 rdfs:domain opcua:BaseNodeClass ;
                  rdfs:range xsd:string .
 
 
@@ -119,6 +130,16 @@
 ###  http://opcfoundation.org/UA/Base/hasValue
 :hasValue rdf:type owl:DatatypeProperty ;
           rdfs:range xsd:string .
+
+
+###  http://opcfoundation.org/UA/Base/isAbstract
+:isAbstract rdf:type owl:DatatypeProperty ;
+            rdfs:range xsd:boolean .
+
+
+###  http://opcfoundation.org/UA/Base/isSymmetric
+:isSymmetric rdf:type owl:DatatypeProperty ;
+             rdfs:range xsd:boolean .
 
 
 #################################################################
