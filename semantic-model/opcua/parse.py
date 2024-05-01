@@ -72,6 +72,7 @@ g = Graph() # graph wich is currently created
 
 hasSubtypeId = 45
 hasPropertyId = 46
+hasTypeDefinition = 40
 
 def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
     #uagraph = Graph()
@@ -313,27 +314,27 @@ def get_namespaced_browsename(index, id):
     return namespace()
 
 
-def add_references_to_class(g, node, classiri, namespace, xml_ns):
-    references_node = node.find('opcua:References', xml_ns)
-    references = references_node.findall('opcua:Reference', xml_ns)
-    for reference in references:
-        reference_name = reference.get('ReferenceType')
-        if not isNodeId(reference_name):
-            referenceid = aliases[referenceid]
-        ref_index, ref_id = parse_nodeid(referenceid)
-        rdfnode = get_rdf_node(ref_index, ref_id)
+# def add_references_to_class(g, node, classiri, namespace, xml_ns):
+#     references_node = node.find('opcua:References', xml_ns)
+#     references = references_node.findall('opcua:Reference', xml_ns)
+#     for reference in references:
+#         reference_name = reference.get('ReferenceType')
+#         if not isNodeId(reference_name):
+#             referenceid = aliases[referenceid]
+#         ref_index, ref_id = parse_nodeid(referenceid)
+#         rdfnode = get_rdf_node(ref_index, ref_id)
         
-        node_type = downcase_string(reference.get('ReferenceType'))
-        nodeId = reference.text
-        ni_index, ni_id = parse_nodeid(nodeId)
-        target_namespace = get_rdf_ns_from_ua_index(ni_index)
-        isForward = reference.get('IsForward')
-        if isForward == 'false':
-            print(node_type)
-            g.add((nodeId_to_iri(target_namespace, ni_id), rdf_ns['opcua'][node_type], URIRef(classiri)))
-        else:
-            print(node_type)
-            g.add((URIRef(classiri), rdf_ns['opcua'][node_type], nodeId_to_iri(target_namespace, ni_id)))
+#         node_type = downcase_string(reference.get('ReferenceType'))
+#         nodeId = reference.text
+#         ni_index, ni_id = parse_nodeid(nodeId)
+#         target_namespace = get_rdf_ns_from_ua_index(ni_index)
+#         isForward = reference.get('IsForward')
+#         if isForward == 'false':
+#             print(node_type)
+#             g.add((nodeId_to_iri(target_namespace, ni_id), rdf_ns['opcua'][node_type], URIRef(classiri)))
+#         else:
+#             print(node_type)
+#             g.add((URIRef(classiri), rdf_ns['opcua'][node_type], nodeId_to_iri(target_namespace, ni_id)))
 
 
 def add_uanode(g, node, type, xml_ns):
@@ -345,6 +346,40 @@ def resolve_alias(nodeid):
     if not isNodeId(nodeid):
         alias = aliases[nodeid]
     return alias
+
+
+def add_typedef(g, node, xml_ns):
+    browsename = node.get('BrowseName')
+    nodeid = node.get('NodeId')
+    index, id = parse_nodeid(nodeid)
+    namespace = get_rdf_ns_from_ua_index(index)
+    classiri = nodeId_to_iri(namespace, id)
+    references_node = node.find('opcua:References', xml_ns)
+    references = references_node.findall('opcua:Reference', xml_ns)
+    #g.add((ref_namespace[browsename], RDF.type, OWL.Class))
+    if len(references) > 0:
+        typedef = None
+        for reference in references:
+            reftype = reference.get('ReferenceType')
+            isforward = reference.get('IsForward')
+            nodeid = resolve_alias(reftype)
+            type_index, type_id = parse_nodeid(nodeid)
+            if type_id == hasTypeDefinition and type_index == 0:
+                # HasSubtype detected
+                typedef = reference.text    
+                break
+        nodeid = resolve_alias(typedef)
+        typedef_index, typedef_id = parse_nodeid(typedef)
+        #typedefiri = typeIds[typedef_index][typedef_id]
+        if (isforward == 'false'):
+            print(f"Warning: IsForward=false makes not sense here: {classiri}")
+            return
+        # get typedefinition
+        #for o in g.objects((typeIds[type_index][type_id], rdf_ns['base']['definedType'])):
+        g.add((classiri, RDF.type, typeIds[typedef_index][typedef_id])) 
+        #g.add((ref_classiri, rdf_ns['base']['definesType'], ref_namespace[browsename]))
+    #typeIds[ref_index][ref_id] = ref_namespace[browsename]
+    return    
 
 
 def add_type(g, node, xml_ns):
@@ -378,22 +413,6 @@ def add_type(g, node, xml_ns):
     typeIds[ref_index][ref_id] = ref_namespace[browsename]
     return
 
-
-# def add_property(g, node, xml_ns):
-#     nodeid = node.get('NodeId')
-#     index, id = parse_nodeid(nodeid)
-#     namespace = get_rdf_ns_from_ua_index(index)
-#     classiri = nodeId_to_iri(namespace, id)
-#     references_node = node.find('opcua:References', xml_ns)
-#     references = references_node.findall('opcua:Reference', xml_ns)
-#     for reference in references:
-#         reftype = reference.get('ReferenceType')
-#         isforward = reference.get('IsForward')
-#         nodeid = resolve_alias(reftype)
-#         reftype_index, reftype_id = parse_nodeid(nodeid)
-#         if reftype_id == hasPropertyId and reftype_index == 0:
-#             property = reference.text
-            
 
 def get_nid_ns_and_name(g, node):
     nodeid = node.get('NodeId')
@@ -449,21 +468,27 @@ if __name__ == '__main__':
         ('opcua:UAReferenceType', 'ReferenceTypeNodeClass'),
         ('opcua:UAVariableType', 'VariableTypeNodeClass')
     ]
-    
+    typed_nodeclasses = [
+        ('opcua:UAVariable', 'VariableNodeClass'), 
+        ('opcua:UAObject', 'ObjectNodeClass')
+    ]
+    # Add Basic definition of NodeClasses
     for tag_name, type in all_nodeclasses:
         uanodes = root.findall(tag_name, xml_ns)   
         for uanode in uanodes:
             add_uanode(g, uanode, type, xml_ns)
-    #uareferencetypes = root.findall('opcua:UAReferenceType', xml_ns)
+    # Create Type Hierarchy
     for tag_name, _ in type_nodeclasses:
         uanodes = root.findall(tag_name, xml_ns)   
         for uanode in uanodes:
             add_type(g, uanode, xml_ns)
+    # Type objects and varialbes
+    for tag_name, _ in typed_nodeclasses:
+        uanodes = root.findall(tag_name, xml_ns)   
+        for uanode in uanodes:
+            add_typedef(g, uanode, xml_ns)
+        
     # Process all nodes by type
-    
-    # for uatype, in type_nodeclasses:
-    #     add_type(g, uatype, xml_ns)
-
     uadatatypes = root.findall('opcua:UADataType', xml_ns)
     for uadatatype in uadatatypes:
         add_uadatatype(g, uadatatype, xml_ns)
