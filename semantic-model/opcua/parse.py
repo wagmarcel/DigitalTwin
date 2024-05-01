@@ -6,25 +6,28 @@ from rdflib.namespace import OWL, RDF, RDFS
 import argparse
 
 query_namespaces = """
+PREFIX op: <http://environment.data.gov.au/def/op#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX opcua: <http://opcfoundation.org/UA/>
+PREFIX base: <http://opcfoundation.org/UA/Base/>
 SELECT ?uri ?prefix ?ns WHERE {
-    ?ns rdf:type opcua:Namespace .
-    ?ns opcua:hasUri ?uri .
-    ?ns opcua:hasPrefix ?prefix .
+    ?ns rdf:type base:Namespace .
+    ?ns base:hasUri ?uri .
+    ?ns base:hasPrefix ?prefix .
 }
 """
 
 query_nodeIds = """
+PREFIX op: <http://environment.data.gov.au/def/op#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX base: <http://opcfoundation.org/UA/Base/>
 PREFIX opcua: <http://opcfoundation.org/UA/>
 SELECT ?nodeId ?uri ?node WHERE {
     ?node rdf:type/rdfs:subClassOf opcua:BaseNodeClass .
-    ?node opcua:hasNodeId ?nodeId .
-    ?node opcua:hasNamespace ?ns .
-    ?ns opcua:hasUri ?uri .
+    ?node base:hasNodeId ?nodeId .
+    ?node base:hasNamespace ?ns .
+    ?ns base:hasUri ?uri .
 }
 """
 
@@ -95,9 +98,9 @@ def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
     for idx, uri in enumerate(uris):
         urimap[uri] = idx
     for nodeId, uri, nodeIri in query_result:
-        ns = urimap[uri]
-        nId = f'ns={ns};i={nodeId}'
-        nodeIds[nId] = nodeIri
+        ns = urimap[str(uri)]
+        #nId = f'ns={ns};i={nodeId}'
+        nodeIds[ns][int(nodeId)] = nodeIri
     
     rdf_ns[ontology_prefix] = Namespace(str(ontology_name))
     namespaceclass = f"{ontology_prefix.upper()}Namespace"
@@ -235,9 +238,6 @@ def add_nodeid_to_class(g, node, nodeclasstype, xml_ns):
     isSymmetric = node.get('Symmetric')
     if isSymmetric is not None:
         g.add((classiri, rdf_ns['base']['isSymmetric'], Literal(isSymmetric)))
-    isAbstract = node.get('IsAbstract')
-    if isAbstract is not None:
-        g.add((classiri, rdf_ns['base']['isAbstract'], Literal(isAbstract)))
     return rdf_namespace, classiri
                         
 
@@ -428,9 +428,14 @@ def add_type(g, node, xml_ns):
             g.add((ref_namespace[browsename], RDFS.subClassOf, typeiri))
         else:
             g.add((typeiri, RDFS.subClassOf, ref_namespace[browsename]))
-        g.add((ref_classiri, rdf_ns['base']['definesType'], ref_namespace[browsename]))
+        
+        isAbstract = node.get('IsAbstract')
+        if isAbstract is not None:
+            g.add((ref_namespace[browsename], rdf_ns['base']['isAbstract'], Literal(isAbstract)))
     typeIds[ref_index][ref_id] = ref_namespace[browsename]
+    g.add((ref_classiri, rdf_ns['base']['definesType'], ref_namespace[browsename]))
     get_datatype(g, node, ref_classiri)
+
     return
 
 
