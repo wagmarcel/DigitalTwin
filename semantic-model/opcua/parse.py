@@ -228,6 +228,16 @@ def add_nodeid_to_class(g, node, nodeclasstype, xml_ns):
     symbolic_name = node.get('SymbolicName')
     if symbolic_name is not None:
         g.add((classiri, rdf_ns['base']['hasSymbolicName'], Literal(symbolic_name)))
+    description_node = node.find('opcua:Description', xml_ns)
+    if description_node is not None:
+        description = description_node.text
+        g.add((classiri, rdf_ns['base']['hasDescription'], Literal(description)))
+    isSymmetric = node.get('Symmetric')
+    if isSymmetric is not None:
+        g.add((classiri, rdf_ns['base']['isSymmetric'], Literal(isSymmetric)))
+    isAbstract = node.get('IsAbstract')
+    if isAbstract is not None:
+        g.add((classiri, rdf_ns['base']['isAbstract'], Literal(isAbstract)))
     return rdf_namespace, classiri
                         
 
@@ -348,6 +358,14 @@ def resolve_alias(nodeid):
     return alias
 
 
+def get_datatype(g, node, classiri):
+    data_type = node.get('DataType')
+    if data_type is not None:
+        data_type = resolve_alias(data_type)
+        dt_index, dt_id = parse_nodeid(data_type)
+        g.add((classiri, rdf_ns['base']['hasDataType'], typeIds[dt_index][dt_id]))
+
+
 def add_typedef(g, node, xml_ns):
     browsename = node.get('BrowseName')
     nodeid = node.get('NodeId')
@@ -379,6 +397,7 @@ def add_typedef(g, node, xml_ns):
         g.add((classiri, RDF.type, typeIds[typedef_index][typedef_id])) 
         #g.add((ref_classiri, rdf_ns['base']['definesType'], ref_namespace[browsename]))
     #typeIds[ref_index][ref_id] = ref_namespace[browsename]
+    get_datatype(g, node, classiri)
     return    
 
 
@@ -411,6 +430,7 @@ def add_type(g, node, xml_ns):
             g.add((typeiri, RDFS.subClassOf, ref_namespace[browsename]))
         g.add((ref_classiri, rdf_ns['base']['definesType'], ref_namespace[browsename]))
     typeIds[ref_index][ref_id] = ref_namespace[browsename]
+    get_datatype(g, node, ref_classiri)
     return
 
 
