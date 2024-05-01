@@ -1,118 +1,124 @@
-@prefix : <http://opcfoundation.org/UA/> .
+@prefix : <http://opcfoundation.org/UA/Base/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix xml: <http://www.w3.org/XML/1998/namespace> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix opcua: <http://opcfoundation.org/UA/> .
-@base <http://opcfoundation.org/UA/> .
+@base <http://opcfoundation.org/UA/Base/> .
 
-<http://opcfoundation.org/UA/> rdf:type owl:Ontology ;
-                                owl:versionIRI <http://example.com/v0.1/UA/> ;
-                                owl:versionInfo 0.1 .
+<http://opcfoundation.org/UA/Base/> rdf:type owl:Ontology ;
+                                     owl:versionIRI <http://example.com/v0.1/UA/Base/> ;
+                                     owl:versionInfo 0.1 .
+
+#################################################################
+#    Datatypes
+#################################################################
+
+###  http://opcfoundation.org/UA/Base/BaseDataType
+:BaseDataType rdf:type rdfs:Datatype .
+
 
 #################################################################
 #    Object Properties
 #################################################################
 
-###  http://opcfoundation.org/UA/definesType
-opcua:definesType rdf:type owl:ObjectProperty .
+###  http://opcfoundation.org/UA/Base/definesType
+:definesType rdf:type owl:ObjectProperty .
 
 
-###  http://opcfoundation.org/UA/generatesEvent
-opcua:generatesEvent rdf:type owl:ObjectProperty .
+###  http://opcfoundation.org/UA/Base/generatesEvent
+:generatesEvent rdf:type owl:ObjectProperty .
 
 
-###  http://opcfoundation.org/UA/hasComponent
-opcua:hasComponent rdf:type owl:ObjectProperty .
+###  http://opcfoundation.org/UA/Base/hasComponent
+:hasComponent rdf:type owl:ObjectProperty .
 
 
-###  http://opcfoundation.org/UA/hasDataType
-opcua:hasDataType rdf:type owl:ObjectProperty ;
-                  rdfs:range opcua:BaseDataType .
+###  http://opcfoundation.org/UA/Base/hasDataType
+:hasDataType rdf:type owl:ObjectProperty .
 
 
-###  http://opcfoundation.org/UA/hasDisplayName
-opcua:hasDisplayName rdf:type owl:ObjectProperty .
+###  http://opcfoundation.org/UA/Base/hasEncoding
+:hasEncoding rdf:type owl:ObjectProperty .
 
 
-###  http://opcfoundation.org/UA/hasEncoding
-opcua:hasEncoding rdf:type owl:ObjectProperty .
+###  http://opcfoundation.org/UA/Base/hasField
+:hasField rdf:type owl:ObjectProperty ;
+          rdfs:range :Field .
 
 
-###  http://opcfoundation.org/UA/hasField
-opcua:hasField rdf:type owl:ObjectProperty ;
-               rdfs:range opcua:Field .
+###  http://opcfoundation.org/UA/Base/hasInterface
+:hasInterface rdf:type owl:ObjectProperty .
 
 
-###  http://opcfoundation.org/UA/hasInterface
-opcua:hasInterface rdf:type owl:ObjectProperty .
+###  http://opcfoundation.org/UA/Base/hasModellingRule
+:hasModellingRule rdf:type owl:ObjectProperty .
 
 
-###  http://opcfoundation.org/UA/hasModellingRule
-opcua:hasModellingRule rdf:type owl:ObjectProperty .
+###  http://opcfoundation.org/UA/Base/hasNamespace
+:hasNamespace rdf:type owl:ObjectProperty .
 
 
-###  http://opcfoundation.org/UA/hasNamespace
-opcua:hasNamespace rdf:type owl:ObjectProperty .
+###  http://opcfoundation.org/UA/Base/hasProperty
+:hasProperty rdf:type owl:ObjectProperty .
 
 
-###  http://opcfoundation.org/UA/hasProperty
-opcua:hasProperty rdf:type owl:ObjectProperty .
+###  http://opcfoundation.org/UA/Base/hasSubtype
+:hasSubtype rdf:type owl:ObjectProperty .
 
 
-###  http://opcfoundation.org/UA/hasSubtype
-opcua:hasSubtype rdf:type owl:ObjectProperty .
-
-
-###  http://opcfoundation.org/UA/hasTypeDefinition
-opcua:hasTypeDefinition rdf:type owl:ObjectProperty .
+###  http://opcfoundation.org/UA/Base/hasTypeDefinition
+:hasTypeDefinition rdf:type owl:ObjectProperty .
 
 
 #################################################################
 #    Data properties
 #################################################################
 
-###  http://opcfoundation.org/UA/hasBrowseName
-opcua:hasBrowseName rdf:type owl:DatatypeProperty ;
-                    rdfs:range xsd:string .
-
-
-###  http://opcfoundation.org/UA/hasDisplayName
-opcua:hasDisplayName rdf:type owl:DatatypeProperty ;
-                     rdfs:range xsd:string .
-
-
-###  http://opcfoundation.org/UA/hasFieldName
-opcua:hasFieldName rdf:type owl:DatatypeProperty ;
-                   rdfs:range xsd:string .
-
-
-###  http://opcfoundation.org/UA/hasNodeId
-opcua:hasNodeId rdf:type owl:DatatypeProperty ;
-                rdfs:domain opcua:BaseNodeClass ;
-                rdfs:range xsd:integer .
-
-
-###  http://opcfoundation.org/UA/hasPrefix
-opcua:hasPrefix rdf:type owl:DatatypeProperty .
-
-
-###  http://opcfoundation.org/UA/hasSymbolicName
-opcua:hasSymbolicName rdf:type owl:DatatypeProperty ;
-                      rdfs:range xsd:string .
-
-
-###  http://opcfoundation.org/UA/hasUri
-opcua:hasUri rdf:type owl:DatatypeProperty ;
-             rdfs:domain opcua:Namespace ;
-             rdfs:range xsd:string .
-
-
-###  http://opcfoundation.org/UA/hasValue
-opcua:hasValue rdf:type owl:DatatypeProperty ;
-               rdfs:domain opcua:BaseDataType ;
+###  http://opcfoundation.org/UA/Base/hasBrowseName
+:hasBrowseName rdf:type owl:DatatypeProperty ;
                rdfs:range xsd:string .
+
+
+###  http://opcfoundation.org/UA/Base/hasDataType
+:hasDataType rdf:type owl:DatatypeProperty ;
+             rdfs:range :BaseDataType .
+
+
+###  http://opcfoundation.org/UA/Base/hasDisplayName
+:hasDisplayName rdf:type owl:DatatypeProperty ;
+                rdfs:range xsd:string .
+
+
+###  http://opcfoundation.org/UA/Base/hasFieldName
+:hasFieldName rdf:type owl:DatatypeProperty ;
+              rdfs:range xsd:string .
+
+
+###  http://opcfoundation.org/UA/Base/hasNodeId
+:hasNodeId rdf:type owl:DatatypeProperty ;
+           rdfs:range xsd:integer .
+
+
+###  http://opcfoundation.org/UA/Base/hasPrefix
+:hasPrefix rdf:type owl:DatatypeProperty .
+
+
+###  http://opcfoundation.org/UA/Base/hasSymbolicName
+:hasSymbolicName rdf:type owl:DatatypeProperty ;
+                 rdfs:range xsd:string .
+
+
+###  http://opcfoundation.org/UA/Base/hasUri
+:hasUri rdf:type owl:DatatypeProperty ;
+        rdfs:domain :Namespace ;
+        rdfs:range xsd:string .
+
+
+###  http://opcfoundation.org/UA/Base/hasValue
+:hasValue rdf:type owl:DatatypeProperty ;
+          rdfs:range xsd:string .
 
 
 #################################################################
@@ -134,18 +140,6 @@ opcua:BaseObjectType rdf:type owl:Class .
 ###  http://opcfoundation.org/UA/DataTypeNodeClass
 opcua:DataTypeNodeClass rdf:type owl:Class ;
                         rdfs:subClassOf opcua:BaseNodeClass .
-
-
-###  http://opcfoundation.org/UA/Field
-opcua:Field rdf:type owl:Class .
-
-
-###  http://opcfoundation.org/UA/Namespace
-opcua:Namespace rdf:type owl:Class .
-
-
-###  http://opcfoundation.org/UA/OPCUAMetaclass
-opcua:OPCUAMetaclass rdf:type owl:Class .
 
 
 ###  http://opcfoundation.org/UA/ObjectNodeClass
@@ -177,15 +171,27 @@ opcua:VariableTypeNodeClass rdf:type owl:Class ;
                             rdfs:subClassOf opcua:BaseNodeClass .
 
 
+###  http://opcfoundation.org/UA/Base/Field
+:Field rdf:type owl:Class .
+
+
+###  http://opcfoundation.org/UA/Base/Namespace
+:Namespace rdf:type owl:Class .
+
+
+###  http://opcfoundation.org/UA/Base/OPCUAMetaclass
+:OPCUAMetaclass rdf:type owl:Class .
+
+
 #################################################################
 #    Individuals
 #################################################################
 
-###  http://opcfoundation.org/UA/OPCUANamespace
-opcua:OPCUANamespace rdf:type owl:NamedIndividual ,
-                              opcua:Namespace ;
-                     opcua:hasPrefix "opcua" ;
-                     opcua:hasUri "http://opcfoundation.org/UA/" .
+###  http://opcfoundation.org/UA/Base/OPCUANamespace
+:OPCUANamespace rdf:type owl:NamedIndividual ,
+                         :Namespace ;
+                :hasPrefix "opcua" ;
+                :hasUri "http://opcfoundation.org/UA/" .
 
 
-###  Generated by the OWL API (version 4.5.9.2019-02-01T07:24:44Z) https://github.com/owlcs/owlapi
+###  Generated by the OWL API (version 4.5.26.2023-07-17T20:34:13Z) https://github.com/owlcs/owlapi

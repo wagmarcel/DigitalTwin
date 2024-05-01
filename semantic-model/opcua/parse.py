@@ -15,6 +15,20 @@ SELECT ?uri ?prefix ?ns WHERE {
     ?ns opcua:hasPrefix ?prefix .
 }
 """
+
+query_nodeIds = """
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX opcua: <http://opcfoundation.org/UA/>
+SELECT ?nodeId ?uri ?node WHERE {
+    ?node rdf:type/rdfs:subClassOf opcua:BaseNodeClass .
+    ?node opcua:hasNodeId ?nodeId .
+    ?node opcua:hasNamespace ?ns .
+    ?ns opcua:hasUri ?uri .
+}
+"""
+
+
 def parse_args(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='\
 parse nodeset and create RDF-graph <nodeset2.xml>')
@@ -22,9 +36,9 @@ parse nodeset and create RDF-graph <nodeset2.xml>')
     parser.add_argument('nodeset2', help='Path to the nodeset2 file')
     parser.add_argument('-i','--inputs', nargs='*', help='<Required> add dependent nodesets')
     parser.add_argument('-o', '--output', help='Resulting file.', default="result.ttl")
-    parser.add_argument('-n', '--namespace', help='Namespace of ouput ontology, e.g. http://opcfoundation.org/UA/Pumps/',  required=True)
+    parser.add_argument('-n', '--namespace', help='Namespace of ouput ontology, e.g. http://opcfoundation.org/UA/Pumps/', required=True)
     parser.add_argument('-v', '--versionIRI', help='VersionIRI of ouput ontology, e.g. http://example.com/v0.1/UA/ ',  required=True)
-    parser.add_argument('-p', '--prefix', help='Prefix for added ontolgoy, e.g. "pumps"',  required=True)
+    parser.add_argument('-p', '--prefix', help='Prefix for added ontolgoy, e.g. "pumps"', required=True)
     parsed_args = parser.parse_args(args)
     return parsed_args
 
@@ -32,7 +46,8 @@ xml_ns = {
     'opcua': 'http://opcfoundation.org/UA/2011/03/UANodeSet.xsd'
 }
 rdf_ns = {
-    'opcua': Namespace('http://opcfoundation.org/UA/')
+    'opcua': Namespace('http://opcfoundation.org/UA/'),
+    'base': Namespace('http://opcfoundation.org/UA/Base/')
 }
 opcua_ns = ['http://opcfoundation.org/UA/']
 known_opcua_ns = {
@@ -44,11 +59,11 @@ known_opcua_ns = {
 # }
 #known_opcua_ns = {}
 known_ns_classes = {
-    'http://opcfoundation.org/UA/': URIRef('http://opcfoundation.org/UA/OPCUANamespace')}
+    'http://opcfoundation.org/UA/': URIRef('http://opcfoundation.org/UA/OPCUACORENamespace')}
 unknown_ns_prefix = "ns"
 versionIRI = None #= URIRef("http://example.com/v0.1/UA/")
 ontology_name = None #= URIRef("http://opcfoundation.org/UA/Pumps/")
-imported_ontologies = [URIRef('http://opcfoundation.org/UA/')]
+imported_ontologies = [URIRef('http://opcfoundation.org/UA/Base')]
 aliases = {}
 nodeIds = [{}]
 typeIds = [{}]
@@ -66,30 +81,32 @@ def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
         hgraph.parse(file)
         ig += hgraph
     query_result = ig.query(query_namespaces)
+    corens = list(known_opcua_ns.keys())[0]
     for uri, prefix, ns in query_result:
-        print(f"found {prefix}: {uri}  with namespaceclass {ns}")
-        known_opcua_ns[str(uri)] = str(prefix)
-        nodeIds.append({})
-        
+        if str(uri) != corens:
+            print(f"found {prefix}: {uri}  with namespaceclass {ns}")
+            known_opcua_ns[str(uri)] = str(prefix)
+            nodeIds.append({})
+    
+    query_result = ig.query(query_nodeIds)
+    uris = known_opcua_ns.keys()
+    urimap = {}
+    for idx, uri in enumerate(uris):
+        urimap[uri] = idx
+    for nodeId, uri, nodeIri in query_result:
+        ns = urimap[uri]
+        nId = f'ns={ns};i={nodeId}'
+        nodeIds[nId] = nodeIri
+    
     rdf_ns[ontology_prefix] = Namespace(str(ontology_name))
-    namespaceclass = f"OPCUA{ontology_prefix.upper()}Namespace"
-          
+    namespaceclass = f"{ontology_prefix.upper()}Namespace"
+        
     known_ns_classes[str(ontology_name)] = rdf_ns[ontology_prefix][namespaceclass]
     known_opcua_ns[ontology_name.toPython()] = ontology_prefix
     nodeIds.append({})
-    g.add((rdf_ns[ontology_prefix][namespaceclass], RDF.type, rdf_ns['opcua']['Namespace']))
-    g.add((rdf_ns[ontology_prefix][namespaceclass], rdf_ns['opcua']['hasUri'], Literal(ontology_name.toPython())))
-    g.add((rdf_ns[ontology_prefix][namespaceclass], rdf_ns['opcua']['hasPrefix'], Literal(ontology_prefix)))
-    # for s, p, o in uagraph.triples((None, RDF.type, rdf_ns['opcua']['Namespace'])):
-    #     print(s, p, o)
-    #     for s, p, o in uagraph.triples((None, rdf_ns['opcua']['hasUri'], None)):
-    #         known_ns_classes
-    #     known_ns_classes[o.toPython()] = s
-    # for s, p, o in uagraph.triples((None, rdf_ns['opcua']['hasNodeId'], None)):
-    #     nodeIds[0][int(o)] = s
-    # nodeIds.append({})
-    # nodeIds.append({})
-    # nodeIds.append({})
+    g.add((rdf_ns[ontology_prefix][namespaceclass], RDF.type, rdf_ns['base']['Namespace']))
+    g.add((rdf_ns[ontology_prefix][namespaceclass], rdf_ns['base']['hasUri'], Literal(ontology_name.toPython())))
+    g.add((rdf_ns[ontology_prefix][namespaceclass], rdf_ns['base']['hasPrefix'], Literal(ontology_prefix)))
 
     
 def create_header(g):
@@ -98,12 +115,11 @@ def create_header(g):
     g.add((ontology_name, OWL.versionInfo, Literal(0.1)))
     for ontology in imported_ontologies:
         g.add((ontology_name, OWL.imports, ontology))
-    #g.add((rdf_ns['pumps']['PumpsNamespace'], RDF.type, rdf_ns['opcua']['Namespace']))
-    #g.add((rdf_ns['pumps']['PumpsNamespace'], rdf_ns['opcua']['hasUri'], Literal(ontology_name.toPython())))
 
 
 def create_prefixes(g, xml_node):
     g.bind('opcua', rdf_ns['opcua'])
+    g.bind('base', rdf_ns['base'])
     if xml_node is None:
         return
     unknown_ns_count = 0
@@ -177,7 +193,7 @@ def add_datatype(g, node, classiri):
         print(f'Warning: Cannot find nodeId ns={index};i={id}')
         return
     if datatype is not None:
-        g.add((classiri, rdf_ns['opcua']['hasDataType'], typeiri))
+        g.add((classiri, rdf_ns['base']['hasDataType'], typeiri))
 
 
 def add_subclass(g, node, classiri):
@@ -200,17 +216,17 @@ def add_nodeid_to_class(g, node, nodeclasstype, xml_ns):
     nid, index, bn_name = get_nid_ns_and_name(g, node)
     rdf_namespace = get_rdf_ns_from_ua_index(index)
     classiri = nodeId_to_iri(rdf_namespace, nid)
-    g.add((classiri, rdf_ns['opcua']['hasNodeId'], Literal(nid)))
-    g.add((classiri, rdf_ns['opcua']['hasBrowseName'], Literal(bn_name)))
+    g.add((classiri, rdf_ns['base']['hasNodeId'], Literal(nid)))
+    g.add((classiri, rdf_ns['base']['hasBrowseName'], Literal(bn_name)))
     namespace = opcua_ns[index]
-    g.add((classiri, rdf_ns['opcua']['hasNamespace'], known_ns_classes[namespace]))
+    g.add((classiri, rdf_ns['base']['hasNamespace'], known_ns_classes[namespace]))
     g.add((classiri, RDF.type, rdf_ns['opcua'][nodeclasstype]))
     nodeIds[index][nid] = classiri
     displayname_node = node.find('opcua:DisplayName', xml_ns)
-    g.add((classiri, rdf_ns['opcua']['hasDisplayName'], Literal(displayname_node.text)))
+    g.add((classiri, rdf_ns['base']['hasDisplayName'], Literal(displayname_node.text)))
     symbolic_name = node.get('SymbolicName')
     if symbolic_name is not None:
-        g.add((classiri, rdf_ns['opcua']['hasSymbolicName'], Literal(symbolic_name)))
+        g.add((classiri, rdf_ns['base']['hasSymbolicName'], Literal(symbolic_name)))
     return rdf_namespace, classiri
                         
 
@@ -272,12 +288,12 @@ def add_uadatatype(g, node, xml_ns):
                 datatypeid = resolve_alias(datatypeid)
                 datatype_index, datatype_id = parse_nodeid(datatypeid)
                 datatypeiri = typeIds[datatype_index][datatype_id]
-                g.add((rdf_namespace[symbolicname], rdf_ns['opcua']['hasDataType'], datatypeiri))
-            g.add((rdf_namespace[symbolicname], RDF.type, rdf_ns['opcua']['Field']))
+                g.add((rdf_namespace[symbolicname], rdf_ns['base']['hasDataType'], datatypeiri))
+            g.add((rdf_namespace[symbolicname], RDF.type, rdf_ns['base']['Field']))
             if value is not None:
-                g.add((rdf_namespace[symbolicname], rdf_ns['opcua']['hasValue'], Literal(str(value))))               
-            g.add((rdf_namespace[symbolicname], rdf_ns['opcua']['hasFieldName'], Literal(str(symbolicname))))
-            g.add((datatypeIri, rdf_ns['opcua']['hasField'], rdf_namespace[symbolicname]))
+                g.add((rdf_namespace[symbolicname], rdf_ns['base']['hasValue'], Literal(str(value))))               
+            g.add((rdf_namespace[symbolicname], rdf_ns['base']['hasFieldName'], Literal(str(symbolicname))))
+            g.add((datatypeIri, rdf_ns['base']['hasField'], rdf_namespace[symbolicname]))
         
 
 def isNodeId(nodeId):
@@ -292,8 +308,8 @@ def get_namespaced_browsename(index, id):
         graph = g
     else:
         graph = ig
-    subject = graph.subjects((RDF.type, rdf_ns['opcua']['hasNodeId'], id))[0]
-    browsename = graph.object((subject, rdf_ns['opcua']['hasBrowseName']))[0]
+    subject = graph.subjects((RDF.type, rdf_ns['base']['hasNodeId'], id))[0]
+    browsename = graph.object((subject, rdf_ns['base']['hasBrowseName']))[0]
     return namespace()
 
 
@@ -358,7 +374,7 @@ def add_type(g, node, xml_ns):
             g.add((ref_namespace[browsename], RDFS.subClassOf, typeiri))
         else:
             g.add((typeiri, RDFS.subClassOf, ref_namespace[browsename]))
-        g.add((ref_classiri, rdf_ns['opcua']['definesType'], ref_namespace[browsename]))
+        g.add((ref_classiri, rdf_ns['base']['definesType'], ref_namespace[browsename]))
     typeIds[ref_index][ref_id] = ref_namespace[browsename]
     return
 
@@ -405,7 +421,7 @@ if __name__ == '__main__':
     opcua_output = args.output
     prefix = args.prefix
     versionIRI = URIRef(args.versionIRI)
-    ontology_name = URIRef(args.namespace)
+    ontology_name = URIRef(args.namespace) if args.namespace is not None else None
     ontology_prefix = args.prefix
     tree = ET.parse(upcua_nodeset)
     #calling the root element
@@ -460,4 +476,4 @@ if __name__ == '__main__':
     # for uaobjecttype in uaobjecttypes:
     #     add_uaobjecttype(g, uaobjecttype)
         
-    write_graph(g, "result.ttl")
+    write_graph(g, opcua_output)
