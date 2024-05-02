@@ -36,7 +36,9 @@
 
 
 ###  http://opcfoundation.org/UA/Base/hasDataType
-:hasDataType rdf:type owl:ObjectProperty .
+:hasDataType rdf:type owl:ObjectProperty ;
+             rdfs:domain opcua:BaseNodeClass ;
+             rdfs:range opcua:BaseDataType .
 
 
 ###  http://opcfoundation.org/UA/Base/hasEncoding
@@ -84,7 +86,6 @@
 
 ###  http://opcfoundation.org/UA/Base/hasDataType
 :hasDataType rdf:type owl:DatatypeProperty ;
-             rdfs:domain opcua:BaseNodeClass ;
              rdfs:range :BaseDataType .
 
 
