@@ -1,5 +1,6 @@
 import sys
 import xml.etree.ElementTree as ET
+import pathlib
 from rdflib import Graph, Namespace, Literal, URIRef
 from rdflib.namespace import NamespaceManager
 from rdflib.namespace import OWL, RDF, RDFS
@@ -74,6 +75,7 @@ parse nodeset and create RDF-graph <nodeset2.xml>')
 
     parser.add_argument('nodeset2', help='Path to the nodeset2 file')
     parser.add_argument('-i','--inputs', nargs='*', help='<Required> add dependent nodesets')
+    parser.add_argument('-m','--imports', nargs='*', help='<Required> add imports')
     parser.add_argument('-o', '--output', help='Resulting file.', default="result.ttl")
     parser.add_argument('-n', '--namespace', help='Namespace of ouput ontology, e.g. http://opcfoundation.org/UA/Pumps/', required=True)
     parser.add_argument('-v', '--versionIRI', help='VersionIRI of ouput ontology, e.g. http://example.com/v0.1/UA/ ',  required=True)
@@ -84,11 +86,14 @@ parse nodeset and create RDF-graph <nodeset2.xml>')
 xml_ns = {
     'opcua': 'http://opcfoundation.org/UA/2011/03/UANodeSet.xsd'
 }
+# Namespaces defined for RDF usage
 rdf_ns = {
     'opcua': Namespace('http://opcfoundation.org/UA/'),
     'base': Namespace('http://opcfoundation.org/UA/Base/')
 }
+# Contains the mapping from opcua-ns-index to ns
 opcua_ns = ['http://opcfoundation.org/UA/']
+# Contains the list of 
 known_opcua_ns = {
      'http://opcfoundation.org/UA/': 'opcua'
  }
@@ -98,11 +103,12 @@ known_opcua_ns = {
 # }
 #known_opcua_ns = {}
 known_ns_classes = {
-    'http://opcfoundation.org/UA/': URIRef('http://opcfoundation.org/UA/OPCUACORENamespace')}
+    'http://opcfoundation.org/UA/': URIRef('http://opcfoundation.org/UA/OPCUANamespace')}
 unknown_ns_prefix = "ns"
 versionIRI = None #= URIRef("http://example.com/v0.1/UA/")
 ontology_name = None #= URIRef("http://opcfoundation.org/UA/Pumps/")
-imported_ontologies = [URIRef('http://opcfoundation.org/UA/Base')]
+#imported_ontologies = [URIRef('http://opcfoundation.org/UA/Base')]
+imported_ontologies = [URIRef('file:///home/marcel/src/IndustryFusion/DigitalTwin/semantic-model/opcua/base.ttl')]
 aliases = {}
 nodeIds = [{}]
 typeIds = [{}]
@@ -126,11 +132,23 @@ def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
         if str(uri) != corens:
             print(f"found {prefix}: {uri}  with namespaceclass {ns}")
             known_opcua_ns[str(uri)] = str(prefix)
+            known_ns_classes[str(uri)] = ns
+            rdf_ns[str(prefix)] = Namespace(str(uri))
             nodeIds.append({})
-            typeIds.append({})
+            typeIds.append({})    
+
+    rdf_ns[ontology_prefix] = Namespace(str(ontology_name))
+    namespaceclass = f"{ontology_prefix.upper()}Namespace"
+    g.bind(ontology_prefix, Namespace(str(ontology_name)))
+    
+    known_ns_classes[str(ontology_name)] = rdf_ns[ontology_prefix][namespaceclass]
+    known_opcua_ns[ontology_name.toPython()] = ontology_prefix
+    nodeIds.append({})
+    typeIds.append({})
     
     query_result = ig.query(query_nodeIds)
-    uris = known_opcua_ns.keys()
+    #uris = known_opcua_ns.keys()
+    uris = opcua_ns
     urimap = {}
     for idx, uri in enumerate(uris):
         urimap[uri] = idx
@@ -143,14 +161,6 @@ def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
         ns = urimap[str(uri)]
         typeIds[ns][int(nodeId)] = type
 
-
-    rdf_ns[ontology_prefix] = Namespace(str(ontology_name))
-    namespaceclass = f"{ontology_prefix.upper()}Namespace"
-        
-    known_ns_classes[str(ontology_name)] = rdf_ns[ontology_prefix][namespaceclass]
-    known_opcua_ns[ontology_name.toPython()] = ontology_prefix
-    nodeIds.append({})
-    typeIds.append({})
     g.add((rdf_ns[ontology_prefix][namespaceclass], RDF.type, rdf_ns['base']['Namespace']))
     g.add((rdf_ns[ontology_prefix][namespaceclass], rdf_ns['base']['hasUri'], Literal(ontology_name.toPython())))
     g.add((rdf_ns[ontology_prefix][namespaceclass], rdf_ns['base']['hasPrefix'], Literal(ontology_prefix)))
@@ -169,21 +179,20 @@ def create_prefixes(g, xml_node):
     g.bind('base', rdf_ns['base'])
     if xml_node is None:
         return
-    unknown_ns_count = 0
-    opcua_ns_count = 10
+    #unknown_ns_count = 0
+    #opcua_ns_count = 10
     for ns in xml_node:
-        namespace = Namespace(ns.text)
-        try:
-            prefix = known_opcua_ns[ns.text]
-        except:          
-            prefix = f'{unknown_ns_prefix}{unknown_ns_count}'
-            unknown_ns_count+=1
-            known_opcua_ns[ns.text] = prefix
+        #namespace = Namespace(ns.text)
+        #try:
+        #    prefix = known_opcua_ns[ns.text]
+        #except:          
+        #    prefix = f'{unknown_ns_prefix}{unknown_ns_count}'
+        #    unknown_ns_count+=1
+        #    known_opcua_ns[ns.text] = prefix
         opcua_ns.append(ns.text)
         #nodeIds.append({})
-        rdf_ns[prefix] = namespace
-        g.bind(prefix, namespace)
-        print(f'Added RDF namespace {namespace} with prefix {prefix}')
+        #rdf_ns[prefix] = namespace
+        #print(f'Added RDF namespace {namespace} with prefix {prefix}')
 
 
 # def split_ns_term(nsterm):
@@ -495,14 +504,17 @@ if __name__ == '__main__':
     versionIRI = URIRef(args.versionIRI)
     ontology_name = URIRef(args.namespace) if args.namespace is not None else None
     ontology_prefix = args.prefix
+    if args.imports is not None:
+        imported_ontologies = list(map(URIRef, args.imports))
     tree = ET.parse(upcua_nodeset)
     #calling the root element
     root = tree.getroot()
 
     #g = Graph()
-    init_nodeids(opcua_inputs, ontology_name, ontology_prefix)
+
     namespace_uris = root.find('opcua:NamespaceUris', xml_ns)
     create_prefixes(g, namespace_uris)
+    init_nodeids(opcua_inputs, ontology_name, ontology_prefix)
     create_header(g)
     aliases_node = root.find('opcua:Aliases', xml_ns)
     alias_nodes = aliases_node.findall('opcua:Alias', xml_ns)
