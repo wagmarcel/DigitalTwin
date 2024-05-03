@@ -118,6 +118,7 @@ g = Graph() # graph wich is currently created
 hasSubtypeId = 45
 hasPropertyId = 46
 hasTypeDefinition = 40
+hasComponent = 47
 
 def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
     #uagraph = Graph()
@@ -315,15 +316,15 @@ def parse_nodeid(nodeid):
     return ns_index, identifier
 
 
-def add_uaobjecttype(g, node):
-    rdf_namespace, name = add_nodeid_to_class(g, node, 'ObjectTypeNodeClass')
-    add_subclass(g, node, rdf_namespace[name])
-    add_to_nodeids(rdf_namespace, name, node)
+# def add_uaobjecttype(g, node):
+#     rdf_namespace, name = add_nodeid_to_class(g, node, 'ObjectTypeNodeClass')
+#     add_subclass(g, node, rdf_namespace[name])
+#     add_to_nodeids(rdf_namespace, name, node)
 
 
-def add_uavariable(g, uavariable):
-    rdf_namespace, name = add_nodeid_to_class(g, uavariable, 'VariableNodeClass')
-    add_datatype(g, uavariable, rdf_namespace[name])
+# def add_uavariable(g, uavariable):
+#     rdf_namespace, name = add_nodeid_to_class(g, uavariable, 'VariableNodeClass')
+#     add_datatype(g, uavariable, rdf_namespace[name])
 
 
 def downcase_string(s):
@@ -404,6 +405,23 @@ def get_datatype(g, node, classiri):
         g.add((classiri, rdf_ns['base']['hasDataType'], typeIds[dt_index][dt_id]))
 
 
+def get_components(g, refnodes, classiri):
+    for reference in refnodes:
+        reftype = reference.get('ReferenceType')
+        isforward = reference.get('IsForward')
+        nodeid = resolve_alias(reftype)
+        type_index, type_id = parse_nodeid(nodeid)
+        if type_id == hasComponent and type_index == 0:
+            componentId = resolve_alias(reference.text)
+            index, id = parse_nodeid(componentId)
+            namespace = get_rdf_ns_from_ua_index(index)
+            targetclassiri = nodeId_to_iri(namespace, id)
+            if isforward != 'false':
+                g.add((classiri, rdf_ns['base']['hasComponent'], targetclassiri))
+            else:
+                g.add((targetclassiri, rdf_ns['base']['hasComponent'], classiri))
+
+
 def add_typedef(g, node, xml_ns):
     _, browsename = getBrowsename(node)
     nodeid = node.get('NodeId')
@@ -413,6 +431,7 @@ def add_typedef(g, node, xml_ns):
     references_node = node.find('opcua:References', xml_ns)
     references = references_node.findall('opcua:Reference', xml_ns)
     if len(references) > 0:
+        get_components(g, references, classiri)
         typedef = None
         for reference in references:
             reftype = reference.get('ReferenceType')
@@ -434,19 +453,20 @@ def add_typedef(g, node, xml_ns):
 
 
 def add_type(g, node, xml_ns):
-    brindex, browsename = getBrowsename(node)
+    _, browsename = getBrowsename(node)
     #browsename = node.get('BrowseName')
     nodeid = node.get('NodeId')
     ref_index, ref_id = parse_nodeid(nodeid)
     ref_namespace = get_rdf_ns_from_ua_index(ref_index)
     br_namespace = ref_namespace
-    if brindex is not None and brindex != ref_index:
-        br_namespace = get_rdf_ns_from_ua_index(brindex)
+    #if brindex is not None and brindex != ref_index:
+    #    br_namespace = get_rdf_ns_from_ua_index(brindex)
     ref_classiri = nodeId_to_iri(ref_namespace, ref_id)
     references_node = node.find('opcua:References', xml_ns)
     references = references_node.findall('opcua:Reference', xml_ns)
     g.add((ref_namespace[browsename], RDF.type, OWL.Class))
     if len(references) > 0:
+        get_components(g, references, ref_classiri)
         subtype = None
         for reference in references:
             reftype = reference.get('ReferenceType')
@@ -478,12 +498,12 @@ def add_type(g, node, xml_ns):
 def get_nid_ns_and_name(g, node):
     nodeid = node.get('NodeId')
     ni_index, ni_id = parse_nodeid(nodeid)
-    bn_index, bn_name = getBrowsename(node)
+    _, bn_name = getBrowsename(node)
     #browsename = node.get('BrowseName')
     #bn_index, bn_name = split_ns_term(browsename)
     index = ni_index
-    if bn_index is not None:
-        index = bn_index
+    #if bn_index is not None:
+    #    index = bn_index
     #rdf_namespace = get_rdf_ns_from_ua_index(index)
     return ni_id, index, bn_name
 
