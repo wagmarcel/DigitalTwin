@@ -1,6 +1,9 @@
 import sys
 import xml.etree.ElementTree as ET
 import pathlib
+import xmlschema
+import json
+import functools
 from rdflib import Graph, Namespace, Literal, URIRef
 from rdflib.namespace import NamespaceManager
 from rdflib.namespace import OWL, RDF, RDFS
@@ -84,7 +87,8 @@ parse nodeset and create RDF-graph <nodeset2.xml>')
     return parsed_args
 
 xml_ns = {
-    'opcua': 'http://opcfoundation.org/UA/2011/03/UANodeSet.xsd'
+    'opcua': 'http://opcfoundation.org/UA/2011/03/UANodeSet.xsd',
+    'xsd': 'http://opcfoundation.org/UA/2008/02/Types.xsd'
 }
 # Namespaces defined for RDF usage
 rdf_ns = {
@@ -119,6 +123,8 @@ hasSubtypeId = 45
 hasPropertyId = 46
 hasTypeDefinition = 40
 hasComponent = 47
+data_schema = xmlschema.XMLSchema('/home/marcel/src/UA-Nodeset/Schema/Opc.Ua.Types.xsd')
+basic_types = ['String', 'Boolean', 'Byte', 'SByte', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Uin64', 'Int64', 'Float', 'DateTime', 'Guid', 'ByteString']
 
 def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
     #uagraph = Graph()
@@ -405,6 +411,33 @@ def get_datatype(g, node, classiri):
         g.add((classiri, rdf_ns['base']['hasDataType'], typeIds[dt_index][dt_id]))
 
 
+def get_value_rank(g, node, classiri):
+    value_rank = node.get('ValueRank')
+    if value_rank is not None:
+        g.add((classiri, rdf_ns['base']['hasValueRank'], Literal(value_rank)))
+
+
+def get_value(g, node, classiri, xml_ns):
+    result = None
+    value = node.find('opcua:Value', xml_ns)
+    if value is not None:
+        for children in value:
+            tag = children.tag
+            basic_type_found = bool([ele for ele in basic_types if(ele in tag)])
+            if 'ListOf' in tag:
+                if basic_type_found:
+                    data = data_schema.to_dict(children, namespaces=xml_ns, indent=4)
+                    field = [ele for ele in data.keys() if('@' not in ele)][0]
+                    result = data[field]
+                    g.add((classiri, rdf_ns['base']['hasValue'], Literal(result)))
+                continue
+            elif basic_type_found:
+                data=data_schema.to_dict(children, namespaces=xml_ns, indent=4)
+                result = data["$"]
+                g.add((classiri, rdf_ns['base']['hasValue'], Literal(result)))
+            
+
+
 def get_components(g, refnodes, classiri):
     for reference in refnodes:
         reftype = reference.get('ReferenceType')
@@ -446,9 +479,11 @@ def add_typedef(g, node, xml_ns):
         typedef_index, typedef_id = parse_nodeid(typedef)
         if (isforward == 'false'):
             print(f"Warning: IsForward=false makes not sense here: {classiri}")
-            return
-        g.add((classiri, RDF.type, typeIds[typedef_index][typedef_id])) 
+        else:
+            g.add((classiri, RDF.type, typeIds[typedef_index][typedef_id])) 
     get_datatype(g, node, classiri)
+    get_value_rank(g, node, classiri)
+    get_value(g, node, classiri, xml_ns)
     return    
 
 
@@ -491,7 +526,8 @@ def add_type(g, node, xml_ns):
     typeIds[ref_index][ref_id] = br_namespace[browsename]
     g.add((ref_classiri, rdf_ns['base']['definesType'], br_namespace[browsename]))
     get_datatype(g, node, ref_classiri)
-
+    get_value_rank(g, node, ref_classiri)
+    get_value(g, node, ref_classiri, xml_ns)
     return
 
 
