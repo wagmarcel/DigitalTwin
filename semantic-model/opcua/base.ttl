@@ -133,6 +133,10 @@
           rdfs:range xsd:string .
 
 
+###  http://opcfoundation.org/UA/Base/hasValueRank
+:hasValueRank rdf:type owl:DatatypeProperty .
+
+
 ###  http://opcfoundation.org/UA/Base/isAbstract
 :isAbstract rdf:type owl:DatatypeProperty ;
             rdfs:range xsd:boolean .
