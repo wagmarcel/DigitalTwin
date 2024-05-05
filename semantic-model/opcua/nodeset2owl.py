@@ -83,6 +83,8 @@ parse nodeset and create RDF-graph <nodeset2.xml>')
     parser.add_argument('-n', '--namespace', help='Namespace of ouput ontology, e.g. http://opcfoundation.org/UA/Pumps/', required=True)
     parser.add_argument('-v', '--versionIRI', help='VersionIRI of ouput ontology, e.g. http://example.com/v0.1/UA/ ',  required=True)
     parser.add_argument('-p', '--prefix', help='Prefix for added ontolgoy, e.g. "pumps"', required=True)
+    parser.add_argument('-t', '--typesxsd', help='Schema for value definitions, e.g. Opc.Ua.Types.xsd',
+                        default='https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/Schema/Opc.Ua.Types.xsd')
     parsed_args = parser.parse_args(args)
     return parsed_args
 
@@ -112,7 +114,7 @@ unknown_ns_prefix = "ns"
 versionIRI = None #= URIRef("http://example.com/v0.1/UA/")
 ontology_name = None #= URIRef("http://opcfoundation.org/UA/Pumps/")
 #imported_ontologies = [URIRef('http://opcfoundation.org/UA/Base')]
-imported_ontologies = [URIRef('file:///home/marcel/src/IndustryFusion/DigitalTwin/semantic-model/opcua/base.ttl')]
+imported_ontologies = None #[URIRef('file:///home/marcel/src/IndustryFusion/DigitalTwin/semantic-model/opcua/base.ttl')]
 aliases = {}
 nodeIds = [{}]
 typeIds = [{}]
@@ -123,7 +125,7 @@ hasSubtypeId = 45
 hasPropertyId = 46
 hasTypeDefinition = 40
 hasComponent = 47
-data_schema = xmlschema.XMLSchema('/home/marcel/src/UA-Nodeset/Schema/Opc.Ua.Types.xsd')
+data_schema = None
 basic_types = ['String', 'Boolean', 'Byte', 'SByte', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Uin64', 'Int64', 'Float', 'DateTime', 'Guid', 'ByteString']
 
 def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
@@ -433,8 +435,9 @@ def get_value(g, node, classiri, xml_ns):
                 continue
             elif basic_type_found:
                 data=data_schema.to_dict(children, namespaces=xml_ns, indent=4)
-                result = data["$"]
-                g.add((classiri, rdf_ns['base']['hasValue'], Literal(result)))
+                if '$' in data:
+                    result = data["$"]
+                    g.add((classiri, rdf_ns['base']['hasValue'], Literal(result)))
             
 
 
@@ -557,6 +560,7 @@ if __name__ == '__main__':
     opcua_inputs = args.inputs if args.inputs is not None else []
     opcua_output = args.output
     prefix = args.prefix
+    data_schema = xmlschema.XMLSchema(args.typesxsd)
     versionIRI = URIRef(args.versionIRI)
     ontology_name = URIRef(args.namespace) if args.namespace is not None else None
     ontology_prefix = args.prefix
