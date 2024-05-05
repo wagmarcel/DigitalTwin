@@ -12,22 +12,22 @@ For local testing
 
 Create core.ttl:
 
-    python3 nodeset2owl.py ${CORE_NODESET} -i base.ttl  -n http://opcfoundation.org/UA/ -v http://example.com/v0.1/UA/ -p opcua -o core.ttl
+    python3 nodeset2owl.py ${CORE_NODESET} -i base.ttl -v http://example.com/v0.1/UA/ -p opcua -o core.ttl
 
 
 Create devices.ttl:
 
-    python3 nodeset2owl.py  ${DI_NODESET} -i base.ttl core.ttl  -n http://opcfoundation.org/UA/DI/ -v http://example.com/v0.1/DI/ -p devices -o devices.ttl
+    python3 nodeset2owl.py  ${DI_NODESET} -i base.ttl core.ttl -v http://example.com/v0.1/DI/ -p devices -o devices.ttl
 
 
 Create machinery.ttl:
 
-    python3 nodeset2owl.py ${MACHINERY_NODESET} -i base.ttl core.ttl devices.ttl -n http://opcfoundation.org/UA/Machinery/ -v http://example.com/v0.1/Machinery/ -p machinery -o machinery.ttl
+    python3 nodeset2owl.py ${MACHINERY_NODESET} -i base.ttl core.ttl devices.ttl -v http://example.com/v0.1/Machinery/ -p machinery -o machinery.ttl
 
 
 Create pumps.ttl:
 
-    python3 nodeset2owl.py  ${PUMPS_NODESET} -i base.ttl core.ttl devices.ttl machinery.ttl -n http://opcfoundation.org/UA/Pumps/ -v http://example.com/v0.1/Pumps/ -p pumps -o pumps.ttl
+    python3 nodeset2owl.py  ${PUMPS_NODESET} -i base.ttl core.ttl devices.ttl machinery.ttl -v http://example.com/v0.1/Pumps/ -p pumps -o pumps.ttl
 
 create pumpexample.ttl:
 
