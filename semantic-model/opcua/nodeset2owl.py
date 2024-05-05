@@ -83,7 +83,7 @@ parse nodeset and create RDF-graph <nodeset2.xml>')
     #parser.add_argument('-m','--imports', nargs='*', help='<Required> add imports')
     parser.add_argument('-o', '--output', help='Resulting file.', default="result.ttl")
     parser.add_argument('-n', '--namespace', help='Overwriting namespace of target ontology, e.g. http://opcfoundation.org/UA/Pumps/', required=False)
-    parser.add_argument('-v', '--versionIRI', help='VersionIRI of ouput ontology, e.g. http://example.com/v0.1/UA/ ',  required=True)
+    parser.add_argument('-v', '--versionIRI', help='VersionIRI of ouput ontology, e.g. http://example.com/v0.1/UA/ ',  required=False)
     parser.add_argument('-p', '--prefix', help='Prefix for added ontolgoy, e.g. "pumps"', required=True)
     parser.add_argument('-t', '--typesxsd', help='Schema for value definitions, e.g. Opc.Ua.Types.xsd',
                         default='https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/Schema/Opc.Ua.Types.xsd')
@@ -179,7 +179,8 @@ def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
     
 def create_header(g):
     g.add((ontology_name, RDF.type, OWL.Ontology))
-    g.add((ontology_name, OWL.versionIRI, versionIRI))
+    if versionIRI is not None:
+        g.add((ontology_name, OWL.versionIRI, versionIRI))
     g.add((ontology_name, OWL.versionInfo, Literal(0.1)))
     for ontology in imported_ontologies:
         g.add((ontology_name, OWL.imports, ontology))
@@ -570,7 +571,7 @@ if __name__ == '__main__':
     opcua_output = args.output
     prefix = args.prefix
     data_schema = xmlschema.XMLSchema(args.typesxsd)
-    versionIRI = URIRef(args.versionIRI)
+    versionIRI = URIRef(args.versionIRI) if args.versionIRI is not None else None
 
     ontology_prefix = args.prefix
     #if args.imports is not None:
