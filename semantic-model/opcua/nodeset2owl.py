@@ -101,22 +101,16 @@ rdf_ns = {
 }
 # Contains the mapping from opcua-ns-index to ns
 opcua_ns = ['http://opcfoundation.org/UA/']
-# Contains the list of 
 known_opcua_ns = {
      'http://opcfoundation.org/UA/': 'opcua'
  }
-#     'http://opcfoundation.org/UA/Pumps/': 'pumps',
-#     'http://opcfoundation.org/UA/Machinery/': 'machinery',
-#     'http://opcfoundation.org/UA/DI/': 'devices'
-# }
-#known_opcua_ns = {}
+
 known_ns_classes = {
     'http://opcfoundation.org/UA/': URIRef('http://opcfoundation.org/UA/OPCUANamespace')}
 unknown_ns_prefix = "ns"
-versionIRI = None #= URIRef("http://example.com/v0.1/UA/")
-ontology_name = None #= URIRef("http://opcfoundation.org/UA/Pumps/")
-#imported_ontologies = [URIRef('http://opcfoundation.org/UA/Base')]
-imported_ontologies = [] #[URIRef('file:///home/marcel/src/IndustryFusion/DigitalTwin/semantic-model/opcua/base.ttl')]
+versionIRI = None
+ontology_name = None
+imported_ontologies = []
 aliases = {}
 nodeIds = [{}]
 typeIds = [{}]
@@ -158,14 +152,12 @@ def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
     typeIds.append({})
     
     query_result = ig.query(query_nodeIds)
-    #uris = known_opcua_ns.keys()
     uris = opcua_ns
     urimap = {}
     for idx, uri in enumerate(uris):
         urimap[uri] = idx
     for nodeId, uri, nodeIri in query_result:
         ns = urimap[str(uri)]
-        #nId = f'ns={ns};i={nodeId}'
         nodeIds[ns][int(nodeId)] = nodeIri
     query_result = ig.query(query_types)
     for nodeId, uri, type in query_result:
@@ -191,29 +183,8 @@ def create_prefixes(g, xml_node):
     g.bind('base', rdf_ns['base'])
     if xml_node is None:
         return
-    #unknown_ns_count = 0
-    #opcua_ns_count = 10
     for ns in xml_node:
-        #namespace = Namespace(ns.text)
-        #try:
-        #    prefix = known_opcua_ns[ns.text]
-        #except:          
-        #    prefix = f'{unknown_ns_prefix}{unknown_ns_count}'
-        #    unknown_ns_count+=1
-        #    known_opcua_ns[ns.text] = prefix
         opcua_ns.append(ns.text)
-        #nodeIds.append({})
-        #rdf_ns[prefix] = namespace
-        #print(f'Added RDF namespace {namespace} with prefix {prefix}')
-
-
-# def split_ns_term(nsterm):
-#     parts = nsterm.split(':', 1)
-#     if len(parts) == 2:
-#         ns_index, name = parts
-#         return int(ns_index), name
-#     else:
-#         return None, nsterm
 
 
 def get_rdf_ns_from_ua_index(index):
@@ -239,7 +210,6 @@ def get_reference_subtype(node):
     for ref in refs:
         reftype = ref.get('ReferenceType')
         isForward = ref.get('IsForward')
-        #print(reftype, isForward)
         if reftype == 'HasSubtype' and isForward == 'false':
             nsid, id = parse_nodeid(ref.text)
             try:
@@ -327,17 +297,6 @@ def parse_nodeid(nodeid):
     return ns_index, identifier
 
 
-# def add_uaobjecttype(g, node):
-#     rdf_namespace, name = add_nodeid_to_class(g, node, 'ObjectTypeNodeClass')
-#     add_subclass(g, node, rdf_namespace[name])
-#     add_to_nodeids(rdf_namespace, name, node)
-
-
-# def add_uavariable(g, uavariable):
-#     rdf_namespace, name = add_nodeid_to_class(g, uavariable, 'VariableNodeClass')
-#     add_datatype(g, uavariable, rdf_namespace[name])
-
-
 def downcase_string(s):
     return s[0].lower() + s[1:]
 
@@ -347,7 +306,6 @@ def add_uadatatype(g, node, xml_ns):
     rdf_namespace = get_rdf_ns_from_ua_index(index)
     classiri = nodeId_to_iri(rdf_namespace, nid)
     datatypeIri = rdf_namespace[name]
-    #add_subclass(g, node, datatypeIri)
     definition = uadatatype.find('opcua:Definition', xml_ns)
     if definition is not None:
         fields = definition.findall('opcua:Field', xml_ns)
@@ -399,7 +357,6 @@ def get_namespaced_browsename(index, id):
 
 def add_uanode(g, node, type, xml_ns):
     namespace, classiri = add_nodeid_to_class(g, node, type, xml_ns)
-    #add_references_to_class(g, node, classiri, namespace, xml_ns)
 
 def resolve_alias(nodeid):
     alias = nodeid
@@ -459,6 +416,16 @@ def get_components(g, refnodes, classiri):
                 g.add((classiri, rdf_ns['base']['hasComponent'], targetclassiri))
             else:
                 g.add((targetclassiri, rdf_ns['base']['hasComponent'], classiri))
+        elif type_id == hasPropertyId and type_index == 0:
+            componentId = resolve_alias(reference.text)
+            index, id = parse_nodeid(componentId)
+            namespace = get_rdf_ns_from_ua_index(index)
+            targetclassiri = nodeId_to_iri(namespace, id)
+            if isforward != 'false':
+                g.add((classiri, rdf_ns['base']['hasProperty'], targetclassiri))
+            else:
+                g.add((targetclassiri, rdf_ns['base']['hasProperty'], classiri))
+
 
 
 def add_typedef(g, node, xml_ns):
@@ -495,13 +462,10 @@ def add_typedef(g, node, xml_ns):
 
 def add_type(g, node, xml_ns):
     _, browsename = getBrowsename(node)
-    #browsename = node.get('BrowseName')
     nodeid = node.get('NodeId')
     ref_index, ref_id = parse_nodeid(nodeid)
     ref_namespace = get_rdf_ns_from_ua_index(ref_index)
     br_namespace = ref_namespace
-    #if brindex is not None and brindex != ref_index:
-    #    br_namespace = get_rdf_ns_from_ua_index(brindex)
     ref_classiri = nodeId_to_iri(ref_namespace, ref_id)
     references_node = node.find('opcua:References', xml_ns)
     references = references_node.findall('opcua:Reference', xml_ns)
@@ -541,12 +505,7 @@ def get_nid_ns_and_name(g, node):
     nodeid = node.get('NodeId')
     ni_index, ni_id = parse_nodeid(nodeid)
     _, bn_name = getBrowsename(node)
-    #browsename = node.get('BrowseName')
-    #bn_index, bn_name = split_ns_term(browsename)
     index = ni_index
-    #if bn_index is not None:
-    #    index = bn_index
-    #rdf_namespace = get_rdf_ns_from_ua_index(index)
     return ni_id, index, bn_name
 
 
@@ -566,16 +525,13 @@ if __name__ == '__main__':
         for input in args.inputs:
             if os.path.basename(input) == input:
                 input = f'{os.getcwd()}/{input}'
-            imported_ontologies.append(URIRef(input)) # = list(map(URIRef, args.inputs))
-    #opcua_inputs = args.inputs if args.inputs is not None else []
+            imported_ontologies.append(URIRef(input))
     opcua_output = args.output
     prefix = args.prefix
     data_schema = xmlschema.XMLSchema(args.typesxsd)
     versionIRI = URIRef(args.versionIRI) if args.versionIRI is not None else None
 
     ontology_prefix = args.prefix
-    #if args.imports is not None:
-    #    imported_ontologies = list(map(URIRef, args.imports))
     tree = None
     try:
         with urllib.request.urlopen(opcua_nodeset) as response:
@@ -585,7 +541,6 @@ if __name__ == '__main__':
     #calling the root element
     root = tree.getroot()
 
-    #g = Graph()
     if args.namespace is None:
         models = root.find('opcua:Models', xml_ns)
         if models is None:
@@ -608,7 +563,8 @@ if __name__ == '__main__':
         ('opcua:UAObjectType', 'ObjectTypeNodeClass'), 
         ('opcua:UAObject', 'ObjectNodeClass'),
         ('opcua:UAReferenceType', 'ReferenceTypeNodeClass'),
-        ('opcua:UAVariableType', 'VariableTypeNodeClass')
+        ('opcua:UAVariableType', 'VariableTypeNodeClass'),
+        ('opcua:UAMethod', 'MethodNodeClass')
     ]
     type_nodeclasses = [
         ('opcua:UADataType', 'DataTypeNodeClass'),
