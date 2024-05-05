@@ -82,7 +82,7 @@ parse nodeset and create RDF-graph <nodeset2.xml>')
     parser.add_argument('-i','--inputs', nargs='*', help='<Required> add dependent nodesets as ttl')
     #parser.add_argument('-m','--imports', nargs='*', help='<Required> add imports')
     parser.add_argument('-o', '--output', help='Resulting file.', default="result.ttl")
-    parser.add_argument('-n', '--namespace', help='Namespace of ouput ontology, e.g. http://opcfoundation.org/UA/Pumps/', required=True)
+    parser.add_argument('-n', '--namespace', help='Overwriting namespace of target ontology, e.g. http://opcfoundation.org/UA/Pumps/', required=False)
     parser.add_argument('-v', '--versionIRI', help='VersionIRI of ouput ontology, e.g. http://example.com/v0.1/UA/ ',  required=True)
     parser.add_argument('-p', '--prefix', help='Prefix for added ontolgoy, e.g. "pumps"', required=True)
     parser.add_argument('-t', '--typesxsd', help='Schema for value definitions, e.g. Opc.Ua.Types.xsd',
@@ -571,7 +571,7 @@ if __name__ == '__main__':
     prefix = args.prefix
     data_schema = xmlschema.XMLSchema(args.typesxsd)
     versionIRI = URIRef(args.versionIRI)
-    ontology_name = URIRef(args.namespace) if args.namespace is not None else None
+
     ontology_prefix = args.prefix
     #if args.imports is not None:
     #    imported_ontologies = list(map(URIRef, args.imports))
@@ -585,7 +585,15 @@ if __name__ == '__main__':
     root = tree.getroot()
 
     #g = Graph()
-
+    if args.namespace is None:
+        models = root.find('opcua:Models', xml_ns)
+        if models is None:
+            print("Error: Namespace cannot be retrieved, plase set it explicitly.")
+            exit(1)
+        model = models.find('opcua:Model', xml_ns)
+        ontology_name = URIRef(model.get('ModelUri'))
+    else:
+        ontology_name = URIRef(args.namespace) if args.namespace is not None else None
     namespace_uris = root.find('opcua:NamespaceUris', xml_ns)
     create_prefixes(g, namespace_uris)
     init_nodeids(opcua_inputs, ontology_name, ontology_prefix)
