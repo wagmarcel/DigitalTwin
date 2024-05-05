@@ -1,4 +1,6 @@
 import sys
+import os
+import urllib
 import xml.etree.ElementTree as ET
 import pathlib
 import xmlschema
@@ -77,8 +79,8 @@ def parse_args(args=sys.argv[1:]):
 parse nodeset and create RDF-graph <nodeset2.xml>')
 
     parser.add_argument('nodeset2', help='Path to the nodeset2 file')
-    parser.add_argument('-i','--inputs', nargs='*', help='<Required> add dependent nodesets')
-    parser.add_argument('-m','--imports', nargs='*', help='<Required> add imports')
+    parser.add_argument('-i','--inputs', nargs='*', help='<Required> add dependent nodesets as ttl')
+    #parser.add_argument('-m','--imports', nargs='*', help='<Required> add imports')
     parser.add_argument('-o', '--output', help='Resulting file.', default="result.ttl")
     parser.add_argument('-n', '--namespace', help='Namespace of ouput ontology, e.g. http://opcfoundation.org/UA/Pumps/', required=True)
     parser.add_argument('-v', '--versionIRI', help='VersionIRI of ouput ontology, e.g. http://example.com/v0.1/UA/ ',  required=True)
@@ -114,7 +116,7 @@ unknown_ns_prefix = "ns"
 versionIRI = None #= URIRef("http://example.com/v0.1/UA/")
 ontology_name = None #= URIRef("http://opcfoundation.org/UA/Pumps/")
 #imported_ontologies = [URIRef('http://opcfoundation.org/UA/Base')]
-imported_ontologies = None #[URIRef('file:///home/marcel/src/IndustryFusion/DigitalTwin/semantic-model/opcua/base.ttl')]
+imported_ontologies = [] #[URIRef('file:///home/marcel/src/IndustryFusion/DigitalTwin/semantic-model/opcua/base.ttl')]
 aliases = {}
 nodeIds = [{}]
 typeIds = [{}]
@@ -556,17 +558,29 @@ def scan_aliases(alias_nodes):
 
 if __name__ == '__main__':
     args = parse_args()
-    upcua_nodeset = args.nodeset2
-    opcua_inputs = args.inputs if args.inputs is not None else []
+    opcua_nodeset = args.nodeset2
+    opcua_inputs = []
+    if args.inputs is not None:
+        opcua_inputs = args.inputs
+        for input in args.inputs:
+            if os.path.basename(input) == input:
+                input = f'{os.getcwd()}/{input}'
+            imported_ontologies.append(URIRef(input)) # = list(map(URIRef, args.inputs))
+    #opcua_inputs = args.inputs if args.inputs is not None else []
     opcua_output = args.output
     prefix = args.prefix
     data_schema = xmlschema.XMLSchema(args.typesxsd)
     versionIRI = URIRef(args.versionIRI)
     ontology_name = URIRef(args.namespace) if args.namespace is not None else None
     ontology_prefix = args.prefix
-    if args.imports is not None:
-        imported_ontologies = list(map(URIRef, args.imports))
-    tree = ET.parse(upcua_nodeset)
+    #if args.imports is not None:
+    #    imported_ontologies = list(map(URIRef, args.imports))
+    tree = None
+    try:
+        with urllib.request.urlopen(opcua_nodeset) as response:
+            tree = ET.parse(response)
+    except:
+        tree = ET.parse(opcua_nodeset)
     #calling the root element
     root = tree.getroot()
 
