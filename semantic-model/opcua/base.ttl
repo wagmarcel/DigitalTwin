@@ -168,6 +168,11 @@ opcua:DataTypeNodeClass rdf:type owl:Class ;
                         rdfs:subClassOf opcua:BaseNodeClass .
 
 
+###  http://opcfoundation.org/UA/MethodNodeClass
+opcua:MethodNodeClass rdf:type owl:Class ;
+                      rdfs:subClassOf opcua:BaseNodeClass .
+
+
 ###  http://opcfoundation.org/UA/ObjectNodeClass
 opcua:ObjectNodeClass rdf:type owl:Class ;
                       rdfs:subClassOf opcua:BaseNodeClass .
