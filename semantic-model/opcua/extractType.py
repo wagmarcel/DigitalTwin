@@ -90,6 +90,20 @@ def create_ngsild_object(node, instancetype, id):
             }
         #for type in g.objects(o, RDF.type):
         print(nodeclass, type)
+    for (s, p, o) in g.triples((node, basens['hasProperty'], None)):
+        browse_name = next(g.objects(o, basens['hasBrowseName']))
+        print(f'Processing Node {o} with browsename {browse_name}')
+        nodeclass, type = get_type(o)
+        attributename = f'has{browse_name}'
+        if isVariableNodeClass(nodeclass):
+            try:
+                value = next(g.objects(o, basens['hasValue']))
+            except StopIteration:
+                value = ''
+        instance[attributename] = {
+            'Property': 'Property',
+            'value': value
+        }
     instances.append(instance)
 
 
@@ -102,22 +116,6 @@ if __name__ == '__main__':
     g.parse(instancename)
     root = next(g.subjects(RDF.type, URIRef(instancetype)))
     create_ngsild_object(root, instancetype, 'urn:test:1')
-        # instance = {}
-        # instance['type'] = instancetype
-        # instance['id'] = 'urn:test:1'
-        # instance['@context'] = {}
-        # # Loop through all components
-        # for (s, p, o) in g.triples((root, basens['hasComponent'], None)):
-        #     browse_name = next(g.objects(o, basens['hasBrowseName']))
-        #     print(f'Processing Node {o} with browsename {browse_name}')
-        #     nodeclass, type = get_type(o)
-        #     if isObjectNodeClass(nodeclass):
-        #         attributename = f'has{attributename_from_type(type)}'
-        #         instance[attributename] = {
-        #             'Property': 'Relationship',
-        #             'object': ''
-        #         }
-        #     print(nodeclass, type)
             
     if jsonldname is not None:
         with open(jsonldname, 'w') as f:
