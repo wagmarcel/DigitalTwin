@@ -32,3 +32,9 @@ Create pumps.ttl:
 create pumpexample.ttl:
 
     python3 nodeset2owl.py  ${PUMP_EXAMPLE_NODESET} -i base.ttl core.ttl devices.ttl machinery.ttl pumps.ttl -n http://yourorganisation.org/InstanceExample/ -v http://example.com/v0.1/pumpexample/ -p pumpexample -o pumpexample.ttl
+
+## extractType.py
+
+Extract ngsi-ld prototype:
+
+    python3 extractType.py -t http://opcfoundation.org/UA/Pumps/PumpType pumpexample.ttl

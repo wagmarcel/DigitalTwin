@@ -122,7 +122,7 @@ hasPropertyId = 46
 hasTypeDefinition = 40
 hasComponent = 47
 data_schema = None
-basic_types = ['String', 'Boolean', 'Byte', 'SByte', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Uin64', 'Int64', 'Float', 'DateTime', 'Guid', 'ByteString']
+basic_types = ['String', 'Boolean', 'Byte', 'SByte', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Uin64', 'Int64', 'Float', 'DateTime', 'Guid', 'ByteString', 'Double']
 
 def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
     #uagraph = Graph()
