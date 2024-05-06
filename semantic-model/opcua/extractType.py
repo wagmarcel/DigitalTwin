@@ -90,6 +90,7 @@ def create_ngsild_object(node, instancetype, id):
         e.add((entity_namespace[attributename], RDF.type, OWL.ObjectProperty))
         e.add((entity_namespace[attributename], RDFS.domain, type))
         e.add((entity_namespace[attributename], RDF.type, OWL.NamedIndividual))
+        e.add((entity_namespace[attributename], RDF.type, basens['SubComponentRelationship']))
         types.append(type)
         if isObjectNodeClass(nodeclass):
             e.add((entity_namespace[attributename], RDFS.range, ngsildns['Relationship']))
@@ -127,6 +128,7 @@ def create_ngsild_object(node, instancetype, id):
             'Property': 'Property',
             'value': value
         }
+        e.add((entity_namespace[attributename], RDFS.range, basens['OPCUAProperty']))
     instances.append(instance)
 
 
@@ -151,6 +153,7 @@ if __name__ == '__main__':
     types = []
     e.bind('entities', entity_namespace)
     e.bind('ngsild', ngsildns)
+    e.bind('base', basens)
     result = g.query(query_namespaces)
     for uri, prefix, _ in result:
         e.bind(prefix, Namespace(uri))

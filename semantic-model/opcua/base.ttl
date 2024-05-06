@@ -202,6 +202,10 @@ opcua:VariableTypeNodeClass rdf:type owl:Class ;
                             rdfs:subClassOf opcua:BaseNodeClass .
 
 
+###  http://opcfoundation.org/UA/Base/AttributeClass
+:AttributeClass rdf:type owl:Class .
+
+
 ###  http://opcfoundation.org/UA/Base/Field
 :Field rdf:type owl:Class .
 
@@ -212,6 +216,21 @@ opcua:VariableTypeNodeClass rdf:type owl:Class ;
 
 ###  http://opcfoundation.org/UA/Base/OPCUAMetaclass
 :OPCUAMetaclass rdf:type owl:Class .
+
+
+###  http://opcfoundation.org/UA/Base/OPCUAProperty
+:OPCUAProperty rdf:type owl:Class ;
+               rdfs:subClassOf :AttributeClass .
+
+
+###  http://opcfoundation.org/UA/Base/PeerRelationship
+:PeerRelationship rdf:type owl:Class ;
+                  rdfs:subClassOf :AttributeClass .
+
+
+###  http://opcfoundation.org/UA/Base/SubComponentRelationship
+:SubComponentRelationship rdf:type owl:Class ;
+                          rdfs:subClassOf :AttributeClass .
 
 
 #################################################################
