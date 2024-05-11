@@ -31,6 +31,10 @@
 :generatesEvent rdf:type owl:ObjectProperty .
 
 
+###  http://opcfoundation.org/UA/Base/hasAddIn
+:hasAddIn rdf:type owl:ObjectProperty .
+
+
 ###  http://opcfoundation.org/UA/Base/hasComponent
 :hasComponent rdf:type owl:ObjectProperty .
 
@@ -72,6 +76,10 @@
 
 ###  http://opcfoundation.org/UA/Base/hasTypeDefinition
 :hasTypeDefinition rdf:type owl:ObjectProperty .
+
+
+###  http://opcfoundation.org/UA/Base/organizes
+:organizes rdf:type owl:ObjectProperty .
 
 
 #################################################################
@@ -238,8 +246,7 @@ opcua:VariableTypeNodeClass rdf:type owl:Class ;
 #################################################################
 
 ###  http://opcfoundation.org/UA/Base/OPCUANamespace
-:OPCUANamespace rdf:type owl:NamedIndividual ,
-                         :Namespace ;
+:OPCUANamespace rdf:type owl:NamedIndividual ;
                 :hasPrefix "opcua" ;
                 :hasUri "http://opcfoundation.org/UA/" .
 
