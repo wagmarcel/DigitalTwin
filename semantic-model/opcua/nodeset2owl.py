@@ -9,6 +9,7 @@ import functools
 from rdflib import Graph, Namespace, Literal, URIRef
 from rdflib.namespace import NamespaceManager
 from rdflib.namespace import OWL, RDF, RDFS
+import owlrl
 import argparse
 
 query_namespaces = """
@@ -121,6 +122,8 @@ hasSubtypeId = 45
 hasPropertyId = 46
 hasTypeDefinition = 40
 hasComponent = 47
+hasAddInId = 17604
+organizesId = 35
 data_schema = None
 basic_types = ['String', 'Boolean', 'Byte', 'SByte', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Uin64', 'Int64', 'Float', 'DateTime', 'Guid', 'ByteString', 'Double']
 
@@ -131,6 +134,7 @@ def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
         hgraph = Graph()
         hgraph.parse(file)
         ig += hgraph
+
     query_result = ig.query(query_namespaces)
     corens = list(known_opcua_ns.keys())[0]
     for uri, prefix, ns in query_result:
@@ -402,6 +406,7 @@ def get_value(g, node, classiri, xml_ns):
 
 
 def get_components(g, refnodes, classiri):
+    components = [(hasAddInId, 'hasAddIn'), (hasPropertyId, 'hasProperty'), (organizesId, 'organizes')]
     for reference in refnodes:
         reftype = reference.get('ReferenceType')
         isforward = reference.get('IsForward')
@@ -416,15 +421,38 @@ def get_components(g, refnodes, classiri):
                 g.add((classiri, rdf_ns['base']['hasComponent'], targetclassiri))
             else:
                 g.add((targetclassiri, rdf_ns['base']['hasComponent'], classiri))
-        elif type_id == hasPropertyId and type_index == 0:
-            componentId = resolve_alias(reference.text)
-            index, id = parse_nodeid(componentId)
-            namespace = get_rdf_ns_from_ua_index(index)
-            targetclassiri = nodeId_to_iri(namespace, id)
-            if isforward != 'false':
-                g.add((classiri, rdf_ns['base']['hasProperty'], targetclassiri))
-            else:
-                g.add((targetclassiri, rdf_ns['base']['hasProperty'], classiri))
+        # elif type_id == hasPropertyId and type_index == 0:
+        #     componentId = resolve_alias(reference.text)
+        #     index, id = parse_nodeid(componentId)
+        #     namespace = get_rdf_ns_from_ua_index(index)
+        #     targetclassiri = nodeId_to_iri(namespace, id)
+        #     if isforward != 'false':
+        #         g.add((classiri, rdf_ns['base']['hasProperty'], targetclassiri))
+        #     else:
+        #         g.add((targetclassiri, rdf_ns['base']['hasProperty'], classiri))
+        # elif type_id == organizesId and type_index == 0:
+        #     componentId = resolve_alias(reference.text)
+        #     index, id = parse_nodeid(componentId)
+        #     namespace = get_rdf_ns_from_ua_index(index)
+        #     targetclassiri = nodeId_to_iri(namespace, id)
+        #     if isforward != 'false':
+        #         g.add((classiri, rdf_ns['base']['organizes'], targetclassiri))
+        #     else:
+        #         g.add((targetclassiri, rdf_ns['base']['organizes'], classiri))
+        else:
+            try:
+                found_component = [ele[1] for ele in components if(ele[0] == type_id)][0]
+            except:
+                found_component = None
+            if found_component is not None:
+                componentId = resolve_alias(reference.text)
+                index, id = parse_nodeid(componentId)
+                namespace = get_rdf_ns_from_ua_index(index)
+                targetclassiri = nodeId_to_iri(namespace, id)
+                if isforward != 'false':
+                    g.add((classiri, rdf_ns['base'][found_component], targetclassiri))
+                else:
+                    g.add((targetclassiri, rdf_ns['base'][found_component], classiri))
 
 
 
