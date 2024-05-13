@@ -8,7 +8,7 @@ import urllib
 from urllib.parse import urlparse
 from rdflib import Graph, Namespace, Literal, URIRef, BNode
 from rdflib.namespace import NamespaceManager
-from rdflib.namespace import OWL, RDF, RDFS, SH
+from rdflib.namespace import OWL, RDF, RDFS, SH, XSD
 import argparse
 
 
@@ -78,6 +78,20 @@ def get_type(node):
     return nc, type
 
 
+def map_datatype_to_jsonld(data_type):
+    boolean_types = [opcuans['Boolean']]
+    integer_types = [opcuans['Integer'], opcuans['Int16'], opcuans['Int32'], opcuans['Int64'], opcuans['SByte'],
+                     opcuans['UInteger'], opcuans['UInt16'], opcuans['UInt32'], opcuans['UInt64'], opcuans['Byte']]
+    number_types = [opcuans['Decimal'], opcuans['Double'], opcuans['Duration'], opcuans['Float']]
+    if data_type in boolean_types:
+        return XSD.boolean
+    if data_type in integer_types:
+        return XSD.integer
+    if data_type in number_types:
+        return XSD.double
+    return XSD.string
+
+
 def create_ngsild_object(node, instancetype, id):
     #instancetype = next(g.objects(node, RDF.type))
     instance = {}
@@ -125,7 +139,7 @@ def create_ngsild_object(node, instancetype, id):
             shacl_rule['contentclass'] = type
             #create_ngsild_object(o, type, f'{id}:{idadd}')
             idadd += 1
-            create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], False, True, shacl_rule['contentclass'])
+            create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], False, True, shacl_rule['contentclass'], None)
         elif isVariableNodeClass(nodeclass):
             shacl_rule['is_property'] = True
             e.add((entity_namespace[attributename], RDFS.range, ngsildns['Property']))
@@ -139,8 +153,10 @@ def create_ngsild_object(node, instancetype, id):
             }                
             try:
                 data_type = next(g.objects(o, basens['hasDataType']))
-                print(data_type)
+                #print(data_type)
+                shacl_rule['datatype'] = map_datatype_to_jsonld(data_type)
                 base_data_type = next(g.objects(data_type, RDFS.subClassOf))
+                e.add((entity_namespace[attributename], basens['hasOPCUADatatype'], data_type))
                 if base_data_type != opcuans['Enumeration']:
                     shacl_rule['is_iri'] = False
                     shacl_rule['contentclass'] = None
@@ -149,7 +165,7 @@ def create_ngsild_object(node, instancetype, id):
                     shacl_rule['contentclass'] = base_data_type
             except:
                 pass
-            create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], True, shacl_rule['is_iri'], shacl_rule['contentclass'])
+            create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], True, shacl_rule['is_iri'], shacl_rule['contentclass'], shacl_rule['datatype'])
         #for type in g.objects(o, RDF.type):
         # print(nodeclass, type)
     for (s, p, o) in g.triples((node, basens['hasProperty'], None)):
@@ -189,7 +205,7 @@ def create_shacl_type(targetclass):
     return shapename
 
 
-def create_shacl_property(shapename, path, optional, is_property, is_iri, contentclass):
+def create_shacl_property(shapename, path, optional, is_property, is_iri, contentclass, datatype):
     global shaclg
     innerproperty = BNode()
     property = BNode()
@@ -213,6 +229,8 @@ def create_shacl_property(shapename, path, optional, is_property, is_iri, conten
             shaclg.add((innerproperty, SH['class'], contentclass))
     elif is_property:
         shaclg.add((innerproperty, SH.nodeKind, SH.Literal))
+    if datatype is not None:
+        shaclg.add((innerproperty, SH.datatype, datatype))
 
     shaclg.add((innerproperty, SH.minCount, Literal(1)))
     shaclg.add((innerproperty, SH.maxCount, Literal(1)))
