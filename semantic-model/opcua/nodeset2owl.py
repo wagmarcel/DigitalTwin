@@ -124,6 +124,8 @@ hasTypeDefinition = 40
 hasComponent = 47
 hasAddInId = 17604
 organizesId = 35
+hasModellingRule = 37
+
 data_schema = None
 basic_types = ['String', 'Boolean', 'Byte', 'SByte', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Uin64', 'Int64', 'Float', 'DateTime', 'Guid', 'ByteString', 'Double']
 
@@ -405,22 +407,28 @@ def get_value(g, node, classiri, xml_ns):
             
 
 
-def get_components(g, refnodes, classiri):
-    components = [(hasAddInId, 'hasAddIn'), (hasPropertyId, 'hasProperty'), (organizesId, 'organizes')]
+def get_references(g, refnodes, classiri):
+    components = [
+        (hasComponent, 'hasComponent'),
+        (hasAddInId, 'hasAddIn'),
+        (hasPropertyId, 'hasProperty'),
+        (organizesId, 'organizes'),
+        (hasModellingRule, 'hasModellingRule')
+    ]
     for reference in refnodes:
         reftype = reference.get('ReferenceType')
         isforward = reference.get('IsForward')
         nodeid = resolve_alias(reftype)
         type_index, type_id = parse_nodeid(nodeid)
-        if type_id == hasComponent and type_index == 0:
-            componentId = resolve_alias(reference.text)
-            index, id = parse_nodeid(componentId)
-            namespace = get_rdf_ns_from_ua_index(index)
-            targetclassiri = nodeId_to_iri(namespace, id)
-            if isforward != 'false':
-                g.add((classiri, rdf_ns['base']['hasComponent'], targetclassiri))
-            else:
-                g.add((targetclassiri, rdf_ns['base']['hasComponent'], classiri))
+        # if type_id == hasComponent and type_index == 0:
+        #     componentId = resolve_alias(reference.text)
+        #     index, id = parse_nodeid(componentId)
+        #     namespace = get_rdf_ns_from_ua_index(index)
+        #     targetclassiri = nodeId_to_iri(namespace, id)
+        #     if isforward != 'false':
+        #         g.add((classiri, rdf_ns['base']['hasComponent'], targetclassiri))
+        #     else:
+        #         g.add((targetclassiri, rdf_ns['base']['hasComponent'], classiri))
         # elif type_id == hasPropertyId and type_index == 0:
         #     componentId = resolve_alias(reference.text)
         #     index, id = parse_nodeid(componentId)
@@ -439,20 +447,19 @@ def get_components(g, refnodes, classiri):
         #         g.add((classiri, rdf_ns['base']['organizes'], targetclassiri))
         #     else:
         #         g.add((targetclassiri, rdf_ns['base']['organizes'], classiri))
-        else:
-            try:
-                found_component = [ele[1] for ele in components if(ele[0] == type_id)][0]
-            except:
-                found_component = None
-            if found_component is not None:
-                componentId = resolve_alias(reference.text)
-                index, id = parse_nodeid(componentId)
-                namespace = get_rdf_ns_from_ua_index(index)
-                targetclassiri = nodeId_to_iri(namespace, id)
-                if isforward != 'false':
-                    g.add((classiri, rdf_ns['base'][found_component], targetclassiri))
-                else:
-                    g.add((targetclassiri, rdf_ns['base'][found_component], classiri))
+        try:
+            found_component = [ele[1] for ele in components if(ele[0] == type_id)][0]
+        except:
+            found_component = None
+        if found_component is not None:
+            componentId = resolve_alias(reference.text)
+            index, id = parse_nodeid(componentId)
+            namespace = get_rdf_ns_from_ua_index(index)
+            targetclassiri = nodeId_to_iri(namespace, id)
+            if isforward != 'false':
+                g.add((classiri, rdf_ns['base'][found_component], targetclassiri))
+            else:
+                g.add((targetclassiri, rdf_ns['base'][found_component], classiri))
 
 
 
@@ -465,7 +472,7 @@ def add_typedef(g, node, xml_ns):
     references_node = node.find('opcua:References', xml_ns)
     references = references_node.findall('opcua:Reference', xml_ns)
     if len(references) > 0:
-        get_components(g, references, classiri)
+        get_references(g, references, classiri)
         typedef = None
         for reference in references:
             reftype = reference.get('ReferenceType')
@@ -499,7 +506,7 @@ def add_type(g, node, xml_ns):
     references = references_node.findall('opcua:Reference', xml_ns)
     g.add((ref_namespace[browsename], RDF.type, OWL.Class))
     if len(references) > 0:
-        get_components(g, references, ref_classiri)
+        get_references(g, references, ref_classiri)
         subtype = None
         for reference in references:
             reftype = reference.get('ReferenceType')
