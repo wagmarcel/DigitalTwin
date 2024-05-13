@@ -66,6 +66,10 @@
 :hasNamespace rdf:type owl:ObjectProperty .
 
 
+###  http://opcfoundation.org/UA/Base/hasOPCUADatatype
+:hasOPCUADatatype rdf:type owl:ObjectProperty .
+
+
 ###  http://opcfoundation.org/UA/Base/hasProperty
 :hasProperty rdf:type owl:ObjectProperty .
 
