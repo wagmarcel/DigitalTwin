@@ -84,30 +84,33 @@ def create_ngsild_object(node, instancetype, id):
     instance['type'] = instancetype
     instance['id'] = id
     instance['@context'] = {}
-    shacl_rule = {}
+
 
     # Loop through all components
     idadd = 0
+    shapename = create_shacl_type(instancetype)
     for (s, p, o) in g.triples((node, basens['hasComponent'], None)):
+        shacl_rule = {}
         browse_name = next(g.objects(o, basens['hasBrowseName']))
         print(f'Processing Node {o} with browsename {browse_name}')
         nodeclass, type = get_type(o)
         attributename = urllib.parse.quote(f'has{browse_name}')
-        shacl_rule['path'] = attributename
+        shacl_rule['path'] = entity_namespace[attributename]
         try:
             modelling_node = next(g.objects(node, basens['hasModellingRule']))
             modelling_rule = next(g.objects(modelling_node, basens['hasNodeId']))
             if int(modelling_rule) == modelling_nodeid_optional:
                 shacl_rule['optional'] = True
-            if int(modelling_rule) == modelling_nodeid_mandatory:
-                shacl_rule['optional'] = False
+            elif int(modelling_rule) == modelling_nodeid_mandatory:
+                shacl_rule['optional'] = False                
         except:
-            pass
+            shacl_rule['optional'] = True
         e.add((entity_namespace[attributename], RDF.type, OWL.ObjectProperty))
         e.add((entity_namespace[attributename], RDFS.domain, URIRef(instancetype)))
         e.add((entity_namespace[attributename], RDF.type, OWL.NamedIndividual))
         e.add((entity_namespace[attributename], RDF.type, basens['SubComponentRelationship']))
         types.append(type)
+       
         if isObjectNodeClass(nodeclass):
             shacl_rule['is_property'] = False
             e.add((entity_namespace[attributename], RDFS.range, ngsildns['Relationship']))
@@ -117,12 +120,10 @@ def create_ngsild_object(node, instancetype, id):
                 'Property': 'Relationship',
                 'object': relid
             }
-            try:
-                data_type = next(g.objects(nodeclass, basens['hasDataType']))
-            except:
-                pass
+            shacl_rule['contentclass'] = type
             #create_ngsild_object(o, type, f'{id}:{idadd}')
             idadd += 1
+            create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], False, True, shacl_rule['contentclass'])
         elif isVariableNodeClass(nodeclass):
             shacl_rule['is_property'] = True
             e.add((entity_namespace[attributename], RDFS.range, ngsildns['Property']))
@@ -133,8 +134,18 @@ def create_ngsild_object(node, instancetype, id):
             instance[attributename] = {
                 'Property': 'Property',
                 'value': value
-            }
-            
+            }                
+            try:
+                data_type = next(g.objects(o, basens['hasDataType']))
+                print(data_type)
+                base_data_type = next(g.objects(data_type, RDFS.subClassOf))
+                if base_data_type != opcuans['Enumeration']:
+                    shacl_rule['is_iri'] = False
+                else:
+                    shacl_rule['is_iri'] = True
+                    shacl_rule['contentclass'] = base_data_type
+            except:
+                pass
         #for type in g.objects(o, RDF.type):
         print(nodeclass, type)
     for (s, p, o) in g.triples((node, basens['hasProperty'], None)):
@@ -159,44 +170,48 @@ def create_ngsild_object(node, instancetype, id):
 def get_typename(url):
     result = urlparse(url)
     if result.fragment != '':
-        return result.fragment
+        return result.fragment 
     else:
         basename = os.path.basename(result.path)
         return basename
 
 
-def create_shacl_type(s, instancetype, targetclass, path, optional, is_property, is_iri, contentclass):
-    name = get_typename(instancetype)
+def create_shacl_type(targetclass):
+    global shaclg
+    name = get_typename(targetclass) + 'Shape' 
     shapename = shacl_namespace[name]
-    property = BNode()
+    shaclg.add((shapename, RDF.type, SH.NodeShape))
+    shaclg.add((shapename, SH.targetClass, URIRef(targetclass)))
+    return shapename
+
+
+def create_shacl_property(shapename, path, optional, is_property, is_iri, contentclass):
+    global shaclg
     innerproperty = BNode()
+    property = BNode()
     maxCount = 1
     minCount = 1
     if optional:
         minCount = 0
-    s.add(
-        (shapename, RDF.type, SH.NodeShape),
-        (shapename, SH.targetClass, URIRef(targetclass)),
-        (shapename, SH.property, property),
-        (property, SH.path, path),
-        (property, SH.nodeKind, SH.BlankNode),
-        (property, SH.minCount, Literal(minCount)),
-        (property, SH.maxCount, Literal(maxCount)),
-        (property, SH.property, innerproperty)
-    )
+    shaclg.add((shapename, SH.property, property))    
+    shaclg.add((property, SH.path, path))
+    shaclg.add((property, SH.nodeKind, SH.BlankNode))
+    shaclg.add((property, SH.minCount, Literal(minCount)))
+    shaclg.add((property, SH.maxCount, Literal(maxCount)))
+    shaclg.add((property, SH.property, innerproperty))
     if is_property:
-        s.add((innerproperty, SH.path, ngsildns['hasValue']))
+        shaclg.add((innerproperty, SH.path, ngsildns['hasValue']))
     else:
-        s.add((innerproperty, SH.path, ngsildns['hasObject']))
-    if is_iri and is_property:
-        s.add((innerproperty, SH.nodeKind, SH.IRI))
+        shaclg.add((innerproperty, SH.path, ngsildns['hasObject']))
+    if is_iri:
+        shaclg.add((innerproperty, SH.nodeKind, SH.IRI))
         if contentclass is not None:
-            s.add((innerproperty, SH['class'], contentclass))
+            shaclg.add((innerproperty, SH['class'], contentclass))
     elif is_property:
-        s.add((innerproperty, SH.nodeKind, SH.Literal))
+        shaclg.add((innerproperty, SH.nodeKind, SH.Literal))
 
-    s.add((innerproperty, SH.minCount, Literal(1)))
-    s.add((innerproperty, SH.maxCount, Literal(1)))
+    shaclg.add((innerproperty, SH.minCount, Literal(1)))
+    shaclg.add((innerproperty, SH.maxCount, Literal(1)))
     
 
 if __name__ == '__main__':
@@ -219,15 +234,15 @@ if __name__ == '__main__':
         h.parse(imprt)
         g += h
     e = Graph()
-    s = Graph()
+    shaclg = Graph()
     types = []
     e.bind('entities', entity_namespace)
-    s.bind('shacl', shacl_namespace)
+    shaclg.bind('shacl', shacl_namespace)
     e.bind('ngsild', ngsildns)
     e.bind('base', basens)
-    s.bind('ngsild', ngsildns)
-    s.bind('base', basens)
-    s.bind('sh', SH)
+    shaclg.bind('ngsild', ngsildns)
+    shaclg.bind('base', basens)
+    shaclg.bind('sh', SH)
     #create_shacl_type(s, instancetype)
     result = g.query(query_namespaces)
     for uri, prefix, _ in result:
@@ -244,5 +259,7 @@ if __name__ == '__main__':
             json.dump(instances, f, ensure_ascii=False, indent=4)
     if entitiesname is not None:
         e.serialize(destination=entitiesname)
+    if shaclname is not None:
+        shaclg.serialize(destination=shaclname)
 
         
