@@ -92,7 +92,7 @@ def create_ngsild_object(node, instancetype, id):
     for (s, p, o) in g.triples((node, basens['hasComponent'], None)):
         shacl_rule = {}
         browse_name = next(g.objects(o, basens['hasBrowseName']))
-        print(f'Processing Node {o} with browsename {browse_name}')
+        #print(f'Processing Node {o} with browsename {browse_name}')
         nodeclass, type = get_type(o)
         attributename = urllib.parse.quote(f'has{browse_name}')
         shacl_rule['path'] = entity_namespace[attributename]
@@ -102,7 +102,9 @@ def create_ngsild_object(node, instancetype, id):
             if int(modelling_rule) == modelling_nodeid_optional:
                 shacl_rule['optional'] = True
             elif int(modelling_rule) == modelling_nodeid_mandatory:
-                shacl_rule['optional'] = False                
+                shacl_rule['optional'] = False
+            else:
+                shacl_rule['optional'] = True
         except:
             shacl_rule['optional'] = True
         e.add((entity_namespace[attributename], RDF.type, OWL.ObjectProperty))
@@ -141,16 +143,18 @@ def create_ngsild_object(node, instancetype, id):
                 base_data_type = next(g.objects(data_type, RDFS.subClassOf))
                 if base_data_type != opcuans['Enumeration']:
                     shacl_rule['is_iri'] = False
+                    shacl_rule['contentclass'] = None
                 else:
                     shacl_rule['is_iri'] = True
                     shacl_rule['contentclass'] = base_data_type
             except:
                 pass
+            create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], True, shacl_rule['is_iri'], shacl_rule['contentclass'])
         #for type in g.objects(o, RDF.type):
-        print(nodeclass, type)
+        # print(nodeclass, type)
     for (s, p, o) in g.triples((node, basens['hasProperty'], None)):
         browse_name = next(g.objects(o, basens['hasBrowseName']))
-        print(f'Processing Node {o} with browsename {browse_name}')
+        #print(f'Processing Node {o} with browsename {browse_name}')
         nodeclass, type = get_type(o)
         attributename = f'has{browse_name}'
         if isVariableNodeClass(nodeclass):
