@@ -5,7 +5,6 @@ from urllib.parse import urlparse
 import json
 import functools
 import urllib
-from urllib.parse import urlparse
 from rdflib import Graph, Namespace, Literal, URIRef, BNode
 from rdflib.namespace import NamespaceManager
 from rdflib.namespace import OWL, RDF, RDFS, SH, XSD
