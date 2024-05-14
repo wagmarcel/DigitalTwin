@@ -92,6 +92,23 @@ def map_datatype_to_jsonld(data_type):
     return XSD.string
 
 
+def get_shacl_iri_and_contentclass(g, node, shacl_rule, attribute_name):
+    try:
+        data_type = next(g.objects(node, basens['hasDataType']))
+        shacl_rule['datatype'] = map_datatype_to_jsonld(data_type)
+        base_data_type = next(g.objects(data_type, RDFS.subClassOf))
+        e.add((attribute_name, basens['hasOPCUADatatype'], data_type))
+        if base_data_type != opcuans['Enumeration']:
+            shacl_rule['is_iri'] = False
+            shacl_rule['contentclass'] = None
+        else:
+            shacl_rule['is_iri'] = True
+            shacl_rule['contentclass'] = base_data_type
+    except:
+        shacl_rule['is_iri'] = False
+        shacl_rule['contentclass'] = None
+
+
 def create_ngsild_object(node, instancetype, id):
     #instancetype = next(g.objects(node, RDF.type))
     instance = {}
@@ -150,27 +167,27 @@ def create_ngsild_object(node, instancetype, id):
             instance[attributename] = {
                 'Property': 'Property',
                 'value': value
-            }                
-            try:
-                data_type = next(g.objects(o, basens['hasDataType']))
-                #print(data_type)
-                shacl_rule['datatype'] = map_datatype_to_jsonld(data_type)
-                base_data_type = next(g.objects(data_type, RDFS.subClassOf))
-                e.add((entity_namespace[attributename], basens['hasOPCUADatatype'], data_type))
-                if base_data_type != opcuans['Enumeration']:
-                    shacl_rule['is_iri'] = False
-                    shacl_rule['contentclass'] = None
-                else:
-                    shacl_rule['is_iri'] = True
-                    shacl_rule['contentclass'] = base_data_type
-            except:
-                pass
+            }
+            get_shacl_iri_and_contentclass(g, o, shacl_rule, entity_namespace[attributename])
+            # try:
+            #     data_type = next(g.objects(o, basens['hasDataType']))
+            #     #print(data_type)
+            #     shacl_rule['datatype'] = map_datatype_to_jsonld(data_type)
+            #     base_data_type = next(g.objects(data_type, RDFS.subClassOf))
+            #     e.add((entity_namespace[attributename], basens['hasOPCUADatatype'], data_type))
+            #     if base_data_type != opcuans['Enumeration']:
+            #         shacl_rule['is_iri'] = False
+            #         shacl_rule['contentclass'] = None
+            #     else:
+            #         shacl_rule['is_iri'] = True
+            #         shacl_rule['contentclass'] = base_data_type
+            # except:
+            #     pass
             create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], True, shacl_rule['is_iri'], shacl_rule['contentclass'], shacl_rule['datatype'])
         #for type in g.objects(o, RDF.type):
         # print(nodeclass, type)
     for (s, p, o) in g.triples((node, basens['hasProperty'], None)):
         browse_name = next(g.objects(o, basens['hasBrowseName']))
-        #print(f'Processing Node {o} with browsename {browse_name}')
         nodeclass, type = get_type(o)
         attributename = f'has{browse_name}'
         if isVariableNodeClass(nodeclass):
@@ -183,7 +200,6 @@ def create_ngsild_object(node, instancetype, id):
             'value': value
         }
         shacl_rule['is_property'] = True
-        #e.add((entity_namespace[attributename], RDFS.range, basens['OPCUAProperty']))
     instances.append(instance)
 
 
