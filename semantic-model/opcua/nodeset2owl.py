@@ -174,7 +174,8 @@ def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
     g.add((rdf_ns[ontology_prefix][namespaceclass], rdf_ns['base']['hasUri'], Literal(ontology_name.toPython())))
     g.add((rdf_ns[ontology_prefix][namespaceclass], rdf_ns['base']['hasPrefix'], Literal(ontology_prefix)))
 
-    
+
+
 def create_header(g):
     g.add((ontology_name, RDF.type, OWL.Ontology))
     if versionIRI is not None:
@@ -311,7 +312,7 @@ def add_uadatatype(g, node, xml_ns):
     nid, index, name = get_nid_ns_and_name(g, node)
     rdf_namespace = get_rdf_ns_from_ua_index(index)
     classiri = nodeId_to_iri(rdf_namespace, nid)
-    datatypeIri = rdf_namespace[name]
+    typeIri = rdf_namespace[name]
     definition = uadatatype.find('opcua:Definition', xml_ns)
     if definition is not None:
         fields = definition.findall('opcua:Field', xml_ns)
@@ -321,18 +322,21 @@ def add_uadatatype(g, node, xml_ns):
             if symbolicname is None:
                 symbolicname = elementname
             value = field.get('Value')
+            itemname = rdf_namespace[f'{name}_{symbolicname}']
             datatypeid = field.get('DataType')
-            datatypeiri = None
-            if datatypeid is not None:
+            datatypeIri = None
+            if datatypeid is not None: # structure is providing field details
                 datatypeid = resolve_alias(datatypeid)
                 datatype_index, datatype_id = parse_nodeid(datatypeid)
-                datatypeiri = typeIds[datatype_index][datatype_id]
-                g.add((rdf_namespace[symbolicname], rdf_ns['base']['hasDataType'], datatypeiri))
-            g.add((rdf_namespace[symbolicname], RDF.type, rdf_ns['base']['Field']))
+                datatypeIri = typeIds[datatype_index][datatype_id]
+                g.add((itemname, rdf_ns['base']['hasDataType'], datatypeIri))
+                g.add((itemname, RDF.type, rdf_ns['base']['Field']))
+                g.add((typeIri, rdf_ns['base']['hasField'], itemname))
+            else: # Enumtype is considered as instance of class
+                g.add((itemname, RDF.type, typeIri))
             if value is not None:
-                g.add((rdf_namespace[symbolicname], rdf_ns['base']['hasValue'], Literal(str(value))))               
-            g.add((rdf_namespace[symbolicname], rdf_ns['base']['hasFieldName'], Literal(str(symbolicname))))
-            g.add((datatypeIri, rdf_ns['base']['hasField'], rdf_namespace[symbolicname]))
+                g.add((itemname, rdf_ns['base']['hasValue'], Literal(str(value))))
+            g.add((itemname, rdf_ns['base']['hasFieldName'], Literal(str(symbolicname))))
         
 
 def isNodeId(nodeId):
