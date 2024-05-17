@@ -128,6 +128,21 @@ hasModellingRule = 37
 
 data_schema = None
 basic_types = ['String', 'Boolean', 'Byte', 'SByte', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Uin64', 'Int64', 'Float', 'DateTime', 'Guid', 'ByteString', 'Double']
+basic_types_map = {'String': 'string', 
+                   'Boolean': 'boolean', 
+                   'Byte': 'integer',
+                   'SByte': 'integer',
+                   'Int16': 'integer',
+                   'UInt16': 'integer',
+                   'Int32': 'integer',
+                   'UInt32': 'integer',
+                   'UInt64': 'integer',
+                   'Int64': 'integer',
+                   'Float': 'number',
+                   'DateTime': 'string',
+                   'Guid': 'string',
+                   'ByteString': 'string',
+                   'Double': 'number'}
 
 def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
     #uagraph = Graph()
@@ -389,6 +404,17 @@ def get_value_rank(g, node, classiri):
         g.add((classiri, rdf_ns['base']['hasValueRank'], Literal(value_rank)))
 
 
+def convert_to_json_type(result, basic_json_type):
+    if basic_json_type == 'string':
+        return str(result)
+    if basic_json_type == 'boolean':
+        return bool(result)
+    if basic_json_type == 'integer':
+        return int(result)
+    if basic_json_type == 'number':
+        return float(result)
+
+
 def get_value(g, node, classiri, xml_ns):
     result = None
     value = node.find('opcua:Value', xml_ns)
@@ -396,6 +422,9 @@ def get_value(g, node, classiri, xml_ns):
         for children in value:
             tag = children.tag
             basic_type_found = bool([ele for ele in basic_types if(ele in tag)])
+            basic_json_type = None
+            if basic_type_found:
+                basic_json_type = [value for key, value in basic_types_map.items() if key in tag][0]
             if 'ListOf' in tag:
                 if basic_type_found:
                     data = data_schema.to_dict(children, namespaces=xml_ns, indent=4)
@@ -407,6 +436,7 @@ def get_value(g, node, classiri, xml_ns):
                 data=data_schema.to_dict(children, namespaces=xml_ns, indent=4)
                 if '$' in data:
                     result = data["$"]
+                    result = convert_to_json_type(result, basic_json_type)
                     g.add((classiri, rdf_ns['base']['hasValue'], Literal(result)))
             
 
