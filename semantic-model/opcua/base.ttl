@@ -82,6 +82,10 @@
 :hasTypeDefinition rdf:type owl:ObjectProperty .
 
 
+###  http://opcfoundation.org/UA/Base/hasValueClass
+:hasValueClass rdf:type owl:ObjectProperty .
+
+
 ###  http://opcfoundation.org/UA/Base/hasValueNode
 :hasValueNode rdf:type owl:ObjectProperty .
 

@@ -30,17 +30,38 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX base: <http://opcfoundation.org/UA/Base/>
 PREFIX opcua: <http://opcfoundation.org/UA/>
-SELECT ?s ?p ?o WHERE {
-  {
+
+CONSTRUCT { ?s ?p ?o .
+            ?c ?classpred ?classobj .
+			?o2 base:hasValue ?value .
+			?o2 base:hasValueClass ?class .
+}
+WHERE
+ { 
   ?s ?p ?o .
   ?s rdf:type ?c .
-  }
-  UNION {
-    ?s ?p ?o .
-    Filter(?s = ?c)
-  }
+  ?c ?classpred ?classobj .
+  ?s ?p2 ?o2 .
+  ?o2 a base:ValueNode .
+  ?o2 base:hasValue ?value .
+  ?o2 base:hasValueClass ?class .
 }
 """
+
+query_default_instance = """
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX op: <http://environment.data.gov.au/def/op#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX base: <http://opcfoundation.org/UA/Base/>
+PREFIX opcua: <http://opcfoundation.org/UA/>
+SELECT ?instance WHERE {
+  	?instance a ?c .
+    ?instance base:hasValueNode ?valueNode .
+  	?valueNode 	base:hasValue ?value .
+} order by ?value limit 1
+"""
+
 modelling_nodeid_optional = 80
 modelling_nodeid_mandatory = 78
 basic_types = ['String', 'Boolean', 'Byte', 'SByte', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Uin64', 'Int64', 'Float', 'DateTime', 'Guid', 'ByteString', 'Double']
@@ -142,6 +163,16 @@ def get_default_value(datatype):
     print(f'Warning: unknown default value for datatype {datatype}')
 
 
+def get_default_contentclass(knowledgeg, contentclass):
+    bindings = {'c': contentclass}
+    result = knowledgeg.query(query_default_instance, initBindings=bindings)
+    foundclass = None
+    if len(result) > 0:
+        foundclass = list(result)[0].instance
+    if foundclass is None:
+        print(f'Warning: no default instance found for class {contentclass}')
+    return foundclass
+
 def create_ngsild_object(node, instancetype, id):
     #instancetype = next(g.objects(node, RDF.type))
     instance = {}
@@ -200,12 +231,16 @@ def create_ngsild_object(node, instancetype, id):
             shacl_rule['is_property'] = True
             e.add((entity_namespace[attributename], RDFS.range, ngsildns['Property']))
             get_shacl_iri_and_contentclass(g, o, shacl_rule, entity_namespace[attributename])
+            create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], True, shacl_rule['is_iri'], shacl_rule['contentclass'], shacl_rule['datatype'])
+            add_class_to_knowledge(g, knowledgeg, shacl_rule['contentclass'])
             try:
                 value = next(g.objects(o, basens['hasValue']))
                 value = value.toPython()
             except StopIteration:
-                value = get_default_value(shacl_rule['datatype'])
-
+                if not shacl_rule['is_iri']:
+                    value = get_default_value(shacl_rule['datatype'])
+                else:
+                    value = get_default_contentclass(knowledgeg, shacl_rule['contentclass'])
             
             if not shacl_rule['is_iri']:
                 instance[f'entities:{attributename}'] = {
@@ -215,12 +250,11 @@ def create_ngsild_object(node, instancetype, id):
             else:
                 instance[f'entities:{attributename}'] = {
                     'Property': 'Property',
-                    'value': { '@id': value}
+                    'value': { '@id': str(value)}
                 }
             if debug:
                 instance[f'entities:{attributename}']['debug'] = f'entities:{attributename}'
-            create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], True, shacl_rule['is_iri'], shacl_rule['contentclass'], shacl_rule['datatype'])
-            add_class_to_knowledge(g, knowledgeg, shacl_rule['contentclass'])
+           
     instances.append(instance)
 
 
