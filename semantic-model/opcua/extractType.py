@@ -22,6 +22,25 @@ SELECT ?uri ?prefix ?ns WHERE {
     ?ns base:hasPrefix ?prefix .
 }
 """
+
+query_enumclass = """
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX op: <http://environment.data.gov.au/def/op#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX base: <http://opcfoundation.org/UA/Base/>
+PREFIX opcua: <http://opcfoundation.org/UA/>
+SELECT ?s ?p ?o WHERE {
+  {
+  ?s ?p ?o .
+  ?s rdf:type ?c .
+  }
+  UNION {
+    ?s ?p ?o .
+    Filter(?s = ?c)
+  }
+}
+"""
 modelling_nodeid_optional = 80
 modelling_nodeid_mandatory = 78
 basic_types = ['String', 'Boolean', 'Byte', 'SByte', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Uin64', 'Int64', 'Float', 'DateTime', 'Guid', 'ByteString', 'Double']
@@ -32,9 +51,10 @@ parse nodeset instance and create ngsi-ld model')
 
     parser.add_argument('instance', help='Path to the instance nodeset2 file.')
     parser.add_argument('-t', '--type', help='Type of root object, e.g. http://opcfoundation.org/UA/Pumps/', required=True)
-    parser.add_argument('-j', '--jsonld', help='Filename of jsonld output file', required=False)
-    parser.add_argument('-e', '--entities', help='Filename of entities output file', required=False)
-    parser.add_argument('-s', '--shacl', help='Filename of shacl output file', required=False)
+    parser.add_argument('-j', '--jsonld', help='Filename of jsonld output file', required=False, default='entities.jsonld')
+    parser.add_argument('-e', '--entities', help='Filename of entities output file', required=False, default='entities.ttl')
+    parser.add_argument('-s', '--shacl', help='Filename of shacl output file', required=False, default='shacl.ttl')
+    parser.add_argument('-k', '--knowledge', help='Filename of shacl output file', required=False, default='knowledge.ttl')
     parser.add_argument('-d', '--debug', help='Add additional debug info to structure', required=False, action='store_true')
     parser.add_argument('-n', '--namespace', help='Namespace prefix for entities, SHACL and JSON-LD', required=True)
     
@@ -111,7 +131,6 @@ def get_shacl_iri_and_contentclass(g, node, shacl_rule, attribute_name):
 
 
 def get_default_value(datatype):
-    print(datatype)
     if datatype == XSD.integer:
         return 0
     if datatype == XSD.double:
@@ -201,22 +220,7 @@ def create_ngsild_object(node, instancetype, id):
             if debug:
                 instance[f'entities:{attributename}']['debug'] = f'entities:{attributename}'
             create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], True, shacl_rule['is_iri'], shacl_rule['contentclass'], shacl_rule['datatype'])
-        #for type in g.objects(o, RDF.type):
-        # print(nodeclass, type)
-    # for (s, p, o) in g.triples((node, basens['hasProperty'], None)):
-    #     browse_name = next(g.objects(o, basens['hasBrowseName']))
-    #     nodeclass, type = get_type(o)
-    #     attributename = f'has{browse_name}'
-    #     if isVariableNodeClass(nodeclass):
-    #         try:
-    #             value = next(g.objects(o, basens['hasProperty']))
-    #         except StopIteration:
-    #             value = ''
-    #     instance[attributename] = {
-    #         'Property': 'Property',
-    #         'value': value
-    #     }
-    #     shacl_rule['is_property'] = True
+            add_class_to_knowledge(g, knowledgeg, shacl_rule['contentclass'])
     instances.append(instance)
 
 
@@ -269,6 +273,18 @@ def create_shacl_property(shapename, path, optional, is_property, is_iri, conten
     shaclg.add((innerproperty, SH.maxCount, Literal(1)))
     
 
+def add_class_to_knowledge(g, knowledgeg, contentclass):
+    if contentclass == None or not isinstance(contentclass, URIRef):
+        return
+    bindings = {'c': contentclass}
+    print(f'Adding type {contentclass} to knowledge.')
+    result = g.query(query_enumclass, initBindings=bindings)
+    #result = g.triples((contentclass, None, None))
+    #for s, p, o in result:
+    #    knowledgeg.add((s, p, o))
+    knowledgeg += result
+
+
 if __name__ == '__main__':
     args = parse_args()
     instancename = args.instance
@@ -276,21 +292,29 @@ if __name__ == '__main__':
     jsonldname = args.jsonld
     entitiesname = args.entities
     shaclname = args.shacl
+    knowledgename = args.knowledge
     debug = args.debug
     namespace_prefix = args.namespace
     entity_namespace = Namespace(f'{namespace_prefix}entities/')
     shacl_namespace = Namespace(f'{namespace_prefix}shacl/')
-    g = Graph()
+    knowledge_namespace = Namespace(f'{namespace_prefix}knowledge/')
+    g = Graph(store='Oxigraph')
+    #g = Graph()
     g.parse(instancename)
     # get all owl imports
     mainontology = next(g.subjects(RDF.type, OWL.Ontology))
     imports = g.objects(mainontology, OWL.imports)
     for imprt in imports:
-        h = Graph()
+        h = Graph(store="Oxigraph")
+        print(f'Importing ontology {imprt}')
         h.parse(imprt)
         g += h
+        for k, v in list(h.namespaces()):
+            g.bind(k, v)
+
     e = Graph()
     shaclg = Graph()
+    knowledgeg = Graph()
     types = []
     e.bind('entities', entity_namespace)
     shaclg.bind('shacl', shacl_namespace)
@@ -299,6 +323,10 @@ if __name__ == '__main__':
     shaclg.bind('ngsild', ngsildns)
     shaclg.bind('base', basens)
     shaclg.bind('sh', SH)
+    knowledgeg.bind('knowledge', knowledge_namespace)
+    for k, v in list(g.namespaces()):
+        knowledgeg.bind(k, v)
+
     #create_shacl_type(s, instancetype)
     result = g.query(query_namespaces)
     for uri, prefix, _ in result:
@@ -317,5 +345,6 @@ if __name__ == '__main__':
         e.serialize(destination=entitiesname)
     if shaclname is not None:
         shaclg.serialize(destination=shaclname)
-
+    if len(knowledgeg) > 0:
+        knowledgeg.serialize(destination=knowledgename)
         
