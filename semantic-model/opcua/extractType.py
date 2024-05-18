@@ -35,7 +35,9 @@ parse nodeset instance and create ngsi-ld model')
     parser.add_argument('-j', '--jsonld', help='Filename of jsonld output file', required=False)
     parser.add_argument('-e', '--entities', help='Filename of entities output file', required=False)
     parser.add_argument('-s', '--shacl', help='Filename of shacl output file', required=False)
+    parser.add_argument('-d', '--debug', help='Add additional debug info to structure', required=False, action='store_true')
     parser.add_argument('-n', '--namespace', help='Namespace prefix for entities, SHACL and JSON-LD', required=True)
+    
     parsed_args = parser.parse_args(args)
     return parsed_args
 
@@ -110,6 +112,15 @@ def get_shacl_iri_and_contentclass(g, node, shacl_rule, attribute_name):
 
 def get_default_value(datatype):
     print(datatype)
+    if datatype == XSD.integer:
+        return 0
+    if datatype == XSD.double:
+        return 0.0
+    if datatype == XSD.string:
+        return ''
+    if datatype == XSD.boolean:
+        return False
+    print(f'Warning: unknown default value for datatype {datatype}')
 
 
 def create_ngsild_object(node, instancetype, id):
@@ -160,6 +171,8 @@ def create_ngsild_object(node, instancetype, id):
                 'Property': 'Relationship',
                 'object': relid
             }
+            if debug:
+                instance[f'entities:{attributename}']['debug'] = f'entities:{attributename}'
             shacl_rule['contentclass'] = classtype
             #create_ngsild_object(o, type, f'{id}:{idadd}')
             idadd += 1
@@ -185,6 +198,8 @@ def create_ngsild_object(node, instancetype, id):
                     'Property': 'Property',
                     'value': { '@id': value}
                 }
+            if debug:
+                instance[f'entities:{attributename}']['debug'] = f'entities:{attributename}'
             create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], True, shacl_rule['is_iri'], shacl_rule['contentclass'], shacl_rule['datatype'])
         #for type in g.objects(o, RDF.type):
         # print(nodeclass, type)
@@ -261,6 +276,7 @@ if __name__ == '__main__':
     jsonldname = args.jsonld
     entitiesname = args.entities
     shaclname = args.shacl
+    debug = args.debug
     namespace_prefix = args.namespace
     entity_namespace = Namespace(f'{namespace_prefix}entities/')
     shacl_namespace = Namespace(f'{namespace_prefix}shacl/')
