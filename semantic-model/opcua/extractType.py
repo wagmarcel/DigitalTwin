@@ -173,18 +173,8 @@ def get_default_contentclass(knowledgeg, contentclass):
         print(f'Warning: no default instance found for class {contentclass}')
     return foundclass
 
-def create_ngsild_object(node, instancetype, id):
-    #instancetype = next(g.objects(node, RDF.type))
-    instance = {}
-    instance['type'] = instancetype
-    instance['id'] = id
-    instance['@context'] = [
-        "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld", {
-            "entities": {
-                "@id": "http://example.com/entities/"
-            }
-        }]
 
+def scan_type(node, instancetype, id):
     # Loop through all components
     idadd = 0
     shapename = create_shacl_type(instancetype)
@@ -216,7 +206,69 @@ def create_ngsild_object(node, instancetype, id):
             shacl_rule['is_property'] = False
             e.add((entity_namespace[attributename], RDFS.range, ngsildns['Relationship']))
             relid = f'{id}:{idadd}'
-            create_ngsild_object(o, classtype, relid)
+            scan_type(o, classtype, relid)
+            
+            shacl_rule['contentclass'] = classtype
+            #create_ngsild_object(o, type, f'{id}:{idadd}')
+            idadd += 1
+            create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], False, True, shacl_rule['contentclass'], None)
+        elif isVariableNodeClass(nodeclass):
+            shacl_rule['is_property'] = True
+            e.add((entity_namespace[attributename], RDFS.range, ngsildns['Property']))
+            get_shacl_iri_and_contentclass(g, o, shacl_rule, entity_namespace[attributename])
+            create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], True, shacl_rule['is_iri'], shacl_rule['contentclass'], shacl_rule['datatype'])
+            add_class_to_knowledge(g, knowledgeg, shacl_rule['contentclass'])
+            try:
+                value = next(g.objects(o, basens['hasValue']))
+                value = value.toPython()
+            except StopIteration:
+                if not shacl_rule['is_iri']:
+                    value = get_default_value(shacl_rule['datatype'])
+                else:
+                    value = get_default_contentclass(knowledgeg, shacl_rule['contentclass'])
+
+
+
+def scan_entity(node, instancetype, id):
+    #instancetype = next(g.objects(node, RDF.type))
+    instance = {}
+    instance['type'] = instancetype
+    instance['id'] = id
+    instance['@context'] = [
+        "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld", {
+            "entities": {
+                "@id": "http://example.com/entities/"
+            }
+        }]
+
+    # Loop through all components
+    idadd = 0
+    shapename = create_shacl_type(instancetype)
+    
+    for (s, p, o) in g.triples((node, basens['hasComponent'], None)):
+        shacl_rule = {}
+        browse_name = next(g.objects(o, basens['hasBrowseName']))
+        #print(f'Processing Node {o} with browsename {browse_name}')
+        nodeclass, classtype = get_type(o)
+        attributename = urllib.parse.quote(f'has{browse_name}')
+        shacl_rule['path'] = entity_namespace[attributename]
+        try:
+            modelling_node = next(g.objects(node, basens['hasModellingRule']))
+            modelling_rule = next(g.objects(modelling_node, basens['hasNodeId']))
+            if int(modelling_rule) == modelling_nodeid_optional:
+                shacl_rule['optional'] = True
+            elif int(modelling_rule) == modelling_nodeid_mandatory:
+                shacl_rule['optional'] = False
+            else:
+                shacl_rule['optional'] = True
+        except:
+            shacl_rule['optional'] = True
+        types.append(classtype)
+       
+        if isObjectNodeClass(nodeclass):
+            shacl_rule['is_property'] = False
+            relid = f'{id}:{idadd}'
+            scan_entity(o, classtype, relid)
             instance[f'entities:{attributename}'] = {
                 'Property': 'Relationship',
                 'object': relid
@@ -229,10 +281,7 @@ def create_ngsild_object(node, instancetype, id):
             create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], False, True, shacl_rule['contentclass'], None)
         elif isVariableNodeClass(nodeclass):
             shacl_rule['is_property'] = True
-            e.add((entity_namespace[attributename], RDFS.range, ngsildns['Property']))
             get_shacl_iri_and_contentclass(g, o, shacl_rule, entity_namespace[attributename])
-            create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], True, shacl_rule['is_iri'], shacl_rule['contentclass'], shacl_rule['datatype'])
-            add_class_to_knowledge(g, knowledgeg, shacl_rule['contentclass'])
             try:
                 value = next(g.objects(o, basens['hasValue']))
                 value = value.toPython()
@@ -254,7 +303,6 @@ def create_ngsild_object(node, instancetype, id):
                 }
             if debug:
                 instance[f'entities:{attributename}']['debug'] = f'entities:{attributename}'
-           
     instances.append(instance)
 
 
@@ -365,8 +413,12 @@ if __name__ == '__main__':
     result = g.query(query_namespaces)
     for uri, prefix, _ in result:
         e.bind(prefix, Namespace(uri))
+    # First scan the templastes to create the rules
     root = next(g.subjects(basens['definesType'], URIRef(instancetype)))
-    create_ngsild_object(root, instancetype, 'urn:test:1')
+    scan_type(root, instancetype, 'urn:test:1')
+    # Then scan the entity with the real values
+    entity = next(g.subjects(RDF.type, URIRef(instancetype)))
+    scan_entity(entity, instancetype, 'urn:test:1')
     # Add types to entities
     for type in types:
         e.add((type, RDF.type, OWL.Class))
