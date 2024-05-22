@@ -121,6 +121,10 @@
                 rdfs:range xsd:string .
 
 
+###  http://opcfoundation.org/UA/Base/hasEnumValue
+:hasEnumValue rdf:type owl:DatatypeProperty .
+
+
 ###  http://opcfoundation.org/UA/Base/hasFieldName
 :hasFieldName rdf:type owl:DatatypeProperty ;
               rdfs:range xsd:string .

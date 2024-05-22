@@ -355,7 +355,7 @@ def add_uadatatype(g, node, xml_ns):
                 g.add((bbnode, RDF.type, rdf_ns['base']['ValueNode']))
                 g.add((itemname, rdf_ns['base']['hasValueNode'], bbnode))
                 g.add((bbnode, rdf_ns['base']['hasValueClass'], typeIri))
-                g.add((bbnode, rdf_ns['base']['hasValue'], Literal(str(value))))
+                g.add((bbnode, rdf_ns['base']['hasEnumValue'], Literal(int(value))))
             g.add((itemname, rdf_ns['base']['hasFieldName'], Literal(str(symbolicname))))
         
 
