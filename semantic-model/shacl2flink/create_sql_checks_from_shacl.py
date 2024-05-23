@@ -35,11 +35,27 @@ create_sql_checks_from_shacl.py <shacl.ttl> <knowledge.ttl>')
     parser.add_argument('knowledgefile', help='Path to the knowledge file')
     parser.add_argument('-c', '--context', help='Context URI. If not given it is derived implicitly \
 from the common helmfile configs.')
+    parser.add_argument('--namespace', help='Kubernetes namespace for configmaps', default='iff')
     parsed_args = parser.parse_args(args)
     return parsed_args
 
 
-def main(shaclfile, knowledgefile, context, output_folder='output'):
+def split_statementsets(statementsets, max_size):
+    splits = []
+    split_sets = []
+    split_size = 0
+    for query in statementsets:
+        if len(query) + split_size < max_size:
+            split_sets.append(query)
+            split_size += len(query)
+        else:
+            splits.append(split_sets)
+            split_size = 0
+            split_sets = []
+    return splits
+
+
+def main(shaclfile, knowledgefile, context, k8s_namespace, output_folder='output'):
     # If no context is defined, try to derive it from common.yaml
     prefixes = {}
     if context is None:
@@ -80,9 +96,20 @@ is accessible.")
     views = list(set(views2).union(set(views)).union(set(views3)))  # deduplication
 
     ttl = '{{.Values.flink.ttl}}'
+
+    statementsets = split_statementsets(statementsets + statementsets2 + statementsets3, 200000)
     with open(os.path.join(output_folder, "shacl-validation.yaml"), "w") as f:
-        yaml.dump(utils.create_statementset('shacl-validation', tables, views, ttl,
-                                            statementsets + statementsets2 + statementsets3), f)
+        num = 0
+        statementmap = []
+        for statementset in statementsets:
+            num += 1
+            f.write("---\n")
+            configmapname = 'shacl-validation' + str(num)
+            yaml.dump(utils.create_configmap(configmapname, statementset), f)
+            statementmap.append(f'{k8s_namespace}/{configmapname}')
+        f.write("---\n")
+        yaml.dump(utils.create_statementmap('shacl-validation', tables,
+                                            views, ttl, statementmap), f)
     with open(os.path.join(output_folder, "shacl-validation.sqlite"), "w") \
             as sqlitef:
         print(sqlite + sqlite2 + sqlite3, file=sqlitef)
@@ -93,4 +120,5 @@ if __name__ == '__main__':
     shaclfile = args.shaclfile
     knowledgefile = args.knowledgefile
     context = args.context
-    main(shaclfile, knowledgefile, context)
+    k8s_namespace = args.namespace
+    main(shaclfile, knowledgefile, context, k8s_namespace)
