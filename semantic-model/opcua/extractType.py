@@ -211,9 +211,10 @@ def generate_node_id(node, id):
 
 def scan_type(node, instancetype):
     # Loop through all components
-    idadd = 0
     shapename = create_shacl_type(instancetype)
-    for (s, p, o) in g.triples((node, basens['hasComponent'], None)):
+    components = g.triples((node, basens['hasComponent'], None))
+    has_components = False
+    for (s, p, o) in components:
         shacl_rule = {}
         browse_name = next(g.objects(o, basens['hasBrowseName']))
         #print(f'Processing Node {o} with browsename {browse_name}')
@@ -240,27 +241,19 @@ def scan_type(node, instancetype):
         if isObjectNodeClass(nodeclass):
             shacl_rule['is_property'] = False
             e.add((entity_namespace[attributename], RDFS.range, ngsildns['Relationship']))
-            #relid = f'{id}:{idadd}'
-            scan_type(o, classtype)
-            
-            shacl_rule['contentclass'] = classtype
-            #create_ngsild_object(o, type, f'{id}:{idadd}')
-            idadd += 1
-            create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], False, True, shacl_rule['contentclass'], None)
+            components_found = scan_type(o, classtype)
+            if components_found:
+                has_components = True
+                shacl_rule['contentclass'] = classtype
+                create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], False, True, shacl_rule['contentclass'], None)
         elif isVariableNodeClass(nodeclass):
+            has_components = True
             shacl_rule['is_property'] = True
             e.add((entity_namespace[attributename], RDFS.range, ngsildns['Property']))
             get_shacl_iri_and_contentclass(g, o, shacl_rule, entity_namespace[attributename])
             create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], True, shacl_rule['is_iri'], shacl_rule['contentclass'], shacl_rule['datatype'])
             add_class_to_knowledge(g, knowledgeg, shacl_rule['contentclass'])
-            # try:
-            #     value = next(g.objects(o, basens['hasValue']))
-            #     value = value.toPython()
-            # except StopIteration:
-            #     if not shacl_rule['is_iri']:
-            #         value = get_default_value(shacl_rule['datatype'])
-            #     else:
-            #         value = get_default_contentclass(knowledgeg, shacl_rule['contentclass'])
+    return has_components
 
 
 def scan_entity(node, instancetype, id):
@@ -277,10 +270,10 @@ def scan_entity(node, instancetype, id):
         }]
 
     # Loop through all components
-    idadd = 0
-    shapename = create_shacl_type(instancetype)
-    
-    for (s, p, o) in g.triples((node, basens['hasComponent'], None)):
+    #shapename = create_shacl_type(instancetype)
+    has_components = False
+    components = g.triples((node, basens['hasComponent'], None))
+    for (s, p, o) in components:
         shacl_rule = {}
         browse_name = next(g.objects(o, basens['hasBrowseName']))
         #print(f'Processing Node {o} with browsename {browse_name}')
@@ -304,16 +297,17 @@ def scan_entity(node, instancetype, id):
             shacl_rule['is_property'] = False
             #relid = f'{id}:{idadd}'
             relid = scan_entity(o, classtype, id)
-            instance[f'entities:{attributename}'] = {
-                'Property': 'Relationship',
-                'object': relid
-            }
-            if debug:
-                instance[f'entities:{attributename}']['debug'] = f'entities:{attributename}'
-            shacl_rule['contentclass'] = classtype
-            #create_ngsild_object(o, type, f'{id}:{idadd}')
-            idadd += 1
-            create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], False, True, shacl_rule['contentclass'], None)
+            if relid is not None:
+                has_components = True
+                instance[f'entities:{attributename}'] = {
+                    'Property': 'Relationship',
+                    'object': relid
+                }
+                if debug:
+                    instance[f'entities:{attributename}']['debug'] = f'entities:{attributename}'
+                shacl_rule['contentclass'] = classtype
+                #create_ngsild_object(o, type, f'{id}:{idadd}')
+                # create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], False, True, shacl_rule['contentclass'], None)
         elif isVariableNodeClass(nodeclass):
             shacl_rule['is_property'] = True
             get_shacl_iri_and_contentclass(g, o, shacl_rule, entity_namespace[attributename])
@@ -330,7 +324,7 @@ def scan_entity(node, instancetype, id):
                     value = get_default_value(shacl_rule['datatype'])
                 else:
                     value = get_default_contentclass(knowledgeg, shacl_rule['contentclass'])
-            
+            has_components = True
             if not shacl_rule['is_iri']:
                 instance[f'entities:{attributename}'] = {
                     'Property': 'Property',
@@ -343,8 +337,11 @@ def scan_entity(node, instancetype, id):
                 }
             if debug:
                 instance[f'entities:{attributename}']['debug'] = f'entities:{attributename}'
-    instances.append(instance)
-    return node_id
+    if has_components:
+        instances.append(instance)
+        return node_id
+    else:
+        return None
 
 
 def get_typename(url):
