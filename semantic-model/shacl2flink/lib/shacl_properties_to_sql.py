@@ -435,7 +435,7 @@ def get_optionals(g, bn1, bn2):
         pass
     return result
 
-def translate(shaclefile, knowledgefile, prefixes):
+def translate(shaclefile, knowledgefile, prefixes, add_strict=False):
     """
     Translate shacl properties into SQL constraints.
 
@@ -595,6 +595,13 @@ def translate(shaclefile, knowledgefile, prefixes):
             else None
         pattern = result.get('pattern').toPython() if result.get('pattern') is not None else None
         ins = row.ins.toPython() if row.ins is not None else None
+        if mincount == 0 and maxcount == 1:
+            # remove spam rules without clear benefit
+            if not add_strict and \
+                    property_class == min_exclusive == max_exclusive == min_inclusive ==\
+                    max_inclusive == min_length == max_length == pattern == None \
+                    and ins == '':
+                continue
         if ins is not None and ins != '':
             reader = csv.reader(StringIO(ins))
             parsed_list = next(reader)
