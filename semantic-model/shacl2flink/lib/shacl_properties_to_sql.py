@@ -1,4 +1,4 @@
-from rdflib import Graph, Namespace
+from rdflib import Graph, Namespace, SH, RDFS
 import os
 import sys
 import csv
@@ -44,35 +44,30 @@ order by ?targetclass
 
 sparql_get_all_properties = """
 SELECT
-    ?nodeshape ?targetclass ?propertypath ?mincount ?maxcount ?attributeclass ?nodekind
-    ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode
+    ?nodeshape ?targetclass ?propertypath ?nodekind ?bn1 ?bn2
     (GROUP_CONCAT(CONCAT('"',?in, '"'); separator=',') as ?ins)
 where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?targetclass .
-    ?nodeshape sh:property [
-        sh:path ?propertypath ;
-        sh:property [
-            sh:path ngsi-ld:hasValue ;
-            sh:nodeKind ?nodekind ;
-        ] ;
-
-    ] .
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:minCount ?mincount ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:maxCount ?maxcount ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:minExclusive ?minexclusive ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:maxExclusive ?maxexclusive ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:minInclusive ?mininclusive ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:maxInclusive ?maxinclusive ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:minLength ?minlength ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:maxLength ?maxlength ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:pattern ?pattern ;] ; ] }
+    ?nodeshape sh:property ?bn1 .
+    ?bn1 sh:path ?propertypath ;
+        sh:property ?bn2 .
+    ?bn2 sh:path ngsi-ld:hasValue ;
+            sh:nodeKind ?nodekind .
+    # OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:minCount ?mincount ; ] }
+    # OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:maxCount ?maxcount ; ] }
+    # OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:minExclusive ?minexclusive ;] ; ] }
+    # OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:maxExclusive ?maxexclusive ;] ; ] }
+    # OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:minInclusive ?mininclusive ;] ; ] }
+    # OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:maxInclusive ?maxinclusive ;] ; ] }
+    # OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:minLength ?minlength ;] ; ] }
+    # OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:maxLength ?maxlength ;] ; ] }
+    # OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:pattern ?pattern ;] ; ] }
     OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:in/(rdf:rest*/rdf:first)+ ?in ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:class ?attributeclass ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath; sh:severity ?severity ; ] . ?severity rdfs:label ?severitycode .}
+    # OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:class ?attributeclass ;] ; ] }
+    # OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath; sh:severity ?severity ; ] . ?severity rdfs:label ?severitycode .}
 }
-GROUP BY ?nodeshape ?targetclass ?propertypath ?mincount ?maxcount ?attributeclass ?nodekind
-    ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode
+GROUP BY ?nodeshape ?targetclass ?propertypath ?nodekind ?bn1 ?bn2
 order by ?targetclass
 
 """  # noqa: E501
@@ -346,6 +341,100 @@ FROM A1
 """  # noqa: E501
 
 
+def get_optionals(g, bn1, bn2):
+    """This became necessary because the query 'sparql_get_all_properties'
+    is too complex with all the Optionals. However, to retrieve the optionals
+    is relatively easy once the basic search has been done. All you need is
+    the blank nodes which describe the deatails of a specific SHACL shape
+    Example:
+    iff:CutterShape
+    a sh:NodeShape ;
+    sh:targetClass iff:cutter ;
+    sh:property [
+        sh:path <https://industry-fusion.com/types/v0.9/state> ;
+        sh:order 1 ;
+        sh:nodeKind sh:BlankNode;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:property [
+            sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+            sh:nodeKind sh:IRI;
+            sh:class iff:machineState;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+        ] ;
+    ] ;
+    Here the needed blank nodes are sh:property [] <=bn1
+    and sh:property [sh:property [] <=bn2]
+
+    Args:
+        g (Graph): The Graph to do the query on
+        bn1 (BlankNode): first property blank node
+        bn2 (BlankNode): sub-property blanknode
+
+    Returns:
+        _type_: _description_
+    """
+    result = {}
+    try:
+        _, _, mincount = next(g.triples((bn1, SH.minCount, None)))
+        result['mincount'] = mincount
+    except:
+        pass
+    try:
+        _, _, maxcount = next(g.triples((bn1, SH.maxCount, None)))
+        result['maxcount'] = maxcount
+    except:
+        pass
+    try:
+        _, _, severity = next(g.triples((bn1, SH.severity, None)))
+        _, _, severitycode = next(g.triples((severity, RDFS.label, None)))
+        result['severitycode'] = severitycode
+    except:
+        pass
+    
+    try:
+        _, _, minexclusive = next(g.triples((bn2, SH.minExclusive, None)))
+        result['minexclusive'] = minexclusive
+    except:
+        pass
+    try:
+        _, _, maxexclusive = next(g.triples((bn2, SH.maxExclusive, None)))
+        result['maxexclusive'] = maxexclusive
+    except:
+        pass
+    try:
+        _, _, mininclusive = next(g.triples((bn2, SH.minInclusive, None)))
+        result['mininclusive'] = mininclusive
+    except:
+        pass
+    try:
+        _, _, maxinclusive = next(g.triples((bn2, SH.maxInclusive, None)))
+        result['maxinclusive'] = maxinclusive
+    except:
+        pass
+    try:
+        _, _, minlength = next(g.triples((bn2, SH.minLength, None)))
+        result['minlength'] = minlength
+    except:
+        pass
+    try:
+        _, _, maxlength = next(g.triples((bn2, SH.maxLength, None)))
+        result['maxlength'] = maxlength
+    except:
+        pass
+    try:
+        _, _, pattern = next(g.triples((bn2, SH.pattern, None)))
+        result['pattern'] = pattern
+    except:
+        pass
+    try:
+        _, _, attributeclass = next(g.triples((bn2, SH['class'], None)))
+        result['attributeclass'] = attributeclass
+    except:
+        pass
+    return result
+
 def translate(shaclefile, knowledgefile, prefixes):
     """
     Translate shacl properties into SQL constraints.
@@ -358,8 +447,8 @@ def translate(shaclefile, knowledgefile, prefixes):
         (statementset, tables, views): statementset in yaml format
 
     """
-    g = Graph()
-    h = Graph()
+    g = Graph(store="Oxigraph")
+    h = Graph(store="Oxigraph")
     g.parse(shaclefile)
     h.parse(knowledgefile)
     g += h
@@ -484,26 +573,27 @@ def translate(shaclefile, knowledgefile, prefixes):
             if row.targetclass else None
         property_path = row.propertypath.toPython() if row.propertypath \
             else None
-        property_class = row.attributeclass.toPython() if row.attributeclass\
+        result = get_optionals(g, row.bn1, row.bn2)
+        property_class = result.get('attributeclass') if result.get('attributeclass')\
             else None
-        mincount = row.mincount.toPython() if row.mincount else 0
-        maxcount = row.maxcount.toPython() if row.maxcount else None
-        severitycode = row.severitycode.toPython() if row.severitycode \
-            else 'warning'
+        mincount = result.get('mincount').toPython() if result.get('mincount') else 0
+        maxcount = result.get('maxcount').toPython() if result.get('maxcount') else None
+        severitycode = result.get('severitycode').toPython() if result.get('severitycode') \
+             else 'warning'
         nodekind = row.nodekind
-        min_exclusive = row.minexclusive.toPython() if row.minexclusive \
+        min_exclusive = result.get('minexclusive').toPython() if result.get('minexclusive') \
             is not None else None
-        max_exclusive = row.maxexclusive.toPython() if row.maxexclusive \
+        max_exclusive = result.get('maxexclusive').toPython() if result.get('maxexclusive') \
             else None
-        min_inclusive = row.mininclusive.toPython() if row.mininclusive \
+        min_inclusive = result.get('mininclusive').toPython() if result.get('mininclusive') \
             is not None else None
-        max_inclusive = row.maxinclusive.toPython() if row.maxinclusive \
+        max_inclusive = result.get('maxinclusive').toPython() if result.get('maxinclusive') \
             else None
-        min_length = row.minlength.toPython() if row.minlength is not None \
+        min_length = result.get('minlength').toPython() if result.get('minlength') is not None \
             else None
-        max_length = row.maxlength.toPython() if row.maxlength is not None \
+        max_length = result.get('maxlength').toPython() if result.get('maxlength') is not None \
             else None
-        pattern = row.pattern.toPython() if row.pattern is not None else None
+        pattern = result.get('pattern').toPython() if result.get('pattern') is not None else None
         ins = row.ins.toPython() if row.ins is not None else None
         if ins is not None and ins != '':
             reader = csv.reader(StringIO(ins))
