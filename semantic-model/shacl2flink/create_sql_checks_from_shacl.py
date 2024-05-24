@@ -36,6 +36,7 @@ create_sql_checks_from_shacl.py <shacl.ttl> <knowledge.ttl>')
     parser.add_argument('-c', '--context', help='Context URI. If not given it is derived implicitly \
 from the common helmfile configs.')
     parser.add_argument('--namespace', help='Kubernetes namespace for configmaps', default='iff')
+    parser.add_argument('-s', '--strict', help='Add all contstraints, even pure optional (will bloat the number of sql scripts)', action='store_true')
     parsed_args = parser.parse_args(args)
     return parsed_args
 
@@ -55,7 +56,7 @@ def split_statementsets(statementsets, max_size):
     return splits
 
 
-def main(shaclfile, knowledgefile, context, k8s_namespace, output_folder='output'):
+def main(shaclfile, knowledgefile, context, k8s_namespace, strict, output_folder='output'):
     # If no context is defined, try to derive it from common.yaml
     prefixes = {}
     if context is None:
@@ -87,7 +88,7 @@ is accessible.")
         translate_construct(shaclfile, knowledgefile)
 
     sqlite, (statementsets, tables, views) = \
-        translate_properties(shaclfile, knowledgefile, prefixes)
+        translate_properties(shaclfile, knowledgefile, prefixes, strict)
 
     sqlite2, (statementsets2, tables2, views2) = \
         translate_sparql(shaclfile, knowledgefile, prefixes)
@@ -121,4 +122,5 @@ if __name__ == '__main__':
     knowledgefile = args.knowledgefile
     context = args.context
     k8s_namespace = args.namespace
-    main(shaclfile, knowledgefile, context, k8s_namespace)
+    strict = args.strict
+    main(shaclfile, knowledgefile, context, k8s_namespace, strict)
