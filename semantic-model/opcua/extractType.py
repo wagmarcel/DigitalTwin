@@ -405,6 +405,13 @@ def add_class_to_knowledge(g, knowledgeg, contentclass):
     knowledgeg += result
 
 
+def create_ontolgoy_header(g, entity_namespace, version=0.1, versionIRI=None):
+    g.add((URIRef(entity_namespace), RDF.type, OWL.Ontology))
+    if versionIRI is not None:
+        g.add((URIRef(entity_namespace), OWL.versionIRI, versionIRI))
+    g.add((URIRef(entity_namespace), OWL.versionInfo, Literal(0.1)))
+
+
 if __name__ == '__main__':
     args = parse_args()
     instancename = args.instance
@@ -441,6 +448,8 @@ if __name__ == '__main__':
     shaclg.bind('shacl', shacl_namespace)
     e.bind('ngsild', ngsildns)
     e.bind('base', basens)
+    create_ontolgoy_header(e, entity_namespace)
+
     shaclg.bind('ngsild', ngsildns)
     shaclg.bind('base', basens)
     shaclg.bind('sh', SH)
