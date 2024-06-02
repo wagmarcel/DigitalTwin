@@ -1,10 +1,5 @@
 # Dataservice setup
 Dataservice grabs data from different source and maps them into the data-model. The simplest setup is a 1:1 mapping which receives one value per NGSI-LD model parameter and forwards it directly. Advanced usecase is to get data from different sources and map it to a common model. A formal binding between the datamodel and the data sources is done and can be configured for different machine setup.
-## OPCUA Module
-Due to licency conflicts, the OPCUA module `asyncua` is NOT installed automatically and NOT statically used by the dataservice. Instead it must be installed manually from [pypi.org](https://pypi.org/project/asyncua/) or from the [GITHUB sources](https://github.com/FreeOpcUa/opcua-asyncio):
-
-    pip3 install asyncua
-
 ## Setup and Activate Device
 For this service to work, a multi-entity device activation is needed. That means that a device does not consist any longer of only one entity ID. A hierarchy of subcomponents with different device IDs can be supported.
 
@@ -52,7 +47,7 @@ Example:
     ex:myBinding:bindsLogic "WHERE { BIND(?var1) as ?value}"
 
 :BoundMap
-    A Bound Map contains a single map to define mapping from metrics to a model property. Several maps can be used to provide metrics for model properties. For instance it provides the rules to calculate the property ex:state with two maps:
+    A Bound Map contains a single map to define mapping from metrics to a model parameter. Several maps can be used to provide metrics for model properties. For instance it provides the rules to calculate the property ex:state with two maps:
 Example:
     ex:map1 a :BoundMap .
     ex:map2 a :BoundMap .
@@ -76,13 +71,7 @@ Example:
     Contains the "WHERE" part of a SPARQL expression. It is expected to deliver a ?value variable. The value can be build from BoundMap variables. If there is no bindslogic value and there is only one single BoundMap, the value is taken directly without SPARQL expression.
 
 ```
-### SHACL Validation of Bindings
 
-The basic structure of Bindings and Maps can be validated with SHACL. For instance the bindings in `examples/bindings.ttl` can be checkd by
-
-```
-pyshacl -s validation/bindings-validation-shacl.ttl examples/bindings.ttl 
-```
 
 ## Use Dataservice to send testdata
 Start dataservice with `startDataservice.py`:
