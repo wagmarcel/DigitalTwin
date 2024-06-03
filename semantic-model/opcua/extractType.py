@@ -12,10 +12,8 @@ import argparse
 
 
 query_namespaces = """
-PREFIX op: <http://environment.data.gov.au/def/op#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX base: <http://opcfoundation.org/UA/Base/>
 SELECT ?uri ?prefix ?ns WHERE {
     ?ns rdf:type base:Namespace .
     ?ns base:hasUri ?uri .
@@ -25,11 +23,8 @@ SELECT ?uri ?prefix ?ns WHERE {
 
 query_enumclass = """
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
-PREFIX op: <http://environment.data.gov.au/def/op#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX base: <http://opcfoundation.org/UA/Base/>
-PREFIX opcua: <http://opcfoundation.org/UA/>
 
 CONSTRUCT { ?s ?p ?o .
             ?c ?classpred ?classobj .
@@ -50,11 +45,8 @@ WHERE
 
 query_default_instance = """
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
-PREFIX op: <http://environment.data.gov.au/def/op#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX base: <http://opcfoundation.org/UA/Base/>
-PREFIX opcua: <http://opcfoundation.org/UA/>
 SELECT ?instance WHERE {
   	?instance a ?c .
     ?instance base:hasValueNode ?valueNode .
@@ -64,11 +56,8 @@ SELECT ?instance WHERE {
 
 query_instance = """
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
-PREFIX op: <http://environment.data.gov.au/def/op#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX base: <http://opcfoundation.org/UA/Base/>
-PREFIX opcua: <http://opcfoundation.org/UA/>
 SELECT ?instance WHERE {
   	?instance a ?c .
     ?instance base:hasValueNode ?valueNode .
@@ -99,8 +88,8 @@ parse nodeset instance and create ngsi-ld model')
     parsed_args = parser.parse_args(args)
     return parsed_args
 
-basens = Namespace('http://opcfoundation.org/UA/Base/')
-opcuans = Namespace('http://opcfoundation.org/UA/')
+basens = None # Will be defined by the imported ontologies
+opcuans = None # dito
 ngsildns = Namespace('https://uri.etsi.org/ngsi-ld/')
 instances = []
 
@@ -182,7 +171,7 @@ def get_default_value(datatype):
 
 def get_default_contentclass(knowledgeg, contentclass):
     bindings = {'c': contentclass}
-    result = knowledgeg.query(query_default_instance, initBindings=bindings)
+    result = knowledgeg.query(query_default_instance, initBindings=bindings, initNs={'base': basens, 'opcua': opcuans})
     foundclass = None
     if len(result) > 0:
         foundclass = list(result)[0].instance
@@ -193,7 +182,7 @@ def get_default_contentclass(knowledgeg, contentclass):
 
 def get_contentclass(knowledgeg, contentclass, value):
     bindings = {'c': contentclass, 'value': value}
-    result = knowledgeg.query(query_instance, initBindings=bindings)
+    result = knowledgeg.query(query_instance, initBindings=bindings, initNs={'base': basens, 'opcua': opcuans})
     foundclass = None
     if len(result) > 0:
         foundclass = list(result)[0].instance
@@ -266,7 +255,7 @@ def scan_entity(node, instancetype, id):
     instance['@context'] = [
         "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld", {
             "entities": {
-                "@id": "http://example.com/entities/"
+                "@id": entity_namespace
             }
         }]
 
@@ -387,8 +376,8 @@ def create_shacl_property(shapename, path, optional, is_property, is_iri, conten
             shaclg.add((innerproperty, SH['class'], contentclass))
     elif is_property:
         shaclg.add((innerproperty, SH.nodeKind, SH.Literal))
-    if datatype is not None:
-        shaclg.add((innerproperty, SH.datatype, datatype))
+        if datatype is not None:
+            shaclg.add((innerproperty, SH.datatype, datatype))
 
     shaclg.add((innerproperty, SH.minCount, Literal(1)))
     shaclg.add((innerproperty, SH.maxCount, Literal(1)))
@@ -399,7 +388,7 @@ def add_class_to_knowledge(g, knowledgeg, contentclass):
         return
     bindings = {'c': contentclass}
     print(f'Adding type {contentclass} to knowledge.')
-    result = g.query(query_enumclass, initBindings=bindings)
+    result = g.query(query_enumclass, initBindings=bindings, initNs={'base': basens, 'opcua': opcuans})
     #result = g.triples((contentclass, None, None))
     #for s, p, o in result:
     #    knowledgeg.add((s, p, o))
@@ -422,6 +411,7 @@ def extract_namespaces(graph):
 
 
 if __name__ == '__main__':
+
     args = parse_args()
     instancename = args.instance
     instancetype = args.type
@@ -466,9 +456,10 @@ if __name__ == '__main__':
     knowledgeg.bind('knowledge', knowledge_namespace)
     for k, v in list(g.namespaces()):
         knowledgeg.bind(k, v)
-
+    basens = next(Namespace(uri) for prefix, uri in list(knowledgeg.namespaces()) if prefix == 'base')
+    opcuans = next(Namespace(uri) for prefix, uri in list(knowledgeg.namespaces()) if prefix == 'opcua')
     #create_shacl_type(s, instancetype)
-    result = g.query(query_namespaces)
+    result = g.query(query_namespaces, initNs={'base': basens, 'opcua': opcuans})
     for uri, prefix, _ in result:
         e.bind(prefix, Namespace(uri))
     # First scan the templastes to create the rules
