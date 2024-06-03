@@ -38,4 +38,9 @@ create pumpexample.ttl:
 
 Extract ngsi-ld prototype:
 
-    python3 extractType.py -t http://opcfoundation.org/UA/Pumps/PumpType pumpexample.ttl
+    python3 ./extractType.py -t http://opcfoundation.org/UA/Pumps/PumpType -n http://yourorganisation.org/InstanceExample/ pumpexample.ttl
+
+Check the SHACL compliance:
+
+    pyshacl -df json-ld entities.jsonld -s shacl.ttl -e knowledge.ttl
+    

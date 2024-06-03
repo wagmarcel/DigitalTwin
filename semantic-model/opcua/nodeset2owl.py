@@ -13,10 +13,8 @@ import owlrl
 import argparse
 
 query_namespaces = """
-PREFIX op: <http://environment.data.gov.au/def/op#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX base: <http://opcfoundation.org/UA/Base/>
 SELECT ?uri ?prefix ?ns WHERE {
     ?ns rdf:type base:Namespace .
     ?ns base:hasUri ?uri .
@@ -25,11 +23,8 @@ SELECT ?uri ?prefix ?ns WHERE {
 """
 
 query_nodeIds = """
-PREFIX op: <http://environment.data.gov.au/def/op#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX base: <http://opcfoundation.org/UA/Base/>
-PREFIX opcua: <http://opcfoundation.org/UA/>
 SELECT ?nodeId ?uri ?node WHERE {
     ?node rdf:type/rdfs:subClassOf opcua:BaseNodeClass .
     ?node base:hasNodeId ?nodeId .
@@ -39,11 +34,8 @@ SELECT ?nodeId ?uri ?node WHERE {
 """
 
 query_types = """
-PREFIX op: <http://environment.data.gov.au/def/op#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX base: <http://opcfoundation.org/UA/Base/>
-PREFIX opcua: <http://opcfoundation.org/UA/>
 SELECT ?nodeId ?uri ?type WHERE {
   {?type rdfs:subClassOf* opcua:BaseDataType .
    ?node base:definesType ?type .
@@ -155,7 +147,7 @@ def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
         hgraph.parse(file)
         ig += hgraph
 
-    query_result = ig.query(query_namespaces)
+    query_result = ig.query(query_namespaces, initNs=rdf_ns)
     corens = list(known_opcua_ns.keys())[0]
     for uri, prefix, ns in query_result:
         if str(uri) != corens:
@@ -175,7 +167,7 @@ def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
     nodeIds.append({})
     typeIds.append({})
     
-    query_result = ig.query(query_nodeIds)
+    query_result = ig.query(query_nodeIds, initNs=rdf_ns)
     uris = opcua_ns
     urimap = {}
     for idx, uri in enumerate(uris):
@@ -183,7 +175,7 @@ def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
     for nodeId, uri, nodeIri in query_result:
         ns = urimap[str(uri)]
         nodeIds[ns][int(nodeId)] = nodeIri
-    query_result = ig.query(query_types)
+    query_result = ig.query(query_types, initNs=rdf_ns)
     for nodeId, uri, type in query_result:
         ns = urimap[str(uri)]
         typeIds[ns][int(nodeId)] = type
@@ -258,7 +250,7 @@ def add_datatype(g, node, classiri):
         print(f'Warning: Cannot find nodeId ns={index};i={id}')
         return
     if datatype is not None:
-        g.add((classiri, rdf_ns['base']['hasDataType'], typeiri))
+        g.add((classiri, rdf_ns['base']['hasDatatype'], typeiri))
 
 
 def add_subclass(g, node, classiri):
@@ -349,7 +341,7 @@ def add_uadatatype(g, node, xml_ns):
                 datatypeid = resolve_alias(datatypeid)
                 datatype_index, datatype_id = parse_nodeid(datatypeid)
                 datatypeIri = typeIds[datatype_index][datatype_id]
-                g.add((itemname, rdf_ns['base']['hasDataType'], datatypeIri))
+                g.add((itemname, rdf_ns['base']['hasDatatype'], datatypeIri))
                 g.add((itemname, RDF.type, rdf_ns['base']['Field']))
                 g.add((typeIri, rdf_ns['base']['hasField'], itemname))
             else: # Enumtype is considered as instance of class
@@ -405,7 +397,7 @@ def get_datatype(g, node, classiri):
     if data_type is not None:
         data_type = resolve_alias(data_type)
         dt_index, dt_id = parse_nodeid(data_type)
-        g.add((classiri, rdf_ns['base']['hasDataType'], typeIds[dt_index][dt_id]))
+        g.add((classiri, rdf_ns['base']['hasDatatype'], typeIds[dt_index][dt_id]))
 
 
 def get_value_rank(g, node, classiri):
