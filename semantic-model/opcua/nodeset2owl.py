@@ -85,6 +85,10 @@ parse nodeset and create RDF-graph <nodeset2.xml>')
     parser.add_argument('-o', '--output', help='Resulting file.', default="result.ttl")
     parser.add_argument('-n', '--namespace', help='Overwriting namespace of target ontology, e.g. http://opcfoundation.org/UA/Pumps/', required=False)
     parser.add_argument('-v', '--versionIRI', help='VersionIRI of ouput ontology, e.g. http://example.com/v0.1/UA/ ',  required=False)
+    parser.add_argument('-b', '--baseOntology', help='Ontology containing the base terms, e.g. https://industryfusion.github.io/contexts/ontology/v0/base/',
+                        required=False, default='https://industryfusion.github.io/contexts/ontology/v0/base/')
+    parser.add_argument('-u', '--opcuaNamespace', help='OPCUA Core namespace, e.g. http://opcfoundation.org/UA/',
+                        required=False, default='http://opcfoundation.org/UA/')
     parser.add_argument('-p', '--prefix', help='Prefix for added ontolgoy, e.g. "pumps"', required=True)
     parser.add_argument('-t', '--typesxsd', help='Schema for value definitions, e.g. Opc.Ua.Types.xsd',
                         default='https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/Schema/Opc.Ua.Types.xsd')
@@ -97,8 +101,6 @@ xml_ns = {
 }
 # Namespaces defined for RDF usage
 rdf_ns = {
-    'opcua': Namespace('http://opcfoundation.org/UA/'),
-    'base': Namespace('http://opcfoundation.org/UA/Base/')
 }
 # Contains the mapping from opcua-ns-index to ns
 opcua_ns = ['http://opcfoundation.org/UA/']
@@ -143,6 +145,7 @@ basic_types_map = {'String': 'string',
                    'Guid': 'string',
                    'ByteString': 'string',
                    'Double': 'number'}
+
 
 def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
     #uagraph = Graph()
@@ -200,7 +203,9 @@ def create_header(g):
         g.add((ontology_name, OWL.imports, ontology))
 
 
-def create_prefixes(g, xml_node):
+def create_prefixes(g, xml_node, base, opcua_namespace):
+    rdf_ns['base'] = Namespace(base)
+    rdf_ns['opcua'] = Namespace(opcua_namespace)
     g.bind('opcua', rdf_ns['opcua'])
     g.bind('base', rdf_ns['base'])
     if xml_node is None:
@@ -577,8 +582,9 @@ if __name__ == '__main__':
     prefix = args.prefix
     data_schema = xmlschema.XMLSchema(args.typesxsd)
     versionIRI = URIRef(args.versionIRI) if args.versionIRI is not None else None
-
+    base_ontology = args.baseOntology
     ontology_prefix = args.prefix
+    opcua_namespace = args.opcuaNamespace
     tree = None
     try:
         with urllib.request.urlopen(opcua_nodeset) as response:
@@ -598,8 +604,8 @@ if __name__ == '__main__':
     else:
         ontology_name = URIRef(args.namespace) if args.namespace is not None else None
     namespace_uris = root.find('opcua:NamespaceUris', xml_ns)
-    create_prefixes(g, namespace_uris)
-    init_nodeids(opcua_inputs, ontology_name, ontology_prefix)
+    create_prefixes(g, namespace_uris, base_ontology, opcua_namespace)
+    init_nodeids( opcua_inputs, ontology_name, ontology_prefix)
     create_header(g)
     aliases_node = root.find('opcua:Aliases', xml_ns)
     alias_nodes = aliases_node.findall('opcua:Alias', xml_ns)
