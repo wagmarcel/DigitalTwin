@@ -153,7 +153,7 @@ async def main(entityId, ontdir, binding_name, entity_id, resources, baseOntolog
         current_attribute['apiVersion'] = apiVersion
         current_attribute['attributeType'] = attributeType
         current_attribute['logic'] = logic
-        current_attribute['ebtityId'] = entityId
+        current_attribute['entityId'] = entityId
 
         # Basic checks
         if apiVersion not in supported_versions:
@@ -314,16 +314,11 @@ async def calculate_attribute(attribute, firmwareVersion, attribute_trust_level,
         for result in results:
             results[result]['trustLevel'] = min(overallTrust, results[result]
                                                 ['trustLevel'])
-        if len(results) > 0:
-            send(results, attribute, attribute_dict['entityId'], dryrun, port)
-        update_found = False
-        while not update_found:
-            await asyncio.sleep(0)
-            for map in attribute_dict['maps']:
-                update_found = attribute_dict['maps'][map]['updated'] or update_found
+        send(results, attribute, attribute_dict['entityId'], dryrun, port)
+        await asyncio.sleep(sleep)
 
 
-def send(results, attribute, entityId, dryrun, port):
+def send(results, attribute, entiyId, dryrun, port):
     payload = []
     for datasetId in results.keys():
         result = results[datasetId]
