@@ -155,7 +155,7 @@ async def main(entityId, ontdir, binding_name, entity_id, resources, baseOntolog
         current_attribute['apiVersion'] = apiVersion
         current_attribute['attributeType'] = attributeType
         current_attribute['logic'] = logic
-        current_attribute['ebtityId'] = entityId
+        current_attribute['entityId'] = entityId
 
         # Basic checks
         if apiVersion not in supported_versions:
@@ -314,11 +314,11 @@ async def calculate_attribute(attribute, firmwareVersion, attribute_trust_level,
         for result in results:
             results[result]['trustLevel'] = min(overallTrust, results[result]
                                                 ['trustLevel'])
-        send(results, attribute, dryrun, port)
+        send(results, attribute, attribute_dict['entityId'], dryrun, port)
         await asyncio.sleep(sleep)
 
 
-def send(results, attribute, dryrun, port):
+def send(results, attribute, entiyId, dryrun, port):
     payload = []
     for datasetId in results.keys():
         result = results[datasetId]
@@ -333,7 +333,7 @@ def send(results, attribute, dryrun, port):
         # Send over mqtt/device-agent
 
         payload.append(f'{{ "n": "{attribute}",\
-"v": "{value.toPython()}", "t": "{prefix}"}}')
+"v": "{value.toPython()}", "t": "{prefix}", "i": "{entityId}"}}')
     payloads = f'[{",".join(payload)}]'
     if not dryrun:
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
