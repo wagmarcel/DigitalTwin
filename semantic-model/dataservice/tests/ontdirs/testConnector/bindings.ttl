@@ -1,0 +1,35 @@
+@prefix entities: <http://yourorganisation.org/InstanceExample/entities/> .
+@prefix binding: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <https://example.com/test/> .
+@prefix : <https://example.com/test/> .
+    
+entities:hasMotorTemperature binding:boundBy :myBinding .
+:myBinding a binding:Binding .
+:myBinding binding:bindsEntity <urn:iff:cutter:1> .
+:myBinding binding:bindsMap :map .
+:myBinding binding:bindingVersion "0.1" .
+:myBinding binding:bindsFirmware "myFirmware" .
+
+:map a binding:BoundMap .
+:map binding:bindsConnector binding:TestConnector .
+:map binding:bindsMapDatatype xsd:float .
+:map binding:bindsLogicVar "var1" .
+:map binding:bindsConnectorParameter 'ns=5;i=6020' .
+
+entities:hasEnergyConsumption binding:boundBy :myBinding2 .
+:myBinding2 a binding:Binding .
+:myBinding2 binding:bindsEntity <urn:iff:cutter:1> .
+:myBinding2 binding:bindsMap :map2 .
+:myBinding2 binding:bindingVersion "0.1" .
+:myBinding2 binding:bindsFirmware "myFirmware" .
+
+:map2 a binding:BoundMap .
+:map2 binding:bindsConnector binding:OPCUAConnector .
+:map2 binding:bindsMapDatatype xsd:float .
+:map2 binding:bindsLogicVar "var1" .
+:map2 binding:bindsConnectorParameter 'ns=5;i=6017' .
