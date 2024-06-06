@@ -446,11 +446,11 @@ if __name__ == '__main__':
     types = []
     e.bind('entities', entity_namespace)
     shaclg.bind('shacl', shacl_namespace)
-    e.bind('ngsild', ngsildns)
+    e.bind('ngsi-ld', ngsildns)
     e.bind('base', basens)
     create_ontolgoy_header(e, entity_namespace)
 
-    shaclg.bind('ngsild', ngsildns)
+    shaclg.bind('ngsi-ld', ngsildns)
     shaclg.bind('base', basens)
     shaclg.bind('sh', SH)
     knowledgeg.bind('knowledge', knowledge_namespace)
