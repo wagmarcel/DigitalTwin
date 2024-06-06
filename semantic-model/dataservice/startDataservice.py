@@ -280,7 +280,10 @@ async def calculate_attribute(attribute, firmwareVersion, attribute_trust_level,
         else: # if there is only one map, take this over directly
             if len(attribute_dict['maps']) == 1:
                 map = next(iter(attribute_dict['maps'].values()))
-                qres = [{'value': map['value'], 'type': map['logicVarType']}]    
+                if 'value' in map:
+                    qres = [{'value': map['value'], 'type': map['logicVarType']}]
+                else:
+                    qres = []
         for row in qres:
             datasetId = '@none'
             type = None
@@ -314,7 +317,8 @@ async def calculate_attribute(attribute, firmwareVersion, attribute_trust_level,
         for result in results:
             results[result]['trustLevel'] = min(overallTrust, results[result]
                                                 ['trustLevel'])
-        send(results, attribute, attribute_dict['entityId'], dryrun, port)
+        if len(results) > 0:
+            send(results, attribute, attribute_dict['entityId'], dryrun, port)
         await asyncio.sleep(sleep)
 
 
