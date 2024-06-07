@@ -24,11 +24,12 @@
  */
 
 var onboarding_token_expiration = java.lang.System.getenv("OISP_FRONTEND_DEVICE_ACCOUNT_ENDPOINT");
+var tainted = 'TAINTED';
+exports = tainted;
 var subdeviceIdsH = keycloakSession.getContext().getRequestHeaders()
     .getRequestHeader("X-SubDeviceIDs")[0];
-if (subdeviceIdsH !== null && subdeviceIdsH !== undefined) {
+if (subdeviceIdsH !== null && subdeviceIdsH !== undefined)
     subdeviceIdsH = JSON.parse(subdeviceIdsH)
-}
 var inputRequest = keycloakSession.getContext().getHttpRequest();
 var params = inputRequest.getDecodedFormParameters();
 var origTokenParam = params.getFirst("orig_token");
@@ -53,18 +54,18 @@ if (grantType === 'refresh_token' && origToken !== null) {
     if (origTokenSubDeviceIds !== null && origTokenSubDeviceIds !== undefined) {
         // Has origToken same session?
         if (origTokenSession !== session) {
-            print("Warning: Rejecting subdeviceids claim due to session mismatch between refresh_token and orig_token")
-            exports = JSON.stringify([]);
+            print("Warning: Rejecting token due to session mismatch between refresh_token and orig_token")
+            exports = tainted;
         } else {
             exports = origTokenSubDeviceIds;
         }
     } else {
         // If there is no origTokenDeviceId, there must be an X-DeviceId header AND origToken must be valid
-        if (!origToken.isExpired() && subdeviceIdsH !== null && subdeviceIdsH !== undefined) {
-            exports = subdeviceIdsH
+        if (!origToken.isExpired() && subdeviceIdHs !== null && subdeviceIdHs !== undefined) {
+            exports = subdeviceIdHs
         } else {
-            print("Warning: Rejecting subdeviceid claim due to orig_token is expired or there is not valid X-SubDeviceIDs Header.")
-            exports = JSON.stringify([]);
+            print("Warning: Rejecting token due to orig_token is expired or there is not valid X-SubDeviceId Header.")
+            exports = tainted;
         }   
     }
 } else if (grantType === 'password'){
@@ -73,5 +74,5 @@ if (grantType === 'refresh_token' && origToken !== null) {
     exports = null
 } else if (origToken === null) {
     print("Warning: Rejecting token due to invalid orig_token.")
-    exports = JSON.stringify([])
+    exports = tainted
 }

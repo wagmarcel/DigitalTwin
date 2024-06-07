@@ -90,6 +90,15 @@ if ! dpkg -l | grep -q "jq"; then
     exit 1
 fi
 
+commaSeparatedIds=${deviceid}
+for i in "${additionalDeviceIds[@]}"; do
+    if [ -n "$commaSeparatedIds" ]; then
+        commaSeparatedIds+=", "
+    fi
+    commaSeparatedIds+=$i
+done
+
+# Define the JSON file path
 
 # To preserve backward compatibility, there are now two fields, device_id and device_ids
 commaSeparatedIds=
@@ -103,14 +112,12 @@ done
 # Define the JSON file path
 json_data=$(jq -n \
         --arg deviceIds "$commaSeparatedIds" \
-        --arg deviceid "$deviceid" \
         --arg gatewayId "$gatewayid" \
         --arg realmId "$realmid" \
         --arg keycloakUrl "$keycloakurl" \
         '
-        $deviceIds | split(",") as $ids | {
-            "device_id": $deviceid,
-            "subdevice_ids": $ids,
+        $deviceIds | split(",") as $ids | { 
+            "device_ids": $ids, 
             "gateway_id": $gatewayId,
             "realm_id": $realmId,
             "keycloak_url": $keycloakUrl
