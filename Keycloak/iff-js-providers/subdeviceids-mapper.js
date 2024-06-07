@@ -26,9 +26,9 @@
 var onboarding_token_expiration = java.lang.System.getenv("OISP_FRONTEND_DEVICE_ACCOUNT_ENDPOINT");
 var subdeviceIdsH = keycloakSession.getContext().getRequestHeaders()
     .getRequestHeader("X-SubDeviceIDs")[0];
-    if (subdeviceIdsH !== null && subdeviceIdsH !== undefined)
-        subdeviceIdsH = JSON.parse(subdeviceIdsH)
-    print("subdevicetoken from Header: " + subdeviceIdsH)
+if (subdeviceIdsH !== null && subdeviceIdsH !== undefined) {
+    subdeviceIdsH = JSON.parse(subdeviceIdsH)
+}
 var inputRequest = keycloakSession.getContext().getHttpRequest();
 var params = inputRequest.getDecodedFormParameters();
 var origTokenParam = params.getFirst("orig_token");
