@@ -17,10 +17,21 @@ set -e
 # shellcheck disable=SC1091
 . common.sh
 
+
+function checkurn(){
+  local deviceid="$1"
+  urnPattern='^urn:[a-zA-Z0-9][a-zA-Z0-9-]{0,31}:[a-zA-Z0-9()+,\-\.:=@;$_!*%/?#]+$'
+  if echo "$deviceid" | grep -E -q "$urnPattern"; then
+      echo "$deviceid is URN compliant."
+  else
+      echo "$deviceid must be an URN. Please fix the parameter $deviceid. Exiting."
+      exit 1
+  fi
+}
 keycloakurl="http://keycloak.local/auth/realms"
 realmid="iff"
-usage="Usage: $(basename "$0") <deviceId> <gatewayId> [-k keycloakurl] [-r realmId]\nDefaults: \nkeycloakurl=${keycloakurl}\nrealmid=${realmid}\n"
-while getopts 'k:r:h' opt; do
+usage="Usage: $(basename "$0")[-k keycloakurl] [-r realmId] [-d additionalDeviceIds] <deviceId> <gatewayId>\nDefaults: \nkeycloakurl=${keycloakurl}\nrealmid=${realmid}\n"
+while getopts 'k:r:d:h' opt; do
   # shellcheck disable=SC2221,SC2222
   case "$opt" in
     k)
@@ -33,6 +44,10 @@ while getopts 'k:r:h' opt; do
       echo "Realm url is set to '${arg}'"
       realmid="${OPTARG}"
       ;;
+    d)
+      additionalDeviceIds+=("$OPTARG")
+      echo "Added additional deviceId ${OPTARG}"
+    ;;
     ?|h)
       echo "$usage"
       exit 1
@@ -50,15 +65,19 @@ else
   exit 1
 fi
 
- # shellcheck disable=2016
-urnPattern='^urn:[a-zA-Z0-9][a-zA-Z0-9-]{0,31}:[a-zA-Z0-9()+,\-\.:=@;$_!*%/?#]+$'
-if echo "$deviceid" | grep -E -q "$urnPattern"; then
-    echo "$deviceid is URN compliant."
-else
-    echo "$deviceid must be an URN. Please fix the deviceId. Exiting."
-    exit 1
+checkurn $deviceid
+if [ ! -z "${additionalDeviceIds}" ]; then
+  #deviceid='["'${deviceid}'"'
+  for i in "${additionalDeviceIds[@]}"; do
+    checkurn $i
+    #echo proecessing $i
+    #deviceid=${deviceid}', "'$i'"'
+  done
+  #deviceid=${deviceid}']'
+#else
+#  deviceid='["'${deviceid}'"]'
 fi
-
+ # shellcheck disable=2016
 echo Processing with deviceid="${deviceid}" gatewayid="${gatewayid}" keycloakurl="${keycloakurl}" realmid="${realmid}"
 
 if [ ! -d ../data ]; then
@@ -71,15 +90,24 @@ if ! dpkg -l | grep -q "jq"; then
     exit 1
 fi
 
+commaSeparatedIds=${deviceid}
+for i in "${additionalDeviceIds[@]}"; do
+    if [ -n "$commaSeparatedIds" ]; then
+        commaSeparatedIds+=", "
+    fi
+    commaSeparatedIds+=$i
+done
+
 # Define the JSON file path
 
 json_data=$(jq -n \
-        --arg deviceId "$deviceid" \
+        --arg deviceIds "$commaSeparatedIds" \
         --arg gatewayId "$gatewayid" \
         --arg realmId "$realmid" \
         --arg keycloakUrl "$keycloakurl" \
-        '{ 
-            "device_id": $deviceId, 
+        '
+        $deviceIds | split(",") as $ids | { 
+            "device_ids": $ids, 
             "gateway_id": $gatewayId,
             "realm_id": $realmId,
             "keycloak_url": $keycloakUrl
