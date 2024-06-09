@@ -254,8 +254,9 @@ def scan_entity(node, instancetype, id):
     instance['id'] = node_id
     instance['@context'] = [
         "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld", {
-            "entities": {
-                "@id": entity_namespace
+            "uaentities": {
+                "@id": entity_namespace,
+                "@prefix": True
             }
         }]
 
@@ -289,12 +290,12 @@ def scan_entity(node, instancetype, id):
             relid = scan_entity(o, classtype, id)
             if relid is not None:
                 has_components = True
-                instance[f'entities:{attributename}'] = {
+                instance[f'uaentities:{attributename}'] = {
                     'type': 'Relationship',
                     'object': relid
                 }
                 if debug:
-                    instance[f'entities:{attributename}']['debug'] = f'entities:{attributename}'
+                    instance[f'uaentities:{attributename}']['debug'] = f'uaentities:{attributename}'
                 shacl_rule['contentclass'] = classtype
                 #create_ngsild_object(o, type, f'{id}:{idadd}')
                 # create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], False, True, shacl_rule['contentclass'], None)
@@ -316,17 +317,17 @@ def scan_entity(node, instancetype, id):
                     value = get_default_contentclass(knowledgeg, shacl_rule['contentclass'])
             has_components = True
             if not shacl_rule['is_iri']:
-                instance[f'entities:{attributename}'] = {
+                instance[f'uaentities:{attributename}'] = {
                     'type': 'Property',
                     'value': value
                 }
             else:
-                instance[f'entities:{attributename}'] = {
+                instance[f'uaentities:{attributename}'] = {
                     'type': 'Property',
                     'value': { '@id': str(value)}
                 }
             if debug:
-                instance[f'entities:{attributename}']['debug'] = f'entities:{attributename}'
+                instance[f'uaentities:{attributename}']['debug'] = f'uaentities:{attributename}'
     if has_components:
         instances.append(instance)
         return node_id
