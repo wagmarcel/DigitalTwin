@@ -53,11 +53,22 @@ class Authenticate {
     this.cache.init();
   }
 
+  async addSubdeviceAcl (realm, clientid, decodedToken) {
+    if ('subdevice_ids' in decodedToken) {
+      const subdevices = decodedToken.subdevice_ids;
+      const parsedSubdevices = JSON.parse(subdevices);
+      for (const did of parsedSubdevices) {
+        await this.cache.setValue(realm + '/' + did, 'acl', clientid);
+      }
+    }
+  }
+
   // expects "username" and "password" as url-query-parameters
   async authenticate (req, res) {
     this.logger.debug('Auth request ' + JSON.stringify(req.query));
     const username = req.query.username;
     const token = req.query.password;
+    const clientid = req.query.clientid;
     if (username === this.config.mqtt.adminUsername) {
       if (token === this.config.mqtt.adminPassword) {
         // superuser
@@ -97,7 +108,9 @@ class Authenticate {
       res.sendStatus(400);
     }
     // put realm/device into the list of accepted topics
-    await this.cache.setValue(realm + '/' + did, 'acl', 'true');
+    await this.cache.deleteKeysWithValue('acl', clientid);
+    await this.addSubdeviceAcl(realm, clientid, decodedToken);
+    await this.cache.setValue(realm + '/' + did, 'acl', clientid);
     res.status(200).json({ result: 'allow', is_superuser: 'false' });
   }
 

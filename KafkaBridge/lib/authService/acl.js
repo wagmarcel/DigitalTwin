@@ -38,6 +38,7 @@ class Acl {
       return;
     }
     const topic = req.query.topic;
+    const clientid = req.query.clientid;
     this.logger.debug('ACL request for username ' + username + ' and topic ' + topic);
     // allow all $SYS topics
     if (topic.startsWith('$SYS/')) {
@@ -54,7 +55,7 @@ class Acl {
       const spBdevId = splitTopic[4];
       const spBAclKey = spBAccountId + '/' + spBdevId;
       const allowed = await this.cache.getValue(spBAclKey, 'acl');
-      if (allowed === undefined || !(allowed === 'true') || spBdevId !== username) {
+      if (allowed === undefined || !(allowed === clientid) || spBdevId !== username) {
         this.logger.info('Connection rejected for realm ' + spBAccountId + ' and device ' + spBdevId);
         res.sendStatus(400);
       } else {
