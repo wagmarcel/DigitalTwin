@@ -290,7 +290,7 @@ def scan_entity(node, instancetype, id):
             if relid is not None:
                 has_components = True
                 instance[f'entities:{attributename}'] = {
-                    'Property': 'Relationship',
+                    'type': 'Relationship',
                     'object': relid
                 }
                 if debug:
@@ -317,12 +317,12 @@ def scan_entity(node, instancetype, id):
             has_components = True
             if not shacl_rule['is_iri']:
                 instance[f'entities:{attributename}'] = {
-                    'Property': 'Property',
+                    'type': 'Property',
                     'value': value
                 }
             else:
                 instance[f'entities:{attributename}'] = {
-                    'Property': 'Property',
+                    'type': 'Property',
                     'value': { '@id': str(value)}
                 }
             if debug:
