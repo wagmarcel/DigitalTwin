@@ -56,14 +56,8 @@ class Acl {
       const command = splitTopic[2];
       const spBdevId = splitTopic[4];
       const spBAclKey = spBAccountId + '/' + spBdevId;
-      let allowed = await this.cache.getValue(spBAclKey, 'acl');
-      if (allowed === undefined && spBdevId === '' && command === 'NBIRTH') { // if it is a NBIRTH command check if gatewayid is permitted for this session
-        allowed = await this.cache.getValue(spBAccountId + '/' + gateway, 'acl');
-        if (allowed === undefined) {
-          this.logger.warn('Gateway id not permitted for this token/session. Use a token which has device_id==gateway_id.');
-        }
-      }
-      if (allowed === undefined || allowed !== clientid) {
+      const allowed = await this.cache.getValue(spBAclKey, 'acl');
+      if (allowed === undefined || !(allowed === clientid) || spBdevId !== username) {
         this.logger.info('Connection rejected for realm ' + spBAccountId + ' and device ' + spBdevId);
         return res.status(200).json({ result: 'deny' });
       } else {
