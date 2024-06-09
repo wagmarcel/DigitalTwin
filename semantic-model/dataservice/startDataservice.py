@@ -322,7 +322,7 @@ async def calculate_attribute(attribute, firmwareVersion, attribute_trust_level,
         await asyncio.sleep(sleep)
 
 
-def send(results, attribute, entiyId, dryrun, port):
+def send(results, attribute, entityId, dryrun, port):
     payload = []
     for datasetId in results.keys():
         result = results[datasetId]

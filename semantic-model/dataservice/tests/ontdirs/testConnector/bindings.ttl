@@ -10,7 +10,7 @@
     
 entities:hasMotorTemperature binding:boundBy :myBinding .
 :myBinding a binding:Binding .
-:myBinding binding:bindsEntity <urn:iff:cutter:1> .
+:myBinding binding:bindsEntity <urn:testid:nodeId:5006> .
 :myBinding binding:bindsMap :map .
 :myBinding binding:bindingVersion "0.1" .
 :myBinding binding:bindsFirmware "myFirmware" .
@@ -23,7 +23,7 @@ entities:hasMotorTemperature binding:boundBy :myBinding .
 
 entities:hasEnergyConsumption binding:boundBy :myBinding2 .
 :myBinding2 a binding:Binding .
-:myBinding2 binding:bindsEntity <urn:iff:cutter:1> .
+:myBinding2 binding:bindsEntity <urn:testid:nodeId:6017> .
 :myBinding2 binding:bindsMap :map2 .
 :myBinding2 binding:bindingVersion "0.1" .
 :myBinding2 binding:bindsFirmware "myFirmware" .
@@ -33,3 +33,16 @@ entities:hasEnergyConsumption binding:boundBy :myBinding2 .
 :map2 binding:bindsMapDatatype xsd:float .
 :map2 binding:bindsLogicVar "var1" .
 :map2 binding:bindsConnectorParameter 'ns=5;i=6017' .
+
+entities:hasDifferentialPressure binding:boundBy :myBinding3 .
+:myBinding3 a binding:Binding .
+:myBinding3 binding:bindsEntity <urn:testid:nodeId:5018> .
+:myBinding3 binding:bindsMap :map3 .
+:myBinding3 binding:bindingVersion "0.1" .
+:myBinding3 binding:bindsFirmware "myFirmware" .
+
+:map3 a binding:BoundMap .
+:map3 binding:bindsConnector binding:OPCUAConnector .
+:map3 binding:bindsMapDatatype xsd:float .
+:map3 binding:bindsLogicVar "var1" .
+:map3 binding:bindsConnectorParameter 'ns=5;i=6117' .
