@@ -112,13 +112,13 @@ typeIds = [{}]
 ig = Graph() # graph from inputs
 g = Graph() # graph wich is currently created
 
-hasSubtypeId = 45
-hasPropertyId = 46
-hasTypeDefinition = 40
-hasComponent = 47
-hasAddInId = 17604
-organizesId = 35
-hasModellingRule = 37
+hasSubtypeId = '45'
+hasPropertyId = '46'
+hasTypeDefinition = '40'
+hasComponent = '47'
+hasAddInId = '17604'
+organizesId = '35'
+hasModellingRule = '37'
 
 data_schema = None
 basic_types = ['String', 'Boolean', 'Byte', 'SByte', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Uin64', 'Int64', 'Float', 'DateTime', 'Guid', 'ByteString', 'Double']
@@ -174,11 +174,11 @@ def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
         urimap[uri] = idx
     for nodeId, uri, nodeIri in query_result:
         ns = urimap[str(uri)]
-        nodeIds[ns][int(nodeId)] = nodeIri
+        nodeIds[ns][str(nodeId)] = nodeIri
     query_result = ig.query(query_types, initNs=rdf_ns)
     for nodeId, uri, type in query_result:
         ns = urimap[str(uri)]
-        typeIds[ns][int(nodeId)] = type
+        typeIds[ns][str(nodeId)] = type
 
     g.add((rdf_ns[ontology_prefix][namespaceclass], RDF.type, rdf_ns['base']['Namespace']))
     g.add((rdf_ns[ontology_prefix][namespaceclass], rdf_ns['base']['hasUri'], Literal(ontology_name.toPython())))
@@ -266,14 +266,26 @@ def add_to_nodeids(rdf_namespace, name, node):
     nodeIds[ni_index][ni_id] = rdf_namespace[name]
 
 
-def nodeId_to_iri(namespace, nid):
-    return namespace[f'nodeId{nid}']
+def nodeId_to_iri(namespace, nid, idtype):
+    if idtype == rdf_ns['base']['numericID']:
+        idt = 'i'
+    elif idtype == rdf_ns['base']['stringID']:
+        idt = 's'
+    elif idtype == rdf_ns['base']['guidID']:
+        idt = 'g'
+    elif idtype == rdf_ns['base']['opqaueID']:
+        idt = 'b'
+    else:
+        idt = 'x'
+        print(f'Warning: No valid identifier found in {nid}')
+    return namespace[f'node{idt}{nid}']
 
 def add_nodeid_to_class(g, node, nodeclasstype, xml_ns):
-    nid, index, bn_name = get_nid_ns_and_name(g, node)
+    nid, index, bn_name, idtype = get_nid_ns_and_name(g, node)
     rdf_namespace = get_rdf_ns_from_ua_index(index)
-    classiri = nodeId_to_iri(rdf_namespace, nid)
+    classiri = nodeId_to_iri(rdf_namespace, nid, idtype)
     g.add((classiri, rdf_ns['base']['hasNodeId'], Literal(nid)))
+    g.add((classiri, rdf_ns['base']['hasIdentifierType'], idtype))
     g.add((classiri, rdf_ns['base']['hasBrowseName'], Literal(bn_name)))
     namespace = opcua_ns[index]
     g.add((classiri, rdf_ns['base']['hasNamespace'], known_ns_classes[namespace]))
@@ -312,8 +324,17 @@ def parse_nodeid(nodeid):
         i_part = nodeid
     if ns_part is not None:
         ns_index = int(ns_part.split('=')[1])
-    identifier = int(i_part.split('=')[1])
-    return ns_index, identifier
+    idt= i_part[0]
+    if idt == 'i':
+        identifierType = rdf_ns['base']['numericID']
+    elif idt == 'g':
+        identifierType = rdf_ns['base']['guidID']
+    elif idt == 's':
+        identifierType = rdf_ns['base']['stringID']
+    elif idt == 'b':
+        identifierType = rdf_ns['base']['opqueID']
+    identifier = str(i_part.split('=')[1])
+    return ns_index, identifier, identifierType
 
 
 def downcase_string(s):
@@ -321,9 +342,9 @@ def downcase_string(s):
 
 
 def add_uadatatype(g, node, xml_ns):
-    nid, index, name = get_nid_ns_and_name(g, node)
+    nid, index, name, idtype = get_nid_ns_and_name(g, node)
     rdf_namespace = get_rdf_ns_from_ua_index(index)
-    classiri = nodeId_to_iri(rdf_namespace, nid)
+    classiri = nodeId_to_iri(rdf_namespace, nid, idtype)
     typeIri = rdf_namespace[name]
     definition = uadatatype.find('opcua:Definition', xml_ns)
     if definition is not None:
@@ -339,7 +360,7 @@ def add_uadatatype(g, node, xml_ns):
             datatypeIri = None
             if datatypeid is not None: # structure is providing field details
                 datatypeid = resolve_alias(datatypeid)
-                datatype_index, datatype_id = parse_nodeid(datatypeid)
+                datatype_index, datatype_id, _ = parse_nodeid(datatypeid)
                 datatypeIri = typeIds[datatype_index][datatype_id]
                 g.add((itemname, rdf_ns['base']['hasDatatype'], datatypeIri))
                 g.add((itemname, RDF.type, rdf_ns['base']['Field']))
@@ -357,7 +378,7 @@ def add_uadatatype(g, node, xml_ns):
         
 
 def isNodeId(nodeId):
-    return 'i=' in nodeId
+    return 'i=' in nodeId or 'g=' in nodeId or 's=' in nodeId
 
 
 def getBrowsename(node):
@@ -396,7 +417,7 @@ def get_datatype(g, node, classiri):
     data_type = node.get('DataType')
     if data_type is not None:
         data_type = resolve_alias(data_type)
-        dt_index, dt_id = parse_nodeid(data_type)
+        dt_index, dt_id, _ = parse_nodeid(data_type)
         g.add((classiri, rdf_ns['base']['hasDatatype'], typeIds[dt_index][dt_id]))
 
 
@@ -455,16 +476,16 @@ def get_references(g, refnodes, classiri):
         reftype = reference.get('ReferenceType')
         isforward = reference.get('IsForward')
         nodeid = resolve_alias(reftype)
-        type_index, type_id = parse_nodeid(nodeid)
+        type_index, type_id, _ = parse_nodeid(nodeid)
         try:
             found_component = [ele[1] for ele in components if(ele[0] == type_id)][0]
         except:
             found_component = None
         if found_component is not None:
             componentId = resolve_alias(reference.text)
-            index, id = parse_nodeid(componentId)
+            index, id, idtype = parse_nodeid(componentId)
             namespace = get_rdf_ns_from_ua_index(index)
-            targetclassiri = nodeId_to_iri(namespace, id)
+            targetclassiri = nodeId_to_iri(namespace, id, idtype)
             if isforward != 'false':
                 g.add((classiri, rdf_ns['base'][found_component], targetclassiri))
             else:
@@ -475,9 +496,9 @@ def get_references(g, refnodes, classiri):
 def add_typedef(g, node, xml_ns):
     _, browsename = getBrowsename(node)
     nodeid = node.get('NodeId')
-    index, id = parse_nodeid(nodeid)
+    index, id, idtype = parse_nodeid(nodeid)
     namespace = get_rdf_ns_from_ua_index(index)
-    classiri = nodeId_to_iri(namespace, id)
+    classiri = nodeId_to_iri(namespace, id, idtype)
     references_node = node.find('opcua:References', xml_ns)
     references = references_node.findall('opcua:Reference', xml_ns)
     if len(references) > 0:
@@ -487,17 +508,20 @@ def add_typedef(g, node, xml_ns):
             reftype = reference.get('ReferenceType')
             isforward = reference.get('IsForward')
             nodeid = resolve_alias(reftype)
-            type_index, type_id = parse_nodeid(nodeid)
+            type_index, type_id, _ = parse_nodeid(nodeid)
             if type_id == hasTypeDefinition and type_index == 0:
                 # HasSubtype detected
                 typedef = reference.text    
                 break
-        nodeid = resolve_alias(typedef)
-        typedef_index, typedef_id = parse_nodeid(typedef)
-        if (isforward == 'false'):
-            print(f"Warning: IsForward=false makes not sense here: {classiri}")
+        if typedef is None:
+            print(f'Warning: Object {classiri} has no type definition. This is not OPCUA compliant.')
         else:
-            g.add((classiri, RDF.type, typeIds[typedef_index][typedef_id])) 
+            nodeid = resolve_alias(typedef)
+            typedef_index, typedef_id, _ = parse_nodeid(typedef)
+            if (isforward == 'false'):
+                print(f"Warning: IsForward=false makes not sense here: {classiri}")
+            else:
+                g.add((classiri, RDF.type, typeIds[typedef_index][typedef_id]))
     get_datatype(g, node, classiri)
     get_value_rank(g, node, classiri)
     get_value(g, node, classiri, xml_ns)
@@ -507,10 +531,10 @@ def add_typedef(g, node, xml_ns):
 def add_type(g, node, xml_ns):
     _, browsename = getBrowsename(node)
     nodeid = node.get('NodeId')
-    ref_index, ref_id = parse_nodeid(nodeid)
+    ref_index, ref_id, idtype = parse_nodeid(nodeid)
     ref_namespace = get_rdf_ns_from_ua_index(ref_index)
     br_namespace = ref_namespace
-    ref_classiri = nodeId_to_iri(ref_namespace, ref_id)
+    ref_classiri = nodeId_to_iri(ref_namespace, ref_id, idtype)
     references_node = node.find('opcua:References', xml_ns)
     references = references_node.findall('opcua:Reference', xml_ns)
     g.add((ref_namespace[browsename], RDF.type, OWL.Class))
@@ -521,13 +545,13 @@ def add_type(g, node, xml_ns):
             reftype = reference.get('ReferenceType')
             isforward = reference.get('IsForward')
             nodeid = resolve_alias(reftype)
-            reftype_index, reftype_id = parse_nodeid(nodeid)
+            reftype_index, reftype_id, _ = parse_nodeid(nodeid)
             if reftype_id == hasSubtypeId and reftype_index == 0:
                 # HasSubtype detected
                 subtype = reference.text    
                 break
         nodeid = resolve_alias(subtype)
-        subtype_index, subtype_id = parse_nodeid(subtype)
+        subtype_index, subtype_id, _ = parse_nodeid(subtype)
         typeiri = typeIds[subtype_index][subtype_id]
         if (isforward == 'false'):
             g.add((br_namespace[browsename], RDFS.subClassOf, typeiri))
@@ -547,10 +571,10 @@ def add_type(g, node, xml_ns):
 
 def get_nid_ns_and_name(g, node):
     nodeid = node.get('NodeId')
-    ni_index, ni_id = parse_nodeid(nodeid)
+    ni_index, ni_id, idtype = parse_nodeid(nodeid)
     _, bn_name = getBrowsename(node)
     index = ni_index
-    return ni_id, index, bn_name
+    return ni_id, index, bn_name, idtype
 
 
 def scan_aliases(alias_nodes):
