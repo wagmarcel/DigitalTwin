@@ -3,6 +3,8 @@ import os
 import pathlib
 from urllib.parse import urlparse
 import json
+import random
+import string
 import functools
 import urllib
 from rdflib import Graph, Namespace, Literal, URIRef, BNode
@@ -65,7 +67,7 @@ SELECT ?instance WHERE {
 }
 """
 
-
+randnamelength = 16
 modelling_nodeid_optional = 80
 modelling_nodeid_mandatory = 78
 basic_types = ['String', 'Boolean', 'Byte', 'SByte', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Uin64', 'Int64', 'Float', 'DateTime', 'Guid', 'ByteString', 'Double']
@@ -80,6 +82,7 @@ parse nodeset instance and create ngsi-ld model')
     parser.add_argument('-e', '--entities', help='Filename of entities output file', required=False, default='entities.ttl')
     parser.add_argument('-s', '--shacl', help='Filename of SHACL output file', required=False, default='shacl.ttl')
     parser.add_argument('-k', '--knowledge', help='Filename of SHACL output file', required=False, default='knowledge.ttl')
+    parser.add_argument('-b', '--bindings', help='Filename of bindings output file', required=False, default='bindings.ttl')
     parser.add_argument('-c', '--context', help='Filename of JSONLD context output file', required=False, default='context.jsonld')
     parser.add_argument('-d', '--debug', help='Add additional debug info to structure (e.g. for better SHACL debug)', required=False, action='store_true')
     parser.add_argument('-n', '--namespace', help='Namespace prefix for entities, SHACL and JSON-LD', required=True)
@@ -142,7 +145,7 @@ def map_datatype_to_jsonld(data_type):
 
 def get_shacl_iri_and_contentclass(g, node, shacl_rule, attribute_name):
     try:
-        data_type = next(g.objects(node, basens['hasDataType']))
+        data_type = next(g.objects(node, basens['hasDatatype']))
         shacl_rule['datatype'] = map_datatype_to_jsonld(data_type)
         base_data_type = next(g.objects(data_type, RDFS.subClassOf))
         e.add((attribute_name, basens['hasOPCUADatatype'], data_type))
@@ -191,13 +194,55 @@ def get_contentclass(knowledgeg, contentclass, value):
     return foundclass
 
 
-def generate_node_id(node, id):
+def generate_node_id(node, id, instancetype):
     try:
-        node_id =  modelling_rule = next(g.objects(node, basens['hasNodeId']))
+        node_id = next(g.objects(node, basens['hasNodeId']))
+        idtype = next(g.objects(node, basens['hasIdentifierType']))
+        bn = next(g.objects(rootentity, basens['hasBrowseName']))
     except:
         node_id = 'unknown'
-    return f'urn:{id}:nodeId:{node_id}'
+    idt = idtype2String(idtype)
+    if instancetype == rootinstancetype:
+        return f'{id}:{bn}'
+    else:
+        return f'{id}:{bn}:sub:{idt}{node_id}'
 
+
+def idtype2String(idtype):
+    if idtype == basens['numericID']:
+        idt = 'i'
+    elif idtype == basens['stringID']:
+        idt = 's'
+    elif idtype == basens['guidID']:
+        idt = 'g'
+    elif idtype == basens['opaqueID']:
+        idt = 'b'
+    else:
+        idt = 'x'
+        print(f'Warning no idtype found.')
+    return idt
+
+
+def create_binding(g, bindingsg, parent_node_id, var_node, attribute_iri, version='0.1', firmware='firmware'):
+    randname = ''.join(random.choices(string.ascii_uppercase + string.digits, k=randnamelength))
+    bindingiri = binding_namespace[f'binding_' + randname]
+    mapiri = binding_namespace[f'map_' + randname]
+    dtype = next(g.objects(var_node, basens['hasDatatype']))
+    node_id = next(g.objects(var_node, basens['hasNodeId']))
+    idtype = next(g.objects(var_node, basens['hasIdentifierType']))
+    nsindex = next(g.objects(var_node, basens['hasNamespaceIndex']))
+    
+    bindingsg.add((bindingiri, RDF['type'], basens['Binding']))
+    bindingsg.add((bindingiri, basens['bindsEntity'], parent_node_id))
+    bindingsg.add((bindingiri, basens['bindingVersion'], Literal(version)))
+    bindingsg.add((bindingiri, basens['bindsFirmware'], Literal(firmware)))
+    bindingsg.add((attribute_iri, basens['boundBy'], bindingiri))
+    bindingsg.add((mapiri, RDF['type'], basens['BoundMap']))
+    bindingsg.add((mapiri, basens['bindsConnector'], basens['OPCUAConnector']))
+    bindingsg.add((mapiri, basens['bindsMapDatatype'], dtype))
+    bindingsg.add((mapiri, basens['bindsLogicalVar'], Literal('var1')))
+    bindingsg.add((mapiri, basens['bindsConnectorParameter'], Literal(f'ns={nsindex};{idtype2String(idtype)}={node_id}')))
+    
 
 def scan_type(node, instancetype):
     # Loop through all components
@@ -248,7 +293,7 @@ def scan_type(node, instancetype):
 
 def scan_entity(node, instancetype, id):
     #instancetype = next(g.objects(node, RDF.type))
-    node_id = generate_node_id(node, id)
+    node_id = generate_node_id(node, id, instancetype)
     instance = {}
     instance['type'] = instancetype
     instance['id'] = node_id
@@ -328,6 +373,13 @@ def scan_entity(node, instancetype, id):
                 }
             if debug:
                 instance[f'uaentities:{attributename}']['debug'] = f'uaentities:{attributename}'
+            try:
+                is_updating = bool(next(g.objects(o, basens['isUpdating'])))
+            except:
+                is_updating = False
+            if is_updating:
+                create_binding(g, bindingsg, URIRef(node_id), o, entity_namespace[attributename])
+                #print(f"Now binding {attributename} to {node}")
     if has_components:
         instances.append(instance)
         return node_id
@@ -415,17 +467,19 @@ if __name__ == '__main__':
 
     args = parse_args()
     instancename = args.instance
-    instancetype = args.type
+    rootinstancetype = args.type
     jsonldname = args.jsonld
     entitiesname = args.entities
     shaclname = args.shacl
     knowledgename = args.knowledge
+    bindingsname = args.bindings
     contextname = args.context
     debug = args.debug
     namespace_prefix = args.namespace
     entity_namespace = Namespace(f'{namespace_prefix}entities/')
     shacl_namespace = Namespace(f'{namespace_prefix}shacl/')
     knowledge_namespace = Namespace(f'{namespace_prefix}knowledge/')
+    binding_namespace = Namespace(f'{namespace_prefix}bindings/')
     entity_id = args.id
     g = Graph(store='Oxigraph')
     #g = Graph()
@@ -444,6 +498,7 @@ if __name__ == '__main__':
     e = Graph()
     shaclg = Graph()
     knowledgeg = Graph()
+    bindingsg = Graph()
     types = []
     e.bind('entities', entity_namespace)
     shaclg.bind('shacl', shacl_namespace)
@@ -455,20 +510,24 @@ if __name__ == '__main__':
     shaclg.bind('base', basens)
     shaclg.bind('sh', SH)
     knowledgeg.bind('knowledge', knowledge_namespace)
+    bindingsg.bind('entities', entity_namespace)
+  
     for k, v in list(g.namespaces()):
         knowledgeg.bind(k, v)
     basens = next(Namespace(uri) for prefix, uri in list(knowledgeg.namespaces()) if prefix == 'base')
     opcuans = next(Namespace(uri) for prefix, uri in list(knowledgeg.namespaces()) if prefix == 'opcua')
+    bindingsg.bind('base', basens)
+    bindingsg.bind('binging', binding_namespace)
     #create_shacl_type(s, instancetype)
     result = g.query(query_namespaces, initNs={'base': basens, 'opcua': opcuans})
     for uri, prefix, _ in result:
         e.bind(prefix, Namespace(uri))
     # First scan the templastes to create the rules
-    root = next(g.subjects(basens['definesType'], URIRef(instancetype)))
-    scan_type(root, instancetype)
+    root = next(g.subjects(basens['definesType'], URIRef(rootinstancetype)))
+    scan_type(root, rootinstancetype)
     # Then scan the entity with the real values
-    entity = next(g.subjects(RDF.type, URIRef(instancetype)))
-    scan_entity(entity, instancetype, entity_id)
+    rootentity = next(g.subjects(RDF.type, URIRef(rootinstancetype)))
+    scan_entity(rootentity, rootinstancetype, entity_id)
     # Add types to entities
     for type in types:
         e.add((type, RDF.type, OWL.Class))
@@ -492,4 +551,6 @@ if __name__ == '__main__':
     }
     with open(contextname, "w") as f:
         json.dump(jsonld_context, f, indent=2)
+    if len(bindingsg) > 0:
+        bindingsg.serialize(destination=bindingsname)
 
