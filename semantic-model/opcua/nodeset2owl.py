@@ -285,7 +285,7 @@ def add_nodeid_to_class(g, node, nodeclasstype, xml_ns):
     rdf_namespace = get_rdf_ns_from_ua_index(index)
     classiri = nodeId_to_iri(rdf_namespace, nid, idtype)
     g.add((classiri, rdf_ns['base']['hasNodeId'], Literal(nid)))
-    g.add((classiri, rdf_ns['base']['hasNamespaceIndex'], Literal(index)))
+    #g.add((classiri, rdf_ns['base']['hasNamespaceIndex'], Literal(index)))
     g.add((classiri, rdf_ns['base']['hasIdentifierType'], idtype))
     g.add((classiri, rdf_ns['base']['hasBrowseName'], Literal(bn_name)))
     namespace = opcua_ns[index]

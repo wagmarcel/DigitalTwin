@@ -230,18 +230,20 @@ def create_binding(g, bindingsg, parent_node_id, var_node, attribute_iri, versio
     dtype = next(g.objects(var_node, basens['hasDatatype']))
     node_id = next(g.objects(var_node, basens['hasNodeId']))
     idtype = next(g.objects(var_node, basens['hasIdentifierType']))
-    nsindex = next(g.objects(var_node, basens['hasNamespaceIndex']))
+    ns = next(g.objects(var_node, basens['hasNamespace']))
+    nsuri = next(g.objects(ns, basens['hasUri']))
     
     bindingsg.add((bindingiri, RDF['type'], basens['Binding']))
     bindingsg.add((bindingiri, basens['bindsEntity'], parent_node_id))
     bindingsg.add((bindingiri, basens['bindingVersion'], Literal(version)))
     bindingsg.add((bindingiri, basens['bindsFirmware'], Literal(firmware)))
+    bindingsg.add((bindingiri, basens['bindsMap'], mapiri))
     bindingsg.add((attribute_iri, basens['boundBy'], bindingiri))
     bindingsg.add((mapiri, RDF['type'], basens['BoundMap']))
     bindingsg.add((mapiri, basens['bindsConnector'], basens['OPCUAConnector']))
     bindingsg.add((mapiri, basens['bindsMapDatatype'], dtype))
-    bindingsg.add((mapiri, basens['bindsLogicalVar'], Literal('var1')))
-    bindingsg.add((mapiri, basens['bindsConnectorParameter'], Literal(f'ns={nsindex};{idtype2String(idtype)}={node_id}')))
+    bindingsg.add((mapiri, basens['bindsLogicVar'], Literal('var1')))
+    bindingsg.add((mapiri, basens['bindsConnectorParameter'], Literal(f'nsu={nsuri};{idtype2String(idtype)}={node_id}')))
     
 
 def scan_type(node, instancetype):
@@ -517,7 +519,7 @@ if __name__ == '__main__':
     basens = next(Namespace(uri) for prefix, uri in list(knowledgeg.namespaces()) if prefix == 'base')
     opcuans = next(Namespace(uri) for prefix, uri in list(knowledgeg.namespaces()) if prefix == 'opcua')
     bindingsg.bind('base', basens)
-    bindingsg.bind('binging', binding_namespace)
+    bindingsg.bind('binding', binding_namespace)
     #create_shacl_type(s, instancetype)
     result = g.query(query_namespaces, initNs={'base': basens, 'opcua': opcuans})
     for uri, prefix, _ in result:
