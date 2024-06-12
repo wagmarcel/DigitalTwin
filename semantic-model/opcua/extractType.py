@@ -124,7 +124,7 @@ def get_type(node):
     for typenc in g.objects(node, RDF.type):
         if isNodeclass(typenc):
             nc = typenc
-        else:
+        elif typenc != OWL.NamedIndividual:
             type = typenc
     return nc, type
 
