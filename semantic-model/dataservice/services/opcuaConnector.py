@@ -26,6 +26,22 @@ from rdflib.namespace import XSD
 #url = os.environ.get('OPCUA_TCP_CONNECT') or "opc.tcp://localhost:4840/"
 url = "opc.tcp://localhost:4840/"
 
+async def update_namespace_parameter(client, connector_attribute_dict):
+    nodeid = connector_attribute_dict['connectorParameter']
+    if not 'nsu=' in nodeid:
+        return nodeid
+    ns_index = 0
+    try:
+        ns_part, i_part = nodeid.split(';')
+    except:
+        ns_part = None
+        i_part = nodeid
+    if ns_part is not None:
+        namespace = ns_part.split('=')[1]
+    nsidx = await client.get_namespace_index(namespace)
+    nodeid = f'ns={nsidx};{i_part}'
+    return nodeid
+
 ##########################################################################################
 # This function will receive an array of dictionaries containing the needed parameters
 # to read out data from machines or databases.
@@ -33,6 +49,8 @@ url = "opc.tcp://localhost:4840/"
 ##########################################################################################
 async def subscribe(connector_attribute_dict, firmware):
     async with Client(url=url) as client:
+        # first resolve explicit namespace when given
+        connector_attribute_dict['connectorParameter'] = await update_namespace_parameter(client, connector_attribute_dict)
         while True:
             logic_var_type = connector_attribute_dict['logicVarType']
             nodeset = connector_attribute_dict['connectorParameter']
