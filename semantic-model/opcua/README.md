@@ -9,10 +9,13 @@ For local testing
     export DI_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/DI/Opc.Ua.Di.NodeSet2.xml
     export IA_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/IA/Opc.Ua.IA.NodeSet2.xml
     export MACHINERY_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/Machinery/Opc.Ua.Machinery.NodeSet2.xml
+    export LASERSYSTEMS_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/LaserSystems/Opc.Ua.LaserSystems.NodeSet2.xml
+    export MACHINERY_EXAMPLE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/Machinery/Opc.Ua.Machinery.Examples.NodeSet2.xml
     export MACHINETOOL_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/MachineTool/Opc.Ua.MachineTool.NodeSet2.xml
     export PUMPS_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/Pumps/Opc.Ua.Pumps.NodeSet2.xml
     export PUMP_EXAMPLE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/Pumps/instanceexample.xml
     export MACHINETOOL_EXAMPLE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/MachineTool/Machinetool-Example.xml
+    export LASERSYSTEMS_EXAMPLE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/LaserSystems/LaserSystem-Example.NodeSet2.xml
     export BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl
 
 Create core.ttl:
@@ -42,10 +45,25 @@ create pumpexample.ttl:
     python3 nodeset2owl.py  ${PUMP_EXAMPLE_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl machinery.ttl pumps.ttl -n http://yourorganisation.org/InstanceExample/ -v http://example.com/v0.1/pumpexample/ -p pumpexample -o pumpexample.ttl
 
 create machinetool.ttl:
+
     python3 nodeset2owl.py  ${MACHINETOOL_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl machinery.ttl ia.ttl -v http://example.com/v0.1/MachineTool/ -p machinetool -o machinetool.ttl
 
+create lasersystems.ttl:
+
+    python3 nodeset2owl.py  ${LASERSYSTEMS_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl machinery.ttl ia.ttl machinetool.ttl -v http://example.com/v0.1/LaserSystems/ -p lasersystems -o lasersystems.ttl
+
+create lasersystemsexample.ttl:
+
+    python3 nodeset2owl.py  ${LASERSYSTEMS_EXAMPLE_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl machinery.ttl ia.ttl machinetool.ttl lasersystems.ttl -v http://example.com/v0.1/LaserSystems/ -p lasersystemsexample -o lasersystemsexample.ttl
+
 create machineToolExample.ttl:
+
     python3 nodeset2owl.py  ${MACHINETOOL_EXAMPLE_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl machinery.ttl machinetool.ttl ia.ttl -n http://yourorganisation.org/MachineTool-Example/ -v http://example.com/MachineToolExample/v0.1/pumpexample/ -p machinetoolexample -o machinetoolexample.ttl
+
+create machineryExample.ttl:
+
+    python3 nodeset2owl.py  ${MACHINERY_EXAMPLE_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl machinery.ttl  -n http://yourorganisation.org/Machinery_Example/ -v http://example.com/MachineryExample/v0.1/pumpexample/ -p machineryexample -o machineryexample.ttl
+
 
 ## extractType.py
 
@@ -54,6 +72,10 @@ Extract ngsi-ld prototype:
     python3 ./extractType.py -t http://opcfoundation.org/UA/Pumps/PumpType -n http://yourorganisation.org/InstanceExample/ pumpexample.ttl
 
     python3 ./extractType.py -t http://opcfoundation.org/UA/MachineTool/MachineToolType -n http://yourorganisation.org/InstanceExample/ -i "urn:iff" machinetoolexample.ttl
+
+    python3 ./extractType.py -t http://opcfoundation.org/UA/Machinery_Example/ExampleMachineType -n http://opcfoundation.org/UA/Machinery_Example/ -i "urn:iff" machineryexample.ttl
+
+    python3 ./extractType.py -t http://opcfoundation.org/UA/LaserSystems/LaserSystemType -n http://vdma.org/UA/LaserSystem-Example/ -i "urn:iff" lasersystemsexample.ttl
 
 Check the SHACL compliance:
 
