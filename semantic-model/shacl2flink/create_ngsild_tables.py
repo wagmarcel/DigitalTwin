@@ -29,6 +29,7 @@ field_query = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
 SELECT DISTINCT ?path ?shacltype
 where {
@@ -36,6 +37,7 @@ where {
     ?nodeshape sh:targetClass ?shacltypex .
     ?shacltype rdfs:subClassOf* ?shacltypex .
     ?nodeshape sh:property [ sh:path ?path ; ] .
+    FILTER(?shacltype != owl:Nothing)
     }
     ORDER BY STR(?path)
 """
