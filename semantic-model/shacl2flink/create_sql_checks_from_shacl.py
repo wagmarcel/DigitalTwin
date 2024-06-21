@@ -37,6 +37,7 @@ create_sql_checks_from_shacl.py <shacl.ttl> <knowledge.ttl>')
 from the common helmfile configs.')
     parser.add_argument('--namespace', help='Kubernetes namespace for configmaps', default='iff')
     parser.add_argument('-s', '--strict', help='Add all contstraints, even pure optional (will bloat the number of sql scripts)', action='store_true')
+    parser.add_argument('-p', '--enablecheckpoints', help='Enable Checkpointing in sql statementset', action='store_true')
     parsed_args = parser.parse_args(args)
     return parsed_args
 
@@ -53,10 +54,12 @@ def split_statementsets(statementsets, max_size):
             splits.append(split_sets)
             split_size = 0
             split_sets = []
+    if len(split_sets) > 0:
+        splits.append(split_sets)
     return splits
 
 
-def main(shaclfile, knowledgefile, context, k8s_namespace, strict, output_folder='output'):
+def main(shaclfile, knowledgefile, context, k8s_namespace, strict, output_folder='output', enable_checkpoints=False):
     # If no context is defined, try to derive it from common.yaml
     prefixes = {}
     if context is None:
@@ -110,7 +113,7 @@ is accessible.")
             statementmap.append(f'{k8s_namespace}/{configmapname}')
         f.write("---\n")
         yaml.dump(utils.create_statementmap('shacl-validation', tables,
-                                            views, ttl, statementmap), f)
+                                            views, ttl, statementmap,  enable_checkpoints=enablecheckpoints), f)
     with open(os.path.join(output_folder, "shacl-validation.sqlite"), "w") \
             as sqlitef:
         print(sqlite + sqlite2 + sqlite3, file=sqlitef)
@@ -123,4 +126,5 @@ if __name__ == '__main__':
     context = args.context
     k8s_namespace = args.namespace
     strict = args.strict
-    main(shaclfile, knowledgefile, context, k8s_namespace, strict)
+    enablecheckpoints = args.enablecheckpoints
+    main(shaclfile, knowledgefile, context, k8s_namespace, strict, enable_checkpoints=enablecheckpoints)
