@@ -1,48 +1,46 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix binding: <http://yourorganisation.org/InstanceExample/bindings/> .
 @prefix entities: <http://yourorganisation.org/InstanceExample/entities/> .
-@prefix binding: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
-@prefix owl: <http://www.w3.org/2002/07/owl#> .
-@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@prefix xml: <http://www.w3.org/XML/1998/namespace> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@base <https://example.com/test/> .
-@prefix : <https://example.com/test/> .
-    
-entities:hasMotorTemperature binding:boundBy :myBinding .
-:myBinding a binding:Binding .
-:myBinding binding:bindsEntity <urn:iff:ExamplePump:sub:i5006> .
-:myBinding binding:bindsMap :map .
-:myBinding binding:bindingVersion "0.1" .
-:myBinding binding:bindsFirmware "myFirmware" .
 
-:map a binding:BoundMap .
-:map binding:bindsConnector binding:TestConnector .
-:map binding:bindsMapDatatype xsd:float .
-:map binding:bindsLogicVar "var1" .
-:map binding:bindsConnectorParameter 'ns=5;i=6020' .
+entities:hasDifferentialPressure base:boundBy binding:binding_LRLLYKV8IG8PAIUP .
 
-entities:hasEnergyConsumption binding:boundBy :myBinding2 .
-:myBinding2 a binding:Binding .
-:myBinding2 binding:bindsEntity <urn:iff:ExamplePump:sub:i5006> .
-:myBinding2 binding:bindsMap :map2 .
-:myBinding2 binding:bindingVersion "0.1" .
-:myBinding2 binding:bindsFirmware "myFirmware" .
+entities:hasEnergyConsumption base:boundBy binding:binding_JKEXWUZG5YC9S3YG .
 
-:map2 a binding:BoundMap .
-:map2 binding:bindsConnector binding:OPCUAConnector .
-:map2 binding:bindsMapDatatype xsd:float .
-:map2 binding:bindsLogicVar "var1" .
-:map2 binding:bindsConnectorParameter 'ns=5;i=6017' .
+entities:hasMotorTemperature base:boundBy binding:binding_RLZG83N97DJZMYTQ .
 
-entities:hasDifferentialPressure binding:boundBy :myBinding3 .
-:myBinding3 a binding:Binding .
-:myBinding3 binding:bindsEntity <urn:iff:ExamplePump:sub:i5018> .
-:myBinding3 binding:bindsMap :map3 .
-:myBinding3 binding:bindingVersion "0.1" .
-:myBinding3 binding:bindsFirmware "myFirmware" .
+binding:binding_JKEXWUZG5YC9S3YG a base:Binding ;
+    base:bindingVersion "0.1" ;
+    base:bindsEntity <urn:iff:ExamplePump:sub:i5006> ;
+    base:bindsFirmware "firmware" ;
+    base:bindsMap binding:map_JKEXWUZG5YC9S3YG .
 
-:map3 a binding:BoundMap .
-:map3 binding:bindsConnector binding:OPCUAConnector .
-:map3 binding:bindsMapDatatype xsd:float .
-:map3 binding:bindsLogicVar "var1" .
-:map3 binding:bindsConnectorParameter 'ns=5;i=6117' .
+binding:binding_LRLLYKV8IG8PAIUP a base:Binding ;
+    base:bindingVersion "0.1" ;
+    base:bindsEntity <urn:iff:ExamplePump:sub:i5018> ;
+    base:bindsFirmware "firmware" ;
+    base:bindsMap binding:map_LRLLYKV8IG8PAIUP .
+
+binding:binding_RLZG83N97DJZMYTQ a base:Binding ;
+    base:bindingVersion "0.1" ;
+    base:bindsEntity <urn:iff:ExamplePump:sub:i5006> ;
+    base:bindsFirmware "firmware" ;
+    base:bindsMap binding:map_RLZG83N97DJZMYTQ .
+
+binding:map_JKEXWUZG5YC9S3YG a base:BoundMap ;
+    base:bindsConnector base:OPCUAConnector ;
+    base:bindsConnectorParameter "nsu=http://yourorganisation.org/InstanceExample/;i=6017" ;
+    base:bindsLogicVar "var1" ;
+    base:bindsMapDatatype <http://opcfoundation.org/UA/Double> .
+
+binding:map_LRLLYKV8IG8PAIUP a base:BoundMap ;
+    base:bindsConnector base:OPCUAConnector ;
+    base:bindsConnectorParameter "nsu=http://yourorganisation.org/InstanceExample/;i=6117" ;
+    base:bindsLogicVar "var1" ;
+    base:bindsMapDatatype <http://opcfoundation.org/UA/Double> .
+
+binding:map_RLZG83N97DJZMYTQ a base:BoundMap ;
+    base:bindsConnector base:OPCUAConnector ;
+    base:bindsConnectorParameter "nsu=http://yourorganisation.org/InstanceExample/;i=6020" ;
+    base:bindsLogicVar "var1" ;
+    base:bindsMapDatatype <http://opcfoundation.org/UA/Double> .
+
