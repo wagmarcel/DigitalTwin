@@ -300,7 +300,7 @@ def create_configmap_generic(object_name, data):
 
 
 def create_statementmap(object_name, table_object_names,
-                        view_object_names, ttl, statementmaps, refresh_interval="12h", enable_checkpoints=False):
+                        view_object_names, ttl, statementmaps, refresh_interval="12h", enable_checkpoints=True, enable_rocksdb=True):
     yaml_bsqls = {}
     yaml_bsqls['apiVersion'] = 'industry-fusion.com/v1alpha4'
     yaml_bsqls['kind'] = 'BeamSqlStatementSet'
@@ -322,10 +322,10 @@ def create_statementmap(object_name, table_object_names,
             {"parallelism.default": "{{ .Values.flink.defaultParalellism }}"}
         ]
         if enable_checkpoints:
-            spec['sqlsettings'].append({"state.backend.rocksdb.writebuffer.size": "64 kb"})
-            {"state.backend.rocksdb.use-bloom-filter": "true"},
-            spec['sqlsettings'].append({"state.backend.rocksdb.use-bloom-filter": "true"})
             spec['sqlsettings'].append({"execution.checkpointing.interval": "{{ .Values.flink.checkpointInterval }}"})
+        if enable_rocksdb:
+            spec['sqlsettings'].append({"state.backend.rocksdb.writebuffer.size": "64 kb"})
+            spec['sqlsettings'].append({"state.backend.rocksdb.use-bloom-filter": "true"})
             spec['sqlsettings'].append({"state.backend": "rocksdb"})
             spec['sqlsettings'].append({"state.backend.rocksdb.predefined-options": "SPINNING_DISK_OPTIMIZED_HIGH_MEM"})
             
