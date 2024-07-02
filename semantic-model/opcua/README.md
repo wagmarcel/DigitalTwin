@@ -12,6 +12,7 @@ For local testing
     export IA_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/IA/Opc.Ua.IA.NodeSet2.xml
     export MACHINERY_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/Machinery/Opc.Ua.Machinery.NodeSet2.xml
     export MACHINERY_PROCESSVALUES_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/Machinery/ProcessValues/opc.ua.machinery.processvalues.xml
+    export MACHINERY_JOBS_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/ISA95-JOBCONTROL/opc.ua.isa95-jobcontrol.nodeset2.xml
     export LASERSYSTEMS_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/LaserSystems/Opc.Ua.LaserSystems.NodeSet2.xml
     export MACHINERY_EXAMPLE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/Machinery/Opc.Ua.Machinery.Examples.NodeSet2.xml
     export MACHINETOOL_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/MachineTool/Opc.Ua.MachineTool.NodeSet2.xml
@@ -78,6 +79,9 @@ create padim.ttl:
 create machinery_processvalues.ttl:
 
     python3 nodeset2owl.py  ${MACHINERY_PROCESSVALUES_NODESET} -i ${BASE_ONTOLOGY} core.ttl padim.ttl -v http://example.com/v0.1/Machinery/ProcessValues -p machinery_processvalues -o machinery_processvalues.ttl
+
+create machinery_jobs (ISA95-JOBCONTROL):
+    python3 nodeset2owl.py  ${MACHINERY_JOBS_NODESET} -i ${BASE_ONTOLOGY} core.ttl  -v http://example.com/v0.1/Machinery/Jobs -p machinery_jobs -o machinery_jobs.ttl
 
 
 ## extractType.py
