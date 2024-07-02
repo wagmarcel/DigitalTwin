@@ -7,8 +7,11 @@ For local testing
     export CORE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/Schema/Opc.Ua.NodeSet2.xml
     export CORE_SERVICES_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/Schema/Opc.Ua.NodeSet2.Services.xml
     export DI_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/DI/Opc.Ua.Di.NodeSet2.xml
+    export PADIM_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/PADIM/Opc.Ua.PADIM.NodeSet2.xml
+    export DICTIONARY_IRDI=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/PADIM/Opc.Ua.IRDI.NodeSet2.xml
     export IA_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/IA/Opc.Ua.IA.NodeSet2.xml
     export MACHINERY_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/Machinery/Opc.Ua.Machinery.NodeSet2.xml
+    export MACHINERY_PROCESSVALUES_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/Machinery/ProcessValues/opc.ua.machinery.processvalues.xml
     export LASERSYSTEMS_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/LaserSystems/Opc.Ua.LaserSystems.NodeSet2.xml
     export MACHINERY_EXAMPLE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/Machinery/Opc.Ua.Machinery.Examples.NodeSet2.xml
     export MACHINETOOL_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/MachineTool/Opc.Ua.MachineTool.NodeSet2.xml
@@ -63,6 +66,18 @@ create machineToolExample.ttl:
 create machineryExample.ttl:
 
     python3 nodeset2owl.py  ${MACHINERY_EXAMPLE_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl machinery.ttl  -n http://yourorganisation.org/Machinery_Example/ -v http://example.com/MachineryExample/v0.1/pumpexample/ -p machineryexample -o machineryexample.ttl
+
+create dictionary_irdi.ttl:
+
+    python3 nodeset2owl.py  ${DICTIONARY_IRDI} -i ${BASE_ONTOLOGY} core.ttl -v http://example.com/v0.1/Dictionary/IRDI -p dictionary_irdi -o dictionary_irdi.ttl
+
+create padim.ttl:
+
+    python3 nodeset2owl.py  ${PADIM_NODESET} -i ${BASE_ONTOLOGY} core.ttl dictionary_irdi.ttl devices.ttl -v http://example.com/v0.1/PADIM -p padim -o padim.ttl
+
+create machinery_processvalues.ttl:
+
+    python3 nodeset2owl.py  ${MACHINERY_PROCESSVALUES_NODESET} -i ${BASE_ONTOLOGY} core.ttl padim.ttl -v http://example.com/v0.1/Machinery/ProcessValues -p machinery_processvalues -o machinery_processvalues.ttl
 
 
 ## extractType.py
