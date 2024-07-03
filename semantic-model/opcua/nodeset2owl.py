@@ -1,6 +1,7 @@
 import sys
 import os
 import urllib
+import urllib.parse
 import xml.etree.ElementTree as ET
 import pathlib
 import xmlschema
@@ -271,6 +272,7 @@ def nodeId_to_iri(namespace, nid, idtype):
         idt = 'i'
     elif idtype == rdf_ns['base']['stringID']:
         idt = 's'
+        nid = urllib.parse.quote(nid)
     elif idtype == rdf_ns['base']['guidID']:
         idt = 'g'
     elif idtype == rdf_ns['base']['opqaueID']:
