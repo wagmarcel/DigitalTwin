@@ -70,7 +70,9 @@ SELECT ?instance WHERE {
 randnamelength = 16
 modelling_nodeid_optional = 80
 modelling_nodeid_mandatory = 78
+modelling_nodeid_optional_array = 11508
 basic_types = ['String', 'Boolean', 'Byte', 'SByte', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Uin64', 'Int64', 'Float', 'DateTime', 'Guid', 'ByteString', 'Double']
+
 
 def parse_args(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='\
@@ -250,48 +252,121 @@ def create_binding(g, bindingsg, parent_node_id, var_node, attribute_iri, versio
 def scan_type(node, instancetype):
     # Loop through all components
     shapename = create_shacl_type(instancetype)
+    print(shapename)
     components = g.triples((node, basens['hasComponent'], None))
+    addins = g.triples((node, basens['hasAddIn'], None))
+    #components = list(components) + list(addins)
     has_components = False
-    for (s, p, o) in components:
-        shacl_rule = {}
-        browse_name = next(g.objects(o, basens['hasBrowseName']))
-        #print(f'Processing Node {o} with browsename {browse_name}')
-        nodeclass, classtype = get_type(o)
-        attributename = urllib.parse.quote(f'has{browse_name}')
-        shacl_rule['path'] = entity_namespace[attributename]
-        try:
-            modelling_node = next(g.objects(node, basens['hasModellingRule']))
-            modelling_rule = next(g.objects(modelling_node, basens['hasNodeId']))
-            if int(modelling_rule) == modelling_nodeid_optional:
-                shacl_rule['optional'] = True
-            elif int(modelling_rule) == modelling_nodeid_mandatory:
-                shacl_rule['optional'] = False
-            else:
-                shacl_rule['optional'] = True
-        except:
-            shacl_rule['optional'] = True
-        e.add((entity_namespace[attributename], RDF.type, OWL.ObjectProperty))
-        e.add((entity_namespace[attributename], RDFS.domain, URIRef(instancetype)))
-        e.add((entity_namespace[attributename], RDF.type, OWL.NamedIndividual))
-        e.add((entity_namespace[attributename], RDF.type, basens['SubComponentRelationship']))
-        types.append(classtype)
-       
-        if isObjectNodeClass(nodeclass):
-            shacl_rule['is_property'] = False
-            e.add((entity_namespace[attributename], RDFS.range, ngsildns['Relationship']))
-            components_found = scan_type(o, classtype)
-            if components_found:
-                has_components = True
-                shacl_rule['contentclass'] = classtype
-                create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], False, True, shacl_rule['contentclass'], None)
-        elif isVariableNodeClass(nodeclass):
-            has_components = True
-            shacl_rule['is_property'] = True
-            e.add((entity_namespace[attributename], RDFS.range, ngsildns['Property']))
-            get_shacl_iri_and_contentclass(g, o, shacl_rule, entity_namespace[attributename])
-            create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], True, shacl_rule['is_iri'], shacl_rule['contentclass'], shacl_rule['datatype'])
-            add_class_to_knowledge(g, knowledgeg, shacl_rule['contentclass'])
+    for (_, _, o) in components:
+        has_components = scan_type_recursive(o, node, instancetype, shapename) or has_components
+    addins = g.triples((node, basens['hasAddIn'], None))
+    for (_, _, o) in addins:
+        has_components = scan_type_recursive(o, node, instancetype, shapename) or has_components
+    organizes = g.triples((node, basens['organizes'], None))
+    for (_, _, o) in organizes:
+        scan_type_nonrecursive(o, node, instancetype, shapename)
+        has_components = True
     return has_components
+
+
+def scan_type_recursive(o, node, instancetype, shapename):
+    has_components = False
+    shacl_rule = {}
+    browse_name = next(g.objects(o, basens['hasBrowseName']))
+    #print(f'Processing Node {o} with browsename {browse_name}')
+    nodeclass, classtype = get_type(o)
+    attributename = urllib.parse.quote(f'has{browse_name}')
+    if len(list(e.objects(entity_namespace[attributename], RDF.type))) > 0:
+        return has_components
+    shacl_rule['path'] = entity_namespace[attributename]
+    get_modelling_rule(node, shacl_rule)
+    e.add((entity_namespace[attributename], RDF.type, OWL.ObjectProperty))
+    e.add((entity_namespace[attributename], RDFS.domain, URIRef(instancetype)))
+    e.add((entity_namespace[attributename], RDF.type, OWL.NamedIndividual))
+    e.add((entity_namespace[attributename], RDF.type, basens['SubComponentRelationship']))
+    types.append(classtype)
+    
+    if isObjectNodeClass(nodeclass):
+        shacl_rule['is_property'] = False
+        e.add((entity_namespace[attributename], RDFS.range, ngsildns['Relationship']))
+        _, use_instance_declaration = get_modelling_rule(o, None)
+        if use_instance_declaration:
+            # This information mixes two details
+            # 1. Use the instance declaration and not the object for instantiation
+            # 2. It could be zero or more instances (i.e. and array)
+            shacl_rule['array'] = True
+            _, typeiri = get_type(o)
+            try:
+                typenode = next(g.subjects(basens['definesType'], typeiri))
+                o = typenode
+            except:
+                pass
+        components_found = scan_type(o, classtype)
+        if components_found:
+            has_components = True
+            shacl_rule['contentclass'] = classtype
+            create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], False, True, shacl_rule['contentclass'], None)
+    elif isVariableNodeClass(nodeclass):
+        has_components = True
+        shacl_rule['is_property'] = True
+        e.add((entity_namespace[attributename], RDFS.range, ngsildns['Property']))
+        get_shacl_iri_and_contentclass(g, o, shacl_rule, entity_namespace[attributename])
+        create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], True, shacl_rule['is_iri'], shacl_rule['contentclass'], shacl_rule['datatype'])
+        add_class_to_knowledge(g, knowledgeg, shacl_rule['contentclass'])
+    return has_components
+
+
+def scan_type_nonrecursive(o, node, instancetype, shapename):
+    shacl_rule = {}
+    browse_name = next(g.objects(o, basens['hasBrowseName']))
+    #print(f'Processing Node {o} with browsename {browse_name}')
+    nodeclass, classtype = get_type(o)
+    attributename = urllib.parse.quote(f'has{browse_name}')
+    shacl_rule['path'] = entity_namespace[attributename]
+    get_modelling_rule(node, shacl_rule)
+    e.add((entity_namespace[attributename], RDF.type, OWL.ObjectProperty))
+    e.add((entity_namespace[attributename], RDFS.domain, URIRef(instancetype)))
+    e.add((entity_namespace[attributename], RDF.type, OWL.NamedIndividual))
+    #e.add((entity_namespace[attributename], RDF.type, basens['SubComponentRelationship']))
+    types.append(classtype)
+    
+    if isObjectNodeClass(nodeclass):
+        shacl_rule['is_property'] = False
+        e.add((entity_namespace[attributename], RDFS.range, ngsildns['Relationship']))
+        shacl_rule['contentclass'] = classtype
+        create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], False, True, shacl_rule['contentclass'], None)
+    elif isVariableNodeClass(nodeclass):
+        shacl_rule['is_property'] = True
+        e.add((entity_namespace[attributename], RDFS.range, ngsildns['Property']))
+        get_shacl_iri_and_contentclass(g, o, shacl_rule, entity_namespace[attributename])
+        create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], True, shacl_rule['is_iri'], shacl_rule['contentclass'], shacl_rule['datatype'])
+        add_class_to_knowledge(g, knowledgeg, shacl_rule['contentclass'])
+    return
+
+
+def get_modelling_rule(node, shacl_rule):
+    use_instance_declaration = False
+    is_optional = True
+    try:
+        modelling_node = next(g.objects(node, basens['hasModellingRule']))
+        modelling_rule = next(g.objects(modelling_node, basens['hasNodeId']))
+        if int(modelling_rule) == modelling_nodeid_optional:
+            is_optional = True
+        elif int(modelling_rule) == modelling_nodeid_mandatory:
+            is_optional = False
+        else:
+            is_optional = True
+        if int(modelling_rule) == modelling_nodeid_optional_array:
+            is_optional = True
+            use_instance_declaration = True
+        else:
+            is_optional = False
+    except:
+        pass
+    if shacl_rule is not None:
+        shacl_rule['optional'] = is_optional
+        shacl_rule['array'] = use_instance_declaration
+    return is_optional, use_instance_declaration
 
 
 def scan_entity(node, instancetype, id):
@@ -527,7 +602,7 @@ if __name__ == '__main__':
     result = g.query(query_namespaces, initNs={'base': basens, 'opcua': opcuans})
     for uri, prefix, _ in result:
         e.bind(prefix, Namespace(uri))
-    # First scan the templastes to create the rules
+    # First scan the templates to create the rules
     root = next(g.subjects(basens['definesType'], URIRef(rootinstancetype)))
     scan_type(root, rootinstancetype)
     # Then scan the entity with the real values
