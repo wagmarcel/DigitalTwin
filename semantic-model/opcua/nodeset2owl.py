@@ -620,9 +620,15 @@ if __name__ == '__main__':
             exit(1)
         model = models.find('opcua:Model', xml_ns)
         ontology_name = URIRef(model.get('ModelUri'))
+        if not str(ontology_name).endswith('/'):
+            ontology_name += '/'
     else:
         ontology_name = URIRef(args.namespace) if args.namespace is not None else None
     namespace_uris = root.find('opcua:NamespaceUris', xml_ns)
+    for uri in namespace_uris:
+        if not uri.text.endswith('/'):
+            uri.text += '/'
+
     create_prefixes(g, namespace_uris, base_ontology, opcua_namespace)
     init_nodeids( opcua_inputs, ontology_name, ontology_prefix)
     create_header(g)
