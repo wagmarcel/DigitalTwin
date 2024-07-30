@@ -252,7 +252,6 @@ def create_binding(g, bindingsg, parent_node_id, var_node, attribute_iri, versio
 def scan_type(node, instancetype):
     # Loop through all components
     shapename = create_shacl_type(instancetype)
-    print(shapename)
     components = g.triples((node, basens['hasComponent'], None))
     addins = g.triples((node, basens['hasAddIn'], None))
     #components = list(components) + list(addins)
@@ -279,7 +278,7 @@ def scan_type_recursive(o, node, instancetype, shapename):
     if len(list(e.objects(entity_namespace[attributename], RDF.type))) > 0:
         return has_components
     shacl_rule['path'] = entity_namespace[attributename]
-    get_modelling_rule(node, shacl_rule)
+    get_modelling_rule(o, shacl_rule)
     e.add((entity_namespace[attributename], RDF.type, OWL.ObjectProperty))
     e.add((entity_namespace[attributename], RDFS.domain, URIRef(instancetype)))
     e.add((entity_namespace[attributename], RDF.type, OWL.NamedIndividual))
@@ -354,13 +353,9 @@ def get_modelling_rule(node, shacl_rule):
             is_optional = True
         elif int(modelling_rule) == modelling_nodeid_mandatory:
             is_optional = False
-        else:
-            is_optional = True
-        if int(modelling_rule) == modelling_nodeid_optional_array:
+        elif int(modelling_rule) == modelling_nodeid_optional_array:
             is_optional = True
             use_instance_declaration = True
-        else:
-            is_optional = False
     except:
         pass
     if shacl_rule is not None:
@@ -387,82 +382,106 @@ def scan_entity(node, instancetype, id):
     #shapename = create_shacl_type(instancetype)
     has_components = False
     components = g.triples((node, basens['hasComponent'], None))
-    for (s, p, o) in components:
-        shacl_rule = {}
-        browse_name = next(g.objects(o, basens['hasBrowseName']))
-        #print(f'Processing Node {o} with browsename {browse_name}')
-        nodeclass, classtype = get_type(o)
-        attributename = urllib.parse.quote(f'has{browse_name}')
-        shacl_rule['path'] = entity_namespace[attributename]
-        try:
-            modelling_node = next(g.objects(node, basens['hasModellingRule']))
-            modelling_rule = next(g.objects(modelling_node, basens['hasNodeId']))
-            if int(modelling_rule) == modelling_nodeid_optional:
-                shacl_rule['optional'] = True
-            elif int(modelling_rule) == modelling_nodeid_mandatory:
-                shacl_rule['optional'] = False
-            else:
-                shacl_rule['optional'] = True
-        except:
-            shacl_rule['optional'] = True
-        types.append(classtype)
-       
-        if isObjectNodeClass(nodeclass):
-            shacl_rule['is_property'] = False
-            #relid = f'{id}:{idadd}'
-            relid = scan_entity(o, classtype, id)
-            if relid is not None:
-                has_components = True
-                instance[f'uaentities:{attributename}'] = {
-                    'type': 'Relationship',
-                    'object': relid
-                }
-                if debug:
-                    instance[f'uaentities:{attributename}']['debug'] = f'uaentities:{attributename}'
-                shacl_rule['contentclass'] = classtype
-                #create_ngsild_object(o, type, f'{id}:{idadd}')
-                # create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], False, True, shacl_rule['contentclass'], None)
-        elif isVariableNodeClass(nodeclass):
-            shacl_rule['is_property'] = True
-            get_shacl_iri_and_contentclass(g, o, shacl_rule, entity_namespace[attributename])
-            try:
-                value = next(g.objects(o, basens['hasValue']))
-                if not shacl_rule['is_iri']:
-                    value = value.toPython()
-                else:
-                    value = get_contentclass(knowledgeg, shacl_rule['contentclass'], value)
-                    
-                    value = value.toPython()
-            except StopIteration:
-                if not shacl_rule['is_iri']:
-                    value = get_default_value(shacl_rule['datatype'])
-                else:
-                    value = get_default_contentclass(knowledgeg, shacl_rule['contentclass'])
-            has_components = True
-            if not shacl_rule['is_iri']:
-                instance[f'uaentities:{attributename}'] = {
-                    'type': 'Property',
-                    'value': value
-                }
-            else:
-                instance[f'uaentities:{attributename}'] = {
-                    'type': 'Property',
-                    'value': { '@id': str(value)}
-                }
-            if debug:
-                instance[f'uaentities:{attributename}']['debug'] = f'uaentities:{attributename}'
-            try:
-                is_updating = bool(next(g.objects(o, basens['isUpdating'])))
-            except:
-                is_updating = False
-            if is_updating:
-                create_binding(g, bindingsg, URIRef(node_id), o, entity_namespace[attributename])
-                #print(f"Now binding {attributename} to {node}")
+    for (_, _, o) in components:
+        has_components = scan_entitiy_recursive(node, id, instance, node_id, o) or has_components
+    addins = g.triples((node, basens['hasAddIn'], None))
+    for (_, _, o) in addins:
+        has_components = scan_entitiy_recursive(node, id, instance, node_id, o) or has_components
+    organizes = g.triples((node, basens['organizes'], None))
+    for (_, _, o) in organizes:
+        has_components = scan_entitiy_nonrecursive(node, id, instance, node_id, o) or has_components
     if has_components:
         instances.append(instance)
         return node_id
     else:
         return None
+
+
+def scan_entitiy_recursive(node, id, instance, node_id, o):
+    has_components = False
+    shacl_rule = {}
+    browse_name = next(g.objects(o, basens['hasBrowseName']))
+    #print(f'Processing Node {o} with browsename {browse_name}')
+    nodeclass, classtype = get_type(o)
+    attributename = urllib.parse.quote(f'has{browse_name}')
+    shacl_rule['path'] = entity_namespace[attributename]
+    get_modelling_rule(node, shacl_rule)
+
+    if isObjectNodeClass(nodeclass):
+        shacl_rule['is_property'] = False
+        relid = scan_entity(o, classtype, id)
+        if relid is not None:
+            has_components = True
+            instance[f'uaentities:{attributename}'] = {
+                'type': 'Relationship',
+                'object': relid
+            }
+            if debug:
+                instance[f'uaentities:{attributename}']['debug'] = f'uaentities:{attributename}'
+            shacl_rule['contentclass'] = classtype
+    elif isVariableNodeClass(nodeclass):
+        shacl_rule['is_property'] = True
+        get_shacl_iri_and_contentclass(g, o, shacl_rule, entity_namespace[attributename])
+        try:
+            value = next(g.objects(o, basens['hasValue']))
+            if not shacl_rule['is_iri']:
+                value = value.toPython()
+            else:
+                value = get_contentclass(knowledgeg, shacl_rule['contentclass'], value)
+                
+                value = value.toPython()
+        except StopIteration:
+            if not shacl_rule['is_iri']:
+                value = get_default_value(shacl_rule['datatype'])
+            else:
+                value = get_default_contentclass(knowledgeg, shacl_rule['contentclass'])
+        has_components = True
+        if not shacl_rule['is_iri']:
+            instance[f'uaentities:{attributename}'] = {
+                'type': 'Property',
+                'value': value
+            }
+        else:
+            instance[f'uaentities:{attributename}'] = {
+                'type': 'Property',
+                'value': { '@id': str(value)}
+            }
+        if debug:
+            instance[f'uaentities:{attributename}']['debug'] = f'uaentities:{attributename}'
+        try:
+            is_updating = bool(next(g.objects(o, basens['isUpdating'])))
+        except:
+            is_updating = False
+        if is_updating:
+            create_binding(g, bindingsg, URIRef(node_id), o, entity_namespace[attributename])
+    return has_components
+
+
+def scan_entitiy_nonrecursive(node, id, instance, node_id, o):
+    has_components = False
+    shacl_rule = {}
+    browse_name = next(g.objects(o, basens['hasBrowseName']))
+    #print(f'Processing Node {o} with browsename {browse_name}')
+    nodeclass, classtype = get_type(o)
+    attributename = urllib.parse.quote(f'has{browse_name}')
+    shacl_rule['path'] = entity_namespace[attributename]
+    get_modelling_rule(node, shacl_rule)
+
+    if isObjectNodeClass(nodeclass):
+        shacl_rule['is_property'] = False
+        relid = generate_node_id(o, id, classtype)
+        if relid is not None:
+            has_components = True
+            instance[f'uaentities:{attributename}'] = {
+                'type': 'Relationship',
+                'object': relid
+            }
+            if debug:
+                instance[f'uaentities:{attributename}']['debug'] = f'uaentities:{attributename}'
+            shacl_rule['contentclass'] = classtype
+    elif isVariableNodeClass(nodeclass):
+       print("Warning: Variable in non-recursive entity creation should not happen")
+    return has_components
 
 
 def get_typename(url):
