@@ -1,0 +1,66 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix test: <http://test/UA/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+opcua:nodei14221 a opcua:NetworkAddressType,
+        opcua:ObjectNodeClass ;
+    base:hasBrowseName "Address" ;
+    base:hasDisplayName "Address" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "14221" .
+
+opcua:nodei21145 a opcua:ObjectTypeNodeClass ;
+    base:definesType opcua:NetworkAddressType ;
+    base:hasBrowseName "NetworkAddressType" ;
+    base:hasDisplayName "NetworkAddressType" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "21145" .
+
+opcua:nodei3062 a opcua:BaseObjectType,
+        opcua:ObjectNodeClass ;
+    base:hasBrowseName "Default Binary" ;
+    base:hasDescription "The default binary encoding for a data type." ;
+    base:hasDisplayName "Default Binary" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "3062" ;
+    base:hasSymbolicName "DefaultBinary" .
+
+opcua:nodei3063 a opcua:BaseObjectType,
+        opcua:ObjectNodeClass ;
+    base:hasBrowseName "Default XML" ;
+    base:hasDescription "The default XML encoding for a data type." ;
+    base:hasDisplayName "Default XML" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "3063" ;
+    base:hasSymbolicName "DefaultXml" .
+
+opcua:nodei58 a opcua:ObjectTypeNodeClass ;
+    base:definesType opcua:BaseObjectType ;
+    base:hasBrowseName "BaseObjectType" ;
+    base:hasDisplayName "BaseObjectType" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "58" .
+
+test: a owl:Ontology ;
+    owl:imports <https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl> ;
+    owl:versionIRI <http://example.com/v0.1/UA/> ;
+    owl:versionInfo 1e-01 .
+
+test:TESTNamespace a base:Namespace ;
+    base:hasPrefix "test" ;
+    base:hasUri "http://test/UA/" .
+
+opcua:NetworkAddressType a owl:Class ;
+    rdfs:subClassOf opcua:BaseObjectType ;
+    base:isAbstract "true" .
+
+opcua:BaseObjectType a owl:Class .
+
