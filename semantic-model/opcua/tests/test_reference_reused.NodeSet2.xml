@@ -72,7 +72,33 @@
     <Category>Base Info Base Types</Category>
     <References />
   </UAReferenceType>
-    <UAReferenceType NodeId="i=33" BrowseName="HierarchicalReferences" IsAbstract="true">
+  <UAReferenceType NodeId="i=32" BrowseName="NonHierarchicalReferences" IsAbstract="true" Symmetric="true">
+    <DisplayName>NonHierarchicalReferences</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/11.3</Documentation>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=31</Reference>
+    </References>
+  </UAReferenceType>
+  <UAReferenceType NodeId="i=33" BrowseName="HierarchicalReferences" IsAbstract="true">
+    <DisplayName>HierarchicalReferences</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/11.2</Documentation>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=31</Reference>
+    </References>
+    <InverseName>InverseHierarchicalReferences</InverseName>
+  </UAReferenceType>
+  <UAReferenceType NodeId="i=34" BrowseName="HasChild" IsAbstract="true">
+    <DisplayName>HasChild</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/11.4</Documentation>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=33</Reference>
+    </References>
+    <InverseName>ChildOf</InverseName>
+  </UAReferenceType>
+  <UAReferenceType NodeId="i=33" BrowseName="HierarchicalReferences" IsAbstract="true">
     <DisplayName>HierarchicalReferences</DisplayName>
     <Category>Base Info Base Types</Category>
     <References>
@@ -80,7 +106,16 @@
     </References>
     <InverseName>InverseHierarchicalReferences</InverseName>
   </UAReferenceType>
-    <UADataType NodeId="i=24" BrowseName="BaseDataType" IsAbstract="true">
+  <UAReferenceType NodeId="i=37" BrowseName="HasModellingRule">
+    <DisplayName>HasModellingRule</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/11.11</Documentation>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=32</Reference>
+    </References>
+    <InverseName>ModellingRuleOf</InverseName>
+  </UAReferenceType>
+  <UADataType NodeId="i=24" BrowseName="BaseDataType" IsAbstract="true">
     <DisplayName>BaseDataType</DisplayName>
     <Category>Base Info Base Types</Category>
     <References />
@@ -92,6 +127,24 @@
       <Reference ReferenceType="HasSubtype" IsForward="false">i=24</Reference>
     </References>
   </UADataType>
+  <UAReferenceType NodeId="i=44" BrowseName="Aggregates" IsAbstract="true">
+    <DisplayName>Aggregates</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/11.5</Documentation>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=34</Reference>
+    </References>
+    <InverseName>AggregatedBy</InverseName>
+  </UAReferenceType>
+  <UAReferenceType NodeId="i=47" BrowseName="HasComponent">
+    <DisplayName>HasComponent</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/11.7</Documentation>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=44</Reference>
+    </References>
+    <InverseName>ComponentOf</InverseName>
+  </UAReferenceType>
   <UAReferenceType NodeId="i=32558" BrowseName="MyTestReference">
     <DisplayName>HasMyTestReference</DisplayName>
     <Category>Test Reference</Category>
