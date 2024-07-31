@@ -23,7 +23,7 @@ DEBUG=true
 if [ "$DEBUG"="true" ]; then
     $DEBUG_CMDLINE="-m debugpy --listen 5678"
 fi
-TESTNODESETS=(test_object_types.NodeSet2 test_objects.NodeSet2)
+TESTNODESETS=(test_object_types.NodeSet2 test_objects.NodeSet2 test_reference_reused.NodeSet2)
 CLEANGRAPH=cleangraph.py
 echo Starting Feature Tests
 echo -------------------------------- 
@@ -33,7 +33,7 @@ for nodeset in "${TESTNODESETS[@]}"; do
         echo DEBUG: python3 -m debugpy --listen 5678 --wait-for-client ../nodeset2owl.py ${nodeset}.xml -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p test -o ${RESULT}
     fi
     python3 ../nodeset2owl.py ${nodeset}.xml -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p test -o ${RESULT}
-    diff ${nodeset}.ttl ${RESULT}
+    diff ${nodeset}.ttl ${RESULT} || exit 1
 done
 echo Starting E2E specification tests
 echo -------------------------------- 
