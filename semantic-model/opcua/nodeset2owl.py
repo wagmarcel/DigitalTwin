@@ -68,6 +68,20 @@ SELECT ?nodeId ?uri ?type WHERE {
 }
 """
 
+query_references="""
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?id ?namespaceUri ?name
+WHERE {
+  ?subclass rdfs:subClassOf* <http://opcfoundation.org/UA/References> .
+  ?node base:definesType ?subclass .
+  ?node base:hasNodeId ?id .
+  ?node base:hasNamespace ?ns .
+  ?ns base:hasUri ?namespaceUri .
+  ?node base:hasBrowseName ?name .
+}
+"""
+
 def parse_args(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='\
 parse nodeset and create RDF-graph <nodeset2.xml>')
@@ -112,14 +126,16 @@ nodeIds = [{}]
 typeIds = [{}]
 ig = Graph() # graph from inputs
 g = Graph() # graph wich is currently created
+known_references = [] # triples of all references (id, namespace, name)
 
 hasSubtypeId = '45'
 hasPropertyId = '46'
-hasTypeDefinition = '40'
-hasComponent = '47'
+hasTypeDefinitionId = '40'
+hasComponentId = '47'
 hasAddInId = '17604'
 organizesId = '35'
-hasModellingRule = '37'
+hasModellingRuleId = '37'
+hasInterfaceId = '17603'
 
 data_schema = None
 basic_types = ['String', 'Boolean', 'Byte', 'SByte', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Uin64', 'Int64', 'Float', 'DateTime', 'Guid', 'ByteString', 'Double']
@@ -180,6 +196,10 @@ def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
     for nodeId, uri, type in query_result:
         ns = urimap[str(uri)]
         typeIds[ns][str(nodeId)] = type
+
+    query_result = ig.query(query_references, initNs=rdf_ns)
+    for id, namespace_uri, name in query_result:
+        known_references.append((id, namespace_uri, name))
 
     g.add((rdf_ns[ontology_prefix][namespaceclass], RDF.type, rdf_ns['base']['Namespace']))
     g.add((rdf_ns[ontology_prefix][namespaceclass], rdf_ns['base']['hasUri'], Literal(ontology_name.toPython())))
@@ -464,24 +484,44 @@ def get_value(g, node, classiri, xml_ns):
                     result = data["$"]
                     result = convert_to_json_type(result, basic_json_type)
                     g.add((classiri, rdf_ns['base']['hasValue'], Literal(result)))
-            
+
+
+def references_get_special(id, ns):
+    special_components = {
+         (hasComponentId, opcua_namespace): 'hasComponent',
+         (hasAddInId, opcua_namespace): 'hasAddIn',
+         (hasPropertyId, opcua_namespace): 'hasProperty',
+         (organizesId, opcua_namespace): 'organizes',
+         (hasModellingRuleId, opcua_namespace): 'hasModellingRule',
+         (hasInterfaceId, opcua_namespace): 'hasInterface'
+    }
+    try:
+        return special_components[(id, ns)]
+    except:
+        return None
+
+
+def references_ignore(id, ns):
+    ignored_components = [
+        (hasSubtypeId, opcua_namespace),
+        (hasTypeDefinitionId, opcua_namespace)
+    ]
+    return (id, ns) in ignored_components
 
 
 def get_references(g, refnodes, classiri):
-    components = [
-        (hasComponent, 'hasComponent'),
-        (hasAddInId, 'hasAddIn'),
-        (hasPropertyId, 'hasProperty'),
-        (organizesId, 'organizes'),
-        (hasModellingRule, 'hasModellingRule')
-    ]
+
     for reference in refnodes:
         reftype = reference.get('ReferenceType')
         isforward = reference.get('IsForward')
         nodeid = resolve_alias(reftype)
-        type_index, type_id, _ = parse_nodeid(nodeid)
+        reftype_index, reftype_id, _ = parse_nodeid(nodeid)
+        reftype_ns = get_rdf_ns_from_ua_index(reftype_index)
+        if references_ignore(reftype_id, reftype_ns):
+            return
         try:
-            found_component = [ele[1] for ele in components if(ele[0] == type_id)][0]
+            found_component = [ele[2] for ele in known_references if(int(ele[0]) == int(reftype_id) 
+                                                               and str(ele[1]) == str(reftype_ns))][0]
         except:
             found_component = None
         if found_component is not None:
@@ -489,10 +529,15 @@ def get_references(g, refnodes, classiri):
             index, id, idtype = parse_nodeid(componentId)
             namespace = get_rdf_ns_from_ua_index(index)
             targetclassiri = nodeId_to_iri(namespace, id, idtype)
-            if isforward != 'false':
-                g.add((classiri, rdf_ns['base'][found_component], targetclassiri))
+            basens = rdf_ns['base']
+            if references_get_special(reftype_id, reftype_ns) is None:
+                basens = reftype_ns
             else:
-                g.add((targetclassiri, rdf_ns['base'][found_component], classiri))
+                found_component = references_get_special(reftype_id, reftype_ns)
+            if isforward != 'false':
+                g.add((classiri, basens[found_component], targetclassiri))
+            else:
+                g.add((targetclassiri, basens[found_component], classiri))
 
 
 
@@ -512,7 +557,7 @@ def add_typedef(g, node, xml_ns):
             isforward = reference.get('IsForward')
             nodeid = resolve_alias(reftype)
             type_index, type_id, _ = parse_nodeid(nodeid)
-            if type_id == hasTypeDefinition and type_index == 0:
+            if type_id == hasTypeDefinitionId and type_index == 0:
                 # HasSubtype detected
                 typedef = reference.text    
                 break
@@ -541,6 +586,9 @@ def add_type(g, node, xml_ns):
     references_node = node.find('opcua:References', xml_ns)
     references = references_node.findall('opcua:Reference', xml_ns)
     g.add((ref_namespace[browsename], RDF.type, OWL.Class))
+    if (node.tag.endswith("UAReferenceType")):
+        known_references.append((Literal(ref_id), ref_namespace, Literal(browsename)))
+        g.add((ref_namespace[browsename], RDF.type, OWL.ObjectProperty))
     if len(references) > 0:
         get_references(g, references, ref_classiri)
         subtype = None
@@ -637,17 +685,17 @@ if __name__ == '__main__':
     scan_aliases(alias_nodes)
     all_nodeclasses = [
         ('opcua:UADataType', 'DataTypeNodeClass'),
+        ('opcua:UAReferenceType', 'ReferenceTypeNodeClass'),
         ('opcua:UAVariable', 'VariableNodeClass'), 
         ('opcua:UAObjectType', 'ObjectTypeNodeClass'), 
         ('opcua:UAObject', 'ObjectNodeClass'),
-        ('opcua:UAReferenceType', 'ReferenceTypeNodeClass'),
         ('opcua:UAVariableType', 'VariableTypeNodeClass'),
         ('opcua:UAMethod', 'MethodNodeClass')
     ]
     type_nodeclasses = [
         ('opcua:UADataType', 'DataTypeNodeClass'),
-        ('opcua:UAObjectType', 'ObjectTypeNodeClass'),
         ('opcua:UAReferenceType', 'ReferenceTypeNodeClass'),
+        ('opcua:UAObjectType', 'ObjectTypeNodeClass'),
         ('opcua:UAVariableType', 'VariableTypeNodeClass')
     ]
     typed_nodeclasses = [
