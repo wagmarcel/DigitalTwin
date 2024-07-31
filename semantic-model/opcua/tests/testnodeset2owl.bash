@@ -23,7 +23,7 @@ DEBUG=true
 if [ "$DEBUG"="true" ]; then
     $DEBUG_CMDLINE="-m debugpy --listen 5678"
 fi
-TESTNODESETS=(test_object_types.NodeSet2 test_objects.NodeSet2 test_reference_reused.NodeSet2)
+TESTNODESETS=(test_object_types.NodeSet2 test_objects.NodeSet2 test_reference_reused.NodeSet2 test_references_special.NodeSet2)
 CLEANGRAPH=cleangraph.py
 echo Starting Feature Tests
 echo -------------------------------- 
