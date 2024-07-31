@@ -21,7 +21,7 @@ RESULT=result.ttl
 CLEANED=cleaned.ttl
 DEBUG=true
 if [ "$DEBUG"="true" ]; then
-    $DEBUG_CMDLINE="-m debugpy --listen 5678"
+    DEBUG_CMDLINE="-m debugpy --listen 5678"
 fi
 TESTNODESETS=(test_object_types.NodeSet2 test_objects.NodeSet2 test_reference_reused.NodeSet2 test_references_special.NodeSet2)
 CLEANGRAPH=cleangraph.py
@@ -74,7 +74,9 @@ python3 ${DEBUG_CMDLINE} ../nodeset2owl.py ${MACHINERY_NODESET} -i ${BASE_ONTOLO
 echo Test pumps
 python3 ${DEBUG_CMDLINE} ../nodeset2owl.py  ${PUMPS_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl machinery.ttl -v http://example.com/v0.1/Pumps/ -p pumps -o ${RESULT}
 python3 $CLEANGRAPH $RESULT $CLEANED
-diff $CLEANED $comparewith
+diff $CLEANED $comparewith || exit 1
 rm -f core.ttl device.ttl machinery.ttl
 
-#rm -f ${CLEANED} ${RESULT}
+if [ "$DEBUG" != "true" ]; then
+    rm -f ${CLEANED} ${RESULT}
+fi
