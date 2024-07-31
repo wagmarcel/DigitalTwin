@@ -22,6 +22,8 @@ CLEANED=cleaned.ttl
 DEBUG=true
 TESTNODESETS=(test_object_types.NodeSet2 test_objects.NodeSet2)
 CLEANGRAPH=cleangraph.py
+echo Starting Feature Tests
+echo -------------------------------- 
 for nodeset in "${TESTNODESETS[@]}"; do
     echo test $nodeset
     if [ "$DEBUG"="true" ]; then
@@ -30,7 +32,7 @@ for nodeset in "${TESTNODESETS[@]}"; do
     python3 ../nodeset2owl.py ${nodeset}.xml -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p test -o ${RESULT}
     diff ${nodeset}.ttl ${RESULT}
 done
-echo Starting testing specifications
+echo Starting E2E specification tests
 echo -------------------------------- 
 comparewith=core_cleaned.ttl
 echo Test ${CORE_NODESET}
@@ -40,10 +42,21 @@ diff $CLEANED $comparewith
 nodeset=$DI_NODESET
 comparewith=devices_cleaned.ttl
 echo Test $DI_NODESET
+echo Prepare core.ttl
 python3 ../nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o core.ttl
 python3 ../nodeset2owl.py  ${DI_NODESET} -i ${BASE_ONTOLOGY} core.ttl -v http://example.com/v0.1/DI/ -p devices -o ${RESULT}
 python3 $CLEANGRAPH $RESULT $CLEANED 
 diff $CLEANED $comparewith
 rm -f core.ttl
+comparewith=machinery_cleaned.ttl
+echo Test $MACHINERY_NODESET
+echo Prepare core.ttl
+python3 ../nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o core.ttl
+echo Prepare devices.ttl
+python3 ../nodeset2owl.py  ${DI_NODESET} -i ${BASE_ONTOLOGY} core.ttl -v http://example.com/v0.1/DI/ -p devices -o devices.ttl
+python3 ../nodeset2owl.py ${MACHINERY_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl -v http://example.com/v0.1/Machinery/ -p machinery -o ${RESULT}
+python3 $CLEANGRAPH $RESULT $CLEANED 
+diff $CLEANED $comparewith
+rm -f core.ttl device.ttl
 
 #rm -f ${CLEANED} ${RESULT}
