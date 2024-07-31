@@ -55,7 +55,65 @@
     <Alias Alias="HasAddIn">i=17604</Alias>
     <Alias Alias="HasInterface">i=17603</Alias>
   </Aliases>
-
+  <UAReferenceType NodeId="i=31" BrowseName="References" IsAbstract="true" Symmetric="true">
+    <DisplayName>References</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/11.1</Documentation>
+    <References />
+  </UAReferenceType>
+  <UAReferenceType NodeId="i=32" BrowseName="NonHierarchicalReferences" IsAbstract="true" Symmetric="true">
+    <DisplayName>NonHierarchicalReferences</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/11.3</Documentation>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=31</Reference>
+    </References>
+  </UAReferenceType>
+  <UAReferenceType NodeId="i=33" BrowseName="HierarchicalReferences" IsAbstract="true">
+    <DisplayName>HierarchicalReferences</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/11.2</Documentation>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=31</Reference>
+    </References>
+    <InverseName>InverseHierarchicalReferences</InverseName>
+  </UAReferenceType>
+  <UAReferenceType NodeId="i=34" BrowseName="HasChild" IsAbstract="true">
+    <DisplayName>HasChild</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/11.4</Documentation>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=33</Reference>
+    </References>
+    <InverseName>ChildOf</InverseName>
+  </UAReferenceType>
+  <UAReferenceType NodeId="i=37" BrowseName="HasModellingRule">
+    <DisplayName>HasModellingRule</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/11.11</Documentation>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=32</Reference>
+    </References>
+    <InverseName>ModellingRuleOf</InverseName>
+  </UAReferenceType>
+  <UAReferenceType NodeId="i=44" BrowseName="Aggregates" IsAbstract="true">
+    <DisplayName>Aggregates</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/11.5</Documentation>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=34</Reference>
+    </References>
+    <InverseName>AggregatedBy</InverseName>
+  </UAReferenceType>
+  <UAReferenceType NodeId="i=47" BrowseName="HasComponent">
+    <DisplayName>HasComponent</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/11.7</Documentation>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=44</Reference>
+    </References>
+    <InverseName>ComponentOf</InverseName>
+  </UAReferenceType>
   <UAObjectType NodeId="i=58" BrowseName="BaseObjectType">
     <DisplayName>BaseObjectType</DisplayName>
     <Category>Base Info Base Types</Category>
