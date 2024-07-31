@@ -20,6 +20,9 @@ export PACKML_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset
 RESULT=result.ttl
 CLEANED=cleaned.ttl
 DEBUG=true
+if [ "$DEBUG"="true" ]; then
+    $DEBUG_CMDLINE="-m debugpy --listen 5678"
+fi
 TESTNODESETS=(test_object_types.NodeSet2 test_objects.NodeSet2)
 CLEANGRAPH=cleangraph.py
 echo Starting Feature Tests
@@ -44,6 +47,7 @@ comparewith=devices_cleaned.ttl
 echo Test $DI_NODESET
 echo Prepare core.ttl
 python3 ../nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o core.ttl
+echo test devices
 python3 ../nodeset2owl.py  ${DI_NODESET} -i ${BASE_ONTOLOGY} core.ttl -v http://example.com/v0.1/DI/ -p devices -o ${RESULT}
 python3 $CLEANGRAPH $RESULT $CLEANED 
 diff $CLEANED $comparewith
@@ -54,9 +58,23 @@ echo Prepare core.ttl
 python3 ../nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o core.ttl
 echo Prepare devices.ttl
 python3 ../nodeset2owl.py  ${DI_NODESET} -i ${BASE_ONTOLOGY} core.ttl -v http://example.com/v0.1/DI/ -p devices -o devices.ttl
+echo test machinery
 python3 ../nodeset2owl.py ${MACHINERY_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl -v http://example.com/v0.1/Machinery/ -p machinery -o ${RESULT}
 python3 $CLEANGRAPH $RESULT $CLEANED 
 diff $CLEANED $comparewith
 rm -f core.ttl device.ttl
+comparewith=pumps_cleaned.ttl
+echo Test $PUMPS_NODESET
+echo Prepare core.ttl
+python3 ${DEBUG_CMDLINE} ../nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o core.ttl
+echo Prepare devices.ttl
+python3 ${DEBUG_CMDLINE} ../nodeset2owl.py  ${DI_NODESET} -i ${BASE_ONTOLOGY} core.ttl -v http://example.com/v0.1/DI/ -p devices -o devices.ttl
+echo Prepare machinery
+python3 ${DEBUG_CMDLINE} ../nodeset2owl.py ${MACHINERY_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl -v http://example.com/v0.1/Machinery/ -p machinery -o machinery.ttl
+echo Test pumps
+python3 ${DEBUG_CMDLINE} ../nodeset2owl.py  ${PUMPS_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl machinery.ttl -v http://example.com/v0.1/Pumps/ -p pumps -o ${RESULT}
+python3 $CLEANGRAPH $RESULT $CLEANED
+diff $CLEANED $comparewith
+rm -f core.ttl device.ttl machinery.ttl
 
 #rm -f ${CLEANED} ${RESULT}
