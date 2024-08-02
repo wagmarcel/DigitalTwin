@@ -172,8 +172,7 @@ def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
             known_opcua_ns[str(uri)] = str(prefix)
             known_ns_classes[str(uri)] = ns
             rdf_ns[str(prefix)] = Namespace(str(uri))
-            nodeIds.append({})
-            typeIds.append({})    
+            
 
     rdf_ns[ontology_prefix] = Namespace(str(ontology_name))
     namespaceclass = f"{ontology_prefix.upper()}Namespace"
@@ -181,17 +180,23 @@ def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
     
     known_ns_classes[str(ontology_name)] = rdf_ns[ontology_prefix][namespaceclass]
     known_opcua_ns[ontology_name.toPython()] = ontology_prefix
-    nodeIds.append({})
-    typeIds.append({})
+    #nodeIds.append({})
+    #typeIds.append({})
     
     query_result = ig.query(query_nodeIds, initNs=rdf_ns)
     uris = opcua_ns
     urimap = {}
     for idx, uri in enumerate(uris):
         urimap[uri] = idx
+        nodeIds.append({})
+        typeIds.append({})  
     for nodeId, uri, nodeIri in query_result:
         ns = urimap[str(uri)]
-        nodeIds[ns][str(nodeId)] = nodeIri
+        try:
+            nodeIds[ns][str(nodeId)] = nodeIri
+        except:
+            print(f"Warning: Did not find namespace {uri}. Did you import the respective companion specification?")
+            exit(1)
     query_result = ig.query(query_types, initNs=rdf_ns)
     for nodeId, uri, type in query_result:
         ns = urimap[str(uri)]
@@ -229,7 +234,11 @@ def create_prefixes(g, xml_node, base, opcua_namespace):
 
 def get_rdf_ns_from_ua_index(index):
     namespace_uri = opcua_ns[int(index)]
-    prefix = known_opcua_ns[namespace_uri]
+    try:
+        prefix = known_opcua_ns[namespace_uri]
+    except:
+        print(f"Warning: Namespace {namespace_uri} not found in imported companion specifications. Did you forget to import it?")
+        exit(1)
     namespace = rdf_ns[prefix]
     return namespace
 
@@ -518,7 +527,7 @@ def get_references(g, refnodes, classiri):
         reftype_index, reftype_id, _ = parse_nodeid(nodeid)
         reftype_ns = get_rdf_ns_from_ua_index(reftype_index)
         if references_ignore(reftype_id, reftype_ns):
-            return
+            continue
         try:
             found_component = [ele[2] for ele in known_references if(int(ele[0]) == int(reftype_id) 
                                                                and str(ele[1]) == str(reftype_ns))][0]
@@ -538,7 +547,8 @@ def get_references(g, refnodes, classiri):
                 g.add((classiri, basens[found_component], targetclassiri))
             else:
                 g.add((targetclassiri, basens[found_component], classiri))
-
+        else:
+            print(f"Warning: Could not find reference: {reftype}")
 
 
 def add_typedef(g, node, xml_ns):
@@ -673,9 +683,10 @@ if __name__ == '__main__':
     else:
         ontology_name = URIRef(args.namespace) if args.namespace is not None else None
     namespace_uris = root.find('opcua:NamespaceUris', xml_ns)
-    for uri in namespace_uris:
-        if not uri.text.endswith('/'):
-            uri.text += '/'
+    if namespace_uris is not None:
+        for uri in namespace_uris:
+            if not uri.text.endswith('/'):
+                uri.text += '/'
 
     create_prefixes(g, namespace_uris, base_ontology, opcua_namespace)
     init_nodeids( opcua_inputs, ontology_name, ontology_prefix)
@@ -693,8 +704,8 @@ if __name__ == '__main__':
         ('opcua:UAMethod', 'MethodNodeClass')
     ]
     type_nodeclasses = [
-        ('opcua:UADataType', 'DataTypeNodeClass'),
         ('opcua:UAReferenceType', 'ReferenceTypeNodeClass'),
+        ('opcua:UADataType', 'DataTypeNodeClass'),
         ('opcua:UAObjectType', 'ObjectTypeNodeClass'),
         ('opcua:UAVariableType', 'VariableTypeNodeClass')
     ]
