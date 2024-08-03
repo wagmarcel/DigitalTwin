@@ -172,6 +172,7 @@ def init_nodeids(base_ontologies, ontology_name, ontology_prefix):
             known_opcua_ns[str(uri)] = str(prefix)
             known_ns_classes[str(uri)] = ns
             rdf_ns[str(prefix)] = Namespace(str(uri))
+            g.bind(str(prefix), Namespace(str(uri)))
             
 
     rdf_ns[ontology_prefix] = Namespace(str(ontology_name))
