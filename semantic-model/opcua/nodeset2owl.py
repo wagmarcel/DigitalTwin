@@ -620,9 +620,9 @@ def add_type(g, node, xml_ns):
         else:
             g.add((typeiri, RDFS.subClassOf, br_namespace[browsename]))
         
-        isAbstract = node.get('IsAbstract')
-        if isAbstract is not None:
-            g.add((br_namespace[browsename], rdf_ns['base']['isAbstract'], Literal(isAbstract)))
+    isAbstract = node.get('IsAbstract')
+    if isAbstract is not None:
+        g.add((br_namespace[browsename], rdf_ns['base']['isAbstract'], Literal(isAbstract)))
     typeIds[ref_index][ref_id] = br_namespace[browsename]
     g.add((ref_classiri, rdf_ns['base']['definesType'], br_namespace[browsename]))
     get_datatype(g, node, ref_classiri)
