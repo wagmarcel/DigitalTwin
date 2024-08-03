@@ -71,6 +71,7 @@ randnamelength = 16
 modelling_nodeid_optional = 80
 modelling_nodeid_mandatory = 78
 modelling_nodeid_optional_array = 11508
+entity_ontology_prefix = 'uaentity'
 basic_types = ['String', 'Boolean', 'Byte', 'SByte', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Uin64', 'Int64', 'Float', 'DateTime', 'Guid', 'ByteString', 'Double']
 
 
@@ -371,12 +372,8 @@ def scan_entity(node, instancetype, id):
     instance['type'] = instancetype
     instance['id'] = node_id
     instance['@context'] = [
-        "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld", {
-            "uaentities": {
-                "@id": entity_namespace,
-                "@prefix": True
-            }
-        }]
+        "https://industryfusion.github.io/contexts/staging/opcua/v0.1/context.jsonld"
+    ]
 
     # Loop through all components
     #shapename = create_shacl_type(instancetype)
@@ -412,12 +409,12 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
         relid = scan_entity(o, classtype, id)
         if relid is not None:
             has_components = True
-            instance[f'uaentities:{attributename}'] = {
+            instance[f'{entity_ontology_prefix}:{attributename}'] = {
                 'type': 'Relationship',
                 'object': relid
             }
             if debug:
-                instance[f'uaentities:{attributename}']['debug'] = f'uaentities:{attributename}'
+                instance[f'{entity_ontology_prefix}:{attributename}']['debug'] = f'{entity_ontology_prefix}:{attributename}'
             shacl_rule['contentclass'] = classtype
     elif isVariableNodeClass(nodeclass):
         shacl_rule['is_property'] = True
@@ -437,17 +434,17 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
                 value = get_default_contentclass(knowledgeg, shacl_rule['contentclass'])
         has_components = True
         if not shacl_rule['is_iri']:
-            instance[f'uaentities:{attributename}'] = {
+            instance[f'{entity_ontology_prefix}:{attributename}'] = {
                 'type': 'Property',
                 'value': value
             }
         else:
-            instance[f'uaentities:{attributename}'] = {
+            instance[f'{entity_ontology_prefix}:{attributename}'] = {
                 'type': 'Property',
                 'value': { '@id': str(value)}
             }
         if debug:
-            instance[f'uaentities:{attributename}']['debug'] = f'uaentities:{attributename}'
+            instance[f'{entity_ontology_prefix}:{attributename}']['debug'] = f'{entity_ontology_prefix}:{attributename}'
         try:
             is_updating = bool(next(g.objects(o, basens['isUpdating'])))
         except:
@@ -472,12 +469,12 @@ def scan_entitiy_nonrecursive(node, id, instance, node_id, o):
         relid = generate_node_id(o, id, classtype)
         if relid is not None:
             has_components = True
-            instance[f'uaentities:{attributename}'] = {
+            instance[f'{entity_ontology_prefix}:{attributename}'] = {
                 'type': 'Relationship',
                 'object': relid
             }
             if debug:
-                instance[f'uaentities:{attributename}']['debug'] = f'uaentities:{attributename}'
+                instance[f'{entity_ontology_prefix}:{attributename}']['debug'] = f'{entity_ontology_prefix}:{attributename}'
             shacl_rule['contentclass'] = classtype
     elif isVariableNodeClass(nodeclass):
        print("Warning: Variable in non-recursive entity creation should not happen")
@@ -554,7 +551,7 @@ def create_ontolgoy_header(g, entity_namespace, version=0.1, versionIRI=None):
 
 def extract_namespaces(graph):
     return {
-        prefix: {
+        str(prefix): {
             '@id': str(namespace),
             '@prefix': True
             } for prefix, namespace in graph.namespaces()}
@@ -573,7 +570,7 @@ if __name__ == '__main__':
     contextname = args.context
     debug = args.debug
     namespace_prefix = args.namespace
-    entity_namespace = Namespace(f'{namespace_prefix}entities/')
+    entity_namespace = Namespace(f'{namespace_prefix}entity/')
     shacl_namespace = Namespace(f'{namespace_prefix}shacl/')
     knowledge_namespace = Namespace(f'{namespace_prefix}knowledge/')
     binding_namespace = Namespace(f'{namespace_prefix}bindings/')
@@ -597,7 +594,7 @@ if __name__ == '__main__':
     knowledgeg = Graph()
     bindingsg = Graph()
     types = []
-    e.bind('entities', entity_namespace)
+    e.bind(f'{entity_ontology_prefix}', entity_namespace)
     shaclg.bind('shacl', shacl_namespace)
     e.bind('ngsi-ld', ngsildns)
     create_ontolgoy_header(e, entity_namespace)
@@ -606,7 +603,7 @@ if __name__ == '__main__':
 
     shaclg.bind('sh', SH)
     knowledgeg.bind('knowledge', knowledge_namespace)
-    bindingsg.bind('entities', entity_namespace)
+    bindingsg.bind(f'{entity_ontology_prefix}', entity_namespace)
   
     for k, v in list(g.namespaces()):
         knowledgeg.bind(k, v)
@@ -645,8 +642,14 @@ if __name__ == '__main__':
     shacl_ns = extract_namespaces(shaclg)
     knowledge_ns = extract_namespaces(knowledgeg)
     combined_namespaces = {**entities_ns, **shacl_ns, **knowledge_ns}
+    final_namespaces = {}
+    for key, value in combined_namespaces.items():
+        final_namespaces[key] = value
     jsonld_context = {
-        "@context": combined_namespaces
+        "@context": [
+            combined_namespaces,
+            "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
+        ]
     }
     with open(contextname, "w") as f:
         json.dump(jsonld_context, f, indent=2)
