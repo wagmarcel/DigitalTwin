@@ -154,7 +154,8 @@ opcua:NonHierarchicalReferences a owl:Class,
     base:isAbstract "true" .
 
 opcua:References a owl:Class,
-        owl:ObjectProperty .
+        owl:ObjectProperty ;
+    base:isAbstract "true" .
 
 opcua:BaseObjectType a owl:Class .
 

@@ -1,4 +1,6 @@
 @prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix devices: <http://opcfoundation.org/UA/DI/> .
+@prefix machinery: <http://opcfoundation.org/UA/Machinery/> .
 @prefix opcua: <http://opcfoundation.org/UA/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix pumps: <http://opcfoundation.org/UA/Pumps/> .
@@ -681,10 +683,10 @@ pumps:nodei1011 a opcua:ObjectTypeNodeClass ;
     base:hasNodeId "1011" .
 
 pumps:nodei1012 a opcua:ObjectTypeNodeClass ;
-    opcua:GeneratesEvent <http://opcfoundation.org/UA/DI/nodei15292>,
-        <http://opcfoundation.org/UA/DI/nodei15441>,
-        <http://opcfoundation.org/UA/DI/nodei15590>,
-        <http://opcfoundation.org/UA/DI/nodei15739> ;
+    opcua:GeneratesEvent devices:nodei15292,
+        devices:nodei15441,
+        devices:nodei15590,
+        devices:nodei15739 ;
     base:definesType pumps:SupervisionMechanicsType ;
     base:hasBrowseName "SupervisionMechanicsType" ;
     base:hasComponent pumps:nodei6704,
@@ -710,10 +712,10 @@ pumps:nodei1012 a opcua:ObjectTypeNodeClass ;
     base:hasNodeId "1012" .
 
 pumps:nodei1013 a opcua:ObjectTypeNodeClass ;
-    opcua:GeneratesEvent <http://opcfoundation.org/UA/DI/nodei15292>,
-        <http://opcfoundation.org/UA/DI/nodei15441>,
-        <http://opcfoundation.org/UA/DI/nodei15590>,
-        <http://opcfoundation.org/UA/DI/nodei15739> ;
+    opcua:GeneratesEvent devices:nodei15292,
+        devices:nodei15441,
+        devices:nodei15590,
+        devices:nodei15739 ;
     base:definesType pumps:SupervisionHardwareType ;
     base:hasBrowseName "SupervisionHardwareType" ;
     base:hasComponent pumps:nodei6752,
@@ -735,10 +737,10 @@ pumps:nodei1013 a opcua:ObjectTypeNodeClass ;
     base:hasNodeId "1013" .
 
 pumps:nodei1014 a opcua:ObjectTypeNodeClass ;
-    opcua:GeneratesEvent <http://opcfoundation.org/UA/DI/nodei15292>,
-        <http://opcfoundation.org/UA/DI/nodei15441>,
-        <http://opcfoundation.org/UA/DI/nodei15590>,
-        <http://opcfoundation.org/UA/DI/nodei15739> ;
+    opcua:GeneratesEvent devices:nodei15292,
+        devices:nodei15441,
+        devices:nodei15590,
+        devices:nodei15739 ;
     base:definesType pumps:SupervisionSoftwareType ;
     base:hasBrowseName "SupervisionSoftwareType" ;
     base:hasComponent pumps:nodei6788,
@@ -756,10 +758,10 @@ pumps:nodei1014 a opcua:ObjectTypeNodeClass ;
     base:hasNodeId "1014" .
 
 pumps:nodei1015 a opcua:ObjectTypeNodeClass ;
-    opcua:GeneratesEvent <http://opcfoundation.org/UA/DI/nodei15292>,
-        <http://opcfoundation.org/UA/DI/nodei15441>,
-        <http://opcfoundation.org/UA/DI/nodei15590>,
-        <http://opcfoundation.org/UA/DI/nodei15739> ;
+    opcua:GeneratesEvent devices:nodei15292,
+        devices:nodei15441,
+        devices:nodei15590,
+        devices:nodei15739 ;
     base:definesType pumps:SupervisionProcessFluidType ;
     base:hasBrowseName "SupervisionProcessFluidType" ;
     base:hasComponent pumps:nodei6812,
@@ -782,10 +784,10 @@ pumps:nodei1015 a opcua:ObjectTypeNodeClass ;
     base:hasNodeId "1015" .
 
 pumps:nodei1016 a opcua:ObjectTypeNodeClass ;
-    opcua:GeneratesEvent <http://opcfoundation.org/UA/DI/nodei15292>,
-        <http://opcfoundation.org/UA/DI/nodei15441>,
-        <http://opcfoundation.org/UA/DI/nodei15590>,
-        <http://opcfoundation.org/UA/DI/nodei15739> ;
+    opcua:GeneratesEvent devices:nodei15292,
+        devices:nodei15441,
+        devices:nodei15590,
+        devices:nodei15739 ;
     base:definesType pumps:SupervisionPumpOperationType ;
     base:hasBrowseName "SupervisionPumpOperationType" ;
     base:hasComponent pumps:nodei12084,
@@ -832,10 +834,10 @@ pumps:nodei1016 a opcua:ObjectTypeNodeClass ;
     base:hasNodeId "1016" .
 
 pumps:nodei1017 a opcua:ObjectTypeNodeClass ;
-    opcua:GeneratesEvent <http://opcfoundation.org/UA/DI/nodei15292>,
-        <http://opcfoundation.org/UA/DI/nodei15441>,
-        <http://opcfoundation.org/UA/DI/nodei15590>,
-        <http://opcfoundation.org/UA/DI/nodei15739> ;
+    opcua:GeneratesEvent devices:nodei15292,
+        devices:nodei15441,
+        devices:nodei15590,
+        devices:nodei15739 ;
     base:definesType pumps:SupervisionAuxiliaryDeviceType ;
     base:hasBrowseName "SupervisionAuxiliaryDeviceType" ;
     base:hasComponent pumps:nodei6960,
@@ -880,10 +882,10 @@ pumps:nodei1017 a opcua:ObjectTypeNodeClass ;
     base:hasNodeId "1017" .
 
 pumps:nodei1018 a opcua:ObjectTypeNodeClass ;
-    opcua:GeneratesEvent <http://opcfoundation.org/UA/DI/nodei15292>,
-        <http://opcfoundation.org/UA/DI/nodei15441>,
-        <http://opcfoundation.org/UA/DI/nodei15590>,
-        <http://opcfoundation.org/UA/DI/nodei15739> ;
+    opcua:GeneratesEvent devices:nodei15292,
+        devices:nodei15441,
+        devices:nodei15590,
+        devices:nodei15739 ;
     base:definesType pumps:SupervisionElectronicsType ;
     base:hasBrowseName "SupervisionElectronicsType" ;
     base:hasComponent pumps:nodei7215,
@@ -1830,7 +1832,7 @@ pumps:Country a base:Field ;
     base:hasFieldName "Country" .
 
 pumps:IPumpVendorNameplateType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/Machinery/IMachineVendorNameplateType> ;
+    rdfs:subClassOf machinery:IMachineVendorNameplateType ;
     base:isAbstract "true" .
 
 pumps:Number a base:Field ;
@@ -1842,7 +1844,7 @@ pumps:PostalCode a base:Field ;
     base:hasFieldName "PostalCode" .
 
 pumps:PumpType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/TopologyElementType> .
+    rdfs:subClassOf devices:TopologyElementType .
 
 pumps:State a base:Field ;
     base:hasDatatype opcua:LocalizedText ;
@@ -109085,25 +109087,25 @@ pumps:nodei9999 a opcua:PropertyType,
     base:hasNodeId "9999" .
 
 pumps:ConfigurationGroupType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:DocumentationType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:MaintenanceGroupType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:OperationalGroupType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:PortsGroupType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:PumpIdentificationType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/Machinery/MachineIdentificationType> .
+    rdfs:subClassOf machinery:MachineIdentificationType .
 
 pumps:SupervisionType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:nodei6018 a opcua:DataTypeDescriptionType,
         opcua:VariableNodeClass ;
@@ -109226,24 +109228,24 @@ pumps:nodei6029 a opcua:DataTypeDescriptionType,
     base:hasValue "//xs:element[@name='PhysicalAddressDataType']" .
 
 pumps:BreakdownMaintenanceType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:ConditionBasedMaintenanceType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:ConnectionDesignType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> ;
+    rdfs:subClassOf devices:FunctionalGroupType ;
     base:isAbstract "true" .
 
 pumps:ConnectionImplementationType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> ;
+    rdfs:subClassOf devices:FunctionalGroupType ;
     base:isAbstract "true" .
 
 pumps:ControlType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:DesignType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:DiscreteObjectType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType ;
@@ -109253,10 +109255,10 @@ pumps:DrivePortType a owl:Class ;
     rdfs:subClassOf pumps:PortType .
 
 pumps:GeneralMaintenanceType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:ImplementationType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:InletConnectionPortType a owl:Class ;
     rdfs:subClassOf pumps:PortType .
@@ -109265,52 +109267,52 @@ pumps:MarkingsType a owl:Class ;
     rdfs:subClassOf opcua:FolderType .
 
 pumps:MeasurementsType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:MultiPumpType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:OutletConnectionPortType a owl:Class ;
     rdfs:subClassOf pumps:PortType .
 
 pumps:PreventiveMaintenanceType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:PumpActuationType a owl:Class ;
     rdfs:subClassOf pumps:ActuationType .
 
 pumps:SignalsType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:SupervisionAuxiliaryDeviceType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:SupervisionElectronicsType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:SupervisionHardwareType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:SupervisionMechanicsType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:SupervisionProcessFluidType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:SupervisionPumpOperationType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:SupervisionSoftwareType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:SystemRequirementsType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:DriveDesignType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:DriveMeasurementsType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:InletConnectionDesignType a owl:Class ;
     rdfs:subClassOf pumps:ConnectionDesignType .
@@ -109319,10 +109321,10 @@ pumps:InletConnectionImplementationType a owl:Class ;
     rdfs:subClassOf pumps:ConnectionImplementationType .
 
 pumps:InletConnectionMeasurementsType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:InletConnectionSystemRequirementsType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:OutletConnectionDesignType a owl:Class ;
     rdfs:subClassOf pumps:ConnectionDesignType .
@@ -109331,10 +109333,10 @@ pumps:OutletConnectionImplementationType a owl:Class ;
     rdfs:subClassOf pumps:ConnectionImplementationType .
 
 pumps:OutletConnectionMeasurementsType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:OutletConnectionSystemRequirementsType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:PhysicalAddressDataType a owl:Class ;
     rdfs:subClassOf opcua:Structure ;
@@ -109353,10 +109355,10 @@ pumps:PumpKickObjectType a owl:Class ;
     rdfs:subClassOf pumps:DiscreteOutputObjectType .
 
 pumps:VibrationMeasurementType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:ActuationType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 pumps:ExchangeModeEnum a owl:Class ;
     rdfs:subClassOf opcua:Enumeration .
