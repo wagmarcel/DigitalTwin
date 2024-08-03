@@ -24,6 +24,28 @@ SELECT ?uri ?prefix ?ns WHERE {
 }
 """
 
+query_subclasses = """
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+
+CONSTRUCT {
+  ?subclass rdfs:subClassOf ?superclass .
+  ?subclass a owl:Class .
+  ?superclass a owl:Class .
+}
+WHERE {
+  ?subclass rdfs:subClassOf* <http://opcfoundation.org/UA/BaseObjectType> .
+  ?subclass rdfs:subClassOf ?superclass .
+  
+  # Ensure both subclasses and superclasses are marked as owl:Class
+  {
+    ?subclass a owl:Class .
+  } UNION {
+    ?superclass a owl:Class .
+  }
+}
+"""
+
 query_enumclass = """
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -74,7 +96,7 @@ modelling_nodeid_mandatory = 78
 modelling_nodeid_optional_array = 11508
 entity_ontology_prefix = 'uaentity'
 basic_types = ['String', 'Boolean', 'Byte', 'SByte', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Uin64', 'Int64', 'Float', 'DateTime', 'Guid', 'ByteString', 'Double']
-
+workaround_instances = ['http://opcfoundation.org/UA/DI/FunctionalGroupType', 'http://opcfoundation.org/UA/FolderType']
 
 def parse_args(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='\
@@ -251,14 +273,16 @@ def create_binding(g, bindingsg, parent_node_id, var_node, attribute_iri, versio
     bindingsg.add((mapiri, basens['bindsConnectorParameter'], Literal(f'nsu={nsuri};{idtype2String(idtype)}={node_id}')))
 
 
-def get_all_supertypes(g, instancetype):
+def get_all_supertypes(g, instancetype, node):
     supertypes = []
     
     curtype = URIRef(instancetype)
+    curnode = node
     while curtype != opcuans['BaseObjectType']:
-        supertypes.append(curtype)
+        supertypes.append((curtype, curnode))
         try:
             curtype = next(g.objects(curtype, RDFS.subClassOf))
+            curnode = next(g.subjects(basens['definesType'], URIRef(curtype)))
         except:
             break
     return supertypes
@@ -266,23 +290,23 @@ def get_all_supertypes(g, instancetype):
 def scan_type(node, instancetype):
     
     # Loop through all supertypes
-    supertypes = get_all_supertypes(g, instancetype)
+    supertypes = get_all_supertypes(g, instancetype, node)
     
     # Loop through all components
     shapename = create_shacl_type(instancetype)
-    components = g.triples((node, basens['hasComponent'], None))
-    addins = g.triples((node, basens['hasAddIn'], None))
-    #components = list(components) + list(addins)
     has_components = False
-    for (_, _, o) in components:
-        has_components = scan_type_recursive(o, node, instancetype, shapename) or has_components
-    addins = g.triples((node, basens['hasAddIn'], None))
-    for (_, _, o) in addins:
-        has_components = scan_type_recursive(o, node, instancetype, shapename) or has_components
-    organizes = g.triples((node, basens['organizes'], None))
-    for (_, _, o) in organizes:
-        scan_type_nonrecursive(o, node, instancetype, shapename)
-        has_components = True
+    for (curtype, curnode) in supertypes:
+        print(f"Supertype {curtype}")
+        components = g.triples((curnode, basens['hasComponent'], None))
+        for (_, _, o) in components:
+            has_components = scan_type_recursive(o, curnode, instancetype, shapename) or has_components
+        addins = g.triples((curnode, basens['hasAddIn'], None))
+        for (_, _, o) in addins:
+            has_components = scan_type_recursive(o, curnode, instancetype, shapename) or has_components
+        organizes = g.triples((curnode, basens['organizes'], None))
+        for (_, _, o) in organizes:
+            scan_type_nonrecursive(o, curnode, instancetype, shapename)
+            has_components = True
     return has_components
 
 
@@ -292,11 +316,15 @@ def scan_type_recursive(o, node, instancetype, shapename):
     browse_name = next(g.objects(o, basens['hasBrowseName']))
     #print(f'Processing Node {o} with browsename {browse_name}')
     nodeclass, classtype = get_type(o)
+    # If defnition is recursive, stop recursion
+    if str(instancetype) == str(classtype):
+        return False
+
     attributename = urllib.parse.quote(f'has{browse_name}')
     if len(list(e.objects(entity_namespace[attributename], RDF.type))) > 0:
         return has_components
     #shacl_rule['path'] = entity_namespace[attributename]
-    get_modelling_rule(o, shacl_rule)
+    get_modelling_rule(o, shacl_rule, instancetype)
 
     decoded_attributename = urllib.parse.unquote(attributename)
     if contains_both_angle_brackets(decoded_attributename):
@@ -312,7 +340,7 @@ def scan_type_recursive(o, node, instancetype, shapename):
     if isObjectNodeClass(nodeclass):
         shacl_rule['is_property'] = False
         e.add((entity_namespace[attributename], RDFS.range, ngsildns['Relationship']))
-        _, use_instance_declaration = get_modelling_rule(o, None)
+        _, use_instance_declaration = get_modelling_rule(o, None, instancetype)
         if use_instance_declaration:
             # This information mixes two details
             # 1. Use the instance declaration and not the object for instantiation
@@ -332,6 +360,12 @@ def scan_type_recursive(o, node, instancetype, shapename):
             create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], shacl_rule['array'], False, True, shacl_rule['contentclass'], None)
     elif isVariableNodeClass(nodeclass):
         has_components = True
+        try:
+            isAbstract = next(g.objects(classtype, basens['isAbstract']))
+        except:
+            isAbstract = False
+        if isAbstract:
+            return False
         shacl_rule['is_property'] = True
         e.add((entity_namespace[attributename], RDFS.range, ngsildns['Property']))
         get_shacl_iri_and_contentclass(g, o, shacl_rule, entity_namespace[attributename])
@@ -361,7 +395,7 @@ def scan_type_nonrecursive(o, node, instancetype, shapename):
     nodeclass, classtype = get_type(o)
     attributename = urllib.parse.quote(f'has{browse_name}')
     shacl_rule['path'] = entity_namespace[attributename]
-    get_modelling_rule(node, shacl_rule)
+    get_modelling_rule(node, shacl_rule, instancetype)
     e.add((entity_namespace[attributename], RDF.type, OWL.ObjectProperty))
     e.add((entity_namespace[attributename], RDFS.domain, URIRef(instancetype)))
     e.add((entity_namespace[attributename], RDF.type, OWL.NamedIndividual))
@@ -382,13 +416,13 @@ def scan_type_nonrecursive(o, node, instancetype, shapename):
     return
 
 
-def get_modelling_rule(node, shacl_rule):
+def get_modelling_rule(node, shacl_rule, instancetype):
     use_instance_declaration = False
     is_optional = True
     try:
         modelling_node = next(g.objects(node, basens['hasModellingRule']))
         modelling_rule = next(g.objects(modelling_node, basens['hasNodeId']))
-        if int(modelling_rule) == modelling_nodeid_optional:
+        if int(modelling_rule) == modelling_nodeid_optional or str(instancetype) in workaround_instances:
             is_optional = True
         elif int(modelling_rule) == modelling_nodeid_mandatory:
             is_optional = False
@@ -440,7 +474,7 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
     nodeclass, classtype = get_type(o)
     attributename = urllib.parse.quote(f'has{browse_name}')
     #shacl_rule['path'] = entity_namespace[attributename]
-    get_modelling_rule(node, shacl_rule)
+    get_modelling_rule(node, shacl_rule, None)
 
     decoded_attributename = normalize_angle_bracket_name(urllib.parse.unquote(attributename))
     try:
@@ -685,7 +719,10 @@ if __name__ == '__main__':
     if jsonldname is not None:
         with open(jsonldname, 'w') as f:
             json.dump(instances, f, ensure_ascii=False, indent=4)
+    # Add all subclassing to entities
     if entitiesname is not None:
+        result = g.query(query_subclasses)
+        e += result
         e.serialize(destination=entitiesname)
     if shaclname is not None:
         shaclg.serialize(destination=shaclname)
