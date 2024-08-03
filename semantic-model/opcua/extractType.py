@@ -7,6 +7,7 @@ import random
 import string
 import functools
 import urllib
+import re
 from rdflib import Graph, Namespace, Literal, URIRef, BNode
 from rdflib.namespace import NamespaceManager
 from rdflib.namespace import OWL, RDF, RDFS, SH, XSD
@@ -81,7 +82,7 @@ parse nodeset instance and create ngsi-ld model')
 
     parser.add_argument('instance', help='Path to the instance nodeset2 file.')
     parser.add_argument('-t', '--type', help='Type of root object, e.g. http://opcfoundation.org/UA/Pumps/', required=True)
-    parser.add_argument('-j', '--jsonld', help='Filename of jsonld output file', required=False, default='entities.jsonld')
+    parser.add_argument('-j', '--jsonld', help='Filename of jsonld output file', required=False, default='instances.jsonld')
     parser.add_argument('-e', '--entities', help='Filename of entities output file', required=False, default='entities.ttl')
     parser.add_argument('-s', '--shacl', help='Filename of SHACL output file', required=False, default='shacl.ttl')
     parser.add_argument('-k', '--knowledge', help='Filename of SHACL output file', required=False, default='knowledge.ttl')
@@ -248,9 +249,25 @@ def create_binding(g, bindingsg, parent_node_id, var_node, attribute_iri, versio
     bindingsg.add((mapiri, basens['bindsMapDatatype'], dtype))
     bindingsg.add((mapiri, basens['bindsLogicVar'], Literal('var1')))
     bindingsg.add((mapiri, basens['bindsConnectorParameter'], Literal(f'nsu={nsuri};{idtype2String(idtype)}={node_id}')))
+
+
+def get_all_supertypes(g, instancetype):
+    supertypes = []
     
+    curtype = URIRef(instancetype)
+    while curtype != opcuans['BaseObjectType']:
+        supertypes.append(curtype)
+        try:
+            curtype = next(g.objects(curtype, RDFS.subClassOf))
+        except:
+            break
+    return supertypes
 
 def scan_type(node, instancetype):
+    
+    # Loop through all supertypes
+    supertypes = get_all_supertypes(g, instancetype)
+    
     # Loop through all components
     shapename = create_shacl_type(instancetype)
     components = g.triples((node, basens['hasComponent'], None))
@@ -278,8 +295,14 @@ def scan_type_recursive(o, node, instancetype, shapename):
     attributename = urllib.parse.quote(f'has{browse_name}')
     if len(list(e.objects(entity_namespace[attributename], RDF.type))) > 0:
         return has_components
-    shacl_rule['path'] = entity_namespace[attributename]
+    #shacl_rule['path'] = entity_namespace[attributename]
     get_modelling_rule(o, shacl_rule)
+
+    decoded_attributename = urllib.parse.unquote(attributename)
+    if contains_both_angle_brackets(decoded_attributename):
+        decoded_attributename = normalize_angle_bracket_name(decoded_attributename)
+    attributename = urllib.parse.quote(decoded_attributename)
+    shacl_rule['path'] = entity_namespace[attributename]
     e.add((entity_namespace[attributename], RDF.type, OWL.ObjectProperty))
     e.add((entity_namespace[attributename], RDFS.domain, URIRef(instancetype)))
     e.add((entity_namespace[attributename], RDF.type, OWL.NamedIndividual))
@@ -295,6 +318,7 @@ def scan_type_recursive(o, node, instancetype, shapename):
             # 1. Use the instance declaration and not the object for instantiation
             # 2. It could be zero or more instances (i.e. and array)
             shacl_rule['array'] = True
+            e.add((entity_namespace[attributename], basens['isPlaceHolder'], Literal(True)))
             _, typeiri = get_type(o)
             try:
                 typenode = next(g.subjects(basens['definesType'], typeiri))
@@ -305,15 +329,29 @@ def scan_type_recursive(o, node, instancetype, shapename):
         if components_found:
             has_components = True
             shacl_rule['contentclass'] = classtype
-            create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], False, True, shacl_rule['contentclass'], None)
+            create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], shacl_rule['array'], False, True, shacl_rule['contentclass'], None)
     elif isVariableNodeClass(nodeclass):
         has_components = True
         shacl_rule['is_property'] = True
         e.add((entity_namespace[attributename], RDFS.range, ngsildns['Property']))
         get_shacl_iri_and_contentclass(g, o, shacl_rule, entity_namespace[attributename])
-        create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], True, shacl_rule['is_iri'], shacl_rule['contentclass'], shacl_rule['datatype'])
+        create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], shacl_rule['array'], True, shacl_rule['is_iri'], shacl_rule['contentclass'], shacl_rule['datatype'])
         add_class_to_knowledge(g, knowledgeg, shacl_rule['contentclass'])
     return has_components
+
+
+def normalize_angle_bracket_name(s):
+    # Remove content inside angle brackets and the brackets themselves
+    no_brackets = re.sub(r'<[^>]*>', '', s)
+    
+    # Strip trailing numbers and non-alphabetic characters
+    normalized = re.sub(r'[^a-zA-Z]+$', '', no_brackets)
+    
+    return normalized
+
+
+def contains_both_angle_brackets(s):
+    return '<' in s and '>' in s
 
 
 def scan_type_nonrecursive(o, node, instancetype, shapename):
@@ -329,17 +367,17 @@ def scan_type_nonrecursive(o, node, instancetype, shapename):
     e.add((entity_namespace[attributename], RDF.type, OWL.NamedIndividual))
     #e.add((entity_namespace[attributename], RDF.type, basens['SubComponentRelationship']))
     types.append(classtype)
-    
+            
     if isObjectNodeClass(nodeclass):
         shacl_rule['is_property'] = False
         e.add((entity_namespace[attributename], RDFS.range, ngsildns['Relationship']))
         shacl_rule['contentclass'] = classtype
-        create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], False, True, shacl_rule['contentclass'], None)
+        create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], False, False, True, shacl_rule['contentclass'], None)
     elif isVariableNodeClass(nodeclass):
         shacl_rule['is_property'] = True
         e.add((entity_namespace[attributename], RDFS.range, ngsildns['Property']))
         get_shacl_iri_and_contentclass(g, o, shacl_rule, entity_namespace[attributename])
-        create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], True, shacl_rule['is_iri'], shacl_rule['contentclass'], shacl_rule['datatype'])
+        create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], False, True, shacl_rule['is_iri'], shacl_rule['contentclass'], shacl_rule['datatype'])
         add_class_to_knowledge(g, knowledgeg, shacl_rule['contentclass'])
     return
 
@@ -401,9 +439,23 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
     #print(f'Processing Node {o} with browsename {browse_name}')
     nodeclass, classtype = get_type(o)
     attributename = urllib.parse.quote(f'has{browse_name}')
-    shacl_rule['path'] = entity_namespace[attributename]
+    #shacl_rule['path'] = entity_namespace[attributename]
     get_modelling_rule(node, shacl_rule)
 
+    decoded_attributename = normalize_angle_bracket_name(urllib.parse.unquote(attributename))
+    try:
+        is_placeholder = next(e.objects(entity_namespace[decoded_attributename], basens['isPlaceHolder']))
+        is_typematch = len(list(e.triples((entity_namespace[decoded_attributename], RDFS.domain, instance['type'])))) > 0
+    except:
+        is_placeholder = False
+        is_typematch = False
+    if is_placeholder:
+        attributename = urllib.parse.quote(decoded_attributename)
+    #if contains_both_angle_brackets(decoded_attributename):
+    #    decoded_attributename = normalize_angle_bracket_name(decoded_attributename)
+    #attributename = urllib.parse.quote(decoded_attributename)
+    shacl_rule['path'] = entity_namespace[attributename]
+    
     if isObjectNodeClass(nodeclass):
         shacl_rule['is_property'] = False
         relid = scan_entity(o, classtype, id)
@@ -499,7 +551,7 @@ def create_shacl_type(targetclass):
     return shapename
 
 
-def create_shacl_property(shapename, path, optional, is_property, is_iri, contentclass, datatype):
+def create_shacl_property(shapename, path, optional, is_array, is_property, is_iri, contentclass, datatype):
     global shaclg
     innerproperty = BNode()
     property = BNode()
@@ -511,7 +563,8 @@ def create_shacl_property(shapename, path, optional, is_property, is_iri, conten
     shaclg.add((property, SH.path, path))
     shaclg.add((property, SH.nodeKind, SH.BlankNode))
     shaclg.add((property, SH.minCount, Literal(minCount)))
-    shaclg.add((property, SH.maxCount, Literal(maxCount)))
+    if not is_array:
+        shaclg.add((property, SH.maxCount, Literal(maxCount)))
     shaclg.add((property, SH.property, innerproperty))
     if is_property:
         shaclg.add((innerproperty, SH.path, ngsildns['hasValue']))
