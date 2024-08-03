@@ -358,5 +358,6 @@ opcua:Number a owl:Class ;
     rdfs:subClassOf opcua:BaseDataType ;
     base:isAbstract "true" .
 
-opcua:BaseDataType a owl:Class .
+opcua:BaseDataType a owl:Class ;
+    base:isAbstract "true" .
 

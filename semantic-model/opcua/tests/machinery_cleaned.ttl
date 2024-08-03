@@ -1,4 +1,5 @@
 @prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix devices: <http://opcfoundation.org/UA/DI/> .
 @prefix machinery: <http://opcfoundation.org/UA/Machinery/> .
 @prefix opcua: <http://opcfoundation.org/UA/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
@@ -48,7 +49,7 @@ machinery:nodei1004 a opcua:ObjectTypeNodeClass ;
     base:hasDescription "Contains information about the identification and nameplate of a MachineryItem" ;
     base:hasDisplayName "MachineryItemIdentificationType" ;
     base:hasIdentifierType base:numericID ;
-    base:hasInterface <http://opcfoundation.org/UA/DI/nodei15048>,
+    base:hasInterface devices:nodei15048,
         machinery:nodei1003 ;
     base:hasNamespace machinery:MACHINERYNamespace ;
     base:hasNodeId "1004" ;
@@ -125,7 +126,7 @@ machinery:nodei1009 a opcua:ObjectTypeNodeClass ;
     base:hasBrowseName "MachineryOperationCounterType" ;
     base:hasDisplayName "MachineryOperationCounterType" ;
     base:hasIdentifierType base:numericID ;
-    base:hasInterface <http://opcfoundation.org/UA/DI/nodei480> ;
+    base:hasInterface devices:nodei480 ;
     base:hasNamespace machinery:MACHINERYNamespace ;
     base:hasNodeId "1009" ;
     base:hasProperty machinery:nodei6079,
@@ -162,7 +163,7 @@ opcua:nodei11715 base:hasComponent machinery:nodei5001 .
 opcua:nodei85 base:organizes machinery:nodei1001 .
 
 machinery:IMachineTagNameplateType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/ITagNameplateType> ;
+    rdfs:subClassOf devices:ITagNameplateType ;
     base:isAbstract "true" .
 
 machinery:IMachineVendorNameplateType a owl:Class ;
@@ -185,7 +186,7 @@ machinery:MachineryLifetimeCounterType a owl:Class ;
     rdfs:subClassOf opcua:FolderType .
 
 machinery:MachineryOperationCounterType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> .
+    rdfs:subClassOf devices:FunctionalGroupType .
 
 machinery:MachineryOperationModeStateMachineType a owl:Class ;
     rdfs:subClassOf opcua:FiniteStateMachineType .
@@ -1546,7 +1547,7 @@ machinery:nodei6082 a opcua:PropertyType,
     base:hasNamespace machinery:MACHINERYNamespace ;
     base:hasNodeId "6082" .
 
-machinery:nodei6083 a <http://opcfoundation.org/UA/DI/LifetimeVariableType>,
+machinery:nodei6083 a devices:LifetimeVariableType,
         opcua:VariableNodeClass ;
     base:hasBrowseName "<LifetimeVariable>" ;
     base:hasDatatype opcua:Number ;
@@ -1613,11 +1614,11 @@ machinery:nodei6088 a opcua:PropertyType,
     base:hasNodeId "6088" .
 
 machinery:IMachineryItemVendorNameplateType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/IVendorNameplateType> ;
+    rdfs:subClassOf devices:IVendorNameplateType ;
     base:isAbstract "true" .
 
 machinery:MachineryItemIdentificationType a owl:Class ;
-    rdfs:subClassOf <http://opcfoundation.org/UA/DI/FunctionalGroupType> ;
+    rdfs:subClassOf devices:FunctionalGroupType ;
     base:isAbstract "true" .
 
 machinery:nodei5004 a opcua:ObjectNodeClass,

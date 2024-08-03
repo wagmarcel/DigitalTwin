@@ -202,9 +202,11 @@ opcua:nodei58 a opcua:ObjectTypeNodeClass ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "58" .
 
-opcua:BaseDataType a owl:Class .
+opcua:BaseDataType a owl:Class ;
+    base:isAbstract "true" .
 
-opcua:BaseVariableType a owl:Class .
+opcua:BaseVariableType a owl:Class ;
+    base:isAbstract "true" .
 
 opcua:HasChild a owl:Class,
         owl:ObjectProperty ;
@@ -249,7 +251,8 @@ opcua:NonHierarchicalReferences a owl:Class,
     base:isAbstract "true" .
 
 opcua:References a owl:Class,
-        owl:ObjectProperty .
+        owl:ObjectProperty ;
+    base:isAbstract "true" .
 
 opcua:nodei47112 a opcua:BaseObjectType,
         opcua:ObjectNodeClass ;

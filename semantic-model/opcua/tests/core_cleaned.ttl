@@ -55163,7 +55163,8 @@ opcua:QueueName a base:Field ;
     base:hasFieldName "QueueName" .
 
 opcua:References a owl:Class,
-        owl:ObjectProperty .
+        owl:ObjectProperty ;
+    base:isAbstract "true" .
 
 opcua:RepresentsSameEntityAs a owl:Class,
         owl:ObjectProperty ;
@@ -55736,7 +55737,8 @@ opcua:AuditNodeManagementEventType a owl:Class ;
     rdfs:subClassOf opcua:AuditEventType ;
     base:isAbstract "true" .
 
-opcua:BaseVariableType a owl:Class .
+opcua:BaseVariableType a owl:Class ;
+    base:isAbstract "true" .
 
 opcua:CartesianCoordinates a owl:Class,
         base:Field ;
@@ -56514,7 +56516,8 @@ opcua:StateType a owl:Class ;
 opcua:BaseDataType a owl:Class,
         base:Field ;
     base:hasDatatype opcua:NodeId ;
-    base:hasFieldName "BaseDataType" .
+    base:hasFieldName "BaseDataType" ;
+    base:isAbstract "true" .
 
 opcua:PermissionType a owl:Class ;
     rdfs:subClassOf opcua:UInt32 .

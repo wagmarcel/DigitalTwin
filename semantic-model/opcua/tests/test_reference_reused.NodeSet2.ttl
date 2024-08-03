@@ -159,12 +159,14 @@ opcua:Aggregates a owl:Class,
     rdfs:subClassOf opcua:HasChild ;
     base:isAbstract "true" .
 
-opcua:BaseDataType a owl:Class .
+opcua:BaseDataType a owl:Class ;
+    base:isAbstract "true" .
 
 opcua:BaseObjectType a owl:Class ;
     rdfs:subClassOf opcua:MyType .
 
-opcua:BaseVariableType a owl:Class .
+opcua:BaseVariableType a owl:Class ;
+    base:isAbstract "true" .
 
 opcua:HasChild a owl:Class,
         owl:ObjectProperty ;
@@ -189,5 +191,6 @@ opcua:HierarchicalReferences a owl:Class,
     base:isAbstract "true" .
 
 opcua:References a owl:Class,
-        owl:ObjectProperty .
+        owl:ObjectProperty ;
+    base:isAbstract "true" .
 
