@@ -278,6 +278,16 @@ def get_all_supertypes(g, instancetype, node):
     
     curtype = URIRef(instancetype)
     curnode = node
+    try:
+        cur_typenode = next(g.objects(URIRef(node), basens['definesType']))
+    except:
+        cur_typenode = None
+    if cur_typenode is None:
+        #node is not instancetype definition
+        cur_typenode = next(g.subjects(basens['definesType'], URIRef(curtype)))
+        supertypes.append((None, curnode))
+        curnode = cur_typenode
+        
     while curtype != opcuans['BaseObjectType']:
         supertypes.append((curtype, curnode))
         try:
@@ -297,6 +307,9 @@ def scan_type(node, instancetype):
     has_components = False
     for (curtype, curnode) in supertypes:
         print(f"Supertype {curtype}")
+        if curtype is None:
+            print("Skipping ... No typeless objects extensions")
+            #continue
         components = g.triples((curnode, basens['hasComponent'], None))
         for (_, _, o) in components:
             has_components = scan_type_recursive(o, curnode, instancetype, shapename) or has_components
@@ -316,20 +329,21 @@ def scan_type_recursive(o, node, instancetype, shapename):
     browse_name = next(g.objects(o, basens['hasBrowseName']))
     #print(f'Processing Node {o} with browsename {browse_name}')
     nodeclass, classtype = get_type(o)
-    # If defnition is recursive, stop recursion
+    # If defnition is infnite, stop recursion
     if str(instancetype) == str(classtype):
         return False
 
     attributename = urllib.parse.quote(f'has{browse_name}')
     if len(list(e.objects(entity_namespace[attributename], RDF.type))) > 0:
         return has_components
-    #shacl_rule['path'] = entity_namespace[attributename]
     get_modelling_rule(o, shacl_rule, instancetype)
-
+   
     decoded_attributename = urllib.parse.unquote(attributename)
     if contains_both_angle_brackets(decoded_attributename):
         decoded_attributename = normalize_angle_bracket_name(decoded_attributename)
     attributename = urllib.parse.quote(decoded_attributename)
+    if attributename == 'has': # full template, ignore it
+        return False
     shacl_rule['path'] = entity_namespace[attributename]
     e.add((entity_namespace[attributename], RDF.type, OWL.ObjectProperty))
     e.add((entity_namespace[attributename], RDFS.domain, URIRef(instancetype)))
