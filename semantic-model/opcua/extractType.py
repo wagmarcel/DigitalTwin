@@ -551,7 +551,7 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
             is_updating = bool(next(g.objects(o, basens['isUpdating'])))
         except:
             is_updating = False
-        if is_updating:
+        if is_updating or not minimal_shacl:
             create_binding(g, bindingsg, URIRef(node_id), o, entity_namespace[attributename])
     return has_components
 
@@ -678,6 +678,7 @@ if __name__ == '__main__':
     knowledge_namespace = Namespace(f'{namespace_prefix}knowledge/')
     binding_namespace = Namespace(f'{namespace_prefix}bindings/')
     entity_id = args.id
+    minimal_shacl = args.minimalshacl
     g = Graph(store='Oxigraph')
     #g = Graph()
     g.parse(instancename)
