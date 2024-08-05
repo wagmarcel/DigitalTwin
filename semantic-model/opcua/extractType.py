@@ -709,6 +709,8 @@ if __name__ == '__main__':
   
     for k, v in list(g.namespaces()):
         knowledgeg.bind(k, v)
+        e.bind(k, v)
+        shaclg.bind(k, v)
     basens = next(Namespace(uri) for prefix, uri in list(knowledgeg.namespaces()) if prefix == 'base')
     opcuans = next(Namespace(uri) for prefix, uri in list(knowledgeg.namespaces()) if prefix == 'opcua')
     bindingsg.bind('base', basens)
