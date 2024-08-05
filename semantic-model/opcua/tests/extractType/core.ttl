@@ -10,324 +10,444 @@ opcua: a owl:Ontology ;
     owl:versionInfo 1e-01 .
 
 opcua:AbsoluteValue a opcua:ExceptionDeviationFormat ;
-    base:hasFieldName "AbsoluteValue" .
+    base:hasFieldName "AbsoluteValue" ;
+    base:hasValueNode base:_Na5bea0c77b29472c89a3b6b95b3db0f9 .
 
 opcua:AccessLevel a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask ;
-    base:hasFieldName "AccessLevel" .
+    base:hasFieldName "AccessLevel" ;
+    base:hasValueNode base:_Na434f2ded50b4114a0f53c46b67d1e07,
+        base:_Na4786e97128348e691faca6ed5efadce .
 
 opcua:AccessLevelEx a opcua:AttributeWriteMask ;
-    base:hasFieldName "AccessLevelEx" .
+    base:hasFieldName "AccessLevelEx" ;
+    base:hasValueNode base:_Ned6dc81053b945dfa7a283575da14410 .
 
 opcua:AccessRestrictions a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask ;
-    base:hasFieldName "AccessRestrictions" .
+    base:hasFieldName "AccessRestrictions" ;
+    base:hasValueNode base:_N685f2e432f6c4190a2f47a20306c83c5,
+        base:_N796ae9cf610748be922c760d4e1b3070 .
 
 opcua:Active a opcua:AlarmMask ;
-    base:hasFieldName "Active" .
+    base:hasFieldName "Active" ;
+    base:hasValueNode base:_N21a5eeff00d4438f9522117d72354868 .
 
 opcua:AddNode a opcua:PermissionType ;
-    base:hasFieldName "AddNode" .
+    base:hasFieldName "AddNode" ;
+    base:hasValueNode base:_Nf883d4a3a65f4396b1204b24b99e59de .
 
 opcua:AddReference a opcua:PermissionType ;
-    base:hasFieldName "AddReference" .
+    base:hasFieldName "AddReference" ;
+    base:hasValueNode base:_Ne0f1da083ce5486b9610bd956f81981a .
 
 opcua:Advanced a opcua:DiagnosticsLevel ;
-    base:hasFieldName "Advanced" .
+    base:hasFieldName "Advanced" ;
+    base:hasValueNode base:_N4130a9b640384a988537aebca8d8c303 .
 
 opcua:All a opcua:NodeAttributesMask,
         opcua:TrustListMasks ;
-    base:hasFieldName "All" .
+    base:hasFieldName "All" ;
+    base:hasValueNode base:_N4bca46c40f074f099ce7754224a89ef4,
+        base:_Nf7863f4c40064e3c8f4a6e4011135afe .
 
 opcua:And a opcua:FilterOperator ;
-    base:hasFieldName "And" .
+    base:hasFieldName "And" ;
+    base:hasValueNode base:_Na22004e711c54b5498619280bbe69606 .
 
 opcua:Anonymous a opcua:IdentityCriteriaType,
         opcua:UserTokenType ;
-    base:hasFieldName "Anonymous" .
+    base:hasFieldName "Anonymous" ;
+    base:hasValueNode base:_N295363080f824eafb866317339a1cf3c,
+        base:_Na2acd3d7f0c44e38a9ed9603e838047c .
 
 opcua:Append a opcua:OpenFileMode ;
-    base:hasFieldName "Append" .
+    base:hasFieldName "Append" ;
+    base:hasValueNode base:_N55287ad314444d56848ed298c6e78e6f .
 
 opcua:Application a opcua:IdentityCriteriaType ;
-    base:hasFieldName "Application" .
+    base:hasFieldName "Application" ;
+    base:hasValueNode base:_Nac7d524f80b24d678d905f33fd0fb22f .
 
 opcua:ApplyRestrictionsToBrowse a opcua:AccessRestrictionType ;
-    base:hasFieldName "ApplyRestrictionsToBrowse" .
+    base:hasFieldName "ApplyRestrictionsToBrowse" ;
+    base:hasValueNode base:_Nd6d4b834243a44d4b716153a9a4e67ac .
 
 opcua:AscendingWriterId a opcua:DataSetOrderingType ;
-    base:hasFieldName "AscendingWriterId" .
+    base:hasFieldName "AscendingWriterId" ;
+    base:hasValueNode base:_N7dbb841dfaa5474f826719954a641761 .
 
 opcua:AscendingWriterIdSingle a opcua:DataSetOrderingType ;
-    base:hasFieldName "AscendingWriterIdSingle" .
+    base:hasFieldName "AscendingWriterIdSingle" ;
+    base:hasValueNode base:_N74ebc192152540f98f89d177ed05c12e .
 
 opcua:AtLeastOnce a opcua:BrokerTransportQualityOfService ;
-    base:hasFieldName "AtLeastOnce" .
+    base:hasFieldName "AtLeastOnce" ;
+    base:hasValueNode base:_N3b7298e16b244744b6e91b7dee90b2bb .
 
 opcua:AtMostOnce a opcua:BrokerTransportQualityOfService ;
-    base:hasFieldName "AtMostOnce" .
+    base:hasFieldName "AtMostOnce" ;
+    base:hasValueNode base:_N9772588610df4ba6bdd66b4a1fd904a3 .
 
 opcua:AuthenticatedUser a opcua:IdentityCriteriaType ;
-    base:hasFieldName "AuthenticatedUser" .
+    base:hasFieldName "AuthenticatedUser" ;
+    base:hasValueNode base:_Nde5dcb774fda4fb2a2256b5a65d3f723 .
 
 opcua:BackupNotReady a opcua:RedundantServerMode ;
-    base:hasFieldName "BackupNotReady" .
+    base:hasFieldName "BackupNotReady" ;
+    base:hasValueNode base:_Nea2ac4b0d8bc45b0a41a2793e37b5916 .
 
 opcua:BackupReady a opcua:RedundantServerMode ;
-    base:hasFieldName "BackupReady" .
+    base:hasFieldName "BackupReady" ;
+    base:hasValueNode base:_N5cf70173a75e45d789cf840edf2d22f2 .
 
 opcua:BaseNode a opcua:NodeAttributesMask ;
-    base:hasFieldName "BaseNode" .
+    base:hasFieldName "BaseNode" ;
+    base:hasValueNode base:_N04e55729d7e147b79df1230ceb6793fd .
 
 opcua:Basic a opcua:DiagnosticsLevel ;
-    base:hasFieldName "Basic" .
+    base:hasFieldName "Basic" ;
+    base:hasValueNode base:_Nf767adba2ddf4b259165548c6d011653 .
 
 opcua:BestEffort a opcua:BrokerTransportQualityOfService ;
-    base:hasFieldName "BestEffort" .
+    base:hasFieldName "BestEffort" ;
+    base:hasValueNode base:_Ncafb5fc2f8b045138510fc34878b9a28 .
 
 opcua:Between a opcua:FilterOperator ;
-    base:hasFieldName "Between" .
+    base:hasFieldName "Between" ;
+    base:hasValueNode base:_Nbd169bfd6c8942219ba0127511d2f23d .
 
 opcua:BitwiseAnd a opcua:FilterOperator ;
-    base:hasFieldName "BitwiseAnd" .
+    base:hasFieldName "BitwiseAnd" ;
+    base:hasValueNode base:_N6de31654ecf94ce5aede13d633c0706d .
 
 opcua:BitwiseOr a opcua:FilterOperator ;
-    base:hasFieldName "BitwiseOr" .
+    base:hasFieldName "BitwiseOr" ;
+    base:hasValueNode base:_Nfae14cac4ec84377a321f88114e2aa5c .
 
 opcua:Body a opcua:UABinaryFileDataType ;
     base:hasFieldName "Body" .
 
 opcua:BridgeDoesNotProvideNetworkId a opcua:TsnFailureCode ;
-    base:hasFieldName "BridgeDoesNotProvideNetworkId" .
+    base:hasFieldName "BridgeDoesNotProvideNetworkId" ;
+    base:hasValueNode base:_N1e769c30abf641529b8e6499b233a1e4 .
 
 opcua:Browse a opcua:PermissionType ;
-    base:hasFieldName "Browse" .
+    base:hasFieldName "Browse" ;
+    base:hasValueNode base:_N2a1c6cc7c7da4e178d1832869736b6eb .
 
 opcua:Call a opcua:PermissionType ;
-    base:hasFieldName "Call" .
+    base:hasFieldName "Call" ;
+    base:hasValueNode base:_N3bcbd70d58a14598baf3f4524bd401e4 .
 
 opcua:CannotStoreDestinationAddress a opcua:TsnFailureCode ;
-    base:hasFieldName "CannotStoreDestinationAddress" .
+    base:hasFieldName "CannotStoreDestinationAddress" ;
+    base:hasValueNode base:_Nd45f8275345e4b99a340deff40464b80 .
 
 opcua:Cast a opcua:FilterOperator ;
-    base:hasFieldName "Cast" .
+    base:hasFieldName "Cast" ;
+    base:hasValueNode base:_N82b6af4490924b98a4f0b753a0d11101 .
 
 opcua:Certificate a opcua:UserTokenType ;
-    base:hasFieldName "Certificate" .
+    base:hasFieldName "Certificate" ;
+    base:hasValueNode base:_N9fd4d776ac4a4861a38ce4793499d4d2 .
 
 opcua:CheckRevocationStatusOffline a opcua:TrustListValidationOptions ;
-    base:hasFieldName "CheckRevocationStatusOffline" .
+    base:hasFieldName "CheckRevocationStatusOffline" ;
+    base:hasValueNode base:_Nd6d4ba79095c45cb93a46671b1dfabb6 .
 
 opcua:CheckRevocationStatusOnline a opcua:TrustListValidationOptions ;
-    base:hasFieldName "CheckRevocationStatusOnline" .
+    base:hasFieldName "CheckRevocationStatusOnline" ;
+    base:hasValueNode base:_Ne873c9996fe8449d99bb3da7212f2304 .
 
 opcua:Client a opcua:ApplicationType ;
-    base:hasFieldName "Client" .
+    base:hasFieldName "Client" ;
+    base:hasValueNode base:_Nad05dcba694c4111948852a24a9bb12d .
 
 opcua:ClientAndServer a opcua:ApplicationType ;
-    base:hasFieldName "ClientAndServer" .
+    base:hasFieldName "ClientAndServer" ;
+    base:hasValueNode base:_Ne3ac510e14a04f459f51235a59477a87 .
 
 opcua:Cold a opcua:RedundancySupport ;
-    base:hasFieldName "Cold" .
+    base:hasFieldName "Cold" ;
+    base:hasValueNode base:_Ndeb2351ed9f6451dad15ee8fd8f0cb0b .
 
 opcua:CommunicationFault a opcua:ServerState ;
-    base:hasFieldName "CommunicationFault" .
+    base:hasFieldName "CommunicationFault" ;
+    base:hasValueNode base:_Nce273b6f0de14465a44e9a6f57f74f96 .
 
 opcua:Complete a opcua:NegotiationStatus ;
-    base:hasFieldName "Complete" .
+    base:hasFieldName "Complete" ;
+    base:hasValueNode base:_N87348f71455a4f2b96ac0a106d8d0389 .
 
 opcua:Configuring a opcua:TsnStreamState ;
-    base:hasFieldName "Configuring" .
+    base:hasFieldName "Configuring" ;
+    base:hasValueNode base:_Na4b10cb4be0842e0a98bf24bf2321690 .
 
 opcua:Constant a opcua:AccessLevelExType ;
-    base:hasFieldName "Constant" .
+    base:hasFieldName "Constant" ;
+    base:hasValueNode base:_N6bc5873b9b8d4cea951b96c884a05da9 .
 
 opcua:Constraint a opcua:NamingRuleType ;
-    base:hasFieldName "Constraint" .
+    base:hasFieldName "Constraint" ;
+    base:hasValueNode base:_N42655f8b3176402abe5d37023ca62b12 .
 
 opcua:ContainsNoLoops a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask ;
-    base:hasFieldName "ContainsNoLoops" .
+    base:hasFieldName "ContainsNoLoops" ;
+    base:hasValueNode base:_N10a3bf70ba214640abb0db9c82c4abb2,
+        base:_Nc1491693c6ee4c198765783013c64c22 .
 
 opcua:CurrentRead a opcua:AccessLevelExType,
         opcua:AccessLevelType ;
-    base:hasFieldName "CurrentRead" .
+    base:hasFieldName "CurrentRead" ;
+    base:hasValueNode base:_N2308d1757eea42a8af89faa00ccdaa22,
+        base:_Nf0966e7ccaba4b4893bf527c22d14970 .
 
 opcua:CurrentWrite a opcua:AccessLevelExType,
         opcua:AccessLevelType ;
-    base:hasFieldName "CurrentWrite" .
+    base:hasFieldName "CurrentWrite" ;
+    base:hasValueNode base:_N94c9ef71293640f39b947fea7b90e754,
+        base:_Na75a7f5ebd154e23ac6d174eec796b1d .
 
 opcua:DataSetMessageHeader a opcua:JsonNetworkMessageContentMask ;
-    base:hasFieldName "DataSetMessageHeader" .
+    base:hasFieldName "DataSetMessageHeader" ;
+    base:hasValueNode base:_N10a1acab27f24a0e853951c123f9a569 .
 
 opcua:DataSetWriterName a opcua:JsonDataSetMessageContentMask ;
-    base:hasFieldName "DataSetWriterName" .
+    base:hasFieldName "DataSetWriterName" ;
+    base:hasValueNode base:_Nefbb1177c73b46cd8339e7c6c94dea26 .
 
 opcua:Debug a opcua:DiagnosticsLevel ;
-    base:hasFieldName "Debug" .
+    base:hasFieldName "Debug" ;
+    base:hasValueNode base:_N98a19f127e824b459b96620a7a35f9c1 .
 
 opcua:Delete a opcua:HistoryUpdateType ;
-    base:hasFieldName "Delete" .
+    base:hasFieldName "Delete" ;
+    base:hasValueNode base:_N0979d1960ea14bc5a4b868eaaaac79ca .
 
 opcua:DeleteHistory a opcua:PermissionType ;
-    base:hasFieldName "DeleteHistory" .
+    base:hasFieldName "DeleteHistory" ;
+    base:hasValueNode base:_Ne9b0c62890204a7fa773e2a700fa1442 .
 
 opcua:DeleteNode a opcua:PermissionType ;
-    base:hasFieldName "DeleteNode" .
+    base:hasFieldName "DeleteNode" ;
+    base:hasValueNode base:_Ndec7548ed5a9449f9fc67e63d18ff612 .
 
 opcua:Disabled a opcua:OverrideValueHandling,
         opcua:PubSubState,
         opcua:TsnStreamState,
         opcua:UserConfigurationMask ;
-    base:hasFieldName "Disabled" .
+    base:hasFieldName "Disabled" ;
+    base:hasValueNode base:_N2970a75d2ce94cf28eb7c7c02bb66a79,
+        base:_N808edba2dafc44ca9a93b5fb7a073dbd,
+        base:_N97a45c3c3ac0402b8df79fe444f17bc4,
+        base:_N9fcdc1692c8842cda697a0bcd353bda5 .
 
 opcua:DiscoveryServer a opcua:ApplicationType ;
-    base:hasFieldName "DiscoveryServer" .
+    base:hasFieldName "DiscoveryServer" ;
+    base:hasValueNode base:_N40d2c27eed274e619757db910a620154 .
 
 opcua:Dormant a opcua:InterfaceOperStatus ;
-    base:hasFieldName "Dormant" .
+    base:hasFieldName "Dormant" ;
+    base:hasValueNode base:_N305bdb9e68914be38a430a2aaf0d0023 .
 
 opcua:Down a opcua:InterfaceAdminStatus,
         opcua:InterfaceOperStatus ;
-    base:hasFieldName "Down" .
+    base:hasFieldName "Down" ;
+    base:hasValueNode base:_N24f49327af394bcd931e82cdf444ff80,
+        base:_Nac5adefd4ee04787a787706bd79a90a0 .
 
 opcua:EgressPortNotAvbCapable a opcua:TsnFailureCode ;
-    base:hasFieldName "EgressPortNotAvbCapable" .
+    base:hasFieldName "EgressPortNotAvbCapable" ;
+    base:hasValueNode base:_N3b703f0e7bf64027acfcf0f2319516df .
 
 opcua:ElementAdd a opcua:PubSubConfigurationRefMask ;
-    base:hasFieldName "ElementAdd" .
+    base:hasFieldName "ElementAdd" ;
+    base:hasValueNode base:_N9a0a15e5c26743ed81a65d4837ee3b32 .
 
 opcua:ElementMatch a opcua:PubSubConfigurationRefMask ;
-    base:hasFieldName "ElementMatch" .
+    base:hasFieldName "ElementMatch" ;
+    base:hasValueNode base:_Nf9d8805ce2bb49849bff8e44963424d6 .
 
 opcua:ElementModify a opcua:PubSubConfigurationRefMask ;
-    base:hasFieldName "ElementModify" .
+    base:hasFieldName "ElementModify" ;
+    base:hasValueNode base:_N7c71912d14fd413ab516122e62ea0981 .
 
 opcua:ElementRemove a opcua:PubSubConfigurationRefMask ;
-    base:hasFieldName "ElementRemove" .
+    base:hasFieldName "ElementRemove" ;
+    base:hasValueNode base:_N00b73773cc484f78849ba6764aed13fc .
 
 opcua:EncryptionRequired a opcua:AccessRestrictionType ;
-    base:hasFieldName "EncryptionRequired" .
+    base:hasFieldName "EncryptionRequired" ;
+    base:hasValueNode base:_Na18ab1a573264c0c83e81b0e80193acb .
 
 opcua:Equals a opcua:FilterOperator ;
-    base:hasFieldName "Equals" .
+    base:hasFieldName "Equals" ;
+    base:hasValueNode base:_Nb9e1a90d4b9b41b48b7d2fc6485994ad .
 
 opcua:EraseExisting a opcua:OpenFileMode ;
-    base:hasFieldName "EraseExisting" .
+    base:hasFieldName "EraseExisting" ;
+    base:hasValueNode base:_N1c2618e903f24fed91144c10f8c2b97c .
 
 opcua:EventFields a opcua:HistoryEventFieldList ;
     base:hasFieldName "EventFields" .
 
 opcua:ExactlyOnce a opcua:BrokerTransportQualityOfService ;
-    base:hasFieldName "ExactlyOnce" .
+    base:hasFieldName "ExactlyOnce" ;
+    base:hasValueNode base:_N193f4217964a41f082a9f9b4784d78e2 .
 
 opcua:Executable a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask ;
-    base:hasFieldName "Executable" .
+    base:hasFieldName "Executable" ;
+    base:hasValueNode base:_N2ea7c131f3a34f9abb027ae76d7e8ffe,
+        base:_Nf76c0a68bdaf45dca674fe90a918613c .
 
 opcua:Failed a opcua:NegotiationStatus,
         opcua:ServerState,
         opcua:TsnListenerStatus,
         opcua:TsnTalkerStatus ;
-    base:hasFieldName "Failed" .
+    base:hasFieldName "Failed" ;
+    base:hasValueNode base:_N227bad0b6c1048638cc96bc5c23347b8,
+        base:_N5230c1b93d5c40fdb75e6b4997887585,
+        base:_N878b178e10ca4eedb70ce991033a79eb,
+        base:_N8c92c531cfe043c2b1a583b9f1f29094 .
 
 opcua:FeatureNotPropagated a opcua:TsnFailureCode ;
-    base:hasFieldName "FeatureNotPropagated" .
+    base:hasFieldName "FeatureNotPropagated" ;
+    base:hasValueNode base:_Nedc891b33fd14e6292a8a3c9e715e455 .
 
 opcua:FeatureNotSupported a opcua:TsnFailureCode ;
-    base:hasFieldName "FeatureNotSupported" .
+    base:hasFieldName "FeatureNotSupported" ;
+    base:hasValueNode base:_Nb66f97594a644656a1abe0a3b10e622f .
 
 opcua:FirstValueChangedForStreamId a opcua:TsnFailureCode ;
-    base:hasFieldName "FirstValueChangedForStreamId" .
+    base:hasFieldName "FirstValueChangedForStreamId" ;
+    base:hasValueNode base:_Nef0036ebd7424ff6b7015018cc66c24b .
 
 opcua:Full a opcua:Duplex ;
-    base:hasFieldName "Full" .
+    base:hasFieldName "Full" ;
+    base:hasValueNode base:_N67d06be7ea2948bcb1d47307b441d9da .
 
 opcua:GreaterThan a opcua:FilterOperator ;
-    base:hasFieldName "GreaterThan" .
+    base:hasFieldName "GreaterThan" ;
+    base:hasValueNode base:_N698f1f1f62cf4f0897b2214e923efb43 .
 
 opcua:GreaterThanOrEqual a opcua:FilterOperator ;
-    base:hasFieldName "GreaterThanOrEqual" .
+    base:hasFieldName "GreaterThanOrEqual" ;
+    base:hasValueNode base:_N9792e726b8684b3bbe04601d26e1a688 .
 
 opcua:GroupHeader a opcua:UadpNetworkMessageContentMask ;
-    base:hasFieldName "GroupHeader" .
+    base:hasFieldName "GroupHeader" ;
+    base:hasValueNode base:_N0db03874bf4d4757a047371751b17f0e .
 
 opcua:GroupId a opcua:IdentityCriteriaType ;
-    base:hasFieldName "GroupId" .
+    base:hasFieldName "GroupId" ;
+    base:hasValueNode base:_Nfa49601e27304a4f88bdad78a4e9e882 .
 
 opcua:Half a opcua:Duplex ;
-    base:hasFieldName "Half" .
+    base:hasFieldName "Half" ;
+    base:hasValueNode base:_Ne3da31ac6c2e404c9a15e5e304fb9240 .
 
 opcua:Historizing a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask ;
-    base:hasFieldName "Historizing" .
+    base:hasFieldName "Historizing" ;
+    base:hasValueNode base:_N4bac504c7e5741ebb130cb86d44fb2b2,
+        base:_Nbf2538e8374143109945ee8783f6d774 .
 
 opcua:HistoryRead a opcua:AccessLevelExType,
         opcua:AccessLevelType,
         opcua:EventNotifierType ;
-    base:hasFieldName "HistoryRead" .
+    base:hasFieldName "HistoryRead" ;
+    base:hasValueNode base:_Na84fbe64f8b74e3396a4a33d8b297dee,
+        base:_Ncc5e0229803446dd9c11c1305d71bdba,
+        base:_Nfb2443517e054c45b1f3a8ea38438983 .
 
 opcua:HistoryWrite a opcua:AccessLevelExType,
         opcua:AccessLevelType,
         opcua:EventNotifierType ;
-    base:hasFieldName "HistoryWrite" .
+    base:hasFieldName "HistoryWrite" ;
+    base:hasValueNode base:_N3d8c4d02cbea47b99dfb18e8040f0a4e,
+        base:_Nc07355797ee845f48e05640e6f3abe75,
+        base:_Nf0e286dd992b4bf89c6c0b7951ffc99e .
 
 opcua:Hot a opcua:RedundancySupport ;
-    base:hasFieldName "Hot" .
+    base:hasFieldName "Hot" ;
+    base:hasValueNode base:_N8c3a2d0acf82453da81ecd2303aab62f .
 
 opcua:HotAndMirrored a opcua:RedundancySupport ;
-    base:hasFieldName "HotAndMirrored" .
+    base:hasFieldName "HotAndMirrored" ;
+    base:hasValueNode base:_N5ed10fb22f1741e285c40f9752f1b312 .
 
 opcua:InList a opcua:FilterOperator ;
-    base:hasFieldName "InList" .
+    base:hasFieldName "InList" ;
+    base:hasValueNode base:_N8b218d14e88f4182a2caa917ca9a187e .
 
 opcua:InProgress a opcua:NegotiationStatus ;
-    base:hasFieldName "InProgress" .
+    base:hasFieldName "InProgress" ;
+    base:hasValueNode base:_Nd6604423c3364df196eb585331553fd6 .
 
 opcua:InView a opcua:FilterOperator ;
-    base:hasFieldName "InView" .
+    base:hasFieldName "InView" ;
+    base:hasValueNode base:_N056f2bbf82574caf922c4b0d529d5f67 .
 
 opcua:Info a opcua:DiagnosticsLevel ;
-    base:hasFieldName "Info" .
+    base:hasFieldName "Info" ;
+    base:hasValueNode base:_Na0c836d8cd7a4cb79800ac33200e4849 .
 
 opcua:Information a opcua:PubSubDiagnosticsCounterClassification ;
-    base:hasFieldName "Information" .
+    base:hasFieldName "Information" ;
+    base:hasValueNode base:_Nba5c598412b3491c850ce2f1bef327fe .
 
 opcua:Insert a opcua:HistoryUpdateType,
         opcua:PerformUpdateType ;
-    base:hasFieldName "Insert" .
+    base:hasFieldName "Insert" ;
+    base:hasValueNode base:_N05f13e765fd54d1fb314f79608e359f7,
+        base:_N87037fcd6ead4a3ea4a1b43bceea1918 .
 
 opcua:InsertHistory a opcua:PermissionType ;
-    base:hasFieldName "InsertHistory" .
+    base:hasFieldName "InsertHistory" ;
+    base:hasValueNode base:_N57a3d2c5208a48009deaab33462f796d .
 
 opcua:InsufficientBandwidth a opcua:TsnFailureCode ;
-    base:hasFieldName "InsufficientBandwidth" .
+    base:hasFieldName "InsufficientBandwidth" ;
+    base:hasValueNode base:_N18f72317506948a89dbdf687514f8456 .
 
 opcua:InsufficientResources a opcua:TsnFailureCode ;
-    base:hasFieldName "InsufficientResources" .
+    base:hasFieldName "InsufficientResources" ;
+    base:hasValueNode base:_Nd55fb29f425f42c387870d97e8317417 .
 
 opcua:InsufficientTrafficClassBandwidth a opcua:TsnFailureCode ;
-    base:hasFieldName "InsufficientTrafficClassBandwidth" .
+    base:hasFieldName "InsufficientTrafficClassBandwidth" ;
+    base:hasValueNode base:_N4047d93e1d994e4698335fe0cd79b08c .
 
 opcua:Invalid a opcua:MessageSecurityMode ;
-    base:hasFieldName "Invalid" .
+    base:hasFieldName "Invalid" ;
+    base:hasValueNode base:_N71681ffcbd2442c1b68579055e3e0969 .
 
 opcua:InverseName a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask ;
-    base:hasFieldName "InverseName" .
+    base:hasFieldName "InverseName" ;
+    base:hasValueNode base:_N42ab3bb5c7c14b6c8318eab312e4e822,
+        base:_Nfa2246c5b0fd44278fd2559f9854b37f .
 
 opcua:IsAbstract a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask ;
-    base:hasFieldName "IsAbstract" .
+    base:hasFieldName "IsAbstract" ;
+    base:hasValueNode base:_N05fe1df91ade41a297885967313d466f,
+        base:_Nece62244234f4d6fb8715b412f779ee8 .
 
 opcua:IsNull a opcua:FilterOperator ;
-    base:hasFieldName "IsNull" .
+    base:hasFieldName "IsNull" ;
+    base:hasValueNode base:_N8a5aa1a6aa72484f819a316530dd39d9 .
 
 opcua:Issue a opcua:SecurityTokenRequestType ;
-    base:hasFieldName "Issue" .
+    base:hasFieldName "Issue" ;
+    base:hasValueNode base:_N43f29b59c74241a4aabc6ce7c1c7568e .
 
 opcua:IssuedToken a opcua:UserTokenType ;
-    base:hasFieldName "IssuedToken" .
+    base:hasFieldName "IssuedToken" ;
+    base:hasValueNode base:_N0e524efeeabb485aa24adb0059141c1d .
 
 opcua:LastMethodInputValues a opcua:ProgramDiagnostic2DataType ;
     base:hasFieldName "LastMethodInputValues" .
@@ -336,100 +456,134 @@ opcua:LastMethodOutputValues a opcua:ProgramDiagnostic2DataType ;
     base:hasFieldName "LastMethodOutputValues" .
 
 opcua:LastUsableValue a opcua:OverrideValueHandling ;
-    base:hasFieldName "LastUsableValue" .
+    base:hasFieldName "LastUsableValue" ;
+    base:hasValueNode base:_N0a1d2ed5a2c849dfa696ecb94be2542c .
 
 opcua:LatencyHasChanged a opcua:TsnFailureCode ;
-    base:hasFieldName "LatencyHasChanged" .
+    base:hasFieldName "LatencyHasChanged" ;
+    base:hasValueNode base:_Ncaa809a339ac4fc8894375d1bd39e1a3 .
 
 opcua:LessThan a opcua:FilterOperator ;
-    base:hasFieldName "LessThan" .
+    base:hasFieldName "LessThan" ;
+    base:hasValueNode base:_N63ababacbabc4fa0915610daa72968be .
 
 opcua:LessThanOrEqual a opcua:FilterOperator ;
-    base:hasFieldName "LessThanOrEqual" .
+    base:hasFieldName "LessThanOrEqual" ;
+    base:hasValueNode base:_N2c26742531fd45be925bb2b74400d87b .
 
 opcua:Like a opcua:FilterOperator ;
-    base:hasFieldName "Like" .
+    base:hasFieldName "Like" ;
+    base:hasValueNode base:_Ncc78609a036a45589554e48912eb697b .
 
 opcua:Limited a opcua:ConversionLimitEnum ;
-    base:hasFieldName "Limited" .
+    base:hasFieldName "Limited" ;
+    base:hasValueNode base:_N5a69cef135144e76a38163e0eeb7fff5 .
 
 opcua:Linear a opcua:AxisScaleEnumeration ;
-    base:hasFieldName "Linear" .
+    base:hasFieldName "Linear" ;
+    base:hasValueNode base:_N06873441ae4b47f39f43f34d791179f6 .
 
 opcua:Ln a opcua:AxisScaleEnumeration ;
-    base:hasFieldName "Ln" .
+    base:hasFieldName "Ln" ;
+    base:hasValueNode base:_N4bc370477aa049058afa3fbf408fe8b3 .
 
 opcua:Log a opcua:AxisScaleEnumeration,
         opcua:DiagnosticsLevel ;
-    base:hasFieldName "Log" .
+    base:hasFieldName "Log" ;
+    base:hasValueNode base:_N56892efde11a4345a7b964cd467079b7,
+        base:_Nced697e2ef9b4799a42bb513bd80b674 .
 
 opcua:LowerLayerDown a opcua:InterfaceOperStatus ;
-    base:hasFieldName "LowerLayerDown" .
+    base:hasFieldName "LowerLayerDown" ;
+    base:hasValueNode base:_Nd5df962938d34db2a7063e565e1642b5 .
 
 opcua:Mandatory a opcua:NamingRuleType ;
-    base:hasFieldName "Mandatory" .
+    base:hasFieldName "Mandatory" ;
+    base:hasValueNode base:_N371be1b1607b4453ac5d766fcae5e2be .
 
 opcua:MaxFanInPortsLimitReached a opcua:TsnFailureCode ;
-    base:hasFieldName "MaxFanInPortsLimitReached" .
+    base:hasFieldName "MaxFanInPortsLimitReached" ;
+    base:hasValueNode base:_Ne2a46b0e0a9d481ebf27f457b9f644ea .
 
 opcua:MaxFrameSizeTooLarge a opcua:TsnFailureCode ;
-    base:hasFieldName "MaxFrameSizeTooLarge" .
+    base:hasFieldName "MaxFrameSizeTooLarge" ;
+    base:hasValueNode base:_N86dcd87fdf9340c5933ad1ad2dbf714f .
 
 opcua:MaxLatencyExceeded a opcua:TsnFailureCode ;
-    base:hasFieldName "MaxLatencyExceeded" .
+    base:hasFieldName "MaxLatencyExceeded" ;
+    base:hasValueNode base:_N03c09582f9dc42258d1f7d4f8ea917ed .
 
 opcua:MessageType a opcua:JsonDataSetMessageContentMask ;
-    base:hasFieldName "MessageType" .
+    base:hasFieldName "MessageType" ;
+    base:hasValueNode base:_N5ddaaac5d4fe4e80914bdf8de72ade28 .
 
 opcua:MetaDataVersion a opcua:JsonDataSetMessageContentMask ;
-    base:hasFieldName "MetaDataVersion" .
+    base:hasFieldName "MetaDataVersion" ;
+    base:hasValueNode base:_N03abc461b9954877a29e815a1580e289 .
 
 opcua:Method a opcua:NodeAttributesMask,
         opcua:NodeClass ;
-    base:hasFieldName "Method" .
+    base:hasFieldName "Method" ;
+    base:hasValueNode base:_N072bf5b0e70e4021a2aec47c46cb7519,
+        base:_N71db5ec10c1849e996e8381054418ed1 .
 
 opcua:MinimumSamplingInterval a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask ;
-    base:hasFieldName "MinimumSamplingInterval" .
+    base:hasFieldName "MinimumSamplingInterval" ;
+    base:hasValueNode base:_N6c81a0ba0230419fa2afbcb8c3821532,
+        base:_N80023a046cac47089c334a680c922025 .
 
 opcua:ModifyHistory a opcua:PermissionType ;
-    base:hasFieldName "ModifyHistory" .
+    base:hasFieldName "ModifyHistory" ;
+    base:hasValueNode base:_Nb1fbd12eb9f249a0b9993064121a4dff .
 
 opcua:MustChangePassword a opcua:UserConfigurationMask ;
-    base:hasFieldName "MustChangePassword" .
+    base:hasFieldName "MustChangePassword" ;
+    base:hasValueNode base:_Nbebe48f1f2304dd4bcef2a4d641a87cc .
 
 opcua:NetworkMessageHeader a opcua:JsonNetworkMessageContentMask ;
-    base:hasFieldName "NetworkMessageHeader" .
+    base:hasFieldName "NetworkMessageHeader" ;
+    base:hasValueNode base:_N40e6d62f8f6d4ac98bd542521eedca06 .
 
 opcua:NoChangeByUser a opcua:UserConfigurationMask ;
-    base:hasFieldName "NoChangeByUser" .
+    base:hasFieldName "NoChangeByUser" ;
+    base:hasValueNode base:_Nd5c2f35ff2134ba99b1e0d906463d020 .
 
 opcua:NoConfiguration a opcua:ServerState ;
-    base:hasFieldName "NoConfiguration" .
+    base:hasFieldName "NoConfiguration" ;
+    base:hasValueNode base:_Nd761baf615e54d258d1a1dd7920e3c83 .
 
 opcua:NoConversion a opcua:ConversionLimitEnum ;
-    base:hasFieldName "NoConversion" .
+    base:hasFieldName "NoConversion" ;
+    base:hasValueNode base:_N98d550bd0c4c40b9a8cf0a6b91378923 .
 
 opcua:NoDelete a opcua:UserConfigurationMask ;
-    base:hasFieldName "NoDelete" .
+    base:hasFieldName "NoDelete" ;
+    base:hasValueNode base:_Nbc0b9f27da304316afa1c3cae46a78df .
 
 opcua:NoFailure a opcua:TsnFailureCode ;
-    base:hasFieldName "NoFailure" .
+    base:hasFieldName "NoFailure" ;
+    base:hasValueNode base:_N3ba0d8917d744f9c93d1b1f8e2c20897 .
 
 opcua:NoNegotiation a opcua:NegotiationStatus ;
-    base:hasFieldName "NoNegotiation" .
+    base:hasFieldName "NoNegotiation" ;
+    base:hasValueNode base:_N05af1e2b2ac54ecf990514e06ae552c3 .
 
 opcua:NoSubDataTypes a opcua:AccessLevelExType ;
-    base:hasFieldName "NoSubDataTypes" .
+    base:hasFieldName "NoSubDataTypes" ;
+    base:hasValueNode base:_N015e466845c2445a818b2ba07e4e0389 .
 
 opcua:NonVolatile a opcua:AccessLevelExType ;
-    base:hasFieldName "NonVolatile" .
+    base:hasFieldName "NonVolatile" ;
+    base:hasValueNode base:_Nceb1613aa1b34605b725ceb2fde5ae04 .
 
 opcua:NonatomicRead a opcua:AccessLevelExType ;
-    base:hasFieldName "NonatomicRead" .
+    base:hasFieldName "NonatomicRead" ;
+    base:hasValueNode base:_N09aa416985054966bfb8f9174841d447 .
 
 opcua:NonatomicWrite a opcua:AccessLevelExType ;
-    base:hasFieldName "NonatomicWrite" .
+    base:hasFieldName "NonatomicWrite" ;
+    base:hasValueNode base:_N277859aae52e4975af205240de4d5481 .
 
 opcua:None a opcua:MessageSecurityMode,
         opcua:NodeAttributesMask,
@@ -437,423 +591,589 @@ opcua:None a opcua:MessageSecurityMode,
         opcua:TrustListMasks,
         opcua:TsnListenerStatus,
         opcua:TsnTalkerStatus ;
-    base:hasFieldName "None" .
+    base:hasFieldName "None" ;
+    base:hasValueNode base:_N024e2ae399c14746a17d08681deef5ab,
+        base:_N4571ec35cf364022aae2cf022205a46e,
+        base:_N5bfecb656d174903be474de1885bd89a,
+        base:_N5c04db9d113443d4a6b801880110599f,
+        base:_Nb82e996f7c7d4ee2a2f5dfb471d5284f,
+        base:_Nf20c4fe62d534fa28375ccd48e028dce .
 
 opcua:Not a opcua:FilterOperator ;
-    base:hasFieldName "Not" .
+    base:hasFieldName "Not" ;
+    base:hasValueNode base:_Nbd37e95178334affadc475156d8a789a .
 
 opcua:NotPresent a opcua:InterfaceOperStatus ;
-    base:hasFieldName "NotPresent" .
+    base:hasFieldName "NotPresent" ;
+    base:hasValueNode base:_N0533836d1d0f4f0982a9d6c4dcc712ca .
 
 opcua:NotSpecified a opcua:BrokerTransportQualityOfService ;
-    base:hasFieldName "NotSpecified" .
+    base:hasFieldName "NotSpecified" ;
+    base:hasValueNode base:_N753ac965c26b4c079bac8607300a1583 .
 
 opcua:Numeric a opcua:IdType ;
-    base:hasFieldName "Numeric" .
+    base:hasFieldName "Numeric" ;
+    base:hasValueNode base:_Nf49516024c604868a8bd48e08b9a470e .
 
 opcua:Object a opcua:NodeAttributesMask,
         opcua:NodeClass ;
-    base:hasFieldName "Object" .
+    base:hasFieldName "Object" ;
+    base:hasValueNode base:_N039c1f41ac384e409ba5da7ba6204c45,
+        base:_Nf84206570d314a829e9d3c83d9cbafe8 .
 
 opcua:ObjectType a opcua:NodeAttributesMask,
         opcua:NodeClass ;
-    base:hasFieldName "ObjectType" .
+    base:hasFieldName "ObjectType" ;
+    base:hasValueNode base:_N0df6026e8355410c91337000d4494861,
+        base:_Na3f664a7ee5144699a93ccad42579300 .
 
 opcua:OfType a opcua:FilterOperator ;
-    base:hasFieldName "OfType" .
+    base:hasFieldName "OfType" ;
+    base:hasValueNode base:_Nf7113de050bb4137bc588081680d4fac .
 
 opcua:Opaque a opcua:IdType ;
-    base:hasFieldName "Opaque" .
+    base:hasFieldName "Opaque" ;
+    base:hasValueNode base:_N43ea7222955a40ea9c8e7a7134e7c398 .
 
 opcua:Operational a opcua:PubSubState,
         opcua:TsnStreamState ;
-    base:hasFieldName "Operational" .
+    base:hasFieldName "Operational" ;
+    base:hasValueNode base:_N160d9a28bb994c85a88bd977673352fe,
+        base:_Naf5989ebe2c14db49b505e6514179dcd .
 
 opcua:Optional a opcua:NamingRuleType ;
-    base:hasFieldName "Optional" .
+    base:hasFieldName "Optional" ;
+    base:hasValueNode base:_Ndcd1a80a2544432bb259703aae4ecb72 .
 
 opcua:Or a opcua:FilterOperator ;
-    base:hasFieldName "Or" .
+    base:hasFieldName "Or" ;
+    base:hasValueNode base:_Nac025a68d6ce4b20a1960bb6c9d64bc4 .
 
 opcua:OutOfMmrpResources a opcua:TsnFailureCode ;
-    base:hasFieldName "OutOfMmrpResources" .
+    base:hasFieldName "OutOfMmrpResources" ;
+    base:hasValueNode base:_N62c220623de24dfaa26db6d366c830ff .
 
 opcua:OutOfMsrpResources a opcua:TsnFailureCode ;
-    base:hasFieldName "OutOfMsrpResources" .
+    base:hasFieldName "OutOfMsrpResources" ;
+    base:hasValueNode base:_N61b34e5c56214f82b731bf979ea1a4b6 .
 
 opcua:OverrideValue a opcua:FieldTargetDataType,
         opcua:OverrideValueHandling ;
-    base:hasFieldName "OverrideValue" .
+    base:hasFieldName "OverrideValue" ;
+    base:hasValueNode base:_Nd1c4649b332140af8706dba1a1ae1a62 .
 
 opcua:PartialFailed a opcua:TsnListenerStatus ;
-    base:hasFieldName "PartialFailed" .
+    base:hasFieldName "PartialFailed" ;
+    base:hasValueNode base:_N05d0ffbe934b4ee7a58e449819991257 .
 
 opcua:Paused a opcua:PubSubState ;
-    base:hasFieldName "Paused" .
+    base:hasFieldName "Paused" ;
+    base:hasValueNode base:_Ndbaae2231515467186e2ca3eb3c811a9 .
 
 opcua:PayloadHeader a opcua:UadpNetworkMessageContentMask ;
-    base:hasFieldName "PayloadHeader" .
+    base:hasFieldName "PayloadHeader" ;
+    base:hasValueNode base:_Ne601d3d285c84c1fb53dce54d0b5f7fb .
 
 opcua:PercentOfEURange a opcua:ExceptionDeviationFormat ;
-    base:hasFieldName "PercentOfEURange" .
+    base:hasFieldName "PercentOfEURange" ;
+    base:hasValueNode base:_Ne19fd43b8b26435384492275ee5feda4 .
 
 opcua:PercentOfRange a opcua:ExceptionDeviationFormat ;
-    base:hasFieldName "PercentOfRange" .
+    base:hasFieldName "PercentOfRange" ;
+    base:hasValueNode base:_N46ef9e1be9ff48b1ad55dce717148119 .
 
 opcua:PercentOfValue a opcua:ExceptionDeviationFormat ;
-    base:hasFieldName "PercentOfValue" .
+    base:hasFieldName "PercentOfValue" ;
+    base:hasValueNode base:_N0671d1fed9a349e89b678ff1b04c6a2a .
 
 opcua:PicoSeconds a opcua:UadpDataSetMessageContentMask,
         opcua:UadpNetworkMessageContentMask ;
-    base:hasFieldName "PicoSeconds" .
+    base:hasFieldName "PicoSeconds" ;
+    base:hasValueNode base:_N28278db27a6441a1b4c0d4017f67ae5c,
+        base:_Nc43264b8fe7d43ceb38b62a85287a0e1 .
 
 opcua:PreOperational a opcua:PubSubState ;
-    base:hasFieldName "PreOperational" .
+    base:hasFieldName "PreOperational" ;
+    base:hasValueNode base:_N03adba10dc1b4a748128e4a3e3b9827e .
 
 opcua:PrimaryOnly a opcua:RedundantServerMode ;
-    base:hasFieldName "PrimaryOnly" .
+    base:hasFieldName "PrimaryOnly" ;
+    base:hasValueNode base:_N7fdd1c9ce9e6444ea297f02980310882 .
 
 opcua:PrimaryWithBackup a opcua:RedundantServerMode ;
-    base:hasFieldName "PrimaryWithBackup" .
+    base:hasFieldName "PrimaryWithBackup" ;
+    base:hasValueNode base:_N6b84446f2dfb4ad6ba3667ef7dcfd7f2 .
 
 opcua:PriorityIsNotAnSrcClass a opcua:TsnFailureCode ;
-    base:hasFieldName "PriorityIsNotAnSrcClass" .
+    base:hasFieldName "PriorityIsNotAnSrcClass" ;
+    base:hasValueNode base:_N6f9d48ff2fa241f094bb0fb5b947f556 .
 
 opcua:PromotedField a opcua:DataSetFieldFlags ;
-    base:hasFieldName "PromotedField" .
+    base:hasFieldName "PromotedField" ;
+    base:hasValueNode base:_Na42294baa43a4017aba66e3a83575ad5 .
 
 opcua:PromotedFields a opcua:UadpNetworkMessageContentMask ;
-    base:hasFieldName "PromotedFields" .
+    base:hasFieldName "PromotedFields" ;
+    base:hasValueNode base:_N1829dfde1df54de1814f397f8c2ca4bd .
 
 opcua:PublisherId a opcua:DataSetReaderDataType,
         opcua:JsonDataSetMessageContentMask,
         opcua:JsonNetworkMessageContentMask,
         opcua:PubSubConnectionDataType,
         opcua:UadpNetworkMessageContentMask ;
-    base:hasFieldName "PublisherId" .
+    base:hasFieldName "PublisherId" ;
+    base:hasValueNode base:_N541974c56606431e9b7cebabff46f4a4,
+        base:_N5765a20cdccd408b91b74968dbc8d958,
+        base:_Neba3240e2be142f0adf5be5d68c04dd6 .
 
 opcua:RawData a opcua:DataSetFieldContentMask ;
-    base:hasFieldName "RawData" .
+    base:hasFieldName "RawData" ;
+    base:hasValueNode base:_N4d684b6259624c938f5fe1c43cb625fa .
 
 opcua:Read a opcua:OpenFileMode,
         opcua:PermissionType ;
-    base:hasFieldName "Read" .
+    base:hasFieldName "Read" ;
+    base:hasValueNode base:_N2e43a2867f214212b8e97037c5f4703a,
+        base:_N94717b15f04e41c5877529e8749899e0 .
 
 opcua:ReadHistory a opcua:PermissionType ;
-    base:hasFieldName "ReadHistory" .
+    base:hasFieldName "ReadHistory" ;
+    base:hasValueNode base:_N7471736a77a744a99603a0ec95d6c9d0 .
 
 opcua:ReadRolePermissions a opcua:PermissionType ;
-    base:hasFieldName "ReadRolePermissions" .
+    base:hasFieldName "ReadRolePermissions" ;
+    base:hasValueNode base:_N5a9dce6cdf894a15a01edffb46404e29 .
 
 opcua:Ready a opcua:TsnListenerStatus,
         opcua:TsnStreamState,
         opcua:TsnTalkerStatus ;
-    base:hasFieldName "Ready" .
+    base:hasFieldName "Ready" ;
+    base:hasValueNode base:_N6e53d1b1f419409ead872b86d11d587d,
+        base:_N84f4ddf641ac419b88a7169e7a098c73,
+        base:_N8e184371968f4ff196b2afb6def74743 .
 
 opcua:ReceiveEvents a opcua:PermissionType ;
-    base:hasFieldName "ReceiveEvents" .
+    base:hasFieldName "ReceiveEvents" ;
+    base:hasValueNode base:_Neb9d4a5b59f34acfb028e736bc0fab79 .
 
 opcua:ReferenceConnection a opcua:PubSubConfigurationRefMask ;
-    base:hasFieldName "ReferenceConnection" .
+    base:hasFieldName "ReferenceConnection" ;
+    base:hasValueNode base:_N1d2fcc9838934356affe0df2b76062cb .
 
 opcua:ReferencePubDataset a opcua:PubSubConfigurationRefMask ;
-    base:hasFieldName "ReferencePubDataset" .
+    base:hasFieldName "ReferencePubDataset" ;
+    base:hasValueNode base:_N770fcda2b07e4b49a99f0cab8374a0a1 .
 
 opcua:ReferencePushTarget a opcua:PubSubConfigurationRefMask ;
-    base:hasFieldName "ReferencePushTarget" .
+    base:hasFieldName "ReferencePushTarget" ;
+    base:hasValueNode base:_Nac6dd6a1ed7841108e58f6224cf25e0b .
 
 opcua:ReferenceReader a opcua:PubSubConfigurationRefMask ;
-    base:hasFieldName "ReferenceReader" .
+    base:hasFieldName "ReferenceReader" ;
+    base:hasValueNode base:_Nccd3694a3dfe4fcba78509ab6bf007a2 .
 
 opcua:ReferenceReaderGroup a opcua:PubSubConfigurationRefMask ;
-    base:hasFieldName "ReferenceReaderGroup" .
+    base:hasFieldName "ReferenceReaderGroup" ;
+    base:hasValueNode base:_Nf9fb5a4821454ebea270ec3086b61edd .
 
 opcua:ReferenceSecurityGroup a opcua:PubSubConfigurationRefMask ;
-    base:hasFieldName "ReferenceSecurityGroup" .
+    base:hasFieldName "ReferenceSecurityGroup" ;
+    base:hasValueNode base:_Nbd8a3f01e05b47cdb86251e1adac8c07 .
 
 opcua:ReferenceSubDataset a opcua:PubSubConfigurationRefMask ;
-    base:hasFieldName "ReferenceSubDataset" .
+    base:hasFieldName "ReferenceSubDataset" ;
+    base:hasValueNode base:_N2b26ecb9056d43568ad6f3ef384df9be .
 
 opcua:ReferenceWriter a opcua:PubSubConfigurationRefMask ;
-    base:hasFieldName "ReferenceWriter" .
+    base:hasFieldName "ReferenceWriter" ;
+    base:hasValueNode base:_N41fb6a2b3a4a47869b4c495db20ae886 .
 
 opcua:ReferenceWriterGroup a opcua:PubSubConfigurationRefMask ;
-    base:hasFieldName "ReferenceWriterGroup" .
+    base:hasFieldName "ReferenceWriterGroup" ;
+    base:hasValueNode base:_N3d32c9fb35e342798800517196ea3a70 .
 
 opcua:RelatedTo a opcua:FilterOperator ;
-    base:hasFieldName "RelatedTo" .
+    base:hasFieldName "RelatedTo" ;
+    base:hasValueNode base:_N76ca1899189946cabfaedfad1ee06d92 .
 
 opcua:Remove a opcua:PerformUpdateType ;
-    base:hasFieldName "Remove" .
+    base:hasFieldName "Remove" ;
+    base:hasValueNode base:_N76f01050f6324f669a7ff41fb659a541 .
 
 opcua:RemoveReference a opcua:PermissionType ;
-    base:hasFieldName "RemoveReference" .
+    base:hasFieldName "RemoveReference" ;
+    base:hasValueNode base:_N77751e60ff8148d5b87383dcb6530df8 .
 
 opcua:Renew a opcua:SecurityTokenRequestType ;
-    base:hasFieldName "Renew" .
+    base:hasFieldName "Renew" ;
+    base:hasValueNode base:_N4075eaa6fc2f4b6bb566280b30f834b2 .
 
 opcua:Replace a opcua:HistoryUpdateType,
         opcua:PerformUpdateType ;
-    base:hasFieldName "Replace" .
+    base:hasFieldName "Replace" ;
+    base:hasValueNode base:_N84f49635b6bb4b4cbffc4c381d9d7546,
+        base:_Nc2f8182354ad4f099a8da145d9e50db2 .
 
 opcua:ReplyTo a opcua:JsonNetworkMessageContentMask ;
-    base:hasFieldName "ReplyTo" .
+    base:hasFieldName "ReplyTo" ;
+    base:hasValueNode base:_N13afd793306f452ebdcc184089e12b65 .
 
 opcua:RequiresDigitCharacters a opcua:PasswordOptionsMask ;
-    base:hasFieldName "RequiresDigitCharacters" .
+    base:hasFieldName "RequiresDigitCharacters" ;
+    base:hasValueNode base:_Nafe7c5fd4d4543ef91e3f9ce621204c0 .
 
 opcua:RequiresLowerCaseCharacters a opcua:PasswordOptionsMask ;
-    base:hasFieldName "RequiresLowerCaseCharacters" .
+    base:hasFieldName "RequiresLowerCaseCharacters" ;
+    base:hasValueNode base:_N4cc1302bc1d84631bd5656da35a33e21 .
 
 opcua:RequiresSpecialCharacters a opcua:PasswordOptionsMask ;
-    base:hasFieldName "RequiresSpecialCharacters" .
+    base:hasFieldName "RequiresSpecialCharacters" ;
+    base:hasValueNode base:_N53f61c9b1d344a8aafe7952eda461e29 .
 
 opcua:RequiresUpperCaseCharacters a opcua:PasswordOptionsMask ;
-    base:hasFieldName "RequiresUpperCaseCharacters" .
+    base:hasFieldName "RequiresUpperCaseCharacters" ;
+    base:hasValueNode base:_N7d8f11c73f3b418cb6c22013b2cb0743 .
 
 opcua:ReversibleFieldEncoding a opcua:JsonDataSetMessageContentMask ;
-    base:hasFieldName "ReversibleFieldEncoding" .
+    base:hasFieldName "ReversibleFieldEncoding" ;
+    base:hasValueNode base:_Nef0affdc62c44d27b53eeeec058948e1 .
 
 opcua:Role a opcua:IdentityCriteriaType ;
-    base:hasFieldName "Role" .
+    base:hasFieldName "Role" ;
+    base:hasValueNode base:_N00a85eba7acc4396ba6bb342dba27ede .
 
 opcua:Running a opcua:ServerState ;
-    base:hasFieldName "Running" .
+    base:hasFieldName "Running" ;
+    base:hasValueNode base:_N2d2a095cf6224f0981052feccb03b246 .
 
 opcua:SemanticChange a opcua:AccessLevelExType,
         opcua:AccessLevelType ;
-    base:hasFieldName "SemanticChange" .
+    base:hasFieldName "SemanticChange" ;
+    base:hasValueNode base:_N0d15d4fec5b74bfb9f48449214e794a6,
+        base:_Ned9b19af79b44f779b7901fa99711b6e .
 
 opcua:SequenceNumber a opcua:JsonDataSetMessageContentMask,
         opcua:UadpDataSetMessageContentMask,
         opcua:UadpNetworkMessageContentMask ;
-    base:hasFieldName "SequenceNumber" .
+    base:hasFieldName "SequenceNumber" ;
+    base:hasValueNode base:_N8e4e750f2ae4457d9326e2d7d6f950aa,
+        base:_N91cbfe260f2d4439bee0f090034dfa82,
+        base:_Nc7320c1cc2e3404ba59a6de0c8921859 .
 
 opcua:ServerPicoSeconds a opcua:DataSetFieldContentMask ;
-    base:hasFieldName "ServerPicoSeconds" .
+    base:hasFieldName "ServerPicoSeconds" ;
+    base:hasValueNode base:_N011a1a3db84846efb05d5e448d4d2dae .
 
 opcua:ServerTimestamp a opcua:DataSetFieldContentMask ;
-    base:hasFieldName "ServerTimestamp" .
+    base:hasFieldName "ServerTimestamp" ;
+    base:hasValueNode base:_Nc16a668d6ff446dd9ba1a94a61643c66 .
 
 opcua:SessionRequired a opcua:AccessRestrictionType ;
-    base:hasFieldName "SessionRequired" .
+    base:hasFieldName "SessionRequired" ;
+    base:hasValueNode base:_Nceda1ca0041a46248de7b57aad6e11fc .
 
 opcua:Shutdown a opcua:ServerState ;
-    base:hasFieldName "Shutdown" .
+    base:hasFieldName "Shutdown" ;
+    base:hasValueNode base:_Nb8d29c2bfb0d4de8a445994b358bb831 .
 
 opcua:Sign a opcua:MessageSecurityMode ;
-    base:hasFieldName "Sign" .
+    base:hasFieldName "Sign" ;
+    base:hasValueNode base:_Nf9fd723741bc46cdb17577e237654d9d .
 
 opcua:SignAndEncrypt a opcua:MessageSecurityMode ;
-    base:hasFieldName "SignAndEncrypt" .
+    base:hasFieldName "SignAndEncrypt" ;
+    base:hasValueNode base:_N75afb385867b48e3a58383e27a8db1d7 .
 
 opcua:SigningRequired a opcua:AccessRestrictionType ;
-    base:hasFieldName "SigningRequired" .
+    base:hasFieldName "SigningRequired" ;
+    base:hasValueNode base:_Ndbb248d19a274a01a9b511548b311e24 .
 
 opcua:SingleDataSetMessage a opcua:JsonNetworkMessageContentMask ;
-    base:hasFieldName "SingleDataSetMessage" .
+    base:hasFieldName "SingleDataSetMessage" ;
+    base:hasValueNode base:_N0d252aa8ab2948b09f6fec0e2cd541e0 .
 
 opcua:SourcePicoSeconds a opcua:DataSetFieldContentMask ;
-    base:hasFieldName "SourcePicoSeconds" .
+    base:hasFieldName "SourcePicoSeconds" ;
+    base:hasValueNode base:_Nbb09a8cf30a34ebaa6218c5ac719c024 .
 
 opcua:SourceTimestamp a opcua:DataSetFieldContentMask ;
-    base:hasFieldName "SourceTimestamp" .
+    base:hasFieldName "SourceTimestamp" ;
+    base:hasValueNode base:_N505f63ac0bc6475aa04fc506df565f0b .
 
 opcua:SrClassPriorityMismatch a opcua:TsnFailureCode ;
-    base:hasFieldName "SrClassPriorityMismatch" .
+    base:hasFieldName "SrClassPriorityMismatch" ;
+    base:hasValueNode base:_N6ec0c4bdf3a4433cb0a24a5b5b59562f .
 
 opcua:Status a opcua:JsonDataSetMessageContentMask,
         opcua:UadpDataSetMessageContentMask ;
-    base:hasFieldName "Status" .
+    base:hasFieldName "Status" ;
+    base:hasValueNode base:_N02e3f84361e64a4f9f3b25d8a98cfe20,
+        base:_N7df0a0689c944ba098cfd64f2c78656b .
 
 opcua:StatusWrite a opcua:AccessLevelExType,
         opcua:AccessLevelType ;
-    base:hasFieldName "StatusWrite" .
+    base:hasFieldName "StatusWrite" ;
+    base:hasValueNode base:_N594211495b964677b117cab4d11cf975,
+        base:_Nd78777df8dab49c19dd5c8aca44a1aea .
 
 opcua:StreamDestinationAddressInUse a opcua:TsnFailureCode ;
-    base:hasFieldName "StreamDestinationAddressInUse" .
+    base:hasFieldName "StreamDestinationAddressInUse" ;
+    base:hasValueNode base:_N6f41c35ad8af4336826cf1f0806759bf .
 
 opcua:StreamIdInUse a opcua:TsnFailureCode ;
-    base:hasFieldName "StreamIdInUse" .
+    base:hasFieldName "StreamIdInUse" ;
+    base:hasValueNode base:_N6d4548154f1b4ecda325cac63c3710a2 .
 
 opcua:StreamIdTypeNotSupported a opcua:TsnFailureCode ;
-    base:hasFieldName "StreamIdTypeNotSupported" .
+    base:hasFieldName "StreamIdTypeNotSupported" ;
+    base:hasValueNode base:_N577db80928024b9f8b6af50d73681989 .
 
 opcua:StreamPreemptedByHigherRank a opcua:TsnFailureCode ;
-    base:hasFieldName "StreamPreemptedByHigherRank" .
+    base:hasFieldName "StreamPreemptedByHigherRank" ;
+    base:hasValueNode base:_N0f41a6701e2440f38f923a84e9b1137a .
 
 opcua:StreamTransformNotSupported a opcua:TsnFailureCode ;
-    base:hasFieldName "StreamTransformNotSupported" .
+    base:hasFieldName "StreamTransformNotSupported" ;
+    base:hasValueNode base:_N71b14d14df254977811ee5626d3eed4a .
 
 opcua:StructureWithOptionalFields a opcua:StructureType ;
-    base:hasFieldName "StructureWithOptionalFields" .
+    base:hasFieldName "StructureWithOptionalFields" ;
+    base:hasValueNode base:_N1d0aebfba4724cff8060be37e2fe2d26 .
 
 opcua:StructureWithSubtypedValues a opcua:StructureType ;
-    base:hasFieldName "StructureWithSubtypedValues" .
+    base:hasFieldName "StructureWithSubtypedValues" ;
+    base:hasValueNode base:_Nb3102ebecfff4ae388dab3317e52b069 .
 
 opcua:SubscribeToEvents a opcua:EventNotifierType ;
-    base:hasFieldName "SubscribeToEvents" .
+    base:hasFieldName "SubscribeToEvents" ;
+    base:hasValueNode base:_Nd61ddc90948241dab976694a0a1abea0 .
 
 opcua:SubstituteValue a opcua:PublishedVariableDataType ;
     base:hasFieldName "SubstituteValue" .
 
 opcua:SupportDescriptionForUser a opcua:PasswordOptionsMask ;
-    base:hasFieldName "SupportDescriptionForUser" .
+    base:hasFieldName "SupportDescriptionForUser" ;
+    base:hasValueNode base:_N9df9537f73a547d9aba3512905b7c30f .
 
 opcua:SupportDisableDeleteForUser a opcua:PasswordOptionsMask ;
-    base:hasFieldName "SupportDisableDeleteForUser" .
+    base:hasFieldName "SupportDisableDeleteForUser" ;
+    base:hasValueNode base:_N34e6ab9ade334f30aec1a2c915208d8a .
 
 opcua:SupportDisableUser a opcua:PasswordOptionsMask ;
-    base:hasFieldName "SupportDisableUser" .
+    base:hasFieldName "SupportDisableUser" ;
+    base:hasValueNode base:_N50008c9b2ce24058a8fcacac62b5a0a6 .
 
 opcua:SupportInitialPasswordChange a opcua:PasswordOptionsMask ;
-    base:hasFieldName "SupportInitialPasswordChange" .
+    base:hasFieldName "SupportInitialPasswordChange" ;
+    base:hasValueNode base:_Ned136a56e3574d6198fe88b822042dac .
 
 opcua:SupportNoChangeForUser a opcua:PasswordOptionsMask ;
-    base:hasFieldName "SupportNoChangeForUser" .
+    base:hasFieldName "SupportNoChangeForUser" ;
+    base:hasValueNode base:_Ne31091d9d7dc4ad0825afaf2421f989f .
 
 opcua:SuppressCertificateExpired a opcua:TrustListValidationOptions ;
-    base:hasFieldName "SuppressCertificateExpired" .
+    base:hasFieldName "SuppressCertificateExpired" ;
+    base:hasValueNode base:_Nb95d0c91262e4a41b8845e5361b285f7 .
 
 opcua:SuppressHostNameInvalid a opcua:TrustListValidationOptions ;
-    base:hasFieldName "SuppressHostNameInvalid" .
+    base:hasFieldName "SuppressHostNameInvalid" ;
+    base:hasValueNode base:_N2b21bcb60fd1462fa6e3dc9d6ee959e2 .
 
 opcua:SuppressIssuerCertificateExpired a opcua:TrustListValidationOptions ;
-    base:hasFieldName "SuppressIssuerCertificateExpired" .
+    base:hasFieldName "SuppressIssuerCertificateExpired" ;
+    base:hasValueNode base:_Nddee8dc8e7bb4e9bae8cc1f9c904bf8f .
 
 opcua:SuppressIssuerRevocationStatusUnknown a opcua:TrustListValidationOptions ;
-    base:hasFieldName "SuppressIssuerRevocationStatusUnknown" .
+    base:hasFieldName "SuppressIssuerRevocationStatusUnknown" ;
+    base:hasValueNode base:_N2f943731599a48f89f0a6c8ac8bf32d4 .
 
 opcua:SuppressRevocationStatusUnknown a opcua:TrustListValidationOptions ;
-    base:hasFieldName "SuppressRevocationStatusUnknown" .
+    base:hasFieldName "SuppressRevocationStatusUnknown" ;
+    base:hasValueNode base:_N49d089c4b09b4858a439694c70fdbcff .
 
 opcua:Suspended a opcua:ServerState ;
-    base:hasFieldName "Suspended" .
+    base:hasFieldName "Suspended" ;
+    base:hasValueNode base:_Nbfd9832a5cb64d82bae92ad51b6c0a29 .
 
 opcua:Symmetric a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask ;
-    base:hasFieldName "Symmetric" .
+    base:hasFieldName "Symmetric" ;
+    base:hasValueNode base:_N550c8a1b0731426999574ff09aec4c9c,
+        base:_Ndd571728c9174f638206cbcbe52f82b1 .
 
 opcua:Test a opcua:ServerState ;
-    base:hasFieldName "Test" .
+    base:hasFieldName "Test" ;
+    base:hasValueNode base:_N86f03d6f851b483d9d683a46bf78f638 .
 
 opcua:Testing a opcua:InterfaceAdminStatus,
         opcua:InterfaceOperStatus ;
-    base:hasFieldName "Testing" .
+    base:hasFieldName "Testing" ;
+    base:hasValueNode base:_N575ae33688e24c86b8601f1d6099adb0,
+        base:_N610a05930bfc43028ba7909f2758d535 .
 
 opcua:Thumbprint a opcua:IdentityCriteriaType ;
-    base:hasFieldName "Thumbprint" .
+    base:hasFieldName "Thumbprint" ;
+    base:hasValueNode base:_N9b40f125b0f94c54bcd75e30a2db4cc3 .
 
 opcua:Timestamp a opcua:JsonDataSetMessageContentMask,
         opcua:UadpDataSetMessageContentMask,
         opcua:UadpNetworkMessageContentMask ;
-    base:hasFieldName "Timestamp" .
+    base:hasFieldName "Timestamp" ;
+    base:hasValueNode base:_N064fd4ea1e29415cb9ea821c2b305114,
+        base:_N53665b89111d43f2b328cc29074153f9,
+        base:_N68585443e1d14bab955b2c4fc3599004 .
 
 opcua:TimestampWrite a opcua:AccessLevelExType,
         opcua:AccessLevelType ;
-    base:hasFieldName "TimestampWrite" .
+    base:hasFieldName "TimestampWrite" ;
+    base:hasValueNode base:_N110376b968c743499b7960f5f4ef452a,
+        base:_Na34ea9de07464e9ba5ce46139368bc32 .
 
 opcua:Transparent a opcua:RedundancySupport ;
-    base:hasFieldName "Transparent" .
+    base:hasFieldName "Transparent" ;
+    base:hasValueNode base:_N044de7d3e3164437b717d3865c917a70 .
 
 opcua:Unacknowledged a opcua:AlarmMask ;
-    base:hasFieldName "Unacknowledged" .
+    base:hasFieldName "Unacknowledged" ;
+    base:hasValueNode base:_N149706b0457e450d94b0ceed8510be10 .
 
 opcua:Unconfirmed a opcua:AlarmMask ;
-    base:hasFieldName "Unconfirmed" .
+    base:hasFieldName "Unconfirmed" ;
+    base:hasValueNode base:_Nc2141eb726074614a9e3ef8fed2479ab .
 
 opcua:Undefined a opcua:DataSetOrderingType ;
-    base:hasFieldName "Undefined" .
+    base:hasFieldName "Undefined" ;
+    base:hasValueNode base:_N673f45f85f22402990eb3f9f0ef47a08 .
 
 opcua:UnionWithSubtypedValues a opcua:StructureType ;
-    base:hasFieldName "UnionWithSubtypedValues" .
+    base:hasFieldName "UnionWithSubtypedValues" ;
+    base:hasValueNode base:_N40623369e46b467581148a138e84ecab .
 
 opcua:Unknown a opcua:Duplex,
         opcua:ExceptionDeviationFormat,
         opcua:InterfaceOperStatus,
         opcua:NegotiationStatus,
         opcua:ServerState ;
-    base:hasFieldName "Unknown" .
+    base:hasFieldName "Unknown" ;
+    base:hasValueNode base:_N01d8beb6e799495db98038c75c6db804,
+        base:_N127cc6de6617414eab0b7e9e5f35eba3,
+        base:_N160663a850e2482396be81591f4f93af,
+        base:_N162984d29e724807ae4ad8c25c92affe,
+        base:_N3bd729b7b386431f89e049d980904307 .
 
 opcua:Unlimited a opcua:ConversionLimitEnum ;
-    base:hasFieldName "Unlimited" .
+    base:hasFieldName "Unlimited" ;
+    base:hasValueNode base:_N04cd6663ecc04f20993b9183594577f9 .
 
 opcua:Unspecified a opcua:NodeClass ;
-    base:hasFieldName "Unspecified" .
+    base:hasFieldName "Unspecified" ;
+    base:hasValueNode base:_Nc90b096a9bdd4d4595e7082bc5dbcda9 .
 
 opcua:Up a opcua:InterfaceAdminStatus,
         opcua:InterfaceOperStatus ;
-    base:hasFieldName "Up" .
+    base:hasFieldName "Up" ;
+    base:hasValueNode base:_N798a90b0c1864fff840d514572ddc374,
+        base:_Nf70469efc01b430ba02ddcb1d833db5e .
 
 opcua:Update a opcua:HistoryUpdateType,
         opcua:PerformUpdateType ;
-    base:hasFieldName "Update" .
+    base:hasFieldName "Update" ;
+    base:hasValueNode base:_Nca3118918e014fd2a8d8425957fc9179,
+        base:_Nd15b0120aed24b53b1e99ce243657281 .
 
 opcua:UseDifferentDestinationAddress a opcua:TsnFailureCode ;
-    base:hasFieldName "UseDifferentDestinationAddress" .
+    base:hasFieldName "UseDifferentDestinationAddress" ;
+    base:hasValueNode base:_Nbe47c04abd074318b715d9527f26b651 .
 
 opcua:UserAccessLevel a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask ;
-    base:hasFieldName "UserAccessLevel" .
+    base:hasFieldName "UserAccessLevel" ;
+    base:hasValueNode base:_N06b4ea0259814387a5f668104cd0cd98,
+        base:_N9119c51b4e4642f186a889477eade6d6 .
 
 opcua:UserExecutable a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask ;
-    base:hasFieldName "UserExecutable" .
+    base:hasFieldName "UserExecutable" ;
+    base:hasValueNode base:_N5259259790f044ba955de20a6f647817,
+        base:_Nca1701d9ee864bfd8f472bf6a4a28996 .
 
 opcua:UserWriteMask a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask ;
-    base:hasFieldName "UserWriteMask" .
+    base:hasFieldName "UserWriteMask" ;
+    base:hasValueNode base:_N4c85a16dc0234c649d67c3338f8c6b17,
+        base:_N681d7aede28946289861ced925253169 .
 
 opcua:ValueForVariableType a opcua:AttributeWriteMask ;
-    base:hasFieldName "ValueForVariableType" .
+    base:hasFieldName "ValueForVariableType" ;
+    base:hasValueNode base:_N5c985f8655ca4102baeae5bc7a22fc74 .
 
 opcua:Variable a opcua:NodeAttributesMask,
         opcua:NodeClass ;
-    base:hasFieldName "Variable" .
+    base:hasFieldName "Variable" ;
+    base:hasValueNode base:_N142e57cda8c54a0c8a74743b87bde926,
+        base:_Ne0a47b272a194dfca922c7093c800501 .
 
 opcua:VariableType a opcua:NodeAttributesMask,
         opcua:NodeClass ;
-    base:hasFieldName "VariableType" .
+    base:hasFieldName "VariableType" ;
+    base:hasValueNode base:_Nc1d2b4fce759457888417df61b40546a,
+        base:_Nd66ab4f55f04486abffbe72d995c6653 .
 
 opcua:View a opcua:NodeAttributesMask,
         opcua:NodeClass ;
-    base:hasFieldName "View" .
+    base:hasFieldName "View" ;
+    base:hasValueNode base:_N362de585e2bd4ed4aecee5a75f803fdf,
+        base:_Nf4ca3e6920ab47ca846ecf70fecd2c1b .
 
 opcua:VlanBlockedOnEgress a opcua:TsnFailureCode ;
-    base:hasFieldName "VlanBlockedOnEgress" .
+    base:hasFieldName "VlanBlockedOnEgress" ;
+    base:hasValueNode base:_Nd75aeaf5f25946e8b64c3a7421b910a5 .
 
 opcua:VlanTaggingDisabledOnEgress a opcua:TsnFailureCode ;
-    base:hasFieldName "VlanTaggingDisabledOnEgress" .
+    base:hasFieldName "VlanTaggingDisabledOnEgress" ;
+    base:hasValueNode base:_N3bdefceab9fe4952b83a6ee76f5bc359 .
 
 opcua:Warm a opcua:RedundancySupport ;
-    base:hasFieldName "Warm" .
+    base:hasFieldName "Warm" ;
+    base:hasValueNode base:_N7e849884abc2498f8870edc56ebd4e3a .
 
 opcua:Write a opcua:OpenFileMode,
         opcua:PermissionType ;
-    base:hasFieldName "Write" .
+    base:hasFieldName "Write" ;
+    base:hasValueNode base:_N291dc166bd164182814acb2d374d2887,
+        base:_N405118b6029c4f7fb11f7897919a986f .
 
 opcua:WriteAttribute a opcua:PermissionType ;
-    base:hasFieldName "WriteAttribute" .
+    base:hasFieldName "WriteAttribute" ;
+    base:hasValueNode base:_Nfff9c5ebe36047318302ec57e6b02c17 .
 
 opcua:WriteFullArrayOnly a opcua:AccessLevelExType ;
-    base:hasFieldName "WriteFullArrayOnly" .
+    base:hasFieldName "WriteFullArrayOnly" ;
+    base:hasValueNode base:_N8b4758eddb5f457d9e093ef43d243503 .
 
 opcua:WriteHistorizing a opcua:PermissionType ;
-    base:hasFieldName "WriteHistorizing" .
+    base:hasFieldName "WriteHistorizing" ;
+    base:hasValueNode base:_N62ad0de6a72f4845b7536e9ac2769cb6 .
 
 opcua:WriteMask a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask ;
-    base:hasFieldName "WriteMask" .
+    base:hasFieldName "WriteMask" ;
+    base:hasValueNode base:_N465b3dad7d6b46a7a736bbb87d7d3709,
+        base:_Na83d8c1dcbfc42f59eaeadc080a9bfd1 .
 
 opcua:WriteRolePermissions a opcua:PermissionType ;
-    base:hasFieldName "WriteRolePermissions" .
+    base:hasFieldName "WriteRolePermissions" ;
+    base:hasValueNode base:_N528c4cf7d3b9446c9ec38bfdb1391f52 .
 
 opcua:WriterGroupName a opcua:JsonDataSetMessageContentMask,
         opcua:JsonNetworkMessageContentMask ;
-    base:hasFieldName "WriterGroupName" .
+    base:hasFieldName "WriterGroupName" ;
+    base:hasValueNode base:_N2d32ad102df84a8d86358004887465c3,
+        base:_Na8f63a6b134c45769dfc0a06145dc415 .
 
 opcua:X509Subject a opcua:IdentityCriteriaType ;
-    base:hasFieldName "X509Subject" .
+    base:hasFieldName "X509Subject" ;
+    base:hasValueNode base:_Nb3651a2c10f943beb2a23196a3f6c3fd .
 
 opcua:nodei1 a opcua:DataTypeNodeClass ;
     base:definesType opcua:Boolean ;
@@ -8721,7 +9041,9 @@ opcua:BrowseName a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask,
         base:Field ;
     base:hasDatatype opcua:QualifiedName ;
-    base:hasFieldName "BrowseName" .
+    base:hasFieldName "BrowseName" ;
+    base:hasValueNode base:_N3898134c520548a18a11a1f4073d7d6f,
+        base:_Na63edb74c70a40678ecdb01265d904ac .
 
 opcua:BrowseNextCount a base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
@@ -9156,7 +9478,10 @@ opcua:Error a opcua:PubSubDiagnosticsCounterClassification,
         opcua:TsnStreamState,
         base:Field ;
     base:hasDatatype opcua:StatusCode ;
-    base:hasFieldName "Error" .
+    base:hasFieldName "Error" ;
+    base:hasValueNode base:_N2b1f3c8b116f41c48d878f8b0b41d807,
+        base:_N369352c4e5c244ebbad8c17edc408d2c,
+        base:_Nb646ac31d3f148c2a7ac77202814778d .
 
 opcua:ErrorCount a base:Field ;
     base:hasDatatype opcua:UInt32 ;
@@ -9170,7 +9495,9 @@ opcua:EventNotifier a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask,
         base:Field ;
     base:hasDatatype opcua:NodeId ;
-    base:hasFieldName "EventNotifier" .
+    base:hasFieldName "EventNotifier" ;
+    base:hasValueNode base:_N1ea2047475904864ab278691edbf2a4a,
+        base:_N7a2723b67ccb4b36ad93721e413fafdd .
 
 opcua:EventQueueOverFlowCount a base:Field ;
     base:hasDatatype opcua:UInt32 ;
@@ -9566,12 +9893,14 @@ opcua:IssuedTokenType a base:Field ;
 opcua:IssuerCertificates a opcua:TrustListMasks,
         base:Field ;
     base:hasDatatype opcua:ByteString ;
-    base:hasFieldName "IssuerCertificates" .
+    base:hasFieldName "IssuerCertificates" ;
+    base:hasValueNode base:_Nc223985ed9c243fe923f1af7d09a141b .
 
 opcua:IssuerCrls a opcua:TrustListMasks,
         base:Field ;
     base:hasDatatype opcua:ByteString ;
-    base:hasFieldName "IssuerCrls" .
+    base:hasFieldName "IssuerCrls" ;
+    base:hasValueNode base:_N04f4d25abcb14156abdc061240c55900 .
 
 opcua:IssuerEndpointUrl a base:Field ;
     base:hasDatatype opcua:String ;
@@ -9640,7 +9969,8 @@ opcua:MaintenanceConditionClassType a owl:Class ;
 opcua:MajorVersion a opcua:UadpDataSetMessageContentMask,
         base:Field ;
     base:hasDatatype opcua:VersionTime ;
-    base:hasFieldName "MajorVersion" .
+    base:hasFieldName "MajorVersion" ;
+    base:hasValueNode base:_N62954380ab994492beceb8229dd128c9 .
 
 opcua:ManufacturerName a base:Field ;
     base:hasDatatype opcua:String ;
@@ -9735,7 +10065,9 @@ opcua:MinorVersion a opcua:JsonDataSetMessageContentMask,
         opcua:UadpDataSetMessageContentMask,
         base:Field ;
     base:hasDatatype opcua:VersionTime ;
-    base:hasFieldName "MinorVersion" .
+    base:hasFieldName "MinorVersion" ;
+    base:hasValueNode base:_N5da3e265c82048d28c2c36d7849373f6,
+        base:_Ndc0ba09923b44ac9b2abcecaa7265c77 .
 
 opcua:ModificationInfos a base:Field ;
     base:hasDatatype opcua:ModificationInfo ;
@@ -10213,7 +10545,8 @@ opcua:SemaphoreFilePath a base:Field ;
 opcua:Server a opcua:ApplicationType,
         base:Field ;
     base:hasDatatype opcua:ApplicationDescription ;
-    base:hasFieldName "Server" .
+    base:hasFieldName "Server" ;
+    base:hasValueNode base:_Nb35b479a3d894e51a5336e72f38b82cb .
 
 opcua:ServerCertificate a base:Field ;
     base:hasDatatype opcua:ApplicationInstanceCertificate ;
@@ -10476,12 +10809,14 @@ opcua:TrustListUpdatedAuditEventType a owl:Class ;
 opcua:TrustedCertificates a opcua:TrustListMasks,
         base:Field ;
     base:hasDatatype opcua:ByteString ;
-    base:hasFieldName "TrustedCertificates" .
+    base:hasFieldName "TrustedCertificates" ;
+    base:hasValueNode base:_Na09b498e20194cbd9491e12fc63b7133 .
 
 opcua:TrustedCrls a opcua:TrustListMasks,
         base:Field ;
     base:hasDatatype opcua:ByteString ;
-    base:hasFieldName "TrustedCrls" .
+    base:hasFieldName "TrustedCrls" ;
+    base:hasValueNode base:_N2140958de2864ea298a1f86974e6b397 .
 
 opcua:TwoStateDiscreteType a owl:Class ;
     rdfs:subClassOf opcua:DiscreteItemType .
@@ -10542,6 +10877,7 @@ opcua:Union a opcua:StructureType,
         owl:Class ;
     rdfs:subClassOf opcua:Structure ;
     base:hasFieldName "Union" ;
+    base:hasValueNode base:_N5866b88bddbd46d2b0e7ef21021aeec7 ;
     base:isAbstract "true" .
 
 opcua:UnitId a base:Field ;
@@ -50699,6 +51035,1486 @@ opcua:nodei9964 a opcua:PropertyType,
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "9964" .
 
+base:_N004086a71c374d99b689b77902bc31fa a base:ValueNode ;
+    base:hasEnumValue 32 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_N00a85eba7acc4396ba6bb342dba27ede a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:IdentityCriteriaType .
+
+base:_N00b73773cc484f78849ba6764aed13fc a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:PubSubConfigurationRefMask .
+
+base:_N00decb9094674dacbe5118b511a21c56 a base:ValueNode ;
+    base:hasEnumValue 23 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_N011a1a3db84846efb05d5e448d4d2dae a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:DataSetFieldContentMask .
+
+base:_N015e466845c2445a818b2ba07e4e0389 a base:ValueNode ;
+    base:hasEnumValue 11 ;
+    base:hasValueClass opcua:AccessLevelExType .
+
+base:_N01d8beb6e799495db98038c75c6db804 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:Duplex .
+
+base:_N024e2ae399c14746a17d08681deef5ab a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:RedundancySupport .
+
+base:_N02e3f84361e64a4f9f3b25d8a98cfe20 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:UadpDataSetMessageContentMask .
+
+base:_N03141abc4fc84b4f94187c1c30ed3e2b a base:ValueNode ;
+    base:hasEnumValue 64 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_N039c1f41ac384e409ba5da7ba6204c45 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:NodeClass .
+
+base:_N03abc461b9954877a29e815a1580e289 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:JsonDataSetMessageContentMask .
+
+base:_N03adba10dc1b4a748128e4a3e3b9827e a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:PubSubState .
+
+base:_N03c09582f9dc42258d1f7d4f8ea917ed a base:ValueNode ;
+    base:hasEnumValue 21 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_N044de7d3e3164437b717d3865c917a70 a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:RedundancySupport .
+
+base:_N04cd6663ecc04f20993b9183594577f9 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:ConversionLimitEnum .
+
+base:_N04e55729d7e147b79df1230ceb6793fd a base:ValueNode ;
+    base:hasEnumValue 26501220 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_N04f4d25abcb14156abdc061240c55900 a base:ValueNode ;
+    base:hasEnumValue 8 ;
+    base:hasValueClass opcua:TrustListMasks .
+
+base:_N0533836d1d0f4f0982a9d6c4dcc712ca a base:ValueNode ;
+    base:hasEnumValue 5 ;
+    base:hasValueClass opcua:InterfaceOperStatus .
+
+base:_N056f2bbf82574caf922c4b0d529d5f67 a base:ValueNode ;
+    base:hasEnumValue 13 ;
+    base:hasValueClass opcua:FilterOperator .
+
+base:_N05af1e2b2ac54ecf990514e06ae552c3 a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:NegotiationStatus .
+
+base:_N05d0ffbe934b4ee7a58e449819991257 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:TsnListenerStatus .
+
+base:_N05f13e765fd54d1fb314f79608e359f7 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:PerformUpdateType .
+
+base:_N05fe1df91ade41a297885967313d466f a base:ValueNode ;
+    base:hasEnumValue 2048 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_N064fd4ea1e29415cb9ea821c2b305114 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:UadpDataSetMessageContentMask .
+
+base:_N0671d1fed9a349e89b678ff1b04c6a2a a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:ExceptionDeviationFormat .
+
+base:_N06873441ae4b47f39f43f34d791179f6 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:AxisScaleEnumeration .
+
+base:_N06b4ea0259814387a5f668104cd0cd98 a base:ValueNode ;
+    base:hasEnumValue 16 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_N072bf5b0e70e4021a2aec47c46cb7519 a base:ValueNode ;
+    base:hasEnumValue 26632548 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_N0979d1960ea14bc5a4b868eaaaac79ca a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:HistoryUpdateType .
+
+base:_N09aa416985054966bfb8f9174841d447 a base:ValueNode ;
+    base:hasEnumValue 8 ;
+    base:hasValueClass opcua:AccessLevelExType .
+
+base:_N0a1d2ed5a2c849dfa696ecb94be2542c a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:OverrideValueHandling .
+
+base:_N0be73b4af2f14ca58dd834167da93bd8 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_N0d15d4fec5b74bfb9f48449214e794a6 a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:AccessLevelType .
+
+base:_N0d252aa8ab2948b09f6fec0e2cd541e0 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:JsonNetworkMessageContentMask .
+
+base:_N0db03874bf4d4757a047371751b17f0e a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:UadpNetworkMessageContentMask .
+
+base:_N0df6026e8355410c91337000d4494861 a base:ValueNode ;
+    base:hasEnumValue 26503268 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_N0e524efeeabb485aa24adb0059141c1d a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:UserTokenType .
+
+base:_N0f34eb1ce0a34f8faa6c8953698f7124 a base:ValueNode ;
+    base:hasEnumValue 4194304 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_N0f41a6701e2440f38f923a84e9b1137a a base:ValueNode ;
+    base:hasEnumValue 6 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_N10a1acab27f24a0e853951c123f9a569 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:JsonNetworkMessageContentMask .
+
+base:_N10a3bf70ba214640abb0db9c82c4abb2 a base:ValueNode ;
+    base:hasEnumValue 8 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_N110376b968c743499b7960f5f4ef452a a base:ValueNode ;
+    base:hasEnumValue 6 ;
+    base:hasValueClass opcua:AccessLevelExType .
+
+base:_N127cc6de6617414eab0b7e9e5f35eba3 a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:NegotiationStatus .
+
+base:_N13afd793306f452ebdcc184089e12b65 a base:ValueNode ;
+    base:hasEnumValue 5 ;
+    base:hasValueClass opcua:JsonNetworkMessageContentMask .
+
+base:_N142e57cda8c54a0c8a74743b87bde926 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:NodeClass .
+
+base:_N149706b0457e450d94b0ceed8510be10 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:AlarmMask .
+
+base:_N160663a850e2482396be81591f4f93af a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:InterfaceOperStatus .
+
+base:_N160d9a28bb994c85a88bd977673352fe a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:PubSubState .
+
+base:_N162984d29e724807ae4ad8c25c92affe a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:ExceptionDeviationFormat .
+
+base:_N1829dfde1df54de1814f397f8c2ca4bd a base:ValueNode ;
+    base:hasEnumValue 10 ;
+    base:hasValueClass opcua:UadpNetworkMessageContentMask .
+
+base:_N18f72317506948a89dbdf687514f8456 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_N193f4217964a41f082a9f9b4784d78e2 a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:BrokerTransportQualityOfService .
+
+base:_N1c2618e903f24fed91144c10f8c2b97c a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:OpenFileMode .
+
+base:_N1c96959c8fd443b7a8c1e558a8d91e75 a base:ValueNode ;
+    base:hasEnumValue 64 ;
+    base:hasValueClass opcua:NodeClass .
+
+base:_N1d0aebfba4724cff8060be37e2fe2d26 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:StructureType .
+
+base:_N1d2fcc9838934356affe0df2b76062cb a base:ValueNode ;
+    base:hasEnumValue 8 ;
+    base:hasValueClass opcua:PubSubConfigurationRefMask .
+
+base:_N1e769c30abf641529b8e6499b233a1e4 a base:ValueNode ;
+    base:hasEnumValue 22 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_N1ea2047475904864ab278691edbf2a4a a base:ValueNode ;
+    base:hasEnumValue 128 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_N2140958de2864ea298a1f86974e6b397 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:TrustListMasks .
+
+base:_N21a5eeff00d4438f9522117d72354868 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:AlarmMask .
+
+base:_N227bad0b6c1048638cc96bc5c23347b8 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:TsnTalkerStatus .
+
+base:_N2308d1757eea42a8af89faa00ccdaa22 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:AccessLevelType .
+
+base:_N24f49327af394bcd931e82cdf444ff80 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:InterfaceAdminStatus .
+
+base:_N277859aae52e4975af205240de4d5481 a base:ValueNode ;
+    base:hasEnumValue 9 ;
+    base:hasValueClass opcua:AccessLevelExType .
+
+base:_N28278db27a6441a1b4c0d4017f67ae5c a base:ValueNode ;
+    base:hasEnumValue 8 ;
+    base:hasValueClass opcua:UadpNetworkMessageContentMask .
+
+base:_N291dc166bd164182814acb2d374d2887 a base:ValueNode ;
+    base:hasEnumValue 6 ;
+    base:hasValueClass opcua:PermissionType .
+
+base:_N295363080f824eafb866317339a1cf3c a base:ValueNode ;
+    base:hasEnumValue 5 ;
+    base:hasValueClass opcua:IdentityCriteriaType .
+
+base:_N2970a75d2ce94cf28eb7c7c02bb66a79 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:TsnStreamState .
+
+base:_N2a1c6cc7c7da4e178d1832869736b6eb a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:PermissionType .
+
+base:_N2b1f3c8b116f41c48d878f8b0b41d807 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:PubSubDiagnosticsCounterClassification .
+
+base:_N2b21bcb60fd1462fa6e3dc9d6ee959e2 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:TrustListValidationOptions .
+
+base:_N2b26ecb9056d43568ad6f3ef384df9be a base:ValueNode ;
+    base:hasEnumValue 10 ;
+    base:hasValueClass opcua:PubSubConfigurationRefMask .
+
+base:_N2c26742531fd45be925bb2b74400d87b a base:ValueNode ;
+    base:hasEnumValue 5 ;
+    base:hasValueClass opcua:FilterOperator .
+
+base:_N2d2a095cf6224f0981052feccb03b246 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:ServerState .
+
+base:_N2d32ad102df84a8d86358004887465c3 a base:ValueNode ;
+    base:hasEnumValue 6 ;
+    base:hasValueClass opcua:JsonNetworkMessageContentMask .
+
+base:_N2e43a2867f214212b8e97037c5f4703a a base:ValueNode ;
+    base:hasEnumValue 5 ;
+    base:hasValueClass opcua:PermissionType .
+
+base:_N2ea7c131f3a34f9abb027ae76d7e8ffe a base:ValueNode ;
+    base:hasEnumValue 256 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_N2f943731599a48f89f0a6c8ac8bf32d4 a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:TrustListValidationOptions .
+
+base:_N305bdb9e68914be38a430a2aaf0d0023 a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:InterfaceOperStatus .
+
+base:_N3256aef47fdd419492c55635c3cf0fec a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:UserTokenType .
+
+base:_N34e6ab9ade334f30aec1a2c915208d8a a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:PasswordOptionsMask .
+
+base:_N362de585e2bd4ed4aecee5a75f803fdf a base:ValueNode ;
+    base:hasEnumValue 26501356 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_N369352c4e5c244ebbad8c17edc408d2c a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:TsnStreamState .
+
+base:_N371be1b1607b4453ac5d766fcae5e2be a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:NamingRuleType .
+
+base:_N3898134c520548a18a11a1f4073d7d6f a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_N394695d109de42949f6a6d26777851b3 a base:ValueNode ;
+    base:hasEnumValue 14 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_N3b703f0e7bf64027acfcf0f2319516df a base:ValueNode ;
+    base:hasEnumValue 8 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_N3b7298e16b244744b6e91b7dee90b2bb a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:BrokerTransportQualityOfService .
+
+base:_N3ba0d8917d744f9c93d1b1f8e2c20897 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_N3bcbd70d58a14598baf3f4524bd401e4 a base:ValueNode ;
+    base:hasEnumValue 12 ;
+    base:hasValueClass opcua:PermissionType .
+
+base:_N3bd729b7b386431f89e049d980904307 a base:ValueNode ;
+    base:hasEnumValue 7 ;
+    base:hasValueClass opcua:ServerState .
+
+base:_N3bdefceab9fe4952b83a6ee76f5bc359 a base:ValueNode ;
+    base:hasEnumValue 18 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_N3d32c9fb35e342798800517196ea3a70 a base:ValueNode ;
+    base:hasEnumValue 6 ;
+    base:hasValueClass opcua:PubSubConfigurationRefMask .
+
+base:_N3d8c4d02cbea47b99dfb18e8040f0a4e a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:AccessLevelType .
+
+base:_N3edf1c76b3dc4ed88b6aae4f0b3eab85 a base:ValueNode ;
+    base:hasEnumValue 16 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_N4047d93e1d994e4698335fe0cd79b08c a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_N405118b6029c4f7fb11f7897919a986f a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:OpenFileMode .
+
+base:_N40623369e46b467581148a138e84ecab a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:StructureType .
+
+base:_N4075eaa6fc2f4b6bb566280b30f834b2 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:SecurityTokenRequestType .
+
+base:_N40d2c27eed274e619757db910a620154 a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:ApplicationType .
+
+base:_N40e6d62f8f6d4ac98bd542521eedca06 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:JsonNetworkMessageContentMask .
+
+base:_N41180880dc5945d39bbeaf10888628a0 a base:ValueNode ;
+    base:hasEnumValue 8192 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_N412e898cb84f423a8fcb637c959e8cc9 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:JsonDataSetMessageContentMask .
+
+base:_N4130a9b640384a988537aebca8d8c303 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:DiagnosticsLevel .
+
+base:_N41fb6a2b3a4a47869b4c495db20ae886 a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:PubSubConfigurationRefMask .
+
+base:_N42655f8b3176402abe5d37023ca62b12 a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:NamingRuleType .
+
+base:_N42ab3bb5c7c14b6c8318eab312e4e822 a base:ValueNode ;
+    base:hasEnumValue 10 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_N43ea7222955a40ea9c8e7a7134e7c398 a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:IdType .
+
+base:_N43f29b59c74241a4aabc6ce7c1c7568e a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:SecurityTokenRequestType .
+
+base:_N4571ec35cf364022aae2cf022205a46e a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_N465b3dad7d6b46a7a736bbb87d7d3709 a base:ValueNode ;
+    base:hasEnumValue 20 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_N46ef9e1be9ff48b1ad55dce717148119 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:ExceptionDeviationFormat .
+
+base:_N49d089c4b09b4858a439694c70fdbcff a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:TrustListValidationOptions .
+
+base:_N4bac504c7e5741ebb130cb86d44fb2b2 a base:ValueNode ;
+    base:hasEnumValue 9 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_N4bc370477aa049058afa3fbf408fe8b3 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:AxisScaleEnumeration .
+
+base:_N4bca46c40f074f099ce7754224a89ef4 a base:ValueNode ;
+    base:hasEnumValue 15 ;
+    base:hasValueClass opcua:TrustListMasks .
+
+base:_N4c85a16dc0234c649d67c3338f8c6b17 a base:ValueNode ;
+    base:hasEnumValue 262144 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_N4cc1302bc1d84631bd5656da35a33e21 a base:ValueNode ;
+    base:hasEnumValue 6 ;
+    base:hasValueClass opcua:PasswordOptionsMask .
+
+base:_N4d684b6259624c938f5fe1c43cb625fa a base:ValueNode ;
+    base:hasEnumValue 5 ;
+    base:hasValueClass opcua:DataSetFieldContentMask .
+
+base:_N50008c9b2ce24058a8fcacac62b5a0a6 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:PasswordOptionsMask .
+
+base:_N505f63ac0bc6475aa04fc506df565f0b a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:DataSetFieldContentMask .
+
+base:_N5230c1b93d5c40fdb75e6b4997887585 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:ServerState .
+
+base:_N5259259790f044ba955de20a6f647817 a base:ValueNode ;
+    base:hasEnumValue 131072 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_N528c4cf7d3b9446c9ec38bfdb1391f52 a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:PermissionType .
+
+base:_N53665b89111d43f2b328cc29074153f9 a base:ValueNode ;
+    base:hasEnumValue 7 ;
+    base:hasValueClass opcua:UadpNetworkMessageContentMask .
+
+base:_N53f61c9b1d344a8aafe7952eda461e29 a base:ValueNode ;
+    base:hasEnumValue 8 ;
+    base:hasValueClass opcua:PasswordOptionsMask .
+
+base:_N541974c56606431e9b7cebabff46f4a4 a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:JsonNetworkMessageContentMask .
+
+base:_N550c8a1b0731426999574ff09aec4c9c a base:ValueNode ;
+    base:hasEnumValue 15 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_N55287ad314444d56848ed298c6e78e6f a base:ValueNode ;
+    base:hasEnumValue 8 ;
+    base:hasValueClass opcua:OpenFileMode .
+
+base:_N56892efde11a4345a7b964cd467079b7 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:AxisScaleEnumeration .
+
+base:_N575ae33688e24c86b8601f1d6099adb0 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:InterfaceOperStatus .
+
+base:_N5765a20cdccd408b91b74968dbc8d958 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:UadpNetworkMessageContentMask .
+
+base:_N577db80928024b9f8b6af50d73681989 a base:ValueNode ;
+    base:hasEnumValue 24 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_N57a3d2c5208a48009deaab33462f796d a base:ValueNode ;
+    base:hasEnumValue 8 ;
+    base:hasValueClass opcua:PermissionType .
+
+base:_N5866b88bddbd46d2b0e7ef21021aeec7 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:StructureType .
+
+base:_N594211495b964677b117cab4d11cf975 a base:ValueNode ;
+    base:hasEnumValue 5 ;
+    base:hasValueClass opcua:AccessLevelExType .
+
+base:_N5a69cef135144e76a38163e0eeb7fff5 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:ConversionLimitEnum .
+
+base:_N5a9dce6cdf894a15a01edffb46404e29 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:PermissionType .
+
+base:_N5b0492cdbf0141e291fe9be97235ac4d a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:DataSetFieldContentMask .
+
+base:_N5bfecb656d174903be474de1885bd89a a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:TsnListenerStatus .
+
+base:_N5c04db9d113443d4a6b801880110599f a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:TsnTalkerStatus .
+
+base:_N5c985f8655ca4102baeae5bc7a22fc74 a base:ValueNode ;
+    base:hasEnumValue 21 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_N5cf70173a75e45d789cf840edf2d22f2 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:RedundantServerMode .
+
+base:_N5da3e265c82048d28c2c36d7849373f6 a base:ValueNode ;
+    base:hasEnumValue 10 ;
+    base:hasValueClass opcua:JsonDataSetMessageContentMask .
+
+base:_N5ddaaac5d4fe4e80914bdf8de72ade28 a base:ValueNode ;
+    base:hasEnumValue 5 ;
+    base:hasValueClass opcua:JsonDataSetMessageContentMask .
+
+base:_N5e24b04de6db46ffa2206148067d3cf6 a base:ValueNode ;
+    base:hasEnumValue 2097152 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_N5ed10fb22f1741e285c40f9752f1b312 a base:ValueNode ;
+    base:hasEnumValue 5 ;
+    base:hasValueClass opcua:RedundancySupport .
+
+base:_N5fedbed58ef64ae089d042f0f4627d00 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:IdType .
+
+base:_N610a05930bfc43028ba7909f2758d535 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:InterfaceAdminStatus .
+
+base:_N61b34e5c56214f82b731bf979ea1a4b6 a base:ValueNode ;
+    base:hasEnumValue 10 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_N62954380ab994492beceb8229dd128c9 a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:UadpDataSetMessageContentMask .
+
+base:_N62ad0de6a72f4845b7536e9ac2769cb6 a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:PermissionType .
+
+base:_N62c220623de24dfaa26db6d366c830ff a base:ValueNode ;
+    base:hasEnumValue 11 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_N63ababacbabc4fa0915610daa72968be a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:FilterOperator .
+
+base:_N673f45f85f22402990eb3f9f0ef47a08 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:DataSetOrderingType .
+
+base:_N67d06be7ea2948bcb1d47307b441d9da a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:Duplex .
+
+base:_N681d7aede28946289861ced925253169 a base:ValueNode ;
+    base:hasEnumValue 18 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_N68585443e1d14bab955b2c4fc3599004 a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:JsonDataSetMessageContentMask .
+
+base:_N685f2e432f6c4190a2f47a20306c83c5 a base:ValueNode ;
+    base:hasEnumValue 16777216 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_N698f1f1f62cf4f0897b2214e923efb43 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:FilterOperator .
+
+base:_N6b84446f2dfb4ad6ba3667ef7dcfd7f2 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:RedundantServerMode .
+
+base:_N6bc5873b9b8d4cea951b96c884a05da9 a base:ValueNode ;
+    base:hasEnumValue 13 ;
+    base:hasValueClass opcua:AccessLevelExType .
+
+base:_N6c81a0ba0230419fa2afbcb8c3821532 a base:ValueNode ;
+    base:hasEnumValue 12 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_N6d4548154f1b4ecda325cac63c3710a2 a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_N6de31654ecf94ce5aede13d633c0706d a base:ValueNode ;
+    base:hasEnumValue 16 ;
+    base:hasValueClass opcua:FilterOperator .
+
+base:_N6e53d1b1f419409ead872b86d11d587d a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:TsnTalkerStatus .
+
+base:_N6ec0c4bdf3a4433cb0a24a5b5b59562f a base:ValueNode ;
+    base:hasEnumValue 19 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_N6f41c35ad8af4336826cf1f0806759bf a base:ValueNode ;
+    base:hasEnumValue 5 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_N6f9d48ff2fa241f094bb0fb5b947f556 a base:ValueNode ;
+    base:hasEnumValue 13 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_N71405ec0e2aa4623baf410a7d249934e a base:ValueNode ;
+    base:hasEnumValue 5 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_N71681ffcbd2442c1b68579055e3e0969 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:MessageSecurityMode .
+
+base:_N71b14d14df254977811ee5626d3eed4a a base:ValueNode ;
+    base:hasEnumValue 23 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_N71db5ec10c1849e996e8381054418ed1 a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:NodeClass .
+
+base:_N7471736a77a744a99603a0ec95d6c9d0 a base:ValueNode ;
+    base:hasEnumValue 7 ;
+    base:hasValueClass opcua:PermissionType .
+
+base:_N74ebc192152540f98f89d177ed05c12e a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:DataSetOrderingType .
+
+base:_N753ac965c26b4c079bac8607300a1583 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:BrokerTransportQualityOfService .
+
+base:_N75afb385867b48e3a58383e27a8db1d7 a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:MessageSecurityMode .
+
+base:_N76ca1899189946cabfaedfad1ee06d92 a base:ValueNode ;
+    base:hasEnumValue 15 ;
+    base:hasValueClass opcua:FilterOperator .
+
+base:_N76f01050f6324f669a7ff41fb659a541 a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:PerformUpdateType .
+
+base:_N770fcda2b07e4b49a99f0cab8374a0a1 a base:ValueNode ;
+    base:hasEnumValue 9 ;
+    base:hasValueClass opcua:PubSubConfigurationRefMask .
+
+base:_N77751e60ff8148d5b87383dcb6530df8 a base:ValueNode ;
+    base:hasEnumValue 14 ;
+    base:hasValueClass opcua:PermissionType .
+
+base:_N796ae9cf610748be922c760d4e1b3070 a base:ValueNode ;
+    base:hasEnumValue 24 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_N798a90b0c1864fff840d514572ddc374 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:InterfaceAdminStatus .
+
+base:_N7a2723b67ccb4b36ad93721e413fafdd a base:ValueNode ;
+    base:hasEnumValue 7 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_N7c71912d14fd413ab516122e62ea0981 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:PubSubConfigurationRefMask .
+
+base:_N7d8f11c73f3b418cb6c22013b2cb0743 a base:ValueNode ;
+    base:hasEnumValue 5 ;
+    base:hasValueClass opcua:PasswordOptionsMask .
+
+base:_N7dbb841dfaa5474f826719954a641761 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:DataSetOrderingType .
+
+base:_N7df0a0689c944ba098cfd64f2c78656b a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:JsonDataSetMessageContentMask .
+
+base:_N7e849884abc2498f8870edc56ebd4e3a a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:RedundancySupport .
+
+base:_N7fdd1c9ce9e6444ea297f02980310882 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:RedundantServerMode .
+
+base:_N80023a046cac47089c334a680c922025 a base:ValueNode ;
+    base:hasEnumValue 4096 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_N808edba2dafc44ca9a93b5fb7a073dbd a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:OverrideValueHandling .
+
+base:_N82b6af4490924b98a4f0b753a0d11101 a base:ValueNode ;
+    base:hasEnumValue 12 ;
+    base:hasValueClass opcua:FilterOperator .
+
+base:_N830759f2bc904f7594b6f3c8f860fac1 a base:ValueNode ;
+    base:hasEnumValue 16384 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_N84f49635b6bb4b4cbffc4c381d9d7546 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:PerformUpdateType .
+
+base:_N84f4ddf641ac419b88a7169e7a098c73 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:TsnStreamState .
+
+base:_N85751ff4cb2c4700814e2ca440df23bd a base:ValueNode ;
+    base:hasEnumValue 8388608 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_N86dcd87fdf9340c5933ad1ad2dbf714f a base:ValueNode ;
+    base:hasEnumValue 14 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_N86f03d6f851b483d9d683a46bf78f638 a base:ValueNode ;
+    base:hasEnumValue 5 ;
+    base:hasValueClass opcua:ServerState .
+
+base:_N87037fcd6ead4a3ea4a1b43bceea1918 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:HistoryUpdateType .
+
+base:_N87348f71455a4f2b96ac0a106d8d0389 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:NegotiationStatus .
+
+base:_N8786909b7fc24f59bdd46639c00ade07 a base:ValueNode ;
+    base:hasEnumValue 524288 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_N878b178e10ca4eedb70ce991033a79eb a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:TsnListenerStatus .
+
+base:_N8a5aa1a6aa72484f819a316530dd39d9 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:FilterOperator .
+
+base:_N8b218d14e88f4182a2caa917ca9a187e a base:ValueNode ;
+    base:hasEnumValue 9 ;
+    base:hasValueClass opcua:FilterOperator .
+
+base:_N8b4758eddb5f457d9e093ef43d243503 a base:ValueNode ;
+    base:hasEnumValue 10 ;
+    base:hasValueClass opcua:AccessLevelExType .
+
+base:_N8c3a2d0acf82453da81ecd2303aab62f a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:RedundancySupport .
+
+base:_N8c92c531cfe043c2b1a583b9f1f29094 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:NegotiationStatus .
+
+base:_N8e184371968f4ff196b2afb6def74743 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:TsnListenerStatus .
+
+base:_N8e4e750f2ae4457d9326e2d7d6f950aa a base:ValueNode ;
+    base:hasEnumValue 5 ;
+    base:hasValueClass opcua:UadpDataSetMessageContentMask .
+
+base:_N9119c51b4e4642f186a889477eade6d6 a base:ValueNode ;
+    base:hasEnumValue 65536 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_N91cbfe260f2d4439bee0f090034dfa82 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:JsonDataSetMessageContentMask .
+
+base:_N94717b15f04e41c5877529e8749899e0 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:OpenFileMode .
+
+base:_N94c9ef71293640f39b947fea7b90e754 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:AccessLevelType .
+
+base:_N9772588610df4ba6bdd66b4a1fd904a3 a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:BrokerTransportQualityOfService .
+
+base:_N9792e726b8684b3bbe04601d26e1a688 a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:FilterOperator .
+
+base:_N97a45c3c3ac0402b8df79fe444f17bc4 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:UserConfigurationMask .
+
+base:_N98a19f127e824b459b96620a7a35f9c1 a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:DiagnosticsLevel .
+
+base:_N98d550bd0c4c40b9a8cf0a6b91378923 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:ConversionLimitEnum .
+
+base:_N9a0a15e5c26743ed81a65d4837ee3b32 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:PubSubConfigurationRefMask .
+
+base:_N9b40f125b0f94c54bcd75e30a2db4cc3 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:IdentityCriteriaType .
+
+base:_N9df9537f73a547d9aba3512905b7c30f a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:PasswordOptionsMask .
+
+base:_N9e0516def7f249debb15481dcab6315c a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:UadpNetworkMessageContentMask .
+
+base:_N9fcdc1692c8842cda697a0bcd353bda5 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:PubSubState .
+
+base:_N9fd4d776ac4a4861a38ce4793499d4d2 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:UserTokenType .
+
+base:_Na09b498e20194cbd9491e12fc63b7133 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:TrustListMasks .
+
+base:_Na0c836d8cd7a4cb79800ac33200e4849 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:DiagnosticsLevel .
+
+base:_Na18ab1a573264c0c83e81b0e80193acb a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:AccessRestrictionType .
+
+base:_Na22004e711c54b5498619280bbe69606 a base:ValueNode ;
+    base:hasEnumValue 10 ;
+    base:hasValueClass opcua:FilterOperator .
+
+base:_Na2acd3d7f0c44e38a9ed9603e838047c a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:UserTokenType .
+
+base:_Na34ea9de07464e9ba5ce46139368bc32 a base:ValueNode ;
+    base:hasEnumValue 6 ;
+    base:hasValueClass opcua:AccessLevelType .
+
+base:_Na3f664a7ee5144699a93ccad42579300 a base:ValueNode ;
+    base:hasEnumValue 8 ;
+    base:hasValueClass opcua:NodeClass .
+
+base:_Na42294baa43a4017aba66e3a83575ad5 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:DataSetFieldFlags .
+
+base:_Na434f2ded50b4114a0f53c46b67d1e07 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_Na4786e97128348e691faca6ed5efadce a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_Na4b10cb4be0842e0a98bf24bf2321690 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:TsnStreamState .
+
+base:_Na518657811554c8698a22b52c7fe7110 a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_Na5bea0c77b29472c89a3b6b95b3db0f9 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:ExceptionDeviationFormat .
+
+base:_Na63edb74c70a40678ecdb01265d904ac a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_Na75a7f5ebd154e23ac6d174eec796b1d a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:AccessLevelExType .
+
+base:_Na83d8c1dcbfc42f59eaeadc080a9bfd1 a base:ValueNode ;
+    base:hasEnumValue 1048576 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_Na84fbe64f8b74e3396a4a33d8b297dee a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:AccessLevelExType .
+
+base:_Na8f63a6b134c45769dfc0a06145dc415 a base:ValueNode ;
+    base:hasEnumValue 9 ;
+    base:hasValueClass opcua:JsonDataSetMessageContentMask .
+
+base:_Nac025a68d6ce4b20a1960bb6c9d64bc4 a base:ValueNode ;
+    base:hasEnumValue 11 ;
+    base:hasValueClass opcua:FilterOperator .
+
+base:_Nac5adefd4ee04787a787706bd79a90a0 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:InterfaceOperStatus .
+
+base:_Nac6dd6a1ed7841108e58f6224cf25e0b a base:ValueNode ;
+    base:hasEnumValue 12 ;
+    base:hasValueClass opcua:PubSubConfigurationRefMask .
+
+base:_Nac7d524f80b24d678d905f33fd0fb22f a base:ValueNode ;
+    base:hasEnumValue 7 ;
+    base:hasValueClass opcua:IdentityCriteriaType .
+
+base:_Nac8dec44f7304ebcad295e1983356dc1 a base:ValueNode ;
+    base:hasEnumValue 19 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_Nad05dcba694c4111948852a24a9bb12d a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:ApplicationType .
+
+base:_Naf5989ebe2c14db49b505e6514179dcd a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:TsnStreamState .
+
+base:_Nafe7c5fd4d4543ef91e3f9ce621204c0 a base:ValueNode ;
+    base:hasEnumValue 7 ;
+    base:hasValueClass opcua:PasswordOptionsMask .
+
+base:_Nb1761c2038404795a3697126419bffc5 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:IdentityCriteriaType .
+
+base:_Nb1fbd12eb9f249a0b9993064121a4dff a base:ValueNode ;
+    base:hasEnumValue 9 ;
+    base:hasValueClass opcua:PermissionType .
+
+base:_Nb303c90312614b1a8be0641b36b288bd a base:ValueNode ;
+    base:hasEnumValue 6 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_Nb3102ebecfff4ae388dab3317e52b069 a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:StructureType .
+
+base:_Nb35b479a3d894e51a5336e72f38b82cb a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:ApplicationType .
+
+base:_Nb3651a2c10f943beb2a23196a3f6c3fd a base:ValueNode ;
+    base:hasEnumValue 8 ;
+    base:hasValueClass opcua:IdentityCriteriaType .
+
+base:_Nb646ac31d3f148c2a7ac77202814778d a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:PubSubState .
+
+base:_Nb66f97594a644656a1abe0a3b10e622f a base:ValueNode ;
+    base:hasEnumValue 25 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_Nb82e996f7c7d4ee2a2f5dfb471d5284f a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:TrustListMasks .
+
+base:_Nb8d29c2bfb0d4de8a445994b358bb831 a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:ServerState .
+
+base:_Nb8dbfb56241e4f608cdc0f322f33ec9e a base:ValueNode ;
+    base:hasEnumValue 13 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_Nb95d0c91262e4a41b8845e5361b285f7 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:TrustListValidationOptions .
+
+base:_Nb9e1a90d4b9b41b48b7d2fc6485994ad a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:FilterOperator .
+
+base:_Nba5c598412b3491c850ce2f1bef327fe a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:PubSubDiagnosticsCounterClassification .
+
+base:_Nbb09a8cf30a34ebaa6218c5ac719c024 a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:DataSetFieldContentMask .
+
+base:_Nbc0b9f27da304316afa1c3cae46a78df a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:UserConfigurationMask .
+
+base:_Nbc136b5220d74164bc960de95c502077 a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:JsonNetworkMessageContentMask .
+
+base:_Nbd169bfd6c8942219ba0127511d2f23d a base:ValueNode ;
+    base:hasEnumValue 8 ;
+    base:hasValueClass opcua:FilterOperator .
+
+base:_Nbd37e95178334affadc475156d8a789a a base:ValueNode ;
+    base:hasEnumValue 7 ;
+    base:hasValueClass opcua:FilterOperator .
+
+base:_Nbd8a3f01e05b47cdb86251e1adac8c07 a base:ValueNode ;
+    base:hasEnumValue 11 ;
+    base:hasValueClass opcua:PubSubConfigurationRefMask .
+
+base:_Nbd9a9468ed5e4d4daa51e1a9fce52107 a base:ValueNode ;
+    base:hasEnumValue 22 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_Nbe47c04abd074318b715d9527f26b651 a base:ValueNode ;
+    base:hasEnumValue 9 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_Nbebe48f1f2304dd4bcef2a4d641a87cc a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:UserConfigurationMask .
+
+base:_Nbf2538e8374143109945ee8783f6d774 a base:ValueNode ;
+    base:hasEnumValue 512 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_Nbfd9832a5cb64d82bae92ad51b6c0a29 a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:ServerState .
+
+base:_Nc00f458ba5a04801b9f3d66b8570ccde a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:StructureType .
+
+base:_Nc07355797ee845f48e05640e6f3abe75 a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:AccessLevelExType .
+
+base:_Nc0e0e7c2da434bc8a50b534bd1ea2021 a base:ValueNode ;
+    base:hasEnumValue 26537060 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_Nc1491693c6ee4c198765783013c64c22 a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_Nc16a668d6ff446dd9ba1a94a61643c66 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:DataSetFieldContentMask .
+
+base:_Nc1d2b4fce759457888417df61b40546a a base:ValueNode ;
+    base:hasEnumValue 16 ;
+    base:hasValueClass opcua:NodeClass .
+
+base:_Nc1ea34897e0344d6b9deacf963fa4986 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_Nc2141eb726074614a9e3ef8fed2479ab a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:AlarmMask .
+
+base:_Nc223985ed9c243fe923f1af7d09a141b a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:TrustListMasks .
+
+base:_Nc2f8182354ad4f099a8da145d9e50db2 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:HistoryUpdateType .
+
+base:_Nc43264b8fe7d43ceb38b62a85287a0e1 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:UadpDataSetMessageContentMask .
+
+base:_Nc7320c1cc2e3404ba59a6de0c8921859 a base:ValueNode ;
+    base:hasEnumValue 5 ;
+    base:hasValueClass opcua:UadpNetworkMessageContentMask .
+
+base:_Nc90b096a9bdd4d4595e7082bc5dbcda9 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:NodeClass .
+
+base:_Nca1701d9ee864bfd8f472bf6a4a28996 a base:ValueNode ;
+    base:hasEnumValue 17 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_Nca3118918e014fd2a8d8425957fc9179 a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:PerformUpdateType .
+
+base:_Ncaa809a339ac4fc8894375d1bd39e1a3 a base:ValueNode ;
+    base:hasEnumValue 7 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_Ncafb5fc2f8b045138510fc34878b9a28 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:BrokerTransportQualityOfService .
+
+base:_Ncc5e0229803446dd9c11c1305d71bdba a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:EventNotifierType .
+
+base:_Ncc78609a036a45589554e48912eb697b a base:ValueNode ;
+    base:hasEnumValue 6 ;
+    base:hasValueClass opcua:FilterOperator .
+
+base:_Nccd3694a3dfe4fcba78509ab6bf007a2 a base:ValueNode ;
+    base:hasEnumValue 5 ;
+    base:hasValueClass opcua:PubSubConfigurationRefMask .
+
+base:_Nce0ef36544464beda33f9bfaeda6dbc7 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:UadpNetworkMessageContentMask .
+
+base:_Nce273b6f0de14465a44e9a6f57f74f96 a base:ValueNode ;
+    base:hasEnumValue 6 ;
+    base:hasValueClass opcua:ServerState .
+
+base:_Nceb1613aa1b34605b725ceb2fde5ae04 a base:ValueNode ;
+    base:hasEnumValue 12 ;
+    base:hasValueClass opcua:AccessLevelExType .
+
+base:_Nced697e2ef9b4799a42bb513bd80b674 a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:DiagnosticsLevel .
+
+base:_Nceda1ca0041a46248de7b57aad6e11fc a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:AccessRestrictionType .
+
+base:_Nd15b0120aed24b53b1e99ce243657281 a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:HistoryUpdateType .
+
+base:_Nd1c4649b332140af8706dba1a1ae1a62 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:OverrideValueHandling .
+
+base:_Nd45f8275345e4b99a340deff40464b80 a base:ValueNode ;
+    base:hasEnumValue 12 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_Nd55fb29f425f42c387870d97e8317417 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_Nd5c2f35ff2134ba99b1e0d906463d020 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:UserConfigurationMask .
+
+base:_Nd5df962938d34db2a7063e565e1642b5 a base:ValueNode ;
+    base:hasEnumValue 6 ;
+    base:hasValueClass opcua:InterfaceOperStatus .
+
+base:_Nd61ddc90948241dab976694a0a1abea0 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:EventNotifierType .
+
+base:_Nd6604423c3364df196eb585331553fd6 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:NegotiationStatus .
+
+base:_Nd66ab4f55f04486abffbe72d995c6653 a base:ValueNode ;
+    base:hasEnumValue 28600438 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_Nd6d4b834243a44d4b716153a9a4e67ac a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:AccessRestrictionType .
+
+base:_Nd6d4ba79095c45cb93a46671b1dfabb6 a base:ValueNode ;
+    base:hasEnumValue 6 ;
+    base:hasValueClass opcua:TrustListValidationOptions .
+
+base:_Nd75aeaf5f25946e8b64c3a7421b910a5 a base:ValueNode ;
+    base:hasEnumValue 17 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_Nd761baf615e54d258d1a1dd7920e3c83 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:ServerState .
+
+base:_Nd78777df8dab49c19dd5c8aca44a1aea a base:ValueNode ;
+    base:hasEnumValue 5 ;
+    base:hasValueClass opcua:AccessLevelType .
+
+base:_Ndbaae2231515467186e2ca3eb3c811a9 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:PubSubState .
+
+base:_Ndbb248d19a274a01a9b511548b311e24 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:AccessRestrictionType .
+
+base:_Ndc0ba09923b44ac9b2abcecaa7265c77 a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:UadpDataSetMessageContentMask .
+
+base:_Ndcd1a80a2544432bb259703aae4ecb72 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:NamingRuleType .
+
+base:_Ndd571728c9174f638206cbcbe52f82b1 a base:ValueNode ;
+    base:hasEnumValue 32768 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_Nddee8dc8e7bb4e9bae8cc1f9c904bf8f a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:TrustListValidationOptions .
+
+base:_Nde5dcb774fda4fb2a2256b5a65d3f723 a base:ValueNode ;
+    base:hasEnumValue 6 ;
+    base:hasValueClass opcua:IdentityCriteriaType .
+
+base:_Ndeb2351ed9f6451dad15ee8fd8f0cb0b a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:RedundancySupport .
+
+base:_Ndec7548ed5a9449f9fc67e63d18ff612 a base:ValueNode ;
+    base:hasEnumValue 15 ;
+    base:hasValueClass opcua:PermissionType .
+
+base:_Ne09c13b693f94cf08f47d1a89ce8b104 a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:UadpNetworkMessageContentMask .
+
+base:_Ne0a47b272a194dfca922c7093c800501 a base:ValueNode ;
+    base:hasEnumValue 26571383 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_Ne0f1da083ce5486b9610bd956f81981a a base:ValueNode ;
+    base:hasEnumValue 13 ;
+    base:hasValueClass opcua:PermissionType .
+
+base:_Ne19fd43b8b26435384492275ee5feda4 a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:ExceptionDeviationFormat .
+
+base:_Ne2a46b0e0a9d481ebf27f457b9f644ea a base:ValueNode ;
+    base:hasEnumValue 15 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_Ne31091d9d7dc4ad0825afaf2421f989f a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:PasswordOptionsMask .
+
+base:_Ne3ac510e14a04f459f51235a59477a87 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:ApplicationType .
+
+base:_Ne3da31ac6c2e404c9a15e5e304fb9240 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:Duplex .
+
+base:_Ne601d3d285c84c1fb53dce54d0b5f7fb a base:ValueNode ;
+    base:hasEnumValue 6 ;
+    base:hasValueClass opcua:UadpNetworkMessageContentMask .
+
+base:_Ne873c9996fe8449d99bb3da7212f2304 a base:ValueNode ;
+    base:hasEnumValue 5 ;
+    base:hasValueClass opcua:TrustListValidationOptions .
+
+base:_Ne9b0c62890204a7fa773e2a700fa1442 a base:ValueNode ;
+    base:hasEnumValue 10 ;
+    base:hasValueClass opcua:PermissionType .
+
+base:_Nea2ac4b0d8bc45b0a41a2793e37b5916 a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:RedundantServerMode .
+
+base:_Neb9d4a5b59f34acfb028e736bc0fab79 a base:ValueNode ;
+    base:hasEnumValue 11 ;
+    base:hasValueClass opcua:PermissionType .
+
+base:_Neba3240e2be142f0adf5be5d68c04dd6 a base:ValueNode ;
+    base:hasEnumValue 8 ;
+    base:hasValueClass opcua:JsonDataSetMessageContentMask .
+
+base:_Nece62244234f4d6fb8715b412f779ee8 a base:ValueNode ;
+    base:hasEnumValue 11 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_Ned136a56e3574d6198fe88b822042dac a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:PasswordOptionsMask .
+
+base:_Ned6dc81053b945dfa7a283575da14410 a base:ValueNode ;
+    base:hasEnumValue 25 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_Ned9b19af79b44f779b7901fa99711b6e a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:AccessLevelExType .
+
+base:_Nedc891b33fd14e6292a8a3c9e715e455 a base:ValueNode ;
+    base:hasEnumValue 20 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_Nef0036ebd7424ff6b7015018cc66c24b a base:ValueNode ;
+    base:hasEnumValue 16 ;
+    base:hasValueClass opcua:TsnFailureCode .
+
+base:_Nef0affdc62c44d27b53eeeec058948e1 a base:ValueNode ;
+    base:hasEnumValue 7 ;
+    base:hasValueClass opcua:JsonDataSetMessageContentMask .
+
+base:_Nefbb1177c73b46cd8339e7c6c94dea26 a base:ValueNode ;
+    base:hasEnumValue 6 ;
+    base:hasValueClass opcua:JsonDataSetMessageContentMask .
+
+base:_Nf0966e7ccaba4b4893bf527c22d14970 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:AccessLevelExType .
+
+base:_Nf0e286dd992b4bf89c6c0b7951ffc99e a base:ValueNode ;
+    base:hasEnumValue 3 ;
+    base:hasValueClass opcua:EventNotifierType .
+
+base:_Nf20c4fe62d534fa28375ccd48e028dce a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:MessageSecurityMode .
+
+base:_Nf49516024c604868a8bd48e08b9a470e a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:IdType .
+
+base:_Nf4ca3e6920ab47ca846ecf70fecd2c1b a base:ValueNode ;
+    base:hasEnumValue 128 ;
+    base:hasValueClass opcua:NodeClass .
+
+base:_Nf70469efc01b430ba02ddcb1d833db5e a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:InterfaceOperStatus .
+
+base:_Nf7113de050bb4137bc588081680d4fac a base:ValueNode ;
+    base:hasEnumValue 14 ;
+    base:hasValueClass opcua:FilterOperator .
+
+base:_Nf767adba2ddf4b259165548c6d011653 a base:ValueNode ;
+    base:hasEnumValue 0 ;
+    base:hasValueClass opcua:DiagnosticsLevel .
+
+base:_Nf76c0a68bdaf45dca674fe90a918613c a base:ValueNode ;
+    base:hasEnumValue 8 ;
+    base:hasValueClass opcua:AttributeWriteMask .
+
+base:_Nf7863f4c40064e3c8f4a6e4011135afe a base:ValueNode ;
+    base:hasEnumValue 33554431 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_Nf84206570d314a829e9d3c83d9cbafe8 a base:ValueNode ;
+    base:hasEnumValue 26501348 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_Nf86cf9050fde47928cf78c6bef6d526e a base:ValueNode ;
+    base:hasEnumValue 9 ;
+    base:hasValueClass opcua:UadpNetworkMessageContentMask .
+
+base:_Nf883d4a3a65f4396b1204b24b99e59de a base:ValueNode ;
+    base:hasEnumValue 16 ;
+    base:hasValueClass opcua:PermissionType .
+
+base:_Nf9d8805ce2bb49849bff8e44963424d6 a base:ValueNode ;
+    base:hasEnumValue 1 ;
+    base:hasValueClass opcua:PubSubConfigurationRefMask .
+
+base:_Nf9fb5a4821454ebea270ec3086b61edd a base:ValueNode ;
+    base:hasEnumValue 7 ;
+    base:hasValueClass opcua:PubSubConfigurationRefMask .
+
+base:_Nf9fd723741bc46cdb17577e237654d9d a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:MessageSecurityMode .
+
+base:_Nfa2246c5b0fd44278fd2559f9854b37f a base:ValueNode ;
+    base:hasEnumValue 1024 ;
+    base:hasValueClass opcua:NodeAttributesMask .
+
+base:_Nfa49601e27304a4f88bdad78a4e9e882 a base:ValueNode ;
+    base:hasEnumValue 4 ;
+    base:hasValueClass opcua:IdentityCriteriaType .
+
+base:_Nfae14cac4ec84377a321f88114e2aa5c a base:ValueNode ;
+    base:hasEnumValue 17 ;
+    base:hasValueClass opcua:FilterOperator .
+
+base:_Nfaf1a3aae86b4d1f99a2b77255f624b6 a base:ValueNode ;
+    base:hasEnumValue 32 ;
+    base:hasValueClass opcua:NodeClass .
+
+base:_Nfb2443517e054c45b1f3a8ea38438983 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:AccessLevelType .
+
+base:_Nfd91e800ba584293a7ae5c472c9028da a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:IdType .
+
+base:_Nfff9c5ebe36047318302ec57e6b02c17 a base:ValueNode ;
+    base:hasEnumValue 2 ;
+    base:hasValueClass opcua:PermissionType .
+
 opcua:3DCartesianCoordinatesType a owl:Class ;
     rdfs:subClassOf opcua:CartesianCoordinatesType .
 
@@ -50849,7 +52665,9 @@ opcua:DataSetClassId a opcua:JsonNetworkMessageContentMask,
         opcua:UadpNetworkMessageContentMask,
         base:Field ;
     base:hasDatatype opcua:Guid ;
-    base:hasFieldName "DataSetClassId" .
+    base:hasFieldName "DataSetClassId" ;
+    base:hasValueNode base:_Nbc136b5220d74164bc960de95c502077,
+        base:_Nf86cf9050fde47928cf78c6bef6d526e .
 
 opcua:DataSetFieldId a base:Field ;
     base:hasDatatype opcua:Guid ;
@@ -50885,7 +52703,8 @@ opcua:DataSetWriterDataType a owl:Class ;
 opcua:DataSetWriterId a opcua:JsonDataSetMessageContentMask,
         base:Field ;
     base:hasDatatype opcua:UInt16 ;
-    base:hasFieldName "DataSetWriterId" .
+    base:hasFieldName "DataSetWriterId" ;
+    base:hasValueNode base:_N412e898cb84f423a8fcb637c959e8cc9 .
 
 opcua:DatagramConnectionTransportDataType a owl:Class ;
     rdfs:subClassOf opcua:ConnectionTransportDataType ;
@@ -50935,7 +52754,9 @@ opcua:DisplayName a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask,
         base:Field ;
     base:hasDatatype opcua:LocalizedText ;
-    base:hasFieldName "DisplayName" .
+    base:hasFieldName "DisplayName" ;
+    base:hasValueNode base:_N03141abc4fc84b4f94187c1c30ed3e2b,
+        base:_Nb303c90312614b1a8be0641b36b288bd .
 
 opcua:Elements a base:Field ;
     base:hasDatatype opcua:ContentFilterElement,
@@ -51000,7 +52821,8 @@ opcua:GroupProperties a base:Field ;
 opcua:GroupVersion a opcua:UadpNetworkMessageContentMask,
         base:Field ;
     base:hasDatatype opcua:VersionTime ;
-    base:hasFieldName "GroupVersion" .
+    base:hasFieldName "GroupVersion" ;
+    base:hasValueNode base:_Ne09c13b693f94cf08f47d1a89ce8b104 .
 
 opcua:HasArgumentDescription a owl:Class,
         owl:ObjectProperty ;
@@ -51138,7 +52960,8 @@ opcua:MultiStateValueDiscreteType a owl:Class ;
 opcua:NetworkMessageNumber a opcua:UadpNetworkMessageContentMask,
         base:Field ;
     base:hasDatatype opcua:UInt16 ;
-    base:hasFieldName "NetworkMessageNumber" .
+    base:hasFieldName "NetworkMessageNumber" ;
+    base:hasValueNode base:_N9e0516def7f249debb15481dcab6315c .
 
 opcua:Numerator a base:Field ;
     base:hasDatatype opcua:Int32,
@@ -51306,7 +53129,9 @@ opcua:ReferenceType a opcua:NodeAttributesMask,
         opcua:NodeClass,
         base:Field ;
     base:hasDatatype opcua:NodeId ;
-    base:hasFieldName "ReferenceType" .
+    base:hasFieldName "ReferenceType" ;
+    base:hasValueNode base:_Nc0e0e7c2da434bc8a50b534bd1ea2021,
+        base:_Nfaf1a3aae86b4d1f99a2b77255f624b6 .
 
 opcua:RelativePath a owl:Class ;
     rdfs:subClassOf opcua:Structure ;
@@ -51323,7 +53148,9 @@ opcua:RolePermissions a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask,
         base:Field ;
     base:hasDatatype opcua:RolePermissionType ;
-    base:hasFieldName "RolePermissions" .
+    base:hasFieldName "RolePermissions" ;
+    base:hasValueNode base:_N00decb9094674dacbe5118b511a21c56,
+        base:_N85751ff4cb2c4700814e2ca440df23bd .
 
 opcua:SamplingIntervalDiagnosticsType a owl:Class ;
     rdfs:subClassOf opcua:BaseDataVariableType .
@@ -51468,7 +53295,8 @@ opcua:WriterGroupDataType a owl:Class ;
 opcua:WriterGroupId a opcua:UadpNetworkMessageContentMask,
         base:Field ;
     base:hasDatatype opcua:UInt16 ;
-    base:hasFieldName "WriterGroupId" .
+    base:hasFieldName "WriterGroupId" ;
+    base:hasValueNode base:_Nce0ef36544464beda33f9bfaeda6dbc7 .
 
 opcua:WriterGroupType a owl:Class ;
     rdfs:subClassOf opcua:PubSubGroupType .
@@ -54909,7 +56737,9 @@ opcua:ArrayDimensions a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask,
         base:Field ;
     base:hasDatatype opcua:UInt32 ;
-    base:hasFieldName "ArrayDimensions" .
+    base:hasFieldName "ArrayDimensions" ;
+    base:hasValueNode base:_N0be73b4af2f14ca58dd834167da93bd8,
+        base:_Nc1ea34897e0344d6b9deacf963fa4986 .
 
 opcua:AudioDataType a owl:Class ;
     rdfs:subClassOf opcua:ByteString .
@@ -54936,9 +56766,6 @@ opcua:CartesianCoordinatesType a owl:Class ;
 opcua:ConditionType a owl:Class ;
     rdfs:subClassOf opcua:BaseEventType ;
     base:isAbstract "true" .
-
-opcua:DataSetFieldFlags a owl:Class ;
-    rdfs:subClassOf opcua:UInt16 .
 
 opcua:DataSetMetaData a base:Field ;
     base:hasDatatype opcua:DataSetMetaDataType ;
@@ -54979,13 +56806,18 @@ opcua:DataType a opcua:AttributeWriteMask,
         opcua:NodeClass,
         base:Field ;
     base:hasDatatype opcua:NodeId ;
-    base:hasFieldName "DataType" .
+    base:hasFieldName "DataType" ;
+    base:hasValueNode base:_N1c96959c8fd443b7a8c1e558a8d91e75,
+        base:_N3edf1c76b3dc4ed88b6aae4f0b3eab85,
+        base:_Na518657811554c8698a22b52c7fe7110 .
 
 opcua:DataTypeDefinition a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask,
         owl:Class ;
     rdfs:subClassOf opcua:Structure ;
     base:hasFieldName "DataTypeDefinition" ;
+    base:hasValueNode base:_N0f34eb1ce0a34f8faa6c8953698f7124,
+        base:_Nbd9a9468ed5e4d4daa51e1a9fce52107 ;
     base:isAbstract "true" .
 
 opcua:DataTypeDictionaryType a owl:Class ;
@@ -55266,13 +57098,16 @@ opcua:Value a opcua:KeyValuePair,
     base:hasDatatype opcua:ByteString,
         opcua:Float,
         opcua:Int64 ;
-    base:hasFieldName "Value" .
+    base:hasFieldName "Value" ;
+    base:hasValueNode base:_N5e24b04de6db46ffa2206148067d3cf6 .
 
 opcua:ValueRank a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask,
         base:Field ;
     base:hasDatatype opcua:Int32 ;
-    base:hasFieldName "ValueRank" .
+    base:hasFieldName "ValueRank" ;
+    base:hasValueNode base:_N8786909b7fc24f59bdd46639c00ade07,
+        base:_Nac8dec44f7304ebcad295e1983356dc1 .
 
 opcua:Vector a owl:Class ;
     rdfs:subClassOf opcua:Structure ;
@@ -55455,6 +57290,9 @@ opcua:ConnectionTransportType a owl:Class ;
 opcua:DataItemType a owl:Class ;
     rdfs:subClassOf opcua:BaseDataVariableType .
 
+opcua:DataSetFieldFlags a owl:Class ;
+    rdfs:subClassOf opcua:UInt16 .
+
 opcua:DataSetFolderType a owl:Class ;
     rdfs:subClassOf opcua:FolderType .
 
@@ -55506,9 +57344,6 @@ opcua:EventFilter a owl:Class ;
     base:hasField opcua:SelectClauses,
         opcua:WhereClause .
 
-opcua:EventNotifierType a owl:Class ;
-    rdfs:subClassOf opcua:Byte .
-
 opcua:ExclusiveLimitAlarmType a owl:Class ;
     rdfs:subClassOf opcua:LimitAlarmType .
 
@@ -55539,9 +57374,6 @@ opcua:MessageSettings a base:Field ;
         opcua:ReaderGroupMessageDataType,
         opcua:WriterGroupMessageDataType ;
     base:hasFieldName "MessageSettings" .
-
-opcua:NamingRuleType a owl:Class ;
-    rdfs:subClassOf opcua:Enumeration .
 
 opcua:NetworkAddressDataType a owl:Class ;
     rdfs:subClassOf opcua:Structure ;
@@ -55593,9 +57425,6 @@ opcua:ResourceUri a base:Field ;
 opcua:SecurityGroupFolderType a owl:Class ;
     rdfs:subClassOf opcua:FolderType .
 
-opcua:SecurityTokenRequestType a owl:Class ;
-    rdfs:subClassOf opcua:Enumeration .
-
 opcua:ServerDiagnosticsSummaryType a owl:Class ;
     rdfs:subClassOf opcua:BaseDataVariableType .
 
@@ -55642,7 +57471,9 @@ opcua:UserName a opcua:IdentityCriteriaType,
         opcua:UserTokenType,
         base:Field ;
     base:hasDatatype opcua:String ;
-    base:hasFieldName "UserName" .
+    base:hasFieldName "UserName" ;
+    base:hasValueNode base:_N3256aef47fdd419492c55635c3cf0fec,
+        base:_Nb1761c2038404795a3697126419bffc5 .
 
 opcua:WriterGroupMessageDataType a owl:Class ;
     rdfs:subClassOf opcua:Structure ;
@@ -55714,9 +57545,6 @@ opcua:nodei83 a opcua:ModellingRuleType,
 opcua:AlarmConditionType a owl:Class ;
     rdfs:subClassOf opcua:AcknowledgeableConditionType .
 
-opcua:AlarmMask a owl:Class ;
-    rdfs:subClassOf opcua:UInt16 .
-
 opcua:AliasNameCategoryType a owl:Class ;
     rdfs:subClassOf opcua:FolderType .
 
@@ -55750,9 +57578,6 @@ opcua:CartesianCoordinates a owl:Class,
 opcua:DataValue a owl:Class ;
     rdfs:subClassOf opcua:BaseDataType .
 
-opcua:Duplex a owl:Class ;
-    rdfs:subClassOf opcua:Enumeration .
-
 opcua:Enabled a base:Field ;
     base:hasDatatype opcua:Boolean ;
     base:hasFieldName "Enabled" .
@@ -55771,7 +57596,8 @@ opcua:FiniteStateMachineType a owl:Class ;
 opcua:Guid a opcua:IdType,
         owl:Class ;
     rdfs:subClassOf opcua:BaseDataType ;
-    base:hasFieldName "Guid" .
+    base:hasFieldName "Guid" ;
+    base:hasValueNode base:_Nfd91e800ba584293a7ae5c472c9028da .
 
 opcua:HasEffect a owl:Class,
         owl:ObjectProperty ;
@@ -55783,9 +57609,6 @@ opcua:Integer a owl:Class ;
 
 opcua:OffNormalAlarmType a owl:Class ;
     rdfs:subClassOf opcua:DiscreteAlarmType .
-
-opcua:OpenFileMode a owl:Class ;
-    rdfs:subClassOf opcua:Enumeration .
 
 opcua:Orientation a owl:Class,
         base:Field ;
@@ -55861,9 +57684,6 @@ opcua:TransportSettings a base:Field ;
         opcua:WriterGroupTransportDataType ;
     base:hasFieldName "TransportSettings" .
 
-opcua:TsnTalkerStatus a owl:Class ;
-    rdfs:subClassOf opcua:Enumeration .
-
 opcua:nodei15823 a opcua:ObjectNodeClass,
         opcua:StateType ;
     base:hasBrowseName "Error" ;
@@ -55922,18 +57742,9 @@ opcua:ArrayItemType a owl:Class ;
     rdfs:subClassOf opcua:DataItemType ;
     base:isAbstract "true" .
 
-opcua:AxisScaleEnumeration a owl:Class ;
-    rdfs:subClassOf opcua:Enumeration .
-
 opcua:ContentFilter a owl:Class ;
     rdfs:subClassOf opcua:Structure ;
     base:hasField opcua:Elements .
-
-opcua:ConversionLimitEnum a owl:Class ;
-    rdfs:subClassOf opcua:Enumeration .
-
-opcua:DataSetOrderingType a owl:Class ;
-    rdfs:subClassOf opcua:Enumeration .
 
 opcua:DictionaryEntryType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType ;
@@ -55948,27 +57759,12 @@ opcua:FiniteTransitionVariableType a owl:Class ;
 opcua:HistoryEventFieldList a owl:Class ;
     rdfs:subClassOf opcua:Structure .
 
-opcua:HistoryUpdateType a owl:Class ;
-    rdfs:subClassOf opcua:Enumeration .
-
 opcua:Image a owl:Class ;
     rdfs:subClassOf opcua:ByteString ;
     base:isAbstract "true" .
 
-opcua:InterfaceAdminStatus a owl:Class ;
-    rdfs:subClassOf opcua:Enumeration .
-
 opcua:ModellingRuleType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType .
-
-opcua:OverrideValueHandling a owl:Class,
-        base:Field ;
-    rdfs:subClassOf opcua:Enumeration ;
-    base:hasDatatype opcua:OverrideValueHandling ;
-    base:hasFieldName "OverrideValueHandling" .
-
-opcua:RedundantServerMode a owl:Class ;
-    rdfs:subClassOf opcua:Enumeration .
 
 opcua:RolePermissionType a owl:Class ;
     rdfs:subClassOf opcua:Structure ;
@@ -55986,6 +57782,9 @@ opcua:SecurityPolicyUri a base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "SecurityPolicyUri" .
 
+opcua:SecurityTokenRequestType a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
 opcua:StateVariableType a owl:Class ;
     rdfs:subClassOf opcua:BaseDataVariableType .
 
@@ -55995,12 +57794,6 @@ opcua:SubscribedDataSetDataType a owl:Class ;
 
 opcua:SubscriptionDiagnosticsArrayType a owl:Class ;
     rdfs:subClassOf opcua:BaseDataVariableType .
-
-opcua:TsnListenerStatus a owl:Class ;
-    rdfs:subClassOf opcua:Enumeration .
-
-opcua:UserConfigurationMask a owl:Class ;
-    rdfs:subClassOf opcua:UInt32 .
 
 opcua:UserIdentityToken a owl:Class ;
     rdfs:subClassOf opcua:Structure ;
@@ -56041,9 +57834,6 @@ opcua:nodei2402 a opcua:ObjectNodeClass,
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "2402" ;
     base:hasProperty opcua:nodei2403 .
-
-opcua:AccessRestrictionType a owl:Class ;
-    rdfs:subClassOf opcua:UInt16 .
 
 opcua:ApplicationDescription a owl:Class ;
     rdfs:subClassOf opcua:Structure ;
@@ -56089,10 +57879,13 @@ opcua:EndpointDescription a owl:Class ;
         opcua:TransportProfileUri,
         opcua:UserIdentityTokens .
 
+opcua:EventNotifierType a owl:Class ;
+    rdfs:subClassOf opcua:Byte .
+
 opcua:ExpandedNodeId a owl:Class ;
     rdfs:subClassOf opcua:BaseDataType .
 
-opcua:NegotiationStatus a owl:Class ;
+opcua:NamingRuleType a owl:Class ;
     rdfs:subClassOf opcua:Enumeration .
 
 opcua:NetworkAddressType a owl:Class ;
@@ -56110,52 +57903,33 @@ opcua:SystemEventType a owl:Class ;
     rdfs:subClassOf opcua:BaseEventType ;
     base:isAbstract "true" .
 
-opcua:TrustListMasks a owl:Class ;
-    rdfs:subClassOf opcua:Enumeration .
-
-opcua:TsnStreamState a owl:Class ;
-    rdfs:subClassOf opcua:Enumeration .
-
 opcua:UInteger a owl:Class ;
     rdfs:subClassOf opcua:Number ;
     base:isAbstract "true" .
 
-opcua:UserTokenType a owl:Class,
-        base:Field ;
-    rdfs:subClassOf opcua:Enumeration ;
-    base:hasDatatype opcua:UserTokenPolicy ;
-    base:hasFieldName "UserTokenType" .
-
-opcua:AccessLevelType a owl:Class ;
-    rdfs:subClassOf opcua:Byte .
+opcua:AlarmMask a owl:Class ;
+    rdfs:subClassOf opcua:UInt16 .
 
 opcua:Description a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask,
         base:Field ;
     base:hasDatatype opcua:LocalizedText,
         opcua:String ;
-    base:hasFieldName "Description" .
+    base:hasFieldName "Description" ;
+    base:hasValueNode base:_N004086a71c374d99b689b77902bc31fa,
+        base:_N71405ec0e2aa4623baf410a7d249934e .
 
-opcua:ExceptionDeviationFormat a owl:Class ;
+opcua:Duplex a owl:Class ;
     rdfs:subClassOf opcua:Enumeration .
 
 opcua:Float a owl:Class ;
     rdfs:subClassOf opcua:Number .
 
-opcua:IdType a owl:Class ;
-    rdfs:subClassOf opcua:Enumeration .
-
 opcua:NumericRange a owl:Class ;
     rdfs:subClassOf opcua:String .
 
-opcua:PerformUpdateType a owl:Class ;
+opcua:TsnTalkerStatus a owl:Class ;
     rdfs:subClassOf opcua:Enumeration .
-
-opcua:StructureType a owl:Class,
-        base:Field ;
-    rdfs:subClassOf opcua:Enumeration ;
-    base:hasDatatype opcua:StructureType ;
-    base:hasFieldName "StructureType" .
 
 opcua:AxisInformation a owl:Class ;
     rdfs:subClassOf opcua:Structure ;
@@ -56165,6 +57939,9 @@ opcua:AxisInformation a owl:Class ;
         opcua:EngineeringUnits,
         opcua:Title .
 
+opcua:AxisScaleEnumeration a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
 opcua:BaseConditionClassType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType ;
     base:isAbstract "true" .
@@ -56173,10 +57950,28 @@ opcua:BaseEventType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType ;
     base:isAbstract "true" .
 
+opcua:ConversionLimitEnum a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
+opcua:DataSetOrderingType a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
 opcua:HierarchicalReferences a owl:Class,
         owl:ObjectProperty ;
     rdfs:subClassOf opcua:References ;
     base:isAbstract "true" .
+
+opcua:InterfaceAdminStatus a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
+opcua:OpenFileMode a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
+opcua:OverrideValueHandling a owl:Class,
+        base:Field ;
+    rdfs:subClassOf opcua:Enumeration ;
+    base:hasDatatype opcua:OverrideValueHandling ;
+    base:hasFieldName "OverrideValueHandling" .
 
 opcua:Range a owl:Class ;
     rdfs:subClassOf opcua:Structure ;
@@ -56219,9 +58014,6 @@ opcua:SubscriptionDiagnosticsDataType a owl:Class ;
         opcua:TransferredToAltClientCount,
         opcua:TransferredToSameClientCount,
         opcua:UnacknowledgedMessageCount .
-
-opcua:TrustListValidationOptions a owl:Class ;
-    rdfs:subClassOf opcua:UInt32 .
 
 opcua:nodei11856 a opcua:ObjectTypeNodeClass ;
     base:definesType opcua:AuditProgramTransitionEventType ;
@@ -56268,9 +58060,6 @@ opcua:AuditEventType a owl:Class ;
     rdfs:subClassOf opcua:BaseEventType ;
     base:isAbstract "true" .
 
-opcua:BrokerTransportQualityOfService a owl:Class ;
-    rdfs:subClassOf opcua:Enumeration .
-
 opcua:CertificateGroupType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType .
 
@@ -56282,13 +58071,10 @@ opcua:DataSetMetaDataType a owl:Class ;
         opcua:Fields,
         opcua:Name .
 
-opcua:IdentityCriteriaType a owl:Class ;
+opcua:HistoryUpdateType a owl:Class ;
     rdfs:subClassOf opcua:Enumeration .
 
-opcua:InterfaceOperStatus a owl:Class ;
-    rdfs:subClassOf opcua:Enumeration .
-
-opcua:RedundancySupport a owl:Class ;
+opcua:RedundantServerMode a owl:Class ;
     rdfs:subClassOf opcua:Enumeration .
 
 opcua:SByte a owl:Class ;
@@ -56352,7 +58138,10 @@ opcua:SessionSecurityDiagnosticsDataType a owl:Class ;
         opcua:SessionId,
         opcua:TransportProtocol .
 
-opcua:UadpDataSetMessageContentMask a owl:Class ;
+opcua:TsnListenerStatus a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
+opcua:UserConfigurationMask a owl:Class ;
     rdfs:subClassOf opcua:UInt32 .
 
 opcua:nodei2915 a opcua:ObjectTypeNodeClass ;
@@ -56394,11 +58183,11 @@ opcua:nodei2915 a opcua:ObjectTypeNodeClass ;
         opcua:nodei9215,
         opcua:nodei9216 .
 
+opcua:AccessRestrictionType a owl:Class ;
+    rdfs:subClassOf opcua:UInt16 .
+
 opcua:AuditConditionEventType a owl:Class ;
     rdfs:subClassOf opcua:AuditUpdateMethodEventType .
-
-opcua:JsonNetworkMessageContentMask a owl:Class ;
-    rdfs:subClassOf opcua:UInt32 .
 
 opcua:LocaleId a owl:Class ;
     rdfs:subClassOf opcua:String .
@@ -56409,14 +58198,23 @@ opcua:TrustListType a owl:Class ;
 opcua:UriString a owl:Class ;
     rdfs:subClassOf opcua:String .
 
-opcua:ApplicationType a owl:Class,
+opcua:UserTokenType a owl:Class,
         base:Field ;
     rdfs:subClassOf opcua:Enumeration ;
-    base:hasDatatype opcua:ApplicationType ;
-    base:hasFieldName "ApplicationType" .
+    base:hasDatatype opcua:UserTokenPolicy ;
+    base:hasFieldName "UserTokenType" .
 
-opcua:PasswordOptionsMask a owl:Class ;
-    rdfs:subClassOf opcua:UInt32 .
+opcua:IdType a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
+opcua:NegotiationStatus a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
+opcua:PerformUpdateType a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
+opcua:TsnStreamState a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
 
 opcua:ConditionVariableType a owl:Class ;
     rdfs:subClassOf opcua:BaseDataVariableType .
@@ -56428,17 +58226,12 @@ opcua:EndpointType a owl:Class ;
         opcua:SecurityPolicyUri,
         opcua:TransportProfileUri .
 
+opcua:ExceptionDeviationFormat a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
 opcua:HasComponent a owl:Class,
         owl:ObjectProperty ;
     rdfs:subClassOf opcua:Aggregates .
-
-opcua:NodeClass a opcua:AttributeWriteMask,
-        opcua:NodeAttributesMask,
-        owl:Class,
-        base:Field ;
-    rdfs:subClassOf opcua:Enumeration ;
-    base:hasDatatype opcua:NodeClass ;
-    base:hasFieldName "NodeClass" .
 
 opcua:PubSubStatusType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType .
@@ -56449,23 +58242,29 @@ opcua:QualifiedName a owl:Class ;
 opcua:RoleType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType .
 
-opcua:AccessLevelExType a owl:Class ;
-    rdfs:subClassOf opcua:UInt32 .
+opcua:StructureType a owl:Class,
+        base:Field ;
+    rdfs:subClassOf opcua:Enumeration ;
+    base:hasDatatype opcua:StructureType ;
+    base:hasFieldName "StructureType" .
+
+opcua:TrustListMasks a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
 
 opcua:IdentityMappingRuleType a owl:Class ;
     rdfs:subClassOf opcua:Structure ;
     base:hasField opcua:Criteria,
         opcua:CriteriaType .
 
+opcua:AccessLevelType a owl:Class ;
+    rdfs:subClassOf opcua:Byte .
+
 opcua:BaseInterfaceType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType ;
     base:isAbstract "true" .
 
-opcua:DataSetFieldContentMask a owl:Class,
-        base:Field ;
-    rdfs:subClassOf opcua:UInt32 ;
-    base:hasDatatype opcua:DataSetFieldContentMask ;
-    base:hasFieldName "DataSetFieldContentMask" .
+opcua:BrokerTransportQualityOfService a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
 
 opcua:DateTime a owl:Class ;
     rdfs:subClassOf opcua:BaseDataType .
@@ -56477,38 +58276,44 @@ opcua:EUInformation a owl:Class ;
         opcua:NamespaceUri,
         opcua:UnitId .
 
-opcua:JsonDataSetMessageContentMask a owl:Class ;
-    rdfs:subClassOf opcua:UInt32 .
-
 opcua:Number a owl:Class ;
     rdfs:subClassOf opcua:BaseDataType ;
     base:isAbstract "true" .
 
-opcua:PubSubConfigurationRefMask a owl:Class ;
-    rdfs:subClassOf opcua:UInt32 .
-
-opcua:UadpNetworkMessageContentMask a owl:Class ;
-    rdfs:subClassOf opcua:UInt32 .
-
 opcua:VersionTime a owl:Class ;
     rdfs:subClassOf opcua:UInt32 .
 
-opcua:MessageSecurityMode a owl:Class ;
-    rdfs:subClassOf opcua:Enumeration .
+opcua:ApplicationType a owl:Class,
+        base:Field ;
+    rdfs:subClassOf opcua:Enumeration ;
+    base:hasDatatype opcua:ApplicationType ;
+    base:hasFieldName "ApplicationType" .
 
 opcua:Name a base:Field ;
     base:hasDatatype opcua:QualifiedName,
         opcua:String ;
     base:hasFieldName "Name" .
 
-opcua:ServerState a owl:Class,
-        base:Field ;
-    rdfs:subClassOf opcua:Enumeration ;
-    base:hasDatatype opcua:ServerState ;
-    base:hasFieldName "ServerState" .
+opcua:RedundancySupport a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
+opcua:TrustListValidationOptions a owl:Class ;
+    rdfs:subClassOf opcua:UInt32 .
+
+opcua:UadpDataSetMessageContentMask a owl:Class ;
+    rdfs:subClassOf opcua:UInt32 .
+
+opcua:InterfaceOperStatus a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
+opcua:IdentityCriteriaType a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
 
 opcua:Int32 a owl:Class ;
     rdfs:subClassOf opcua:Integer .
+
+opcua:JsonNetworkMessageContentMask a owl:Class ;
+    rdfs:subClassOf opcua:UInt32 .
 
 opcua:StateType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType .
@@ -56519,15 +58324,13 @@ opcua:BaseDataType a owl:Class,
     base:hasFieldName "BaseDataType" ;
     base:isAbstract "true" .
 
-opcua:PermissionType a owl:Class ;
-    rdfs:subClassOf opcua:UInt32 .
-
 opcua:StatusCode a opcua:DataSetFieldContentMask,
         owl:Class,
         base:Field ;
     rdfs:subClassOf opcua:BaseDataType ;
     base:hasDatatype opcua:StatusCode ;
-    base:hasFieldName "StatusCode" .
+    base:hasFieldName "StatusCode" ;
+    base:hasValueNode base:_N5b0492cdbf0141e291fe9be97235ac4d .
 
 opcua:EnumValueType a owl:Class ;
     rdfs:subClassOf opcua:Structure ;
@@ -56535,14 +58338,27 @@ opcua:EnumValueType a owl:Class ;
         opcua:DisplayName,
         opcua:Value .
 
-opcua:PubSubState a owl:Class ;
+opcua:MessageSecurityMode a owl:Class ;
     rdfs:subClassOf opcua:Enumeration .
 
-opcua:FilterOperator a owl:Class,
+opcua:DataSetFieldContentMask a owl:Class,
+        base:Field ;
+    rdfs:subClassOf opcua:UInt32 ;
+    base:hasDatatype opcua:DataSetFieldContentMask ;
+    base:hasFieldName "DataSetFieldContentMask" .
+
+opcua:PasswordOptionsMask a owl:Class ;
+    rdfs:subClassOf opcua:UInt32 .
+
+opcua:NodeClass a opcua:AttributeWriteMask,
+        opcua:NodeAttributesMask,
+        owl:Class,
         base:Field ;
     rdfs:subClassOf opcua:Enumeration ;
-    base:hasDatatype opcua:FilterOperator ;
-    base:hasFieldName "FilterOperator" .
+    base:hasDatatype opcua:NodeClass ;
+    base:hasFieldName "NodeClass" ;
+    base:hasValueNode base:_N41180880dc5945d39bbeaf10888628a0,
+        base:_Nb8dbfb56241e4f608cdc0f322f33ec9e .
 
 opcua:UInt64 a owl:Class ;
     rdfs:subClassOf opcua:UInteger .
@@ -56551,11 +58367,26 @@ opcua:KeyValuePair a owl:Class ;
     rdfs:subClassOf opcua:Structure ;
     base:hasField opcua:Key .
 
-opcua:AttributeWriteMask a owl:Class ;
+opcua:ServerState a owl:Class,
+        base:Field ;
+    rdfs:subClassOf opcua:Enumeration ;
+    base:hasDatatype opcua:ServerState ;
+    base:hasFieldName "ServerState" .
+
+opcua:PubSubState a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
+opcua:JsonDataSetMessageContentMask a owl:Class ;
     rdfs:subClassOf opcua:UInt32 .
 
-opcua:TsnFailureCode a owl:Class ;
-    rdfs:subClassOf opcua:Enumeration .
+opcua:UadpNetworkMessageContentMask a owl:Class ;
+    rdfs:subClassOf opcua:UInt32 .
+
+opcua:AccessLevelExType a owl:Class ;
+    rdfs:subClassOf opcua:UInt32 .
+
+opcua:PubSubConfigurationRefMask a owl:Class ;
+    rdfs:subClassOf opcua:UInt32 .
 
 opcua:TwoStateVariableType a owl:Class ;
     rdfs:subClassOf opcua:StateVariableType .
@@ -56575,11 +58406,17 @@ opcua:Enumeration a owl:Class ;
     rdfs:subClassOf opcua:BaseDataType ;
     base:isAbstract "true" .
 
-opcua:NodeAttributesMask a owl:Class ;
-    rdfs:subClassOf opcua:Enumeration .
+opcua:PermissionType a owl:Class ;
+    rdfs:subClassOf opcua:UInt32 .
 
 opcua:AggregateFunctionType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType .
+
+opcua:FilterOperator a owl:Class,
+        base:Field ;
+    rdfs:subClassOf opcua:Enumeration ;
+    base:hasDatatype opcua:FilterOperator ;
+    base:hasFieldName "FilterOperator" .
 
 opcua:nodei11508 a opcua:ModellingRuleType,
         opcua:ObjectNodeClass ;
@@ -56600,8 +58437,17 @@ opcua:FolderType a owl:Class ;
 opcua:Double a owl:Class ;
     rdfs:subClassOf opcua:Number .
 
+opcua:AttributeWriteMask a owl:Class ;
+    rdfs:subClassOf opcua:UInt32 .
+
+opcua:TsnFailureCode a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
 opcua:Duration a owl:Class ;
     rdfs:subClassOf opcua:Double .
+
+opcua:NodeAttributesMask a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
 
 opcua:PubSubDiagnosticsCounterType a owl:Class ;
     rdfs:subClassOf opcua:BaseDataVariableType .
@@ -56618,6 +58464,7 @@ opcua:Structure a opcua:StructureType,
         owl:Class ;
     rdfs:subClassOf opcua:BaseDataType ;
     base:hasFieldName "Structure" ;
+    base:hasValueNode base:_Nc00f458ba5a04801b9f3d66b8570ccde ;
     base:isAbstract "true" .
 
 opcua:UtcTime a owl:Class ;
@@ -56629,7 +58476,9 @@ opcua:NodeId a opcua:AttributeWriteMask,
         base:Field ;
     rdfs:subClassOf opcua:BaseDataType ;
     base:hasDatatype opcua:NodeId ;
-    base:hasFieldName "NodeId" .
+    base:hasFieldName "NodeId" ;
+    base:hasValueNode base:_N394695d109de42949f6a6d26777851b3,
+        base:_N830759f2bc904f7594b6f3c8f860fac1 .
 
 opcua:DiagnosticsLevel a owl:Class ;
     rdfs:subClassOf opcua:Enumeration .
@@ -56678,7 +58527,8 @@ opcua:BaseDataVariableType a owl:Class ;
 opcua:String a opcua:IdType,
         owl:Class ;
     rdfs:subClassOf opcua:BaseDataType ;
-    base:hasFieldName "String" .
+    base:hasFieldName "String" ;
+    base:hasValueNode base:_N5fedbed58ef64ae089d042f0f4627d00 .
 
 opcua:nodei78 a opcua:ModellingRuleType,
         opcua:ObjectNodeClass ;
