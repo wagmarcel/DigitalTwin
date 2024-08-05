@@ -492,6 +492,7 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
     get_modelling_rule(node, shacl_rule, None)
 
     decoded_attributename = normalize_angle_bracket_name(urllib.parse.unquote(attributename))
+    datasetId = None
     try:
         is_placeholder = next(e.objects(entity_namespace[decoded_attributename], basens['isPlaceHolder']))
         is_typematch = len(list(e.triples((entity_namespace[decoded_attributename], RDFS.domain, instance['type'])))) > 0
@@ -499,6 +500,7 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
         is_placeholder = False
         is_typematch = False
     if is_placeholder:
+        datasetId = f'{instance["id"]}:datasetId:{attributename}'
         attributename = urllib.parse.quote(decoded_attributename)
     #if contains_both_angle_brackets(decoded_attributename):
     #    decoded_attributename = normalize_angle_bracket_name(decoded_attributename)
@@ -514,6 +516,8 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
                 'type': 'Relationship',
                 'object': relid
             }
+            if is_placeholder and datasetId is not None:
+                instance[f'{entity_ontology_prefix}:{attributename}']['datasetId'] = datasetId
             if debug:
                 instance[f'{entity_ontology_prefix}:{attributename}']['debug'] = f'{entity_ontology_prefix}:{attributename}'
             shacl_rule['contentclass'] = classtype
