@@ -97,6 +97,7 @@ modelling_nodeid_optional_array = 11508
 entity_ontology_prefix = 'uaentity'
 basic_types = ['String', 'Boolean', 'Byte', 'SByte', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Uin64', 'Int64', 'Float', 'DateTime', 'Guid', 'ByteString', 'Double']
 workaround_instances = ['http://opcfoundation.org/UA/DI/FunctionalGroupType', 'http://opcfoundation.org/UA/FolderType']
+datasetid_urn = 'urn:iff:datasetId'
 
 def parse_args(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='\
@@ -306,10 +307,6 @@ def scan_type(node, instancetype):
     shapename = create_shacl_type(instancetype)
     has_components = False
     for (curtype, curnode) in supertypes:
-        print(f"Supertype {curtype}")
-        if curtype is None:
-            print("Skipping ... No typeless objects extensions")
-            #continue
         components = g.triples((curnode, basens['hasComponent'], None))
         for (_, _, o) in components:
             has_components = scan_type_recursive(o, curnode, instancetype, shapename) or has_components
@@ -500,7 +497,7 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
         is_placeholder = False
         is_typematch = False
     if is_placeholder:
-        datasetId = f'{instance["id"]}:datasetId:{attributename}'
+        datasetId = f'{datasetid_urn}:{attributename}'
         attributename = urllib.parse.quote(decoded_attributename)
     #if contains_both_angle_brackets(decoded_attributename):
     #    decoded_attributename = normalize_angle_bracket_name(decoded_attributename)
