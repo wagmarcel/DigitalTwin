@@ -329,7 +329,7 @@ def scan_type_recursive(o, node, instancetype, shapename):
     browse_name = next(g.objects(o, basens['hasBrowseName']))
     #print(f'Processing Node {o} with browsename {browse_name}')
     nodeclass, classtype = get_type(o)
-    # If defnition is infnite, stop recursion
+    # If defnition is self referential, stop recursion
     if str(instancetype) == str(classtype):
         return False
 
@@ -348,12 +348,13 @@ def scan_type_recursive(o, node, instancetype, shapename):
     e.add((entity_namespace[attributename], RDF.type, OWL.ObjectProperty))
     e.add((entity_namespace[attributename], RDFS.domain, URIRef(instancetype)))
     e.add((entity_namespace[attributename], RDF.type, OWL.NamedIndividual))
-    e.add((entity_namespace[attributename], RDF.type, basens['SubComponentRelationship']))
+   
     types.append(classtype)
     
     if isObjectNodeClass(nodeclass):
         shacl_rule['is_property'] = False
         e.add((entity_namespace[attributename], RDFS.range, ngsildns['Relationship']))
+        e.add((entity_namespace[attributename], RDF.type, basens['SubComponentRelationship']))
         _, use_instance_declaration = get_modelling_rule(o, None, instancetype)
         if use_instance_declaration:
             # This information mixes two details
