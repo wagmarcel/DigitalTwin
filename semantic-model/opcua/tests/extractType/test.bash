@@ -9,7 +9,7 @@ DEBUG=true
 if [ "$DEBUG"="true" ]; then
     DEBUG_CMDLINE="-m debugpy --listen 5678"
 fi
-TESTNODESETS=(test_object_types.NodeSet2)
+TESTNODESETS=(test_minimal_object.NodeSet2 test_object_types.NodeSet2)
 CLEANGRAPH=cleangraph.py
 
 echo Prepare core nodeset
@@ -23,7 +23,7 @@ for nodeset in "${TESTNODESETS[@]}"; do
     if [ "$DEBUG"="true" ]; then
         echo DEBUG: python3 ${NODESET2OWL} ${nodeset}.xml -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p test -o ${NODESET2OWL_RESULT}
     fi
-    python3 ${NODESET2OWL} ${nodeset}.xml -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p test -o ${NODESET2OWL_RESULT}
-    python3 ${EXTRACTTYPE}
+    python3 ${NODESET2OWL} ${nodeset}.xml -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p test -o ${NODESET2OWL_RESULT} || exit 1
+    python3 ${EXTRACTTYPE} || exit 1
     #diff ${nodeset}.ttl ${RESULT} || exit 1
 done
