@@ -594,8 +594,11 @@ def add_type(g, node, xml_ns):
     ref_namespace = get_rdf_ns_from_ua_index(ref_index)
     br_namespace = ref_namespace
     ref_classiri = nodeId_to_iri(ref_namespace, ref_id, idtype)
-    references_node = node.find('opcua:References', xml_ns)
-    references = references_node.findall('opcua:Reference', xml_ns)
+    try:
+        references_node = node.find('opcua:References', xml_ns)
+        references = references_node.findall('opcua:Reference', xml_ns)
+    except:
+        references = []
     g.add((ref_namespace[browsename], RDF.type, OWL.Class))
     if (node.tag.endswith("UAReferenceType")):
         known_references.append((Literal(ref_id), ref_namespace, Literal(browsename)))
@@ -692,9 +695,12 @@ if __name__ == '__main__':
     create_prefixes(g, namespace_uris, base_ontology, opcua_namespace)
     init_nodeids( opcua_inputs, ontology_name, ontology_prefix)
     create_header(g)
-    aliases_node = root.find('opcua:Aliases', xml_ns)
-    alias_nodes = aliases_node.findall('opcua:Alias', xml_ns)
-    scan_aliases(alias_nodes)
+    try:
+        aliases_node = root.find('opcua:Aliases', xml_ns)
+        alias_nodes = aliases_node.findall('opcua:Alias', xml_ns)
+        scan_aliases(alias_nodes)
+    except:
+        pass
     all_nodeclasses = [
         ('opcua:UADataType', 'DataTypeNodeClass'),
         ('opcua:UAReferenceType', 'ReferenceTypeNodeClass'),
