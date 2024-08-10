@@ -725,7 +725,11 @@ if __name__ == '__main__':
     for uri, prefix, _ in result:
         e.bind(prefix, Namespace(uri))
     # First scan the templates to create the rules
-    root = next(g.subjects(basens['definesType'], URIRef(rootinstancetype)))
+    try:
+        root = next(g.subjects(basens['definesType'], URIRef(rootinstancetype)))
+    except:
+        print(f"Error: root-instance with type {rootinstancetype} not found. Please review the type parameter.")
+        exit(1)
     scan_type(root, rootinstancetype)
     # Then scan the entity with the real values
     rootentity = next(g.subjects(RDF.type, URIRef(rootinstancetype)))
