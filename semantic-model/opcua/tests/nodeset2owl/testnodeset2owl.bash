@@ -17,6 +17,15 @@ export MACHINETOOL_EXAMPLE_NODESET=https://raw.githubusercontent.com/OPCFoundati
 export LASERSYSTEMS_EXAMPLE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/LaserSystems/LaserSystem-Example.NodeSet2.xml
 export BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl
 export PACKML_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/PackML/Opc.Ua.PackML.NodeSet2.xml
+
+
+function mydiff() {
+    result="$1"
+    expected="$2"
+    echo "Compare expected <=> result" 
+    diff $result $expected || exit 1
+
+}
 RESULT=result.ttl
 CLEANED=cleaned.ttl
 DEBUG=true
@@ -25,56 +34,64 @@ if [ "$DEBUG"="true" ]; then
 fi
 TESTNODESETS=(test_object_types.NodeSet2 test_objects.NodeSet2 test_reference_reused.NodeSet2 test_references_special.NodeSet2)
 CLEANGRAPH=cleangraph.py
+NODESET2OWL=../../nodeset2owl.py
 echo Starting Feature Tests
 echo -------------------------------- 
 for nodeset in "${TESTNODESETS[@]}"; do
     echo test $nodeset
     if [ "$DEBUG"="true" ]; then
-        echo DEBUG: python3 -m debugpy --listen 5678 --wait-for-client ../nodeset2owl.py ${nodeset}.xml -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p test -o ${RESULT}
+        echo DEBUG: python3 -m debugpy --listen 5678 --wait-for-client ${NODESET2OWL} ${nodeset}.xml -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p test -o ${RESULT}
     fi
-    python3 ../nodeset2owl.py ${nodeset}.xml -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p test -o ${RESULT}
+    python3 ${NODESET2OWL} ${nodeset}.xml -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p test -o ${RESULT}
+    echo "Comparing expected <=> result"
     diff ${nodeset}.ttl ${RESULT} || exit 1
 done
 echo Starting E2E specification tests
 echo -------------------------------- 
 comparewith=core_cleaned.ttl
 echo Test ${CORE_NODESET}
-python3 ../nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o ${RESULT}
+echo --------------------
+python3 ${NODESET2OWL} ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o ${RESULT}
 python3 $CLEANGRAPH $RESULT $CLEANED 
-diff $CLEANED $comparewith || exit 1
+mydiff $comparewith $CLEANED 
 nodeset=$DI_NODESET
 comparewith=devices_cleaned.ttl
 echo Test $DI_NODESET
+echo --------------------
 echo Prepare core.ttl
-python3 ../nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o core.ttl
+python3 ${NODESET2OWL} ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o core.ttl
 echo test devices
-python3 ../nodeset2owl.py  ${DI_NODESET} -i ${BASE_ONTOLOGY} core.ttl -v http://example.com/v0.1/DI/ -p devices -o ${RESULT}
+python3 ${NODESET2OWL}  ${DI_NODESET} -i ${BASE_ONTOLOGY} core.ttl -v http://example.com/v0.1/DI/ -p devices -o ${RESULT}
 python3 $CLEANGRAPH $RESULT $CLEANED 
-diff $CLEANED $comparewith  || exit 1
+mydiff $comparewith $CLEANED 
 rm -f core.ttl
 comparewith=machinery_cleaned.ttl
 echo Test $MACHINERY_NODESET
+echo -----------------------
 echo Prepare core.ttl
-python3 ../nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o core.ttl
+python3 ${NODESET2OWL} ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o core.ttl
 echo Prepare devices.ttl
-python3 ../nodeset2owl.py  ${DI_NODESET} -i ${BASE_ONTOLOGY} core.ttl -v http://example.com/v0.1/DI/ -p devices -o devices.ttl
+python3 ${NODESET2OWL}  ${DI_NODESET} -i ${BASE_ONTOLOGY} core.ttl -v http://example.com/v0.1/DI/ -p devices -o devices.ttl
 echo test machinery
-python3 ../nodeset2owl.py ${MACHINERY_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl -v http://example.com/v0.1/Machinery/ -p machinery -o ${RESULT}
+echo --------------
+python3 ${NODESET2OWL} ${MACHINERY_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl -v http://example.com/v0.1/Machinery/ -p machinery -o ${RESULT}
 python3 $CLEANGRAPH $RESULT $CLEANED 
-diff $CLEANED $comparewith  || exit 1
+mydiff $comparewith $CLEANED 
 rm -f core.ttl device.ttl
 comparewith=pumps_cleaned.ttl
 echo Test $PUMPS_NODESET
+echo -------------------
 echo Prepare core.ttl
-python3 ${DEBUG_CMDLINE} ../nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o core.ttl
+python3 ${DEBUG_CMDLINE} ${NODESET2OWL} ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o core.ttl
 echo Prepare devices.ttl
-python3 ${DEBUG_CMDLINE} ../nodeset2owl.py  ${DI_NODESET} -i ${BASE_ONTOLOGY} core.ttl -v http://example.com/v0.1/DI/ -p devices -o devices.ttl
+python3 ${DEBUG_CMDLINE} ${NODESET2OWL}  ${DI_NODESET} -i ${BASE_ONTOLOGY} core.ttl -v http://example.com/v0.1/DI/ -p devices -o devices.ttl
 echo Prepare machinery
-python3 ${DEBUG_CMDLINE} ../nodeset2owl.py ${MACHINERY_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl -v http://example.com/v0.1/Machinery/ -p machinery -o machinery.ttl
+python3 ${DEBUG_CMDLINE} ${NODESET2OWL} ${MACHINERY_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl -v http://example.com/v0.1/Machinery/ -p machinery -o machinery.ttl
 echo Test pumps
-python3 ${DEBUG_CMDLINE} ../nodeset2owl.py  ${PUMPS_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl machinery.ttl -v http://example.com/v0.1/Pumps/ -p pumps -o ${RESULT}
+echo ----------
+python3 ${DEBUG_CMDLINE} ${NODESET2OWL}  ${PUMPS_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl machinery.ttl -v http://example.com/v0.1/Pumps/ -p pumps -o ${RESULT}
 python3 $CLEANGRAPH $RESULT $CLEANED
-diff $CLEANED $comparewith || exit 1
+mydiff $CLEANED $comparewith
 rm -f core.ttl device.ttl machinery.ttl
 
 if [ "$DEBUG" != "true" ]; then

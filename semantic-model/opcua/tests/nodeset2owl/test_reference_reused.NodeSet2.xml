@@ -156,7 +156,7 @@
     <DisplayName>MyType</DisplayName>
     <Category>MyType</Category>
     <References>
-      <Reference ReferenceType="HasSubtype">i=58</Reference>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
       <Reference ReferenceType="i=32558">i=11113</Reference>
     </References>
   </UAObjectType>

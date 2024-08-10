@@ -216,7 +216,7 @@
     <DisplayName>MyType</DisplayName>
     <Category>MyType</Category>
     <References>
-      <Reference ReferenceType="HasSubtype">i=58</Reference>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
       <Reference ReferenceType="HasComponent">i=47112</Reference>
       <Reference ReferenceType="HasProperty">i=16363</Reference>
       <Reference ReferenceType="Organizes">i=47112</Reference>
