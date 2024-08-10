@@ -136,6 +136,10 @@ hasAddInId = '17604'
 organizesId = '35'
 hasModellingRuleId = '37'
 hasInterfaceId = '17603'
+baseObjectTypeId = '58'
+referencesId = '31'
+baseDataTypeId = '24'
+baseVariableType = '62'
 
 data_schema = None
 basic_types = ['String', 'Boolean', 'Byte', 'SByte', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Uin64', 'Int64', 'Float', 'DateTime', 'Guid', 'ByteString', 'Double']
@@ -284,10 +288,10 @@ def add_datatype(g, node, classiri):
         g.add((classiri, rdf_ns['base']['hasDatatype'], typeiri))
 
 
-def add_subclass(g, node, classiri):
-    subtype = get_reference_subtype(node)
-    if subtype is not None:
-        g.add((classiri, RDFS.subClassOf, subtype))
+# def add_subclass(g, node, classiri):
+#     subtype = get_reference_subtype(node)
+#     if subtype is not None:
+#         g.add((classiri, RDFS.subClassOf, subtype))
 
 
 def add_to_nodeids(rdf_namespace, name, node):
@@ -552,6 +556,29 @@ def get_references(g, refnodes, classiri):
             print(f"Warning: Could not find reference: {reftype}")
 
 
+def get_type_from_references(g, references, classiri):
+    typedef = None
+    for reference in references:
+        reftype = reference.get('ReferenceType')
+        isforward = reference.get('IsForward')
+        nodeid = resolve_alias(reftype)
+        type_index, type_id, _ = parse_nodeid(nodeid)
+        if type_id == hasTypeDefinitionId and type_index == 0:
+            # HasSubtype detected
+            typedef = reference.text    
+            break
+    if typedef is None:
+        print(f'Warning: Object {classiri} has no type definition. This is not OPCUA compliant.')
+        exit
+    else:
+        nodeid = resolve_alias(typedef)
+        typedef_index, typedef_id, _ = parse_nodeid(typedef)
+        if (isforward == 'false'):
+            print(f"Warning: IsForward=false makes not sense here: {classiri}")
+        else:
+            g.add((classiri, RDF.type, typeIds[typedef_index][typedef_id]))
+
+
 def add_typedef(g, node, xml_ns):
     _, browsename = getBrowsename(node)
     nodeid = node.get('NodeId')
@@ -560,31 +587,65 @@ def add_typedef(g, node, xml_ns):
     classiri = nodeId_to_iri(namespace, id, idtype)
     references_node = node.find('opcua:References', xml_ns)
     references = references_node.findall('opcua:Reference', xml_ns)
-    if len(references) > 0:
-        get_references(g, references, classiri)
-        typedef = None
-        for reference in references:
-            reftype = reference.get('ReferenceType')
-            isforward = reference.get('IsForward')
-            nodeid = resolve_alias(reftype)
-            type_index, type_id, _ = parse_nodeid(nodeid)
-            if type_id == hasTypeDefinitionId and type_index == 0:
-                # HasSubtype detected
-                typedef = reference.text    
-                break
-        if typedef is None:
-            print(f'Warning: Object {classiri} has no type definition. This is not OPCUA compliant.')
-        else:
-            nodeid = resolve_alias(typedef)
-            typedef_index, typedef_id, _ = parse_nodeid(typedef)
-            if (isforward == 'false'):
-                print(f"Warning: IsForward=false makes not sense here: {classiri}")
-            else:
-                g.add((classiri, RDF.type, typeIds[typedef_index][typedef_id]))
+    #if len(references) > 0:
+    get_references(g, references, classiri)
+    get_type_from_references(g, references, classiri)
     get_datatype(g, node, classiri)
     get_value_rank(g, node, classiri)
     get_value(g, node, classiri, xml_ns)
     return    
+
+
+def is_objecttype_nodeset_node(node):
+    return node.tag.endswith('UAObjectType')
+
+
+def is_base_object(name):
+    return name == rdf_ns['opcua']['BaseObject']
+
+
+def get_typedefinition_from_references(g, references, ref_classiri, node):
+    _, browsename = getBrowsename(node)
+    nodeid = node.get('NodeId')
+    ref_index, ref_id, idtype = parse_nodeid(nodeid)
+    ref_namespace = get_rdf_ns_from_ua_index(ref_index)
+    br_namespace = ref_namespace
+    mandatory_typedef_found = False
+    for reference in references:
+        reftype = reference.get('ReferenceType')
+        isforward = reference.get('IsForward')
+        nodeid = resolve_alias(reftype)
+        reftype_index, reftype_id, _ = parse_nodeid(nodeid)
+        if reftype_id != hasSubtypeId or reftype_index != 0:
+            continue
+            # HasSubtype detected
+        subtype = reference.text
+        if subtype is not None:
+            nodeid = resolve_alias(subtype)
+            subtype_index, subtype_id, _ = parse_nodeid(subtype)
+            typeiri = typeIds[subtype_index][subtype_id]
+            if (isforward == 'false'):
+                g.add((br_namespace[browsename], RDFS.subClassOf, typeiri))
+                mandatory_typedef_found = True
+            else:
+                g.add((typeiri, RDFS.subClassOf, br_namespace[browsename]))
+        # else:
+        #     if is_objecttype_nodeset(node):
+        #         g.add((br_namespace[browsename], RDFS.subClassOf, rdf_ns['opcua']['BaseObjectType']))
+            isAbstract = node.get('IsAbstract')
+            if isAbstract is not None:
+                g.add((br_namespace[browsename], rdf_ns['base']['isAbstract'], Literal(isAbstract)))
+            typeIds[ref_index][ref_id] = br_namespace[browsename]
+            g.add((ref_classiri, rdf_ns['base']['definesType'], br_namespace[browsename]))
+    if ref_id == baseObjectTypeId or ref_id == referencesId or ref_id == baseDataTypeId or ref_id == baseVariableType:
+        isAbstract = node.get('IsAbstract')
+        if isAbstract is not None:
+            g.add((br_namespace[browsename], rdf_ns['base']['isAbstract'], Literal(isAbstract)))
+        typeIds[ref_index][ref_id] = br_namespace[browsename]
+        g.add((ref_classiri, rdf_ns['base']['definesType'], br_namespace[browsename]))
+    elif not mandatory_typedef_found:
+        print(f"Error: Objecttype {ref_classiri} has no supertype and is not the base object type.")
+        exit(1)
 
 
 def add_type(g, node, xml_ns):
@@ -603,31 +664,10 @@ def add_type(g, node, xml_ns):
     if (node.tag.endswith("UAReferenceType")):
         known_references.append((Literal(ref_id), ref_namespace, Literal(browsename)))
         g.add((ref_namespace[browsename], RDF.type, OWL.ObjectProperty))
-    if len(references) > 0:
-        get_references(g, references, ref_classiri)
-        subtype = None
-        for reference in references:
-            reftype = reference.get('ReferenceType')
-            isforward = reference.get('IsForward')
-            nodeid = resolve_alias(reftype)
-            reftype_index, reftype_id, _ = parse_nodeid(nodeid)
-            if reftype_id == hasSubtypeId and reftype_index == 0:
-                # HasSubtype detected
-                subtype = reference.text    
-                break
-        nodeid = resolve_alias(subtype)
-        subtype_index, subtype_id, _ = parse_nodeid(subtype)
-        typeiri = typeIds[subtype_index][subtype_id]
-        if (isforward == 'false'):
-            g.add((br_namespace[browsename], RDFS.subClassOf, typeiri))
-        else:
-            g.add((typeiri, RDFS.subClassOf, br_namespace[browsename]))
-        
-    isAbstract = node.get('IsAbstract')
-    if isAbstract is not None:
-        g.add((br_namespace[browsename], rdf_ns['base']['isAbstract'], Literal(isAbstract)))
-    typeIds[ref_index][ref_id] = br_namespace[browsename]
-    g.add((ref_classiri, rdf_ns['base']['definesType'], br_namespace[browsename]))
+    #if len(references) > 0:
+    get_references(g, references, ref_classiri)
+    #subtype = None
+    get_typedefinition_from_references(g, references, ref_classiri, node)
     get_datatype(g, node, ref_classiri)
     get_value_rank(g, node, ref_classiri)
     get_value(g, node, ref_classiri, xml_ns)

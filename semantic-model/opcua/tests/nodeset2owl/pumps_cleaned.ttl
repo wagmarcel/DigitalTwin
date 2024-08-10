@@ -8,9 +8,9 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 pumps: a owl:Ontology ;
-    owl:imports <file:///home/marcel/src/IndustryFusion/DigitalTwin/semantic-model/opcua/tests/core.ttl>,
-        <file:///home/marcel/src/IndustryFusion/DigitalTwin/semantic-model/opcua/tests/devices.ttl>,
-        <file:///home/marcel/src/IndustryFusion/DigitalTwin/semantic-model/opcua/tests/machinery.ttl>,
+    owl:imports <file:///home/marcel/src/IndustryFusion/DigitalTwin/semantic-model/opcua/tests/nodeset2owl/core.ttl>,
+        <file:///home/marcel/src/IndustryFusion/DigitalTwin/semantic-model/opcua/tests/nodeset2owl/devices.ttl>,
+        <file:///home/marcel/src/IndustryFusion/DigitalTwin/semantic-model/opcua/tests/nodeset2owl/machinery.ttl>,
         <https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl> ;
     owl:versionIRI <http://example.com/v0.1/Pumps/> ;
     owl:versionInfo 1e-01 .

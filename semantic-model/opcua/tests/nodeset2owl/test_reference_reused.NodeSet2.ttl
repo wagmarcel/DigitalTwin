@@ -143,6 +143,10 @@ opcua:MyTestReference a owl:Class,
         owl:ObjectProperty ;
     rdfs:subClassOf opcua:HierarchicalReferences .
 
+opcua:MyType a owl:Class ;
+    rdfs:subClassOf opcua:BaseObjectType ;
+    base:isAbstract "false" .
+
 opcua:nodei16363 a opcua:BaseVariableType,
         opcua:VariableNodeClass ;
     base:hasBrowseName "MyTestVar" ;
@@ -162,9 +166,6 @@ opcua:Aggregates a owl:Class,
 opcua:BaseDataType a owl:Class ;
     base:isAbstract "true" .
 
-opcua:BaseObjectType a owl:Class ;
-    rdfs:subClassOf opcua:MyType .
-
 opcua:BaseVariableType a owl:Class ;
     base:isAbstract "true" .
 
@@ -172,9 +173,6 @@ opcua:HasChild a owl:Class,
         owl:ObjectProperty ;
     rdfs:subClassOf opcua:HierarchicalReferences ;
     base:isAbstract "true" .
-
-opcua:MyType a owl:Class ;
-    base:isAbstract "false" .
 
 opcua:NonHierarchicalReferences a owl:Class,
         owl:ObjectProperty ;
@@ -184,6 +182,8 @@ opcua:NonHierarchicalReferences a owl:Class,
 opcua:Number a owl:Class ;
     rdfs:subClassOf opcua:BaseDataType ;
     base:isAbstract "true" .
+
+opcua:BaseObjectType a owl:Class .
 
 opcua:HierarchicalReferences a owl:Class,
         owl:ObjectProperty ;

@@ -6,7 +6,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 devices: a owl:Ontology ;
-    owl:imports <file:///home/marcel/src/IndustryFusion/DigitalTwin/semantic-model/opcua/tests/core.ttl>,
+    owl:imports <file:///home/marcel/src/IndustryFusion/DigitalTwin/semantic-model/opcua/tests/nodeset2owl/core.ttl>,
         <https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl> ;
     owl:versionIRI <http://example.com/v0.1/DI/> ;
     owl:versionInfo 1e-01 .
