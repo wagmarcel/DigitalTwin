@@ -1,0 +1,5 @@
+ask where {
+test:X a owl:ObjectProperty ;
+    rdfs:domain test:AlphaType ;
+    rdfs:range ngsi-ld:Relationship .
+}

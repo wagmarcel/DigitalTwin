@@ -309,6 +309,7 @@ def get_all_supertypes(g, instancetype, node):
 
 def scan_type(node, instancetype):
     
+    generic_references = get_generic_references(node)
     # Loop through all supertypes
     supertypes = get_all_supertypes(g, instancetype, node)
     
@@ -326,6 +327,8 @@ def scan_type(node, instancetype):
         for (_, _, o) in organizes:
             scan_type_nonrecursive(o, curnode, instancetype, shapename)
             has_components = True
+        for generic_reference, o in generic_references:
+            has_components = scan_type_nonrecursive(o, curnode, instancetype, shapename, generic_reference) or has_components 
     return has_components
 
 
@@ -409,31 +412,36 @@ def contains_both_angle_brackets(s):
     return '<' in s and '>' in s
 
 
-def scan_type_nonrecursive(o, node, instancetype, shapename):
+def scan_type_nonrecursive(o, node, instancetype, shapename, generic_reference=None):
     shacl_rule = {}
     browse_name = next(g.objects(o, basens['hasBrowseName']))
     #print(f'Processing Node {o} with browsename {browse_name}')
     nodeclass, classtype = get_type(o)
     attributename = urllib.parse.quote(f'has{browse_name}')
-    shacl_rule['path'] = entity_namespace[attributename]
+
+    full_attribute_name = entity_namespace[attributename]
+    if generic_reference is not None:
+        full_attribute_name = generic_reference
+    shacl_rule['path'] = full_attribute_name
     get_modelling_rule(node, shacl_rule, instancetype)
-    e.add((entity_namespace[attributename], RDF.type, OWL.ObjectProperty))
-    e.add((entity_namespace[attributename], RDFS.domain, URIRef(instancetype)))
-    e.add((entity_namespace[attributename], RDF.type, OWL.NamedIndividual))
-    #e.add((entity_namespace[attributename], RDF.type, basens['SubComponentRelationship']))
+    e.add((full_attribute_name, RDF.type, OWL.ObjectProperty))
+    e.add((full_attribute_name, RDFS.domain, URIRef(instancetype)))
+    e.add((full_attribute_name, RDF.type, OWL.NamedIndividual))
+    #e.add((full_attribute_name, RDF.type, basens['SubComponentRelationship']))
     types.append(classtype)
             
     if isObjectNodeClass(nodeclass):
         shacl_rule['is_property'] = False
-        e.add((entity_namespace[attributename], RDFS.range, ngsildns['Relationship']))
+        e.add((full_attribute_name, RDFS.range, ngsildns['Relationship']))
         shacl_rule['contentclass'] = classtype
         create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], False, False, True, shacl_rule['contentclass'], None)
     elif isVariableNodeClass(nodeclass):
-        shacl_rule['is_property'] = True
-        e.add((entity_namespace[attributename], RDFS.range, ngsildns['Property']))
-        get_shacl_iri_and_contentclass(g, o, shacl_rule, entity_namespace[attributename])
-        create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], False, True, shacl_rule['is_iri'], shacl_rule['contentclass'], shacl_rule['datatype'])
-        add_class_to_knowledge(g, knowledgeg, shacl_rule['contentclass'])
+        print(f"Warning: Variable node {o} is target of non-owning reference {full_attribute_name}. This will be ignored.")
+        # shacl_rule['is_property'] = True
+        # e.add((full_attribute_name, RDFS.range, ngsildns['Property']))
+        # get_shacl_iri_and_contentclass(g, o, shacl_rule, full_attribute_name)
+        # create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], False, True, shacl_rule['is_iri'], shacl_rule['contentclass'], shacl_rule['datatype'])
+        # add_class_to_knowledge(g, knowledgeg, shacl_rule['contentclass'])
     return
 
 
@@ -465,7 +473,6 @@ def get_generic_references(node):
 
 
 def scan_entity(node, instancetype, id):
-    #instancetype = next(g.objects(node, RDF.type))
     generic_references = get_generic_references(node)
     node_id = generate_node_id(node, id, instancetype)
     instance = {}
