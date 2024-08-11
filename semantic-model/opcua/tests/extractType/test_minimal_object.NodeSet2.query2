@@ -1,0 +1,6 @@
+ask where {
+  uaentity:hasVariable a owl:ObjectProperty ;
+  	rdfs:domain test:ObjectType ;
+    rdfs:range ngsi-ld:Property ;
+    base:hasOPCUADatatype opcua:Double .
+}
