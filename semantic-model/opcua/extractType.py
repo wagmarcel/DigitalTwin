@@ -90,6 +90,15 @@ SELECT ?instance WHERE {
 }
 """
 
+query_generic_references = """
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+select ?reference ?target where {
+  ?node ?reference ?target .
+  ?reference rdfs:subClassOf* opcua:References
+}
+"""
+
 randnamelength = 16
 modelling_nodeid_optional = 80
 modelling_nodeid_mandatory = 78
@@ -449,8 +458,15 @@ def get_modelling_rule(node, shacl_rule, instancetype):
     return is_optional, use_instance_declaration
 
 
+def get_generic_references(node):
+    bindings = {'node': node}
+    result = g.query(query_generic_references, initBindings=bindings, initNs={'opcua': opcuans})
+    return list(result)
+
+
 def scan_entity(node, instancetype, id):
     #instancetype = next(g.objects(node, RDF.type))
+    generic_references = get_generic_references(node)
     node_id = generate_node_id(node, id, instancetype)
     instance = {}
     instance['type'] = instancetype
@@ -471,6 +487,8 @@ def scan_entity(node, instancetype, id):
     organizes = g.triples((node, basens['organizes'], None))
     for (_, _, o) in organizes:
         has_components = scan_entitiy_nonrecursive(node, id, instance, node_id, o) or has_components
+    for generic_reference, o in generic_references:
+        has_components = scan_entitiy_nonrecursive(node, id, instance, node_id, o, generic_reference) or has_components    
     if has_components:
         instances.append(instance)
         return node_id
@@ -556,7 +574,7 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
     return has_components
 
 
-def scan_entitiy_nonrecursive(node, id, instance, node_id, o):
+def scan_entitiy_nonrecursive(node, id, instance, node_id, o, generic_reference=None):
     has_components = False
     shacl_rule = {}
     browse_name = next(g.objects(o, basens['hasBrowseName']))
@@ -564,22 +582,24 @@ def scan_entitiy_nonrecursive(node, id, instance, node_id, o):
     nodeclass, classtype = get_type(o)
     attributename = urllib.parse.quote(f'has{browse_name}')
     shacl_rule['path'] = entity_namespace[attributename]
-    get_modelling_rule(node, shacl_rule)
-
+    get_modelling_rule(node, shacl_rule, None)
+    full_attribute_name = f'{entity_ontology_prefix}:{attributename}'
+    if generic_reference is not None:
+        full_attribute_name = g.qname(generic_reference)
     if isObjectNodeClass(nodeclass):
         shacl_rule['is_property'] = False
         relid = generate_node_id(o, id, classtype)
         if relid is not None:
             has_components = True
-            instance[f'{entity_ontology_prefix}:{attributename}'] = {
+            instance[full_attribute_name] = {
                 'type': 'Relationship',
                 'object': relid
             }
             if debug:
-                instance[f'{entity_ontology_prefix}:{attributename}']['debug'] = f'{entity_ontology_prefix}:{attributename}'
+                instance[full_attribute_name]['debug'] = full_attribute_name
             shacl_rule['contentclass'] = classtype
     elif isVariableNodeClass(nodeclass):
-       print("Warning: Variable in non-recursive entity creation should not happen")
+       print(f"Warning: Variable node {o} is target of non-owning reference {full_attribute_name}. This will be ignored.")
     return has_components
 
 
