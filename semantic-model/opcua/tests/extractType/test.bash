@@ -8,8 +8,8 @@ DEBUG=true
 if [ "$DEBUG"="true" ]; then
     DEBUG_CMDLINE="-m debugpy --listen 5678"
 fi
-#TESTNODESETS=(test_minimal_object.NodeSet2 test_object_types.NodeSet2)
-TESTNODESETS=(test_object_types.NodeSet2,http://my.demo/AlphaType )
+TESTNODESETS=(test_minimal_object.NodeSet2,http://example.org/MinimalNodeset/ObjectType test_object_types.NodeSet2,http://my.demo/AlphaType)
+#TESTNODESETS=(test_object_types.NodeSet2,http://my.demo/AlphaType )
 CLEANGRAPH=cleangraph.py
 TYPEURI=http://example.org/MinimalNodeset
 TESTURI=http://test/
@@ -23,27 +23,49 @@ EXTRACTTYPE="../../extractType.py"
 
 
 function mydiff() {
-    echo $1
-    result="$2"
-    expected="$3"
-    echo "expected <=> result" 
-    diff $result $expected || exit 1
+    shouldsort="$2"
+    echo "$1"
+    result="$3"
+    expected="$4"
+    echo "expected <=> result"
+    cat $result | sort | tr -d ";," > /tmp/result
+    cat $expected | sort | tr -d ";," > /tmp/expected
+    if [ "$shouldsort" = "true" ]; then
+        diff -w /tmp/expected /tmp/result || exit 1
+    else
+        diff -w $expected $result || exit 1
+    fi
+    
     echo Done
 }
 
 function checkqueries() {
-    echo $1
-    queries=$(ls "$2".query[0-9]* 2>/dev/null)
-    for query in $queries; do
-        echo Executing query for $query
-        result=$(python3 ${SPARQLQUERY} ${ENTITIES} $query)
-        if [ ! "$result" = "True" ]; then
-            echo Wrong result of query: ${result}.
+    echo "$1"
+    
+    # Correctly capture the list of query files into an array
+    queries=()
+    while IFS= read -r -d '' file; do
+        queries+=("$file")
+    done < <(find . -maxdepth 1 -name "$2.query[0-9]*" -print0)
+
+    # Check if the array is empty
+    if [ ${#queries[@]} -eq 0 ]; then
+        echo "No queries found matching pattern $2.query[0-9]*"
+        return 1
+    fi
+    for query in "${queries[@]}"; do
+        echo "Executing query for entities $ENTITIES and query $query"
+        result=$(python3 "${SPARQLQUERY}" "${ENTITIES}" "$query")
+        
+        if [ "$result" != "True" ]; then
+            echo "Wrong result of query: ${result}."
             exit 1
-        fi;
+        fi
     done
-    echo Done
+    
+    echo "Done"
 }
+
 
 echo Prepare core nodeset
 echo -------------------------
@@ -69,8 +91,8 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
     echo Extract types and instances
     echo ---------------------------
     python3 ${EXTRACTTYPE} -t ${instancetype} -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTURN} || exit 1
-    mydiff "Compare SHACL" ${nodeset}.shacl ${SHACL}
-    mydiff "Compare instances" ${nodeset}.instances ${INSTANCES}
+    mydiff "Compare SHACL" true ${nodeset}.shacl ${SHACL}
+    mydiff "Compare instances" true ${nodeset}.instances ${INSTANCES}
     checkqueries "Check basic entities structure" ${nodeset}
     #diff ${nodeset}.ttl ${RESULT} || exit 1
 done
