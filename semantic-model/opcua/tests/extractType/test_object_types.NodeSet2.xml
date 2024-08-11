@@ -5,7 +5,7 @@
 
 <UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" LastModified="2024-07-15T00:00:00Z" xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
   <Models>
-    <Model ModelUri="http://test/UA/" XmlSchemaUri="http://opcfoundation.org/UA/2008/02/Types.xsd" Version="1.05.03" PublicationDate="2024-07-29T00:00:00Z" ModelVersion="1.5.3" />
+    <Model ModelUri="http://my.demo/" XmlSchemaUri="http://opcfoundation.org/UA/2008/02/Types.xsd" Version="1.05.03" PublicationDate="2024-07-29T00:00:00Z" ModelVersion="1.5.3" />
   </Models>
   <NamespaceUris>
     <Uri>http://my.demo/</Uri>
@@ -59,15 +59,99 @@
     <Alias Alias="HasInterface">i=17603</Alias>
   </Aliases>
  
-
-   <UAObjectType NodeId="ns=1;i=1" BrowseName="AlphaType" SymbolicName="AlphaType">
-    <DisplayName>AlphaType</DisplayName>
-    <Description>The AlphaType</Description>
+  <UAReferenceType NodeId="ns=1;i=100" BrowseName="X" IsAbstract="true" Symmetric="false">
+    <DisplayName>X Reference</DisplayName>
     <References>
-      <Reference ReferenceType="HasComponent">i=84</Reference>
-      <Reference ReferenceType="HasTypeDefinition">i=58</Reference>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=32</Reference>
+    </References>
+  </UAReferenceType>
+  <UAReferenceType NodeId="ns=1;i=101" BrowseName="Y" IsAbstract="true" Symmetric="false">
+    <DisplayName>Y Reference</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=32</Reference>
+    </References>
+  </UAReferenceType>
+  <UAObjectType NodeId="ns=1;i=1001" BrowseName="1:AlphaType">
+    <DisplayName>AlphaType</DisplayName>
+    <Description>A custom object type Alpha</Description>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="ns=1;i=101" IsForward="false">ns=1;i=2001</Reference>
+      <Reference ReferenceType="ns=1;i=100" IsForward="false">ns=1;i=1003</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1003</Reference>
     </References>
   </UAObjectType>
-  
+  <UAObjectType NodeId="ns=1;i=1002" BrowseName="1:BType">
+    <DisplayName>B Type</DisplayName>
+    <Description>A custom object type B</Description>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+    </References>
+  </UAObjectType>
+  <UAObject NodeId="ns=1;i=1003" BrowseName="1:B">
+    <DisplayName>Object B</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
+       <Reference ReferenceType="HasComponent">ns=1;i=1004</Reference>
+    </References>
+  </UAObject>
+  <UAVariable NodeId="ns=1;i=1004" BrowseName="MyVariable" DataType="Boolean">
+    <DisplayName>Variable of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+    </References>
+  </UAVariable>
 
+
+
+  <UAVariable NodeId="ns=1;i=2001" BrowseName="1:C" DataType="i=11">
+    <DisplayName>Variable of AlphaType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1001</Reference>
+    </References>
+  </UAVariable>  
+  <UAVariable NodeId="ns=1;i=2002" BrowseName="1:E" DataType="i=11">
+    <DisplayName>Variable of Variable C</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=2001</Reference>
+    </References>
+  </UAVariable>
+  <UAObject NodeId="ns=1;i=2003" BrowseName="1:B">
+    <DisplayName>Object B</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
+    </References>
+  </UAObject>
+ <UAObject NodeId="ns=1;i=2010" BrowseName="1:AlphaInstance">
+    <DisplayName>Alpha Instance</DisplayName>
+    <References>
+      <Reference ReferenceType="HasComponent" IsForward="true">ns=1;i=2011</Reference>
+       <Reference ReferenceType="HasComponent" IsForward="true">ns=1;i=2012</Reference>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1001</Reference>
+      <Reference ReferenceType="ns=1;i=101" IsForward="true">ns=1;i=2012</Reference>
+    </References>
+  </UAObject>
+  <UAVariable NodeId="ns=1;i=2011" BrowseName="1:C" DataType="i=11">
+    <DisplayName>C Variable of AlphaType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=2010</Reference>
+      <Reference ReferenceType="ns=1;i=100" IsForward="true">ns=1;i=2011</Reference>
+    </References>
+  </UAVariable>
+  <UAObject NodeId="ns=1;i=2012" BrowseName="1:B">
+    <DisplayName>Object B</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
+       <Reference ReferenceType="HasComponent">ns=1;i=2013</Reference>
+    </References>
+  </UAObject>
+  <UAVariable NodeId="ns=1;i=2013" BrowseName="MyVariable" DataType="Boolean">
+    <DisplayName>Variable of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+    </References>
+  </UAVariable>
 </UANodeSet>

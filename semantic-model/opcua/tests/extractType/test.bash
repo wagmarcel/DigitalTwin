@@ -9,7 +9,7 @@ if [ "$DEBUG"="true" ]; then
     DEBUG_CMDLINE="-m debugpy --listen 5678"
 fi
 #TESTNODESETS=(test_minimal_object.NodeSet2 test_object_types.NodeSet2)
-TESTNODESETS=(test_minimal_object.NodeSet2)
+TESTNODESETS=(test_object_types.NodeSet2,http://my.demo/AlphaType )
 CLEANGRAPH=cleangraph.py
 TYPEURI=http://example.org/MinimalNodeset
 TESTURI=http://test/
@@ -19,7 +19,7 @@ ENTITIES=entities.ttl
 INSTANCES=instances.jsonld
 SPARQLQUERY=query.py
 
-EXTRACTTYPE="../../extractType.py  -t ${TYPEURI}/ObjectType -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTURN}"
+EXTRACTTYPE="../../extractType.py"
 
 
 function mydiff() {
@@ -54,18 +54,21 @@ python3 ${NODESET2OWL} ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com
 
 echo Starting Feature Tests
 echo --------------------------------
-for nodeset in "${TESTNODESETS[@]}"; do
-    echo test $nodeset
+for tuple in "${TESTNODESETS[@]}"; do IFS=","
+    set -- $tuple;
+    nodeset=$1
+    instancetype=$2 
+    echo test $nodeset with instancetype $instancetype
     if [ "$DEBUG"="true" ]; then
         echo DEBUG: python3 ${NODESET2OWL} ${nodeset}.xml -i ${BASE_ONTOLOGY} ${CORE_RESULT} -v http://example.com/v0.1/UA/ -p test -o ${NODESET2OWL_RESULT}
-        echo DEBUG: python3 ${EXTRACTTYPE}
+        echo DEBUG: python3 ${EXTRACTTYPE} -t ${instancetype} -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTURN} 
     fi
     echo Create owl nodesets
     echo -------------------
     python3 ${NODESET2OWL} ${nodeset}.xml -i ${BASE_ONTOLOGY} ${CORE_RESULT} -v http://example.com/v0.1/UA/ -p test -o ${NODESET2OWL_RESULT} || exit 1
     echo Extract types and instances
     echo ---------------------------
-    python3 ${EXTRACTTYPE} || exit 1
+    python3 ${EXTRACTTYPE} -t ${instancetype} -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTURN} || exit 1
     mydiff "Compare SHACL" ${nodeset}.shacl ${SHACL}
     mydiff "Compare instances" ${nodeset}.instances ${INSTANCES}
     checkqueries "Check basic entities structure" ${nodeset}
