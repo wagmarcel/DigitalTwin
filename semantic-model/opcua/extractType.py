@@ -115,16 +115,7 @@ select ?nodeclass ?realtype where {
   }
 }
 """
-query_realtype_test = """
-select ?nodeclass ?realtype where {
-  {
-    ?node a ?realtype .
- 	FILTER (!STRENDS(STR(?realtype), "NodeClass"))
-    
-  }
-  
-}
-"""
+
 
 randnamelength = 16
 modelling_nodeid_optional = 80
@@ -393,6 +384,11 @@ def scan_type_recursive(o, node, instancetype, shapename):
     if attributename == 'has': # full template, ignore it
         return False
     shacl_rule['path'] = entity_namespace[attributename]
+    try: # does it exist already?
+        if len(list(e.triples((entity_namespace[attributename], RDFS.domain, URIRef(instancetype))))):
+            return False
+    except:
+        pass
     e.add((entity_namespace[attributename], RDF.type, OWL.ObjectProperty))
     e.add((entity_namespace[attributename], RDFS.domain, URIRef(instancetype)))
     e.add((entity_namespace[attributename], RDF.type, OWL.NamedIndividual))
@@ -462,6 +458,11 @@ def scan_type_nonrecursive(o, node, instancetype, shapename, generic_reference=N
     if generic_reference is not None:
         full_attribute_name = generic_reference
     shacl_rule['path'] = full_attribute_name
+    try:
+        if len(list(e.triples((full_attribute_name, RDFS.domain, URIRef(instancetype))))):
+            return False
+    except:
+        pass
     get_modelling_rule(node, shacl_rule, instancetype)
     e.add((full_attribute_name, RDF.type, OWL.ObjectProperty))
     e.add((full_attribute_name, RDFS.domain, URIRef(instancetype)))
