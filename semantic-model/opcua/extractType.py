@@ -99,6 +99,33 @@ select ?reference ?target where {
 }
 """
 
+query_realtype = """
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+select ?nodeclass ?realtype where {
+  {
+    ?node a ?realtype .
+ 	FILTER (!STRENDS(STR(?realtype), "NodeClass") && ?realtype != owl:NamedIndividual)
+    ?node a ?nodeclass .
+    FILTER(?nodeclass != ?realtype)
+  }
+  union
+  {
+    ?node base:definesType ?realtype .
+    ?node a ?nodeclass .
+  }
+}
+"""
+query_realtype_test = """
+select ?nodeclass ?realtype where {
+  {
+    ?node a ?realtype .
+ 	FILTER (!STRENDS(STR(?realtype), "NodeClass"))
+    
+  }
+  
+}
+"""
+
 randnamelength = 16
 modelling_nodeid_optional = 80
 modelling_nodeid_mandatory = 78
@@ -144,6 +171,10 @@ def isObjectNodeClass(type):
     return type == opcuans['ObjectNodeClass']
 
 
+def isObjectTypeNodeClass(type):
+    return type == opcuans['ObjectTypeNodeClass']
+
+
 def isVariableNodeClass(type):
     return type == opcuans['VariableNodeClass']
 
@@ -155,15 +186,23 @@ def attributename_from_type(type):
         basename = basename.removesuffix('Type')
     return basename
 
+# def get_type(node):
+#     nc = None
+#     type = None
+#     for typenc in g.objects(node, RDF.type):
+#         if isNodeclass(typenc):
+#             nc = typenc
+#         elif typenc != OWL.NamedIndividual:
+#             type = typenc
+#     return nc, type
 def get_type(node):
-    nc = None
-    type = None
-    for typenc in g.objects(node, RDF.type):
-        if isNodeclass(typenc):
-            nc = typenc
-        elif typenc != OWL.NamedIndividual:
-            type = typenc
-    return nc, type
+    try:
+        bindings = {'node': node}
+        result = list(g.query(query_realtype, initBindings=bindings, initNs={'opcua': opcuans, 'base': basens}))
+        return result[0]
+    except:
+        return None, None
+
 
 
 def map_datatype_to_jsonld(data_type):
@@ -239,7 +278,7 @@ def generate_node_id(node, id, instancetype):
     except:
         node_id = 'unknown'
     idt = idtype2String(idtype)
-    if instancetype == rootinstancetype:
+    if str(node) == str(rootentity):
         return f'{id}:{bn}'
     else:
         return f'{id}:{bn}:sub:{idt}{node_id}'
@@ -430,7 +469,7 @@ def scan_type_nonrecursive(o, node, instancetype, shapename, generic_reference=N
     #e.add((full_attribute_name, RDF.type, basens['SubComponentRelationship']))
     types.append(classtype)
             
-    if isObjectNodeClass(nodeclass):
+    if isObjectNodeClass(nodeclass) or isObjectTypeNodeClass(nodeclass):
         shacl_rule['is_property'] = False
         e.add((full_attribute_name, RDFS.range, ngsildns['Relationship']))
         shacl_rule['contentclass'] = classtype
