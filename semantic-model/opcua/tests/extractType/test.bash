@@ -9,6 +9,7 @@ if [ "$DEBUG"="true" ]; then
     DEBUG_CMDLINE="-m debugpy --listen 5678"
 fi
 TESTNODESETS=(
+    test_ignore_references.NodeSet2,http://my.demo/AlphaType
     test_references_to_typedefinitions.NodeSet2,http://my.demo/AlphaType
     test_minimal_object.NodeSet2,http://example.org/MinimalNodeset/ObjectType 
     test_object_types.NodeSet2,http://my.demo/AlphaType
