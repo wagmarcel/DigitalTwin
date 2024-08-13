@@ -101,18 +101,40 @@ select ?reference ?target where {
 
 query_realtype = """
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
-select ?nodeclass ?realtype where {
+
+SELECT ?nodeclass ?realtype WHERE {
   {
-    ?node a ?realtype .
- 	FILTER (!STRENDS(STR(?realtype), "NodeClass") && ?realtype != owl:NamedIndividual)
-    ?node a ?nodeclass .
-    FILTER(?nodeclass != ?realtype)
+     ?node a ?nodeclass .
+  FILTER(?nodeclass != owl:NamedIndividual 
+      && STRENDS(STR(?nodeclass), "NodeClass")
+      && STRSTARTS(STR(?nodeclass), STR(opcua:))
+    )
   }
-  union
+	UNION
   {
-    ?node base:definesType ?realtype .
-    ?node a ?nodeclass .
+    {
+      ?node a ?realtype .
+      FILTER ((!STRENDS(STR(?realtype), "NodeClass") || !STRSTARTS(STR(?realtype), STR(opcua:))) && 
+        ?realtype != owl:NamedIndividual
+      )
+    }
+    UNION
+    {
+      ?node base:definesType ?realtype .
+    }
   }
+}
+"""
+
+query_ignored_references = """
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?subclass WHERE {
+  VALUES ?reference {
+    opcua:GeneratesEvent
+    opcua:HasEventSource
+  }
+    ?subclass rdfs:subClassOf* ?reference .
 }
 """
 
@@ -189,11 +211,18 @@ def attributename_from_type(type):
 def get_type(node):
     try:
         bindings = {'node': node}
-        result = list(g.query(query_realtype, initBindings=bindings, initNs={'opcua': opcuans, 'base': basens}))
-        return result[0]
+        results = list(g.query(query_realtype, initBindings=bindings, initNs={'opcua': opcuans, 'base': basens}))
+        nodeclass = None
+        type = None
+        for result in results:
+            if result[0] is not None:
+                nodeclass = result[0]
+            elif result[1] is not None:
+                type = result[1]
+        return (nodeclass, type)
     except:
+        print(f"Warning: Could not find nodeclass of class node {node}. This should not happen")
         return None, None
-
 
 
 def map_datatype_to_jsonld(data_type):
@@ -358,7 +387,8 @@ def scan_type(node, instancetype):
             scan_type_nonrecursive(o, curnode, instancetype, shapename)
             has_components = True
         for generic_reference, o in generic_references:
-            has_components = scan_type_nonrecursive(o, curnode, instancetype, shapename, generic_reference) or has_components 
+            if generic_reference not in ignored_references:
+                has_components = scan_type_nonrecursive(o, curnode, instancetype, shapename, generic_reference) or has_components 
     return has_components
 
 
@@ -368,6 +398,9 @@ def scan_type_recursive(o, node, instancetype, shapename):
     browse_name = next(g.objects(o, basens['hasBrowseName']))
     #print(f'Processing Node {o} with browsename {browse_name}')
     nodeclass, classtype = get_type(o)
+    if nodeclass == opcuans['MethodNodeClass']:
+        return False
+    
     # If defnition is self referential, stop recursion
     if str(instancetype) == str(classtype):
         return False
@@ -512,6 +545,12 @@ def get_generic_references(node):
     return list(result)
 
 
+def get_ignored_references():
+    result = g.query(query_ignored_references, initNs={'opcua': opcuans})
+    first_elements = [t[0] for t in set(result)]
+    return first_elements
+
+
 def scan_entity(node, instancetype, id):
     generic_references = get_generic_references(node)
     node_id = generate_node_id(node, id, instancetype)
@@ -535,7 +574,8 @@ def scan_entity(node, instancetype, id):
     for (_, _, o) in organizes:
         has_components = scan_entitiy_nonrecursive(node, id, instance, node_id, o) or has_components
     for generic_reference, o in generic_references:
-        has_components = scan_entitiy_nonrecursive(node, id, instance, node_id, o, generic_reference) or has_components    
+        if generic_reference not in ignored_references:
+            has_components = scan_entitiy_nonrecursive(node, id, instance, node_id, o, generic_reference) or has_components    
     if has_components:
         instances.append(instance)
         return node_id
@@ -791,6 +831,9 @@ if __name__ == '__main__':
     result = g.query(query_namespaces, initNs={'base': basens, 'opcua': opcuans})
     for uri, prefix, _ in result:
         e.bind(prefix, Namespace(uri))
+    
+    ignored_references = get_ignored_references()
+    
     # First scan the templates to create the rules
     try:
         root = next(g.subjects(basens['definesType'], URIRef(rootinstancetype)))
