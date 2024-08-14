@@ -121,6 +121,7 @@ SELECT ?nodeclass ?realtype WHERE {
     UNION
     {
       ?node base:definesType ?realtype .
+      ?node a opcua:ObjectTypeNodeClass .
     }
   }
 }
