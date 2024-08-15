@@ -1,6 +1,6 @@
 [
     {
-        "type": "http://my.demo/BType",
+        "type": "http://demo.machine/entity/BType",
         "id": "urn:test:AlphaInstance:sub:i2012",
         "@context": [
             "https://industryfusion.github.io/contexts/staging/opcua/v0.1/context.jsonld"
@@ -11,7 +11,7 @@
         }
     },
     {
-        "type": "http://my.demo/AlphaType",
+        "type": "http://demo.machine/entity/AlphaType",
         "id": "urn:test:AlphaInstance",
         "@context": [
             "https://industryfusion.github.io/contexts/staging/opcua/v0.1/context.jsonld"

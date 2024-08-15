@@ -1,6 +1,6 @@
 @prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
-@prefix shacl: <http://test/shacl/> .
+@prefix shacl: <http://demo.machine/shacl/> .
 @prefix test: <http://example.org/MinimalNodeset/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
@@ -8,7 +8,7 @@ shacl:ObjectTypeShape a sh:NodeShape ;
     sh:property [ sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
-            sh:path <http://test/entity/hasVariable> ;
+            sh:path <http://demo.machine/entity/hasVariable> ;
             sh:property [ sh:datatype xsd:double ;
                     sh:maxCount 1 ;
                     sh:minCount 1 ;

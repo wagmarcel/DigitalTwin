@@ -552,7 +552,7 @@ def get_ignored_references():
     return first_elements
 
 
-def scan_entity(node, instancetype, id):
+def scan_entity(node, instancetype, id, optional=False):
     generic_references = get_generic_references(node)
     node_id = generate_node_id(node, id, instancetype)
     instance = {}
@@ -577,7 +577,7 @@ def scan_entity(node, instancetype, id):
     for generic_reference, o in generic_references:
         if generic_reference not in ignored_references:
             has_components = scan_entitiy_nonrecursive(node, id, instance, node_id, o, generic_reference) or has_components    
-    if has_components:
+    if has_components or not optional:
         instances.append(instance)
         return node_id
     else:
@@ -592,7 +592,7 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
     nodeclass, classtype = get_type(o)
     attributename = urllib.parse.quote(f'has{browse_name}')
     #shacl_rule['path'] = entity_namespace[attributename]
-    get_modelling_rule(node, shacl_rule, None)
+    get_modelling_rule(o, shacl_rule, None)
 
     decoded_attributename = normalize_angle_bracket_name(urllib.parse.unquote(attributename))
     datasetId = None
@@ -612,7 +612,7 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
     
     if isObjectNodeClass(nodeclass):
         shacl_rule['is_property'] = False
-        relid = scan_entity(o, classtype, id)
+        relid = scan_entity(o, classtype, id, shacl_rule['optional'])
         if relid is not None:
             has_components = True
             instance[f'{entity_ontology_prefix}:{attributename}'] = {
@@ -623,6 +623,9 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
                 instance[f'{entity_ontology_prefix}:{attributename}']['datasetId'] = datasetId
             if debug:
                 instance[f'{entity_ontology_prefix}:{attributename}']['debug'] = f'{entity_ontology_prefix}:{attributename}'
+            shacl_rule['contentclass'] = classtype
+        if not shacl_rule['optional']:
+            has_components = True
             shacl_rule['contentclass'] = classtype
     elif isVariableNodeClass(nodeclass):
         shacl_rule['is_property'] = True

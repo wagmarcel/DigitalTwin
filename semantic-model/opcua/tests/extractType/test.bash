@@ -4,21 +4,21 @@ NODESET2OWL_RESULT=nodeset2owl_result.ttl
 CORE_RESULT=core.ttl
 CLEANED=cleaned.ttl
 NODESET2OWL=../../nodeset2owl.py
+TESTURI=http://demo.machine/
 DEBUG=true
 if [ "$DEBUG"="true" ]; then
     DEBUG_CMDLINE="-m debugpy --listen 5678"
 fi
 TESTNODESETS=(
-    test_object_hierarchies_no_DataValue,http://my.demo/AlphaType
-    test_ignore_references.NodeSet2,http://my.demo/AlphaType
-    test_references_to_typedefinitions.NodeSet2,http://my.demo/AlphaType
+    test_object_hierarchies_no_DataValue,${TESTURI}entity/AlphaType
+    test_ignore_references.NodeSet2,${TESTURI}entity/AlphaType
+    test_references_to_typedefinitions.NodeSet2,${TESTURI}entity/AlphaType
     test_minimal_object.NodeSet2,http://example.org/MinimalNodeset/ObjectType 
-    test_object_types.NodeSet2,http://my.demo/AlphaType
+    test_object_types.NodeSet2,${TESTURI}entity/AlphaType
     )
 #TESTNODESETS=(test_object_types.NodeSet2,http://my.demo/AlphaType )
 CLEANGRAPH=cleangraph.py
 TYPEURI=http://example.org/MinimalNodeset
-TESTURI=http://test/
 TESTURN=urn:test
 SHACL=shacl.ttl
 ENTITIES=entities.ttl
@@ -85,8 +85,9 @@ echo --------------------------------
 for tuple in "${TESTNODESETS[@]}"; do IFS=","
     set -- $tuple;
     nodeset=$1
-    instancetype=$2 
+    instancetype=$2
     echo test $nodeset with instancetype $instancetype
+    echo ---------------------------------------------
     if [ "$DEBUG"="true" ]; then
         echo DEBUG: python3 ${NODESET2OWL} ${nodeset}.xml -i ${BASE_ONTOLOGY} ${CORE_RESULT} -v http://example.com/v0.1/UA/ -p test -o ${NODESET2OWL_RESULT}
         echo DEBUG: python3 ${EXTRACTTYPE} -t ${instancetype} -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTURN} 

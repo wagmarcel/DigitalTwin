@@ -1,35 +1,35 @@
 @prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
-@prefix shacl: <http://test/shacl/> .
-@prefix test: <http://my.demo/> .
+@prefix shacl: <http://demo.machine/shacl/> .
+@prefix test: <http://demo.machine/entity/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 shacl:AlphaTypeShape a sh:NodeShape ;
     sh:property [ sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
-            sh:path <http://test/entity/hasB> ;
-            sh:property [ sh:class test:BType ;
-                    sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:nodeKind sh:IRI ;
-                    sh:path ngsi-ld:hasObject ] ],
-        [ sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path <http://test/entity/hasC> ;
+            sh:path test:hasC ;
             sh:property [ sh:datatype xsd:double ;
                     sh:maxCount 1 ;
                     sh:minCount 1 ;
                     sh:nodeKind sh:Literal ;
-                    sh:path ngsi-ld:hasValue ] ] ;
+                    sh:path ngsi-ld:hasValue ] ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasB ;
+            sh:property [ sh:class test:BType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ] ;
     sh:targetClass test:AlphaType .
 
 shacl:BTypeShape a sh:NodeShape ;
     sh:property [ sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
-            sh:path <http://test/entity/hasMyVariable> ;
+            sh:path test:hasMyVariable ;
             sh:property [ sh:datatype xsd:boolean ;
                     sh:maxCount 1 ;
                     sh:minCount 1 ;
