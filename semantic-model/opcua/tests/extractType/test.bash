@@ -11,17 +11,17 @@ if [ "$DEBUG"="true" ]; then
 fi
 TESTNODESETS=(
     test_object_hierarchies_no_DataValue,${TESTURI}AlphaType
-    test_ignore_references.NodeSet2,${TESTURI}entity/AlphaType
-    test_references_to_typedefinitions.NodeSet2,${TESTURI}entity/AlphaType
+    test_ignore_references.NodeSet2,${TESTURI}AlphaType
+    test_references_to_typedefinitions.NodeSet2,${TESTURI}AlphaType
     test_minimal_object.NodeSet2,http://example.org/MinimalNodeset/ObjectType 
-    test_object_types.NodeSet2,${TESTURI}entity/AlphaType
+    test_object_types.NodeSet2,${TESTURI}AlphaType
     )
 #TESTNODESETS=(test_object_types.NodeSet2,http://my.demo/AlphaType )
 CLEANGRAPH=cleangraph.py
 TYPEURI=http://example.org/MinimalNodeset
 TESTURN=urn:test
 SHACL=shacl.ttl
-ENTITIES=entities.ttl
+ENTITIES_FILE=entities.ttl
 INSTANCES=instances.jsonld
 SPARQLQUERY=query.py
 SERVE_CONTEXT=serve_context.py
@@ -72,6 +72,8 @@ function startstop_context_server() {
         python3 ${SERVE_CONTEXT} -p ${SERVE_CONTEXT_PORT} ${CONTEXT_FILE} &
     else
         pkill -9 -f ${SERVE_CONTEXT}
+
+        sleep 3
     fi
     sleep 1
 }
@@ -91,8 +93,8 @@ function checkqueries() {
         return 1
     fi
     for query in "${queries[@]}"; do
-        echo "Executing query for entities $ENTITIES and query $query"
-        result=$(python3 "${SPARQLQUERY}" "${ENTITIES}" "$query")
+        echo "Executing query for entities $ENTITIES_FILE and query $query"
+        result=$(python3 "${SPARQLQUERY}" "${ENTITIES_FILE}" "$query")
         
         if [ "$result" != "True" ]; then
             echo "Wrong result of query: ${result}."
@@ -137,5 +139,4 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
     checkqueries "Check basic entities structure" ${nodeset}
     #diff ${nodeset}.ttl ${RESULT} || exit 1
     startstop_context_server "Stopping context server" false
-    exit 1
 done

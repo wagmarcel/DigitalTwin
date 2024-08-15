@@ -1,32 +1,18 @@
-[
-    {
-        "type": "http://demo.machine/entity/BType",
-        "id": "urn:test:AlphaInstance:sub:i2012",
-        "@context": [
-            "https://industryfusion.github.io/contexts/staging/opcua/v0.1/context.jsonld"
-        ],
-        "uaentity:hasMyVariable": {
-            "type": "Property",
-            "value": false
-        },
-        "test:Y": {
-            "type": "Relationship",
-            "object": "urn:test:AlphaInstance"
-        }
-    },
-    {
-        "type": "http://demo.machine/entity/AlphaType",
-        "id": "urn:test:AlphaInstance",
-        "@context": [
-            "https://industryfusion.github.io/contexts/staging/opcua/v0.1/context.jsonld"
-        ],
-        "uaentity:hasC": {
-            "type": "Property",
-            "value": 0.0
-        },
-        "uaentity:hasB": {
-            "type": "Relationship",
-            "object": "urn:test:AlphaInstance:sub:i2012"
-        }
-    }
-]
+PREFIX ns1: <http://my.test/entity/>
+PREFIX ns2: <https://uri.etsi.org/ngsi-ld/>
+PREFIX ns3: <http://my.test/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+ASK WHERE{
+<urn:test:AlphaInstance> a ns3:AlphaType ;
+    ns1:hasB [ a ns2:Relationship ;
+            ns2:hasObject <urn:test:AlphaInstance:sub:i2012> ] ;
+    ns1:hasC [ a ns2:Property ;
+            ns2:hasValue 0e+00 ] .
+
+<urn:test:AlphaInstance:sub:i2012> a ns3:BType ;
+    ns3:Y [ a ns2:Relationship ;
+            ns2:hasObject <urn:test:AlphaInstance> ] ;
+    ns1:hasMyVariable [ a ns2:Property ;
+            ns2:hasValue false ] .
+}

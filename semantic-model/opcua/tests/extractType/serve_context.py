@@ -2,6 +2,9 @@ import http.server
 import socketserver
 import argparse
 import os
+import signal
+import sys
+import socket
 
 class SingleFileRequestHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -17,9 +20,37 @@ class SingleFileRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         return super().do_GET()
 
+class GracefulTCPServer(socketserver.TCPServer):
+    allow_reuse_address = True
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.is_shut_down = False
+
+    def shutdown(self):
+        self.is_shut_down = True
+        super().shutdown()
+
+    def serve_forever(self):
+        while not self.is_shut_down:
+            self.handle_request()
+
 def run_server(port, file_to_serve):
     handler = lambda *args, **kwargs: SingleFileRequestHandler(*args, file_to_serve=file_to_serve, **kwargs)
-    with socketserver.TCPServer(("", port), handler) as httpd:
+    
+    with GracefulTCPServer(("", port), handler) as httpd:
+        # Set the socket option to reuse the address
+        httpd.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+        def signal_handler(sig, frame):
+            print("Received shutdown signal. Shutting down the server...")
+            httpd.shutdown()
+            sys.exit(0)
+
+        # Register signal handlers for SIGINT (Ctrl+C) and SIGTERM
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
+
         print(f"Serving {file_to_serve} on port {port}")
         httpd.serve_forever()
 

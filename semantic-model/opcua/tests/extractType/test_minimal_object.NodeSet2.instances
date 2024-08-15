@@ -1,13 +1,9 @@
-[
-    {
-        "type": "http://example.org/MinimalNodeset/ObjectType",
-        "id": "urn:test:Object",
-        "@context": [
-            "https://industryfusion.github.io/contexts/staging/opcua/v0.1/context.jsonld"
-        ],
-        "uaentity:hasVariable": {
-            "type": "Property",
-            "value": 123.456
-        }
-    }
-]
+PREFIX ns1: <http://my.test/entity/>
+PREFIX ns2: <https://uri.etsi.org/ngsi-ld/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+ASK WHERE{
+<urn:test:Object> a <http://example.org/MinimalNodeset/ObjectType> ;
+    ns1:hasVariable [ a ns2:Property ;
+            ns2:hasValue 1.23456e+02 ] .
+}
