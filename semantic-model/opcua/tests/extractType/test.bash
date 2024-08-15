@@ -4,13 +4,13 @@ NODESET2OWL_RESULT=nodeset2owl_result.ttl
 CORE_RESULT=core.ttl
 CLEANED=cleaned.ttl
 NODESET2OWL=../../nodeset2owl.py
-TESTURI=http://demo.machine/
+TESTURI=http://my.test/
 DEBUG=true
 if [ "$DEBUG"="true" ]; then
     DEBUG_CMDLINE="-m debugpy --listen 5678"
 fi
 TESTNODESETS=(
-    test_object_hierarchies_no_DataValue,${TESTURI}entity/AlphaType
+    test_object_hierarchies_no_DataValue,${TESTURI}AlphaType
     test_ignore_references.NodeSet2,${TESTURI}entity/AlphaType
     test_references_to_typedefinitions.NodeSet2,${TESTURI}entity/AlphaType
     test_minimal_object.NodeSet2,http://example.org/MinimalNodeset/ObjectType 
@@ -24,6 +24,10 @@ SHACL=shacl.ttl
 ENTITIES=entities.ttl
 INSTANCES=instances.jsonld
 SPARQLQUERY=query.py
+SERVE_CONTEXT=serve_context.py
+SERVE_CONTEXT_PORT=8099
+CONTEXT_FILE=context.jsonld
+LOCAL_CONTEXT=http://localhost:${SERVE_CONTEXT_PORT}/${CONTEXT_FILE}
 
 EXTRACTTYPE="../../extractType.py"
 
@@ -43,6 +47,33 @@ function mydiff() {
     fi
     
     echo Done
+}
+
+function ask() {
+    echo $1
+    query=$3
+    ENTITIES=$2
+    FORMAT=${4:-ttl}
+
+    result=$(python3 "${SPARQLQUERY}" -f ${FORMAT} "${ENTITIES}" "$query")
+        
+        if [ "$result" != "True" ]; then
+            echo "Wrong result of query: ${result}."
+            exit 1
+        else
+            echo "OK"
+        fi
+}
+
+function startstop_context_server() {
+    echo $1
+    start=$2
+    if [ "$start" = "true" ]; then
+        python3 ${SERVE_CONTEXT} -p ${SERVE_CONTEXT_PORT} ${CONTEXT_FILE} &
+    else
+        pkill -9 -f ${SERVE_CONTEXT}
+    fi
+    sleep 1
 }
 
 function checkqueries() {
@@ -82,24 +113,29 @@ python3 ${NODESET2OWL} ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com
 
 echo Starting Feature Tests
 echo --------------------------------
+echo --------------------------------
 for tuple in "${TESTNODESETS[@]}"; do IFS=","
     set -- $tuple;
     nodeset=$1
     instancetype=$2
-    echo test $nodeset with instancetype $instancetype
-    echo ---------------------------------------------
+    echo "==> test $nodeset with instancetype $instancetype"
+    echo --------------------------------------------------
     if [ "$DEBUG"="true" ]; then
         echo DEBUG: python3 ${NODESET2OWL} ${nodeset}.xml -i ${BASE_ONTOLOGY} ${CORE_RESULT} -v http://example.com/v0.1/UA/ -p test -o ${NODESET2OWL_RESULT}
-        echo DEBUG: python3 ${EXTRACTTYPE} -t ${instancetype} -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTURN} 
+        echo DEBUG: python3 ${EXTRACTTYPE} -t ${instancetype} -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTURN} -xc ${LOCAL_CONTEXT}
     fi
     echo Create owl nodesets
     echo -------------------
     python3 ${NODESET2OWL} ${nodeset}.xml -i ${BASE_ONTOLOGY} ${CORE_RESULT} -v http://example.com/v0.1/UA/ -p test -o ${NODESET2OWL_RESULT} || exit 1
     echo Extract types and instances
     echo ---------------------------
-    python3 ${EXTRACTTYPE} -t ${instancetype} -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTURN} || exit 1
-    mydiff "Compare SHACL" true ${nodeset}.shacl ${SHACL}
-    mydiff "Compare instances" true ${nodeset}.instances ${INSTANCES}
+    python3 ${EXTRACTTYPE} -t ${instancetype} -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTURN} -xc ${LOCAL_CONTEXT} || exit 1
+    startstop_context_server "Starting context server" true 
+    ask "Compare SHACL" ${SHACL} ${nodeset}.shacl
+    #mydiff "Compare instances" true ${nodeset}.instances ${INSTANCES}
+    ask "Compare INSTANCE" ${INSTANCES} ${nodeset}.instances json-ld
     checkqueries "Check basic entities structure" ${nodeset}
     #diff ${nodeset}.ttl ${RESULT} || exit 1
+    startstop_context_server "Stopping context server" false
+    exit 1
 done

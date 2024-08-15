@@ -1,0 +1,39 @@
+ASK WHERE{
+
+shacl:AlphaTypeShape a sh:NodeShape ;
+    sh:property [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasB> ;
+            sh:property [ sh:class test:BType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ] ;
+    sh:targetClass test:AlphaType .
+
+shacl:BTypeShape a sh:NodeShape ;
+    sh:property [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasD> ;
+            sh:property [ sh:class test:DType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ] ;
+    sh:targetClass test:BType .
+
+shacl:DTypeShape a sh:NodeShape ;
+    sh:property [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasMyVariable> ;
+            sh:property [ sh:datatype xsd:boolean ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:Literal ;
+                    sh:path ngsi-ld:hasValue ] ] ;
+    sh:targetClass test:DType .
+
+}

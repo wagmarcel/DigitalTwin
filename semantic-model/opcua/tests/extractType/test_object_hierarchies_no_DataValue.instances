@@ -1,0 +1,14 @@
+
+PREFIX ns1: <https://uri.etsi.org/ngsi-ld/>
+PREFIX ns2: <http://my.test/entity/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+ASK WHERE {
+<urn:test:AlphaInstance> a <http://my.test/AlphaType> ;
+    ns2:hasB [ a ns1:Relationship ;
+            ns1:hasObject <urn:test:AlphaInstance:sub:i2012> ] ;
+    ns2:hasC [ a ns1:Property ;
+            ns1:hasValue 0e+00 ] .
+
+<urn:test:AlphaInstance:sub:i2012> a <http://my.test/BType> .
+}
