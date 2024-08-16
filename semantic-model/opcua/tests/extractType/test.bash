@@ -69,11 +69,10 @@ function startstop_context_server() {
     echo $1
     start=$2
     if [ "$start" = "true" ]; then
-        python3 ${SERVE_CONTEXT} -p ${SERVE_CONTEXT_PORT} ${CONTEXT_FILE} &
+        (python3 ${SERVE_CONTEXT} -p ${SERVE_CONTEXT_PORT} ${CONTEXT_FILE} &) 
     else
-        pkill -9 -f ${SERVE_CONTEXT}
-
-        sleep 3
+        pkill -f ${SERVE_CONTEXT}
+        sleep 1
     fi
     sleep 1
 }
@@ -116,6 +115,7 @@ python3 ${NODESET2OWL} ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com
 echo Starting Feature Tests
 echo --------------------------------
 echo --------------------------------
+startstop_context_server "Stopping context server" false
 for tuple in "${TESTNODESETS[@]}"; do IFS=","
     set -- $tuple;
     nodeset=$1

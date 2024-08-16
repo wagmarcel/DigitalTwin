@@ -5,6 +5,7 @@ import os
 import signal
 import sys
 import socket
+import threading
 
 class SingleFileRequestHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -25,15 +26,15 @@ class GracefulTCPServer(socketserver.TCPServer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.is_shut_down = False
-
-    def shutdown(self):
-        self.is_shut_down = True
-        super().shutdown()
+        self._shutdown_event = threading.Event()
 
     def serve_forever(self):
-        while not self.is_shut_down:
+        while not self._shutdown_event.is_set():
             self.handle_request()
+
+    def shutdown(self):
+        self._shutdown_event.set()
+        super().shutdown()
 
 def run_server(port, file_to_serve):
     handler = lambda *args, **kwargs: SingleFileRequestHandler(*args, file_to_serve=file_to_serve, **kwargs)
@@ -44,7 +45,7 @@ def run_server(port, file_to_serve):
 
         def signal_handler(sig, frame):
             print("Received shutdown signal. Shutting down the server...")
-            httpd.shutdown()
+            #httpd.shutdown()
             sys.exit(0)
 
         # Register signal handlers for SIGINT (Ctrl+C) and SIGTERM
@@ -52,7 +53,10 @@ def run_server(port, file_to_serve):
         signal.signal(signal.SIGTERM, signal_handler)
 
         print(f"Serving {file_to_serve} on port {port}")
-        httpd.serve_forever()
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            httpd.shutdown()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Minimal web server to serve a single file.")
