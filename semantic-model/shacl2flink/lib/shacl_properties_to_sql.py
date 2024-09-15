@@ -474,7 +474,7 @@ def translate(shaclefile, knowledgefile, prefixes):
         if target_class_obj not in tables:
             tables.append(target_class_obj)
             views.append(target_class_obj + "-view")
-        property_check.append(check)
+        property_checks.append(check)
     # Get all NGSI-LD Properties
     #qres = g.query(sparql_get_all_properties, initNs=prefixes)
     qres = []
