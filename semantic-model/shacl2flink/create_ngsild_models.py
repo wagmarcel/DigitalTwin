@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from rdflib import Graph, URIRef
+from rdflib import Graph
 import os
 import sys
 import argparse
@@ -42,38 +42,20 @@ PREFIX sh: <http://www.w3.org/ns/shacl#>
 SELECT DISTINCT (?a as ?entityId) (?b as ?name) (?e as ?type) (IF(bound(?g), IF(isIRI(?g), '@id', '@value'), IF(isIRI(?f), '@id', '@value')) as ?nodeType)
 (datatype(?g) as ?valueType) (?f as ?hasValue) (?g as ?hasObject) ?observedAt ?index
 where {
-    ?nodeshape a sh:NodeShape .
-    ?nodeshape sh:targetClass ?class .
-    ?nodeshape sh:property [ sh:path ?b ] .
     ?a a ?subclass .
-    ?subclass rdfs:subClassOf* ?class .
-    FILTER NOT EXISTS {
-        ?class rdfs:subClassOf+ ?further .
-        ?subnodeshape sh:targetClass ?further .
-        ?subnodeshape sh:property [ sh:path ?b ] .
-    } .
     {?a ?b [ ngsild:hasObject ?g ] .
     VALUES ?e {ngsild:Relationship} .
     OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt; ngsild:hasObject ?g  ] .} .
     OPTIONAl{?a ?b [ ngsild:datasetId ?index; ngsild:hasObject ?g  ] .} .
     }
-    UNION
-    { ?a ?b [ ngsild:hasValue ?f ] .
-    VALUES ?d {'@value'} .
-    VALUES ?e {ngsild:Property}
-    FILTER(!isIRI(?f))
-    ?nodeshape sh:property [ sh:path ?b ] .
-    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt; ngsild:hasValue ?f ] .} .
-    OPTIONAl{?a ?b [ ngsild:datasetId ?index; ngsild:hasValue ?f ] .} .
+  UNION
+  {
+    {?a ?b [ ngsild:hasValue ?f ] .
+    VALUES ?e {ngsild:Property} .
+    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt; ngsild:hasValue ?f  ] .} .
+    OPTIONAl{?a ?b [ ngsild:datasetId ?index; ngsild:hasValue ?f  ] .} .
     }
-    UNION
-    { ?a ?b [ ngsild:hasValue ?f ] .
-    VALUES ?d {'@id'} .
-    VALUES ?e {ngsild:Property}
-    FILTER(isIRI(?f))
-    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt;ngsild:hasValue ?f  ] .} .
-    OPTIONAl{?a ?b [ ngsild:datasetId ?index;ngsild:hasValue ?f  ] .} .
-    }
+  }
 }
 order by ?observedAt
 """  # noqa: E501
@@ -127,17 +109,10 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                   file=sqlitef)
         for entityId, name, type, nodeType, valueType, hasValue, \
                 hasObject, observedAt, index in qres:
-            id = entityId.toPython() + "\\\\" + name.toPython()
-            current_index = None
             if index is None:
-                current_index = 0
+                current_dataset_id = "NULL"
             else:
-                current_index = index
-                if isinstance(index, URIRef):
-                    try:
-                        current_index = int(utils.strip_class(current_index.toPython()))
-                    except:
-                        current_index = 0
+                current_dataset_id = f"'{index}'"
             valueType = nullify(valueType)
             hasValue = nullify(hasValue)
             hasObject = nullify(hasObject)
@@ -150,13 +125,11 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
             current_timestamp = "CURRENT_TIMESTAMP"
             if observedAt is not None:
                 current_timestamp = f"'{str(observedAt)}'"
-            print("('" + id + "', '" + entityId.toPython() + "', '" +
+            print("('" + entityId.toPython() + "', '" +
                   name.toPython() +
-                  "', '" + nodeType + "', " + valueType + ", " +
-                  str(current_index) +
-                  ", '" + type.toPython() + "', 'http://example.com/index/" + str(current_index) +
-                  "'," + hasValue + ", " +
-                  hasObject + ", " + current_timestamp + ")", end='',
+                  "', '" + nodeType + "', " + valueType + ", '" + type.toPython() + "', " + str(current_dataset_id) +
+                  "," + hasValue + ", " +
+                  hasObject + ", CAST(NULL AS BOOLEAN), " + current_timestamp + ")", end='',
                   file=sqlitef)
         print(";", file=sqlitef)
 
@@ -179,12 +152,11 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                 tables[key][idstr] = []
                 tables[key][idstr].append(idstr)
                 tables[key][idstr].append(type.toPython())
+                tables[key][idstr].append('CAST(NULL as BOOLEAN)')
                 tables[key][idstr].append('CURRENT_TIMESTAMP')
-            tables[key][idstr].append(idstr + "\\\\" +
-                                      field.toPython())
         for type, ids in tables.items():
             for id, table in ids.items():
-                print(f'INSERT INTO `{type}` VALUES',
+                print('INSERT INTO `entity` VALUES',
                       file=sqlitef)
                 first = True
                 print("(", end='', file=sqlitef)
@@ -194,7 +166,7 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                     else:
                         print(", ", end='', file=sqlitef)
                     if isinstance(field, str) and not field ==\
-                            'CURRENT_TIMESTAMP':
+                            'CURRENT_TIMESTAMP' and 'CAST(' not in field:
                         print("'" + field + "'", end='', file=sqlitef)
                     else:
                         print(field, end='', file=sqlitef)

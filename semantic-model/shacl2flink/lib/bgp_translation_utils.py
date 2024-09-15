@@ -470,7 +470,7 @@ Consider to use a variable and FILTER. Target query is {ctx["query"]}')
     # subject_table, attribute_table, object_table
     subject_tablename = f'{s.toPython().upper()}TABLE'[1:]
     subject_varname = f'{s.toPython()}'[1:]
-    subject_sqltable = utils.camelcase_to_snake_case(utils.strip_class(local_ctx['row'][subject_varname]))
+    subject_sqltable = f'{configs.kafka_topic_ngsi_prefix_name}'
     attribute_sqltable = utils.camelcase_to_snake_case(utils.strip_class(p))
     attribute_tablename = f'{subject_varname.upper()}{attribute_sqltable.upper()}TABLE'
     if ngsildtype[0] == ngsild['hasValue']:
@@ -478,7 +478,8 @@ Consider to use a variable and FILTER. Target query is {ctx["query"]}')
             local_ctx['bounds'][ngsildvar[0].toPython()[1:]] = f'`{attribute_tablename}`.`{ngsildtype[0]}`'
         if attribute_tablename not in local_ctx['bgp_tables'] and attribute_tablename not in ctx['tables']:
             sql_expression = create_attribute_table_expression(ctx, attribute_tablename, ngsildvar[0])
-            join_condition = f'{attribute_tablename}.id = {subject_tablename}.`{p}`'
+            join_condition = f"{attribute_tablename}.name = '{p}' and {subject_tablename}.id = \
+{attribute_tablename}.entityId"
             local_ctx['bgp_sql_expression'].append({'statement': f'{sql_expression}',
                                                     'join_condition': f'{join_condition}'})
         local_ctx['bgp_tables'][attribute_tablename] = []
@@ -491,11 +492,12 @@ Consider to use a variable and FILTER. Target query is {ctx["query"]}')
             raise utils.SparqlValidationFailed(f'Binding {s} to non-variable {ngsildvar[0]} not supported. \
 Consider using a variable and FILTER instead.')
         object_varname = f'{ngsildvar[0].toPython()}'[1:]
-        object_sqltable = utils.camelcase_to_snake_case(utils.strip_class(local_ctx['row'][object_varname]))
+        object_sqltable = f'{configs.kafka_topic_ngsi_prefix_name}'
         object_tablename = f'{object_varname.upper()}TABLE'
         if object_varname not in local_ctx['bounds']:
             # case (1)
-            join_condition = f'{attribute_tablename}.id = {subject_tablename}.`{p}`'
+            join_condition = f"{attribute_tablename}.name = '{p}' and {attribute_tablename}.entityId = \
+{subject_tablename}.id"
             sql_expression = create_attribute_table_expression(ctx, attribute_tablename, ngsildvar[0])
             local_ctx['bgp_tables'][attribute_tablename] = []
 
@@ -513,7 +515,8 @@ Consider using a variable and FILTER instead.')
             sql_expression = create_attribute_table_expression(ctx, attribute_tablename, ngsildvar[0])
             local_ctx['bgp_sql_expression'].append({'statement': f'{sql_expression}',
                                                     'join_condition': f'{join_condition}'})
-            join_condition = f'{attribute_tablename}.id = {subject_tablename}.`{p}`'
+            join_condition = f"{attribute_tablename}.name = '{p}' and {attribute_tablename}.entityId = \
+{subject_tablename}.id"
             sql_expression = f'{subject_sqltable}_view AS {subject_tablename}'
             ctx['sql_tables'].append(subject_sqltable)
             local_ctx['bgp_tables'][attribute_tablename] = []
@@ -582,7 +585,8 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
             if entity is None:  # create entity table based on type definition
                 subject_tablename = f'{s.toPython().upper()}TABLE'[1:]
                 subject_varname = f'{s.toPython()}'[1:]
-                subject_sqltable = utils.camelcase_to_snake_case(utils.strip_class(local_ctx['row'][subject_varname]))
+                subject_sqltable = f'{configs.kafka_topic_ngsi_prefix_name}'
+
                 join_condition = ''
                 if isinstance(o, URIRef):
                     join_condition = f"'<'||{subject_tablename}.`type`||'>' = '<{o.toPython()}>'"

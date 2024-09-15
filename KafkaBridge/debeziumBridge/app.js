@@ -22,8 +22,6 @@ const { Kafka } = require('kafkajs');
 const config = require('../config/config.json');
 const DebeziumBridge = require('../lib/debeziumBridge.js');
 const Logger = require('../lib/logger.js');
-const newEngine = require('@comunica/actor-init-sparql-file').newEngine;
-const iffEngine = newEngine();
 const runningAsMain = require.main === module;
 
 const debeziumBridge = new DebeziumBridge(config);
@@ -179,32 +177,32 @@ const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, delet
   const topicMessages = [];
   // if only updates are detected, no update of entity is needed
   if (!updateOnly) {
-    let subClasses = await getSubClasses(entity.type);
-    if (subClasses.length === 0) {
-      subClasses = [entity.type];
-    }
+    // let subClasses = await getSubClasses(entity.type);
+    // if (subClasses.length === 0) {
+    //   subClasses = [entity.type];
+    // }
     // Now remove type. This has been determined earlier.
     if (removeType) {
       // delete of entities is done by set everything to NULL
-      delete entity.type;
+      entity.deleted = true;
     }
 
-    subClasses.forEach((element) => {
-      const obj = {};
-      const entityTopic = config.debeziumBridge.entityTopicPrefix + '.' + getTopic(element);
-      obj.topic = entityTopic;
-      obj.messages = [{
-        key: genKey,
-        value: JSON.stringify(entity)
-      }];
-      topicMessages.push(obj);
-    });
+    const obj = {};
+    const entityTopic = config.debeziumBridge.entityTopicPrefix;
+    obj.topic = entityTopic;
+    obj.messages = [{
+      key: genKey,
+      value: JSON.stringify(entity)
+    }];
+    topicMessages.push(obj);
   }
 
   if (deletedAttrs !== null && deletedAttrs !== undefined && Object.keys(deletedAttrs).length > 0) {
     // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
     const deleteMessages = Object.entries(deletedAttrs).flatMap(([key, value]) =>
       value.map(val => {
+        val.deleted = true;
+        val.synched = true;
         return { key: genKey, value: JSON.stringify(val) };
       })
     );
@@ -217,6 +215,7 @@ const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, delet
     // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
     const updateMessages = Object.entries(updatedAttrs).flatMap(([key, value]) => {
       return value.map(val => {
+        val.synched = true;
         const timestamp = checkTimestamp(val);
         const result = { key: genKey, value: JSON.stringify(val) };
         if (timestamp !== null) {
@@ -234,6 +233,7 @@ const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, delet
     // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
     const insertMessages = Object.entries(insertedAttrs).flatMap(([key, value]) => {
       return value.map(val => {
+        val.synched = true;
         const timestamp = checkTimestamp(val);
         const result = { key: genKey, value: JSON.stringify(val) };
         if (timestamp !== null) {
