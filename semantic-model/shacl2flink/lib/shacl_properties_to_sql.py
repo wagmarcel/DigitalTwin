@@ -125,27 +125,27 @@ sql_check_relationship_property_class = """
 
 sql_check_relationship_property_count = """
             SELECT this AS resource,
-                'CountConstraintComponent({{property_path}})' AS event,
+                'CountConstraintComponent(' || `propertyPath` || ')' AS event,
                 'Development' AS environment,
                 {% if sqlite %}
                 '[SHACL Validator]' AS service,
                 {% else %}
                 ARRAY ['SHACL Validator'] AS service,
                 {% endif %}
-                CASE WHEN typ IS NOT NULL AND ({%- if maxcount %} count(link) > {{maxcount}} {%- endif %} {%- if mincount and maxcount %} OR {%- endif %} {%- if mincount %} count(link) < {{mincount}} {%- endif %})
-                    THEN '{{severity}}'
+                CASE WHEN typ IS NOT NULL AND (count(link) > `maxCount` OR count(link) < `minCount`)
+                    THEN `severity`
                     ELSE 'ok' END AS severity,
                 'customer'  customer,
-                CASE WHEN typ IS NOT NULL AND ({%- if maxcount %} count(link) > {{maxcount}} {%- endif %} {%- if mincount and maxcount %} OR {%- endif %} {%- if mincount %} count(link) < {{mincount}} {%- endif %})
+                CASE WHEN typ IS NOT NULL AND (count(link) > `maxCount`  OR count(link) < `mincount`)
                     THEN
-                        'Model validation for relationship {{property_path}} failed for ' || this || ' . Found ' || CAST(count(link) AS STRING) || ' relationships instead of
-                            [{%- if mincount %}{{mincount}}{%- else %} 0 {%- endif %},{%if maxcount %}{{maxcount}}]{%- else %}[ {%- endif %}!'
+                        'Model validation for relationship ' || `propertyPath` || 'failed for ' || this || ' . Found ' || CAST(count(link) AS STRING) || ' relationships instead of
+                            [' || `mincount` || ', ' || `maxcount` || ']!'
                     ELSE 'All ok' END as `text`
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
             FROM A1
-            group by this, typ
+            group by this, typ, propertyPath
 """  # noqa: E501
 
 sql_check_relationship_nodeType = """
@@ -391,6 +391,18 @@ def translate(shaclefile, knowledgefile, prefixes):
             alerts_bulk_table=alerts_bulk_table,
             target_class="entity",
             sqlite=True)
+    sql_command_yaml += "\nUNION ALL"
+    sql_command_sqlite += "\nUNION ALL"
+    sql_command_yaml += \
+        Template(sql_check_relationship_property_count).render(
+            alerts_bulk_table=alerts_bulk_table,
+            target_class="entity",
+            sqlite=False)
+    sql_command_sqlite += \
+        Template(sql_check_relationship_property_count).render(
+            alerts_bulk_table=alerts_bulk_table,
+            target_class="entity",
+            sqlite=True)
     qres = g.query(sparql_get_all_relationships, initNs=prefixes)
     sql_command_sqlite += ";"
     sql_command_yaml += ";"
@@ -417,29 +429,7 @@ def translate(shaclefile, knowledgefile, prefixes):
         check['maxCount'] = maxcount
         check['minCount'] = mincount
         check['severity'] = severitycode
-        # if mincount > 0 or maxcount:
-        #     if add_union:
-        #         sql_command_yaml += "\nUNION ALL"
-        #         sql_command_sqlite += "\nUNION ALL"
-        #     add_union = True
-        #     sql_command_yaml += \
-        #         Template(sql_check_relationship_property_count).render(
-        #             alerts_bulk_table=alerts_bulk_table,
-        #             target_class=target_class,
-        #             property_path=property_path,
-        #             mincount=mincount,
-        #             maxcount=maxcount,
-        #             severity=severitycode,
-        #             sqlite=False)
-        #     sql_command_sqlite += \
-        #         Template(sql_check_relationship_property_count).render(
-        #             alerts_bulk_table=alerts_bulk_table,
-        #             target_class=target_class,
-        #             property_path=property_path,
-        #             mincount=mincount,
-        #             maxcount=maxcount,
-        #             severity=severitycode,
-        #             sqlite=True)
+ 
         # if add_union:
         #     sql_command_yaml += "\nUNION ALL"
         #     sql_command_sqlite += "\nUNION ALL"
@@ -463,8 +453,8 @@ def translate(shaclefile, knowledgefile, prefixes):
         # )
         sql_command_sqlite += ";"
         sql_command_yaml += ";"
-        statementsets.append(sql_command_yaml)
-        sqlite += sql_command_sqlite
+        #statementsets.append(sql_command_yaml)
+        #sqlite += sql_command_sqlite
 
         target_class_obj = utils.class_to_obj_name(target_class)
         target_class_obj = utils.class_to_obj_name(target_class)
@@ -797,5 +787,6 @@ def translate(shaclefile, knowledgefile, prefixes):
         if target_class_obj not in tables:
             tables.append(target_class_obj)
             views.append(target_class_obj + "-view")
+    sqlite += '\n'
     sqlite += utils.add_relationship_checks(relationshp_checks, utils.SQL_DIALECT.SQLITE)
     return sqlite, (statementsets, tables, views)
