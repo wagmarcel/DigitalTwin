@@ -92,7 +92,7 @@ sql_check_relationship_base = """
                     D.minCount as minCount,
                     D.severity as severity 
                     FROM {{target_class}}_view AS A JOIN `relationshipChecksTable` as D ON A.`type` = D.targetClass
-                    LEFT JOIN attributes_view AS B ON B.id = D.propertyPath
+                    LEFT JOIN attributes_view AS B ON B.name = D.propertyPath
                     LEFT JOIN {{target_class}}_view AS C ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
                     WHERE
                         (B.entityId = A.id OR B.entityId IS NULL)
@@ -396,10 +396,12 @@ def translate(shaclefile, knowledgefile, prefixes):
     sql_command_yaml += ";"
     statementsets.append(sql_command_yaml)
     sqlite += sql_command_sqlite
-    property_checks = []
+    relationshp_checks = []
     for row in qres:
         check = {}
-        target_class = utils.camelcase_to_snake_case(utils.strip_class(row.targetclass.toPython())) \
+        #target_class = utils.camelcase_to_snake_case(utils.strip_class(row.targetclass.toPython())) \
+        #    if row.targetclass else None
+        target_class = row.targetclass.toPython() \
             if row.targetclass else None
         property_path = row.propertypath.toPython() if row.propertypath \
             else None
@@ -474,7 +476,7 @@ def translate(shaclefile, knowledgefile, prefixes):
         if target_class_obj not in tables:
             tables.append(target_class_obj)
             views.append(target_class_obj + "-view")
-        property_checks.append(check)
+        relationshp_checks.append(check)
     # Get all NGSI-LD Properties
     #qres = g.query(sparql_get_all_properties, initNs=prefixes)
     qres = []
@@ -795,4 +797,5 @@ def translate(shaclefile, knowledgefile, prefixes):
         if target_class_obj not in tables:
             tables.append(target_class_obj)
             views.append(target_class_obj + "-view")
+    sqlite += utils.add_relationship_checks(relationshp_checks, utils.SQL_DIALECT.SQLITE)
     return sqlite, (statementsets, tables, views)

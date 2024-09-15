@@ -180,11 +180,11 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                 tables[key][idstr].append(idstr)
                 tables[key][idstr].append(type.toPython())
                 tables[key][idstr].append('CURRENT_TIMESTAMP')
-            tables[key][idstr].append(idstr + "\\\\" +
-                                      field.toPython())
+        #    tables[key][idstr].append(idstr + "\\\\" +
+        #                              field.toPython())
         for type, ids in tables.items():
             for id, table in ids.items():
-                print(f'INSERT INTO `{type}` VALUES',
+                print(f'INSERT INTO `entity` VALUES',
                       file=sqlitef)
                 first = True
                 print("(", end='', file=sqlitef)
