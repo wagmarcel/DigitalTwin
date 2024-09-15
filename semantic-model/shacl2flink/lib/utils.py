@@ -39,6 +39,31 @@ class DnsNameNotCompliant(Exception):
     Exception for non compliant DNS name
     """
 
+relationship_checks_tablename = "relationshipChecksTable"
+property_checks_tablename = "propertyChecksTable"
+checks_table_primary_key = ["targetClass", "propertyPath"]
+relationship_checks_table = [{"targetClass": "STRING"},
+                                 {"propertyPath": "STRING"},
+                                     {"propertyClass": "STRING"},
+                                     {"maxCount": "INTEGER"},
+                                     {"minCount": "INTEGER"},
+                                     {"severity": "STRING"}
+                                    ]
+property_checks_table = [{"targetClass": "STRING"},
+                                 {"propertyPath": "STRING"},
+                                 {"propertyClass": "STRING"},
+                                 {"propertyNodetype": "STRING"},
+                                 {"maxCount": "INTEGER"},
+                                 {"minCount": "INTEGER"},
+                                 {"severity": "STRING"},
+                                 {"minExclusive": "DOUBLE"},
+                                 {"maxExclusive": "DOUBLE"},
+                                 {"minInclusive": "DOUBLE"},
+                                 {"maxInclusive": "DOUBLE"},
+                                 {"minLength": "INTEGER"},
+                                 {"maxLength": "INTEGER"},
+                                 {"pattern": "STRING"}
+                                ]
 
 def get_timevars(ctx, vars):
     """calculate time-attribute of variables
@@ -553,3 +578,19 @@ def split_statementsets(statementsets, max_map_size):
         grouped_strings.append(current_group)
 
     return grouped_strings
+
+def create_relationship_check_yaml_table(connector, value):
+    return create_yaml_table(relationship_checks_tablename, connector, relationship_checks_table,
+                      checks_table_primary_key, "relationshipChecksTable", value)
+
+def create_relationship_check_sql_table():
+    return create_sql_table(relationship_checks_tablename, relationship_checks_table,  checks_table_primary_key,
+                                         SQL_DIALECT.SQLITE)
+
+def create_property_check_yaml_table(connector, value):
+    return create_yaml_table(property_checks_tablename, connector,  property_checks_table,
+                                               checks_table_primary_key, "propertyChecksTable", value)
+    
+def create_property_check_sql_table():
+    return create_sql_table(property_checks_tablename, property_checks_table,  checks_table_primary_key,
+                                         SQL_DIALECT.SQLITE)

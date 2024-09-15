@@ -130,7 +130,41 @@ def main(shaclfile, knowledgefile, output_folder='output'):
 {table_name}', configs.kafka_topic_object_label,
                                                config), fk)
 
+        # Create "entity"
+        value = {
+                'format': 'json',
+                'json.fail-on-missing-field': False,
+                'json.ignore-parse-errors': True
+        }
+        connector = 'kafka'
+        base_entity_table = []
+        base_entity_table.append({sq("id"): "STRING"})
+        base_entity_table.append({sq("type"): "STRING"})
+        base_entity_table.append({sq("ts"): "TIMESTAMP(3) METADATA FROM 'timestamp'"})
+        base_entity_table.append({"watermark": "FOR `ts` AS `ts`"})
 
+        base_entity_tablename = "entity"
+        base_entity_primary_key = ["id"]
+        print('---', file=f)
+        yaml.dump(utils.create_yaml_table(base_entity_tablename, connector,  base_entity_table,
+                                              base_entity_primary_key, "relationshipChecksTable", value), f)
+        print(utils.create_sql_table(base_entity_tablename, base_entity_table, base_entity_primary_key,
+                                    utils.SQL_DIALECT.SQLITE),
+        file=sqlitef)
+        print('---', file=f)
+        
+        yaml.dump(utils.create_yaml_view(base_entity_tablename, base_entity_table), f)
+        print(utils.create_sql_view(base_entity_tablename, base_entity_table), file=sqlitef)
+        # Create property_checks and relational_checks
+        print('---', file=f)
+
+        yaml.dump(utils. create_relationship_check_yaml_table(connector, value), f)
+        print('---', file=f)
+        yaml.dump(utils.create_property_check_yaml_table(connector, value), f)
+        print(utils.create_relationship_check_sql_table(),
+              file=sqlitef)
+        print(utils.create_property_check_sql_table(),
+              file=sqlitef)
 if __name__ == '__main__':
     args = parse_args()
     shaclfile = args.shaclfile

@@ -81,43 +81,46 @@ sql_check_relationship_base = """
             WITH A1 as (
                     SELECT A.id AS this,
                            A.`type` as typ,
-                           {%- if property_class %}
                            C.`type` AS entity,
-                           {%- endif %}
                            B.`type` AS link,
                            B.`nodeType` as nodeType,
-                    IFNULL(B.`index`, 0) as `index` FROM {{target_class}}_view AS A
-                    LEFT JOIN attributes_view AS B ON B.id = A.`{{property_path}}`
-                    {%- if property_class %}
-                    LEFT JOIN {{property_class}}_view AS C ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
-                    {%- endif %}
+                    IFNULL(B.`index`, 0) as `index`,
+                    D.targetClass as targetClass,
+                    D.propertyPath as propertyPath,
+                    D.propertyClass as propertyClass,
+                    D.maxCount as maxCount,
+                    D.minCount as minCount,
+                    D.severity as severity 
+                    FROM {{target_class}}_view AS A JOIN `relationshipChecksTable` as D ON A.`type` = D.targetClass
+                    LEFT JOIN attributes_view AS B ON B.id = D.propertyPath
+                    LEFT JOIN {{target_class}}_view AS C ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
                     WHERE
                         (B.entityId = A.id OR B.entityId IS NULL)
-                        AND (B.name = '{{property_path}}' OR B.name IS NULL)
+                        AND (B.name = D.propertyPath OR B.name IS NULL)
 
             )
 """  # noqa: E501
 
 sql_check_relationship_property_class = """
             SELECT this AS resource,
-                'ClassConstraintComponent({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
+                'ClassConstraintComponent(' || `propertyPath` || '[' || CAST( `index` AS STRING) || '])' AS event,
                 'Development' AS environment,
                 {% if sqlite %}
                 '[SHACL Validator]' AS service,
                 {% else %}
                 ARRAY ['SHACL Validator'] AS service,
                 {% endif %}
-                CASE WHEN typ IS NOT NULL AND link IS NOT NULL AND entity IS NULL THEN '{{severity}}'
+                CASE WHEN typ IS NOT NULL AND link IS NOT NULL AND entity IS NULL THEN `severity`
                     ELSE 'ok' END AS severity,
                 'customer'  customer,
 
                 CASE WHEN typ IS NOT NULL AND link IS NOT NULL AND entity IS NULL
-                        THEN 'Model validation for relationship {{property_path}} failed for '|| this || '. Relationship not linked to existing entity of type {{property_class}}.'
+                        THEN 'Model validation for relationship' || `propertyPath` || 'failed for '|| this || '. Relationship not linked to existing entity of type ' ||  `propertyClass` || '.'
                     ELSE 'All ok' END as `text`
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
-            FROM A1
+            FROM A1 WHERE A1.propertyClass IS NOT NULL
 """  # noqa: E501
 
 sql_check_relationship_property_count = """
@@ -370,8 +373,32 @@ def translate(shaclefile, knowledgefile, prefixes):
     statementsets = []
     sqlite = ''
     # Get all NGSI-LD Relationship
+    sql_command_yaml = Template(sql_check_relationship_base).render(
+        alerts_bulk_table=alerts_bulk_table,
+        target_class="entitiy",
+        sqlite=False)
+    sql_command_sqlite = Template(sql_check_relationship_base).render(
+        alerts_bulk_table=alerts_bulk_table,
+        target_class="entity",
+        sqlite=True)
+    sql_command_yaml += \
+        Template(sql_check_relationship_property_class).render(
+            alerts_bulk_table=alerts_bulk_table,
+            target_class="entity",
+            sqlite=False)
+    sql_command_sqlite += \
+        Template(sql_check_relationship_property_class).render(
+            alerts_bulk_table=alerts_bulk_table,
+            target_class="entity",
+            sqlite=True)
     qres = g.query(sparql_get_all_relationships, initNs=prefixes)
+    sql_command_sqlite += ";"
+    sql_command_yaml += ";"
+    statementsets.append(sql_command_yaml)
+    sqlite += sql_command_sqlite
+    property_checks = []
     for row in qres:
+        check = {}
         target_class = utils.camelcase_to_snake_case(utils.strip_class(row.targetclass.toPython())) \
             if row.targetclass else None
         property_path = row.propertypath.toPython() if row.propertypath \
@@ -382,85 +409,56 @@ def translate(shaclefile, knowledgefile, prefixes):
         maxcount = row.maxcount.toPython() if row.maxcount else None
         severitycode = row.severitycode.toPython() if row.severitycode \
             else 'warning'
-        sql_command_yaml = Template(sql_check_relationship_base).render(
-            alerts_bulk_table=alerts_bulk_table,
-            target_class=target_class,
-            property_path=property_path,
-            property_class=utils.camelcase_to_snake_case(utils.strip_class(property_class)),
-            mincount=mincount,
-            maxcount=maxcount,
-            sqlite=False)
-        sql_command_sqlite = Template(sql_check_relationship_base).render(
-            alerts_bulk_table=alerts_bulk_table,
-            target_class=target_class,
-            property_path=property_path,
-            property_class=utils.camelcase_to_snake_case(utils.strip_class(property_class)),
-            mincount=mincount,
-            maxcount=maxcount,
-            sqlite=True)
-        add_union = False
-        if property_class:
-            add_union = True
-            sql_command_yaml += \
-                Template(sql_check_relationship_property_class).render(
-                    alerts_bulk_table=alerts_bulk_table,
-                    target_class=target_class,
-                    property_path=property_path,
-                    property_class=property_class,
-                    severity=severitycode,
-                    sqlite=False)
-            sql_command_sqlite += \
-                Template(sql_check_relationship_property_class).render(
-                    alerts_bulk_table=alerts_bulk_table,
-                    target_class=target_class,
-                    property_path=property_path,
-                    property_class=property_class,
-                    severity=severitycode,
-                    sqlite=True)
-        if mincount > 0 or maxcount:
-            if add_union:
-                sql_command_yaml += "\nUNION ALL"
-                sql_command_sqlite += "\nUNION ALL"
-            add_union = True
-            sql_command_yaml += \
-                Template(sql_check_relationship_property_count).render(
-                    alerts_bulk_table=alerts_bulk_table,
-                    target_class=target_class,
-                    property_path=property_path,
-                    mincount=mincount,
-                    maxcount=maxcount,
-                    severity=severitycode,
-                    sqlite=False)
-            sql_command_sqlite += \
-                Template(sql_check_relationship_property_count).render(
-                    alerts_bulk_table=alerts_bulk_table,
-                    target_class=target_class,
-                    property_path=property_path,
-                    mincount=mincount,
-                    maxcount=maxcount,
-                    severity=severitycode,
-                    sqlite=True)
-        if add_union:
-            sql_command_yaml += "\nUNION ALL"
-            sql_command_sqlite += "\nUNION ALL"
-        sql_command_yaml += Template(sql_check_relationship_nodeType).render(
-            alerts_bulk_table=alerts_bulk_table,
-            target_class=target_class,
-            property_path=property_path,
-            severity=severitycode,
-            property_nodetype='@id',
-            property_nodetype_description='an IRI',
-            sqlite=False
-        )
-        sql_command_sqlite += Template(sql_check_relationship_nodeType).render(
-            alerts_bulk_table=alerts_bulk_table,
-            target_class=target_class,
-            property_path=property_path,
-            severity=severitycode,
-            property_nodetype='@id',
-            property_nodetype_description='an IRI',
-            sqlite=True
-        )
+        check['targetClass'] = target_class
+        check['propertyPath'] = property_path
+        check['propertyClass'] = property_class
+        check['maxCount'] = maxcount
+        check['minCount'] = mincount
+        check['severity'] = severitycode
+        # if mincount > 0 or maxcount:
+        #     if add_union:
+        #         sql_command_yaml += "\nUNION ALL"
+        #         sql_command_sqlite += "\nUNION ALL"
+        #     add_union = True
+        #     sql_command_yaml += \
+        #         Template(sql_check_relationship_property_count).render(
+        #             alerts_bulk_table=alerts_bulk_table,
+        #             target_class=target_class,
+        #             property_path=property_path,
+        #             mincount=mincount,
+        #             maxcount=maxcount,
+        #             severity=severitycode,
+        #             sqlite=False)
+        #     sql_command_sqlite += \
+        #         Template(sql_check_relationship_property_count).render(
+        #             alerts_bulk_table=alerts_bulk_table,
+        #             target_class=target_class,
+        #             property_path=property_path,
+        #             mincount=mincount,
+        #             maxcount=maxcount,
+        #             severity=severitycode,
+        #             sqlite=True)
+        # if add_union:
+        #     sql_command_yaml += "\nUNION ALL"
+        #     sql_command_sqlite += "\nUNION ALL"
+        # sql_command_yaml += Template(sql_check_relationship_nodeType).render(
+        #     alerts_bulk_table=alerts_bulk_table,
+        #     target_class=target_class,
+        #     property_path=property_path,
+        #     severity=severitycode,
+        #     property_nodetype='@id',
+        #     property_nodetype_description='an IRI',
+        #     sqlite=False
+        # )
+        # sql_command_sqlite += Template(sql_check_relationship_nodeType).render(
+        #     alerts_bulk_table=alerts_bulk_table,
+        #     target_class=target_class,
+        #     property_path=property_path,
+        #     severity=severitycode,
+        #     property_nodetype='@id',
+        #     property_nodetype_description='an IRI',
+        #     sqlite=True
+        # )
         sql_command_sqlite += ";"
         sql_command_yaml += ";"
         statementsets.append(sql_command_yaml)
@@ -476,8 +474,10 @@ def translate(shaclefile, knowledgefile, prefixes):
         if target_class_obj not in tables:
             tables.append(target_class_obj)
             views.append(target_class_obj + "-view")
+        property_check.append(check)
     # Get all NGSI-LD Properties
-    qres = g.query(sparql_get_all_properties, initNs=prefixes)
+    #qres = g.query(sparql_get_all_properties, initNs=prefixes)
+    qres = []
     for row in qres:
         nodeshape = row.nodeshape.toPython()
         target_class = utils.camelcase_to_snake_case(utils.strip_class(row.targetclass.toPython())) \
