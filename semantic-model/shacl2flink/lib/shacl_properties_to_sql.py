@@ -144,13 +144,13 @@ sql_check_relationship_property_count = """
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
-            FROM A1
-            group by this, typ, propertyPath
+            FROM A1 WHERE `minCount` is NOT NULL or `maxCount` is NOT NULL
+            group by this, typ, propertyPath 
 """  # noqa: E501
 
 sql_check_relationship_nodeType = """
             SELECT this AS resource,
-                'NodeKindConstraintComponent({{property_path}})' AS event,
+                'NodeKindConstraintComponent(' || `propertyPath` || ')' AS event,
                 'Development' AS environment,
                 {% if sqlite %}
                 '[SHACL Validator]' AS service,
@@ -158,12 +158,12 @@ sql_check_relationship_nodeType = """
                 ARRAY ['SHACL Validator'] AS service,
                 {% endif %}
                 CASE WHEN typ IS NOT NULL AND link IS NOT NULL AND (nodeType is NULL OR nodeType <> '{{ property_nodetype }}')
-                    THEN '{{severity}}'
+                    THEN `severity`
                     ELSE 'ok' END AS severity,
                 'customer'  customer,
                 CASE WHEN typ IS NOT NULL AND  link IS NOT NULL AND (nodeType is NULL OR nodeType <> '{{ property_nodetype }}')
                     THEN
-                        'Model validation for relationship {{property_path}} failed for ' || this || ' . NodeType is '|| nodeType || ' but must be an IRI.'
+                        'Model validation for relationship ' || `propertyPath` || ' failed for ' || this || ' . NodeType is '|| nodeType || ' but must be an IRI.'
                     ELSE 'All ok' END as `text`
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
@@ -403,6 +403,22 @@ def translate(shaclefile, knowledgefile, prefixes):
             alerts_bulk_table=alerts_bulk_table,
             target_class="entity",
             sqlite=True)
+    sql_command_yaml += "\nUNION ALL"
+    sql_command_sqlite += "\nUNION ALL"
+    sql_command_yaml += Template(sql_check_relationship_nodeType).render(
+        alerts_bulk_table=alerts_bulk_table,
+        property_nodetype='@id',
+        property_nodetype_description='an IRI',
+        sqlite=False
+    )
+    sql_command_sqlite += Template(sql_check_relationship_nodeType).render(
+        alerts_bulk_table=alerts_bulk_table,
+        property_nodetype='@id',
+        property_nodetype_description='an IRI',
+        sqlite=True
+    )
+    sql_command_sqlite += ";"
+    sql_command_yaml += ";"
     qres = g.query(sparql_get_all_relationships, initNs=prefixes)
     sql_command_sqlite += ";"
     sql_command_yaml += ";"
