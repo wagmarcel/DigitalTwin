@@ -1,4 +1,5 @@
 from rdflib import Graph, Namespace
+from rdflib.namespace import SH
 import os
 import sys
 import csv
@@ -178,16 +179,26 @@ WITH A1 AS (SELECT A.id as this,
                    B.`https://uri.etsi.org/ngsi-ld/hasValue` as val,
                    B.`nodeType` as nodeType,
                    B.`type` as attr_typ,
-                   {% if property_class -%}
                    C.subject as foundVal,
                    C.object as foundClass,
-                   {%- endif %}
-                   IFNULL(B.`index`, 0) as `index` FROM `{{target_class}}_view` AS A
-            LEFT JOIN attributes_view AS B ON A.`{{property_path}}` = B.id
-            {% if property_class -%}
+                   IFNULL(B.`index`, 0) as `index`,
+                   D.propertyPath as propertyPath,
+                   D.propertyClass as propertyClass,
+                   D.propertyNodeType as propertyNodeType,
+                   D.maxCount as maxCount,
+                   D.minCount as minCount,
+                   D.severity as severity,
+                   D.minExclusive as minExclusive,
+                   D.maxExclusive as maxExclusive,
+                   D.minInclusive as minInclusive,
+                   D.maxInclusive as maxInclusive,
+                   D.minLength as minLength,
+                   D.maxLength as maxLength,
+                   D.pattern as pattern 
+                   FROM `{{target_class}}_view` AS A JOIN `propertyChecksTable` as D ON A.`type` = D.targetClass
+            LEFT JOIN attributes_view AS B ON D.propertyPath = B.name
             LEFT JOIN {{rdf_table_name}} as C ON C.subject = '<' || B.`https://uri.etsi.org/ngsi-ld/hasValue` || '>'
-                and C.predicate = '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>' and C.object = '<{{property_class}}>'
-            {%- endif %}
+                and C.predicate = '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>' and C.object = D.propertyPath
             )
 """  # noqa: E501
 
@@ -238,24 +249,25 @@ FROM A1
 
 sql_check_property_nodeType = """
 SELECT this AS resource,
- 'NodeKindConstraintComponent({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
+ 'NodeKindConstraintComponent(' || `propertyPath` || '[' || CAST( `index` AS STRING) || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
     {%- else %}
     ARRAY ['SHACL Validator'] AS service,
     {%- endif %}
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND (nodeType is NULL OR nodeType <> '{{ property_nodetype }}')
-        THEN '{{severity}}'
+    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND (nodeType is NULL OR nodeType <> `propertyNodetype`)
+        THEN `severity`
         ELSE 'ok' END AS severity,
     'customer'  customer,
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND (nodeType is NULL OR nodeType <> '{{ property_nodetype }}')
-        THEN 'Model validation for Property {{property_path}} failed for ' || this || '. Node is not {{ property_nodetype_description }}.'
+    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND (nodeType is NULL OR nodeType <> `propertyNodetype`)
+        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Node is not ' || 
+            CASE WHEN `propertyNodetype` = '@id' THEN ' an IRI' ELSE 'a Literal' END
         ELSE 'All ok' END as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1
+FROM A1 WHERE propertyNodetype IS NOT NULL
 """  # noqa: E501
 
 sql_check_property_minmax = """
@@ -375,7 +387,7 @@ def translate(shaclefile, knowledgefile, prefixes):
     # Get all NGSI-LD Relationship
     sql_command_yaml = Template(sql_check_relationship_base).render(
         alerts_bulk_table=alerts_bulk_table,
-        target_class="entitiy",
+        target_class="entity",
         sqlite=False)
     sql_command_sqlite = Template(sql_check_relationship_base).render(
         alerts_bulk_table=alerts_bulk_table,
@@ -419,11 +431,35 @@ def translate(shaclefile, knowledgefile, prefixes):
     )
     sql_command_sqlite += ";"
     sql_command_yaml += ";"
-    qres = g.query(sparql_get_all_relationships, initNs=prefixes)
-    sql_command_sqlite += ";"
-    sql_command_yaml += ";"
+
+
     statementsets.append(sql_command_yaml)
     sqlite += sql_command_sqlite
+    sql_command_yaml = Template(sql_check_property_iri_base).render(
+    alerts_bulk_table=alerts_bulk_table,
+    target_class="entity",
+    rdf_table_name=configs.rdf_table_name,
+    sqlite=False
+    )
+    sql_command_sqlite = Template(sql_check_property_iri_base).render(
+        alerts_bulk_table=alerts_bulk_table,
+        target_class="entity",
+        rdf_table_name=configs.rdf_table_name,
+        sqlite=True
+    )
+    sql_command_yaml += Template(sql_check_property_nodeType).render(
+    alerts_bulk_table=alerts_bulk_table,
+    sqlite=False
+    )
+    sql_command_sqlite += Template(sql_check_property_nodeType).render(
+        alerts_bulk_table=alerts_bulk_table,
+        sqlite=True
+    )
+    sql_command_sqlite += ";"
+    sql_command_yaml += ";"
+    sqlite += sql_command_sqlite
+    statementsets.append(sql_command_yaml)
+    qres = g.query(sparql_get_all_relationships, initNs=prefixes)    
     relationshp_checks = []
     for row in qres:
         check = {}
@@ -467,8 +503,8 @@ def translate(shaclefile, knowledgefile, prefixes):
         #     property_nodetype_description='an IRI',
         #     sqlite=True
         # )
-        sql_command_sqlite += ";"
-        sql_command_yaml += ";"
+        #sql_command_sqlite += ";"
+        #sql_command_yaml += ";"
         #statementsets.append(sql_command_yaml)
         #sqlite += sql_command_sqlite
 
@@ -484,9 +520,11 @@ def translate(shaclefile, knowledgefile, prefixes):
             views.append(target_class_obj + "-view")
         relationshp_checks.append(check)
     # Get all NGSI-LD Properties
-    #qres = g.query(sparql_get_all_properties, initNs=prefixes)
-    qres = []
+    qres = g.query(sparql_get_all_properties, initNs=prefixes)
+    #qres = []
+    property_checks = []
     for row in qres:
+        check = {}
         nodeshape = row.nodeshape.toPython()
         target_class = utils.camelcase_to_snake_case(utils.strip_class(row.targetclass.toPython())) \
             if row.targetclass else None
@@ -517,292 +555,277 @@ def translate(shaclefile, knowledgefile, prefixes):
             reader = csv.reader(StringIO(ins))
             parsed_list = next(reader)
             ins = [element.replace("'", "\\'") for element in parsed_list]
-        if (nodekind == sh.IRI):
-            sql_command_yaml = Template(sql_check_property_iri_base).render(
-                alerts_bulk_table=alerts_bulk_table,
-                target_class=target_class,
-                property_path=property_path,
-                property_class=property_class,
-                rdf_table_name=configs.rdf_table_name,
-                sqlite=False
-            )
-            sql_command_sqlite = Template(sql_check_property_iri_base).render(
-                alerts_bulk_table=alerts_bulk_table,
-                target_class=target_class,
-                property_path=property_path,
-                property_class=property_class,
-                rdf_table_name=configs.rdf_table_name,
-                severity=severitycode,
-                sqlite=True
-            )
-            sql_command_yaml += Template(sql_check_property_nodeType).render(
-                alerts_bulk_table=alerts_bulk_table,
-                target_class=target_class,
-                property_path=property_path,
-                severity=severitycode,
-                property_nodetype='@id',
-                property_nodetype_description='an IRI',
-                sqlite=False
-            )
-            sql_command_sqlite += Template(sql_check_property_nodeType).render(
-                alerts_bulk_table=alerts_bulk_table,
-                target_class=target_class,
-                property_path=property_path,
-                severity=severitycode,
-                property_nodetype='@id',
-                property_nodetype_description='an IRI',
-                sqlite=True
-            )
-            if property_class:
-                sql_command_yaml += "\nUNION ALL"
-                sql_command_sqlite += "\nUNION ALL"
-                sql_command_yaml += \
-                    Template(sql_check_property_iri_class).render(
-                        alerts_bulk_table=alerts_bulk_table,
-                        target_class=target_class,
-                        property_path=property_path,
-                        property_class=property_class,
-                        severity=severitycode,
-                        sqlite=False)
-                sql_command_sqlite += \
-                    Template(sql_check_property_iri_class).render(
-                        alerts_bulk_table=alerts_bulk_table,
-                        target_class=target_class,
-                        property_path=property_path,
-                        property_class=property_class,
-                        severity=severitycode,
-                        sqlite=True)
-        elif (nodekind == sh.Literal):
-            sql_command_yaml = Template(sql_check_property_iri_base).render(
-                alerts_bulk_table=alerts_bulk_table,
-                target_class=target_class,
-                property_path=property_path,
-                property_class=property_class,
-                rdf_table_name=configs.rdf_table_name,
-                severity=severitycode,
-                sqlite=False
-            )
-            sql_command_sqlite = Template(sql_check_property_iri_base).render(
-                alerts_bulk_table=alerts_bulk_table,
-                target_class=target_class,
-                property_path=property_path,
-                property_class=property_class,
-                rdf_table_name=configs.rdf_table_name,
-                severity=severitycode,
-                sqlite=True
-            )
-            sql_command_yaml += Template(sql_check_property_nodeType).render(
-                alerts_bulk_table=alerts_bulk_table,
-                target_class=target_class,
-                property_path=property_path,
-                severity=severitycode,
-                property_nodetype='@value',
-                property_nodetype_description='a Literal',
-                sqlite=False
-            )
-            sql_command_sqlite += Template(sql_check_property_nodeType).render(
-                alerts_bulk_table=alerts_bulk_table,
-                target_class=target_class,
-                property_path=property_path,
-                severity=severitycode,
-                property_nodetype='@value',
-                property_nodetype_description='a Literal',
-                sqlite=True
-            )
-            if min_exclusive is not None:
-                sql_command_yaml += "\nUNION ALL"
-                sql_command_sqlite += "\nUNION ALL"
-                sql_command_yaml += Template(sql_check_property_minmax).render(
-                    target_class=target_class,
-                    property_path=property_path,
-                    operator='>',
-                    comparison_value=min_exclusive,
-                    severity=severitycode,
-                    minmaxname="MinExclusive",
-                    sqlite=False
-                )
-                sql_command_sqlite += \
-                    Template(sql_check_property_minmax).render(
-                        target_class=target_class,
-                        property_path=property_path,
-                        operator='>',
-                        comparison_value=min_exclusive,
-                        severity=severitycode,
-                        minmaxname="MinExclusive",
-                        sqlite=True)
-            if ins is not None and len(ins) != 0:
-                sql_command_yaml += "\nUNION ALL"
-                sql_command_sqlite += "\nUNION ALL"
-                sql_command_yaml += \
-                    Template(sql_check_literal_in).render(
-                        alerts_bulk_table=alerts_bulk_table,
-                        target_class=target_class,
-                        property_path=property_path,
-                        property_class=property_class,
-                        severity=severitycode,
-                        sqlite=False,
-                        constraintname="InConstraintComponent",
-                        ins=ins)
-                sql_command_sqlite += \
-                    Template(sql_check_literal_in).render(
-                        alerts_bulk_table=alerts_bulk_table,
-                        target_class=target_class,
-                        property_path=property_path,
-                        property_class=property_class,
-                        severity=severitycode,
-                        sqlite=True,
-                        constraintname="InConstraintComponent",
-                        ins=ins)
-            if max_exclusive is not None:
-                sql_command_yaml += "\nUNION ALL"
-                sql_command_sqlite += "\nUNION ALL"
-                sql_command_yaml += Template(sql_check_property_minmax).render(
-                    target_class=target_class,
-                    property_path=property_path,
-                    operator='<',
-                    comparison_value=max_exclusive,
-                    severity=severitycode,
-                    minmaxname="MaxExclusive",
-                    sqlite=False
-                )
-                sql_command_sqlite += \
-                    Template(sql_check_property_minmax).render(
-                        target_class=target_class,
-                        property_path=property_path,
-                        operator='<',
-                        comparison_value=max_exclusive,
-                        severity=severitycode,
-                        minmaxname="MaxExclusive",
-                        sqlite=True)
-            if max_inclusive is not None:
-                sql_command_yaml += "\nUNION ALL"
-                sql_command_sqlite += "\nUNION ALL"
-                sql_command_yaml += Template(sql_check_property_minmax).render(
-                    target_class=target_class,
-                    property_path=property_path,
-                    operator='<=',
-                    comparison_value=max_inclusive,
-                    severity=severitycode,
-                    minmaxname="MaxInclusive",
-                    sqlite=False
-                )
-                sql_command_sqlite += \
-                    Template(sql_check_property_minmax).render(
-                        target_class=target_class,
-                        property_path=property_path,
-                        operator='<=',
-                        comparison_value=max_inclusive,
-                        severity=severitycode,
-                        minmaxname="MaxInclusive",
-                        sqlite=True)
-            if min_inclusive is not None:
-                sql_command_yaml += "\nUNION ALL"
-                sql_command_sqlite += "\nUNION ALL"
-                sql_command_yaml += Template(sql_check_property_minmax).render(
-                    target_class=target_class,
-                    property_path=property_path,
-                    operator='>=',
-                    comparison_value=min_inclusive,
-                    severity=severitycode,
-                    minmaxname="MinInclusive",
-                    sqlite=False
-                )
-                sql_command_sqlite += \
-                    Template(sql_check_property_minmax).render(
-                        target_class=target_class,
-                        property_path=property_path,
-                        operator='>=',
-                        comparison_value=min_inclusive,
-                        severity=severitycode,
-                        minmaxname="MinInclusive",
-                        sqlite=True)
-            if pattern is not None:
-                sql_command_yaml += "\nUNION ALL"
-                sql_command_sqlite += "\nUNION ALL"
-                sql_command_yaml += Template(sql_check_literal_pattern).render(
-                    property_path=property_path,
-                    pattern=pattern,
-                    severity=severitycode,
-                    validationname="Pattern",
-                    sqlite=False
-                )
-                sql_command_sqlite += \
-                    Template(sql_check_literal_pattern).render(
-                        property_path=property_path,
-                        pattern=pattern,
-                        severity=severitycode,
-                        validationname="Pattern",
-                        sqlite=True)
+        check['targetClass'] = target_class
+        check['propertyPath'] = property_path
+        check['propertyClass'] = property_class
+        check['propertyNodetype'] = '@id' if nodekind == SH.IRI else '@value'
+        check['maxCount'] = maxcount
+        check['minCount'] = mincount
+        check['severity'] = severitycode
+        check['minExclusive'] = min_exclusive
+        check['maxExclusive'] = max_exclusive
+        check['minInclusive'] = min_inclusive
+        check['maxInclusive'] = max_inclusive
+        check['minLength'] = min_length
+        check['maxLength'] = max_length
+        check['pattern'] = pattern
+        check['ins'] = ins
+        property_checks.append(check)
+        # if (nodekind == sh.IRI):
+ 
 
-        else:
-            print(f'WARNING: Property path {property_path} of Nodeshape \
-                  {nodeshape} is neither IRI nor Literal')
-            continue
-        if mincount > 0 or maxcount:
-            sql_command_yaml += "\nUNION ALL"
-            sql_command_sqlite += "\nUNION ALL"
-            sql_command_yaml += Template(sql_check_property_count).render(
-                target_class=target_class,
-                property_path=property_path,
-                mincount=mincount,
-                maxcount=maxcount,
-                severity=severitycode,
-                sqlite=False
-            )
-            sql_command_sqlite += \
-                Template(sql_check_property_count).render(
-                    target_class=target_class,
-                    property_path=property_path,
-                    mincount=mincount,
-                    maxcount=maxcount,
-                    severity=severitycode,
-                    sqlite=True)
-        if min_length is not None:
-            sql_command_yaml += "\nUNION ALL"
-            sql_command_sqlite += "\nUNION ALL"
-            sql_command_yaml += Template(sql_check_string_length).render(
-                property_path=property_path,
-                operator='<',
-                comparison_value=min_length,
-                minmaxname="MinLength",
-                severity=severitycode,
-                sqlite=False
-            )
-            sql_command_sqlite += Template(sql_check_string_length).render(
-                property_path=property_path,
-                operator='<',
-                comparison_value=min_length,
-                minmaxname="MinLength",
-                severity=severitycode,
-                sqlite=True
-            )
-        if max_length is not None:
-            sql_command_yaml += "\nUNION ALL"
-            sql_command_sqlite += "\nUNION ALL"
-            sql_command_yaml += Template(sql_check_string_length).render(
-                property_path=property_path,
-                operator='>',
-                comparison_value=max_length,
-                minmaxname="MaxLength",
-                severity=severitycode,
-                sqlite=False
-            )
-            sql_command_sqlite += Template(sql_check_string_length).render(
-                property_path=property_path,
-                operator='>',
-                comparison_value=max_length,
-                minmaxname="MaxLength",
-                severity=severitycode,
-                sqlite=True
-            )
-        sql_command_sqlite += ";"
-        sql_command_yaml += ";"
-        sqlite += sql_command_sqlite
-        statementsets.append(sql_command_yaml)
-        target_class_obj = utils.class_to_obj_name(target_class)
-        if target_class_obj not in tables:
-            tables.append(target_class_obj)
-            views.append(target_class_obj + "-view")
+        #     if property_class:
+        #         sql_command_yaml += "\nUNION ALL"
+        #         sql_command_sqlite += "\nUNION ALL"
+        #         sql_command_yaml += \
+        #             Template(sql_check_property_iri_class).render(
+        #                 alerts_bulk_table=alerts_bulk_table,
+        #                 target_class=target_class,
+        #                 property_path=property_path,
+        #                 property_class=property_class,
+        #                 severity=severitycode,
+        #                 sqlite=False)
+        #         sql_command_sqlite += \
+        #             Template(sql_check_property_iri_class).render(
+        #                 alerts_bulk_table=alerts_bulk_table,
+        #                 target_class=target_class,
+        #                 property_path=property_path,
+        #                 property_class=property_class,
+        #                 severity=severitycode,
+        #                 sqlite=True)
+        # elif (nodekind == sh.Literal):
+        #     sql_command_yaml = Template(sql_check_property_iri_base).render(
+        #         alerts_bulk_table=alerts_bulk_table,
+        #         target_class=target_class,
+        #         property_path=property_path,
+        #         property_class=property_class,
+        #         rdf_table_name=configs.rdf_table_name,
+        #         severity=severitycode,
+        #         sqlite=False
+        #     )
+        #     sql_command_sqlite = Template(sql_check_property_iri_base).render(
+        #         alerts_bulk_table=alerts_bulk_table,
+        #         target_class=target_class,
+        #         property_path=property_path,
+        #         property_class=property_class,
+        #         rdf_table_name=configs.rdf_table_name,
+        #         severity=severitycode,
+        #         sqlite=True
+        #     )
+        #     sql_command_yaml += Template(sql_check_property_nodeType).render(
+        #         alerts_bulk_table=alerts_bulk_table,
+        #         target_class=target_class,
+        #         property_path=property_path,
+        #         severity=severitycode,
+        #         property_nodetype='@value',
+        #         property_nodetype_description='a Literal',
+        #         sqlite=False
+        #     )
+        #     sql_command_sqlite += Template(sql_check_property_nodeType).render(
+        #         alerts_bulk_table=alerts_bulk_table,
+        #         target_class=target_class,
+        #         property_path=property_path,
+        #         severity=severitycode,
+        #         property_nodetype='@value',
+        #         property_nodetype_description='a Literal',
+        #         sqlite=True
+        #     )
+        #     if min_exclusive is not None:
+        #         sql_command_yaml += "\nUNION ALL"
+        #         sql_command_sqlite += "\nUNION ALL"
+        #         sql_command_yaml += Template(sql_check_property_minmax).render(
+        #             target_class=target_class,
+        #             property_path=property_path,
+        #             operator='>',
+        #             comparison_value=min_exclusive,
+        #             severity=severitycode,
+        #             minmaxname="MinExclusive",
+        #             sqlite=False
+        #         )
+        #         sql_command_sqlite += \
+        #             Template(sql_check_property_minmax).render(
+        #                 target_class=target_class,
+        #                 property_path=property_path,
+        #                 operator='>',
+        #                 comparison_value=min_exclusive,
+        #                 severity=severitycode,
+        #                 minmaxname="MinExclusive",
+        #                 sqlite=True)
+        #     if ins is not None and len(ins) != 0:
+        #         sql_command_yaml += "\nUNION ALL"
+        #         sql_command_sqlite += "\nUNION ALL"
+        #         sql_command_yaml += \
+        #             Template(sql_check_literal_in).render(
+        #                 alerts_bulk_table=alerts_bulk_table,
+        #                 target_class=target_class,
+        #                 property_path=property_path,
+        #                 property_class=property_class,
+        #                 severity=severitycode,
+        #                 sqlite=False,
+        #                 constraintname="InConstraintComponent",
+        #                 ins=ins)
+        #         sql_command_sqlite += \
+        #             Template(sql_check_literal_in).render(
+        #                 alerts_bulk_table=alerts_bulk_table,
+        #                 target_class=target_class,
+        #                 property_path=property_path,
+        #                 property_class=property_class,
+        #                 severity=severitycode,
+        #                 sqlite=True,
+        #                 constraintname="InConstraintComponent",
+        #                 ins=ins)
+        #     if max_exclusive is not None:
+        #         sql_command_yaml += "\nUNION ALL"
+        #         sql_command_sqlite += "\nUNION ALL"
+        #         sql_command_yaml += Template(sql_check_property_minmax).render(
+        #             target_class=target_class,
+        #             property_path=property_path,
+        #             operator='<',
+        #             comparison_value=max_exclusive,
+        #             severity=severitycode,
+        #             minmaxname="MaxExclusive",
+        #             sqlite=False
+        #         )
+        #         sql_command_sqlite += \
+        #             Template(sql_check_property_minmax).render(
+        #                 target_class=target_class,
+        #                 property_path=property_path,
+        #                 operator='<',
+        #                 comparison_value=max_exclusive,
+        #                 severity=severitycode,
+        #                 minmaxname="MaxExclusive",
+        #                 sqlite=True)
+        #     if max_inclusive is not None:
+        #         sql_command_yaml += "\nUNION ALL"
+        #         sql_command_sqlite += "\nUNION ALL"
+        #         sql_command_yaml += Template(sql_check_property_minmax).render(
+        #             target_class=target_class,
+        #             property_path=property_path,
+        #             operator='<=',
+        #             comparison_value=max_inclusive,
+        #             severity=severitycode,
+        #             minmaxname="MaxInclusive",
+        #             sqlite=False
+        #         )
+        #         sql_command_sqlite += \
+        #             Template(sql_check_property_minmax).render(
+        #                 target_class=target_class,
+        #                 property_path=property_path,
+        #                 operator='<=',
+        #                 comparison_value=max_inclusive,
+        #                 severity=severitycode,
+        #                 minmaxname="MaxInclusive",
+        #                 sqlite=True)
+        #     if min_inclusive is not None:
+        #         sql_command_yaml += "\nUNION ALL"
+        #         sql_command_sqlite += "\nUNION ALL"
+        #         sql_command_yaml += Template(sql_check_property_minmax).render(
+        #             target_class=target_class,
+        #             property_path=property_path,
+        #             operator='>=',
+        #             comparison_value=min_inclusive,
+        #             severity=severitycode,
+        #             minmaxname="MinInclusive",
+        #             sqlite=False
+        #         )
+        #         sql_command_sqlite += \
+        #             Template(sql_check_property_minmax).render(
+        #                 target_class=target_class,
+        #                 property_path=property_path,
+        #                 operator='>=',
+        #                 comparison_value=min_inclusive,
+        #                 severity=severitycode,
+        #                 minmaxname="MinInclusive",
+        #                 sqlite=True)
+        #     if pattern is not None:
+        #         sql_command_yaml += "\nUNION ALL"
+        #         sql_command_sqlite += "\nUNION ALL"
+        #         sql_command_yaml += Template(sql_check_literal_pattern).render(
+        #             property_path=property_path,
+        #             pattern=pattern,
+        #             severity=severitycode,
+        #             validationname="Pattern",
+        #             sqlite=False
+        #         )
+        #         sql_command_sqlite += \
+        #             Template(sql_check_literal_pattern).render(
+        #                 property_path=property_path,
+        #                 pattern=pattern,
+        #                 severity=severitycode,
+        #                 validationname="Pattern",
+        #                 sqlite=True)
+
+        # else:
+        #     print(f'WARNING: Property path {property_path} of Nodeshape \
+        #           {nodeshape} is neither IRI nor Literal')
+        #     continue
+        # if mincount > 0 or maxcount:
+        #     sql_command_yaml += "\nUNION ALL"
+        #     sql_command_sqlite += "\nUNION ALL"
+        #     sql_command_yaml += Template(sql_check_property_count).render(
+        #         target_class=target_class,
+        #         property_path=property_path,
+        #         mincount=mincount,
+        #         maxcount=maxcount,
+        #         severity=severitycode,
+        #         sqlite=False
+        #     )
+        #     sql_command_sqlite += \
+        #         Template(sql_check_property_count).render(
+        #             target_class=target_class,
+        #             property_path=property_path,
+        #             mincount=mincount,
+        #             maxcount=maxcount,
+        #             severity=severitycode,
+        #             sqlite=True)
+        # if min_length is not None:
+        #     sql_command_yaml += "\nUNION ALL"
+        #     sql_command_sqlite += "\nUNION ALL"
+        #     sql_command_yaml += Template(sql_check_string_length).render(
+        #         property_path=property_path,
+        #         operator='<',
+        #         comparison_value=min_length,
+        #         minmaxname="MinLength",
+        #         severity=severitycode,
+        #         sqlite=False
+        #     )
+        #     sql_command_sqlite += Template(sql_check_string_length).render(
+        #         property_path=property_path,
+        #         operator='<',
+        #         comparison_value=min_length,
+        #         minmaxname="MinLength",
+        #         severity=severitycode,
+        #         sqlite=True
+        #     )
+        # if max_length is not None:
+        #     sql_command_yaml += "\nUNION ALL"
+        #     sql_command_sqlite += "\nUNION ALL"
+        #     sql_command_yaml += Template(sql_check_string_length).render(
+        #         property_path=property_path,
+        #         operator='>',
+        #         comparison_value=max_length,
+        #         minmaxname="MaxLength",
+        #         severity=severitycode,
+        #         sqlite=False
+        #     )
+        #     sql_command_sqlite += Template(sql_check_string_length).render(
+        #         property_path=property_path,
+        #         operator='>',
+        #         comparison_value=max_length,
+        #         minmaxname="MaxLength",
+        #         severity=severitycode,
+        #         sqlite=True
+        #     )
+        # sql_command_sqlite += ";"
+        # sql_command_yaml += ";"
+        # sqlite += sql_command_sqlite
+        # statementsets.append(sql_command_yaml)
+        # target_class_obj = utils.class_to_obj_name(target_class)
+        # if target_class_obj not in tables:
+        #     tables.append(target_class_obj)
+        #     views.append(target_class_obj + "-view")
     sqlite += '\n'
     sqlite += utils.add_relationship_checks(relationshp_checks, utils.SQL_DIALECT.SQLITE)
+    sqlite += '\n'
+    sqlite += utils.add_property_checks(property_checks, utils.SQL_DIALECT.SQLITE)
     return sqlite, (statementsets, tables, views)

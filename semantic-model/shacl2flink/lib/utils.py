@@ -615,3 +615,37 @@ def add_relationship_checks(checks, sqldialect):
         statement += f'({check["targetClass"]}, {check["propertyPath"]}, {check["propertyClass"]}, {check["maxCount"]}, {check["minCount"]}, {check["severity"]})'
     statement += ';'
     return statement
+
+def add_property_checks(checks, sqldialect):
+    if sqldialect == SQL_DIALECT.SQLITE:
+        statement = f'INSERT OR REPLACE INTO {property_checks_tablename} VALUES'
+    else:
+        print("ToDo: Implement property check for FLINK")
+        exit(1)
+    first = True
+    for check in checks:
+        for k, v  in check.items():
+            if v is None:
+               check[k] = 'NULL'
+            else:
+                check[k] = f"'{v}'"
+        if first:
+            first = False
+        else:
+            statement += ', '
+        statement += f'({check["targetClass"]}, \
+{check["propertyPath"]}, \
+{check["propertyClass"]}, \
+{check["propertyNodetype"]}, \
+{check["maxCount"]}, \
+{check["minCount"]}, \
+{check["severity"]}, \
+{check["minExclusive"]}, \
+{check["maxExclusive"]}, \
+{check["minInclusive"]}, \
+{check["maxInclusive"]}, \
+{check["minLength"]}, \
+{check["maxLength"]}, \
+{check["pattern"]})'
+    statement += ';'
+    return statement
