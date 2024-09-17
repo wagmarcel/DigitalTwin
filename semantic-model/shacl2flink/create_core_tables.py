@@ -144,12 +144,11 @@ def main():
     table_name = "attributes"
     spec_name = "attributes"
     connector = 'kafka'
-    table = [{'id': 'STRING'},
+    table = [
              {'entityId': 'STRING'},
              {'name': 'STRING'},
              {'nodeType': 'STRING'},
              {'valueType': 'STRING'},
-             {'index': 'INTEGER'},
              {'type': 'STRING'},
              {'https://uri.etsi.org/ngsi-ld/datasetId': 'STRING'},
              {'https://uri.etsi.org/ngsi-ld/hasValue': 'STRING'},
@@ -180,12 +179,11 @@ def main():
     table_name = "attributes-insert"
     spec_name = "attributes_insert"
     connector = 'upsert-kafka'
-    table = [{'id': 'STRING'},
+    table = [
              {'entityId': 'STRING'},
              {'name': 'STRING'},
              {'nodeType': 'STRING'},
              {'valueType': 'STRING'},
-             {'index': 'INTEGER'},
              {'type': 'STRING'},
              {'https://uri.etsi.org/ngsi-ld/datasetId': 'STRING'},
              {'https://uri.etsi.org/ngsi-ld/hasValue': 'STRING'},
@@ -201,7 +199,7 @@ def main():
         'json.fail-on-missing-field': False,
         'json.ignore-parse-errors': True
     }
-    primary_key = ['id', 'index']
+    primary_key = ['entityId', 'name', 'https://uri.etsi.org/ngsi-ld/datasetId']
 
     print('---', file=f)
     yaml.dump(utils.create_yaml_table(spec_name, connector, table,
@@ -214,12 +212,11 @@ def main():
     table_name = "attributes-insert-filter"
     spec_name = "attributes_insert_filter"
     connector = 'kafka'
-    table = [{'id': 'STRING'},
+    table = [
              {'entityId': 'STRING'},
              {'name': 'STRING'},
              {'nodeType': 'STRING'},
              {'valueType': 'STRING'},
-             {'index': 'INTEGER'},
              {'type': 'STRING'},
              {'https://uri.etsi.org/ngsi-ld/datasetId': 'STRING'},
              {'https://uri.etsi.org/ngsi-ld/hasValue': 'STRING'},

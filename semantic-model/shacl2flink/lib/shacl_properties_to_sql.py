@@ -526,7 +526,7 @@ def translate(shaclefile, knowledgefile, prefixes):
     for row in qres:
         check = {}
         nodeshape = row.nodeshape.toPython()
-        target_class = utils.camelcase_to_snake_case(utils.strip_class(row.targetclass.toPython())) \
+        target_class = row.targetclass.toPython() \
             if row.targetclass else None
         property_path = row.propertypath.toPython() if row.propertypath \
             else None
