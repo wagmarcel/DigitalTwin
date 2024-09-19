@@ -225,7 +225,7 @@ def create_sql_table(name, table, primary_key, dialect=SQL_DIALECT. SQL):
     return sqltable
 
 
-def create_yaml_view(name, table, primary_key=['id']):
+def create_yaml_view(name, table, primary_key=None):
     table_name = class_to_obj_name(name)
     if not check_dns_name(table_name):
         raise DnsNameNotCompliant
@@ -238,11 +238,10 @@ def create_yaml_view(name, table, primary_key=['id']):
     spec = {}
     yaml_view['spec'] = spec
     spec['name'] = f'{name}_view'
-    sqlstatement = "SELECT `id`, `type`"
+    sqlstatement = "SELECT `type`"
     for field in table:
         for field_name, field_type in field.items():
             if ('metadata' not in field_name.lower() and
-                    field_name.lower() != "id" and
                     field_name.lower() != "watermark" and
                     field_name.lower() != "type"):
                 sqlstatement += f',\n `{field_name}`'
@@ -260,8 +259,8 @@ def create_yaml_view(name, table, primary_key=['id']):
     return yaml_view
 
 
-def create_sql_view(table_name, table, primary_key=['id'],
-                    additional_keys=['id', 'type']):
+def create_sql_view(table_name, table, primary_key=None,
+                    additional_keys=['type']):
     sqlstatement = f'DROP VIEW IF EXISTS `{table_name}_view`;\n'
     sqlstatement += f"CREATE VIEW `{table_name}_view` AS\n"
     sqlstatement += "SELECT "
@@ -278,7 +277,6 @@ def create_sql_view(table_name, table, primary_key=['id'],
     for field in table:
         for field_name, field_type in field.items():
             if ('metadata' not in field_name.lower() and
-                    field_name.lower() != "id" and
                     field_name.lower() != "watermark" and
                     field_name.lower() != "type"):
                 if first:

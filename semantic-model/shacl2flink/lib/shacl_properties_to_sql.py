@@ -85,7 +85,7 @@ sql_check_relationship_base = """
                            C.`type` AS entity,
                            B.`type` AS link,
                            B.`nodeType` as nodeType,
-                    IFNULL(B.`index`, 0) as `index`,
+                    IFNULL(B.`https://uri.etsi.org/ngsi-ld/datasetId`, 0) as `index`,
                     D.targetClass as targetClass,
                     D.propertyPath as propertyPath,
                     D.propertyClass as propertyClass,
@@ -181,7 +181,7 @@ WITH A1 AS (SELECT A.id as this,
                    B.`type` as attr_typ,
                    C.subject as foundVal,
                    C.object as foundClass,
-                   IFNULL(B.`index`, 0) as `index`,
+                   IFNULL(B.`https://uri.etsi.org/ngsi-ld/datasetId`, 0) as `index`,
                    D.propertyPath as propertyPath,
                    D.propertyClass as propertyClass,
                    D.propertyNodeType as propertyNodeType,
@@ -361,30 +361,7 @@ FROM A1
 """  # noqa: E501
 
 
-def translate(shaclefile, knowledgefile, prefixes):
-    """
-    Translate shacl properties into SQL constraints.
-
-    Parameters:
-        filename: filename of SHACL file
-
-    Returns:
-        sql-statement-list: list of plain SQL objects
-        (statementset, tables, views): statementset in yaml format
-
-    """
-    g = Graph()
-    h = Graph()
-    g.parse(shaclefile)
-    h.parse(knowledgefile)
-    g += h
-    sh = Namespace("http://www.w3.org/ns/shacl#")
-    tables = [alerts_bulk_table_object, configs.attributes_table_obj_name,
-              configs.rdf_table_obj_name]
-    views = [configs.attributes_view_obj_name]
-    statementsets = []
-    sqlite = ''
-    # Get all NGSI-LD Relationship
+def create_relationship_sql():
     sql_command_yaml = Template(sql_check_relationship_base).render(
         alerts_bulk_table=alerts_bulk_table,
         target_class="entity",
@@ -431,10 +408,11 @@ def translate(shaclefile, knowledgefile, prefixes):
     )
     sql_command_sqlite += ";"
     sql_command_yaml += ";"
+    return sql_command_sqlite, sql_command_yaml
 
 
-    statementsets.append(sql_command_yaml)
-    sqlite += sql_command_sqlite
+def create_property_sql():
+
     sql_command_yaml = Template(sql_check_property_iri_base).render(
     alerts_bulk_table=alerts_bulk_table,
     target_class="entity",
@@ -457,8 +435,35 @@ def translate(shaclefile, knowledgefile, prefixes):
     )
     sql_command_sqlite += ";"
     sql_command_yaml += ";"
-    sqlite += sql_command_sqlite
-    statementsets.append(sql_command_yaml)
+    return sql_command_sqlite, sql_command_yaml
+
+
+def translate(shaclefile, knowledgefile, prefixes):
+    """
+    Translate shacl properties into SQL constraints.
+
+    Parameters:
+        filename: filename of SHACL file
+
+    Returns:
+        sql-statement-list: list of plain SQL objects
+        (statementset, tables, views): statementset in yaml format
+
+    """
+    g = Graph()
+    h = Graph()
+    g.parse(shaclefile)
+    h.parse(knowledgefile)
+    g += h
+    sh = Namespace("http://www.w3.org/ns/shacl#")
+    tables = [alerts_bulk_table_object, configs.attributes_table_obj_name,
+              configs.rdf_table_obj_name]
+    views = [configs.attributes_view_obj_name]
+    statementsets = []
+    sqlite = ''
+    # Get all NGSI-LD Relationship
+  
+ 
     qres = g.query(sparql_get_all_relationships, initNs=prefixes)    
     relationshp_checks = []
     for row in qres:
@@ -828,4 +833,12 @@ def translate(shaclefile, knowledgefile, prefixes):
     sqlite += utils.add_relationship_checks(relationshp_checks, utils.SQL_DIALECT.SQLITE)
     sqlite += '\n'
     sqlite += utils.add_property_checks(property_checks, utils.SQL_DIALECT.SQLITE)
+    sqlite += '\n'
+    sql_command_sqlite, sql_command_yaml = create_relationship_sql()
+    statementsets.append(sql_command_yaml)
+    sqlite += sql_command_sqlite
+    sqlite += '\n'
+    sql_command_sqlite, sql_command_yaml = create_property_sql()
+    sqlite += sql_command_sqlite
+    statementsets.append(sql_command_yaml)
     return sqlite, (statementsets, tables, views)

@@ -172,8 +172,8 @@ def main():
     print(utils.create_sql_table(table_name, table, primary_key,
                                  utils.SQL_DIALECT.SQLITE), file=sqlitef)
     print('---', file=f)
-    yaml.dump(utils.create_yaml_view(table_name, table, ['id', 'index']), f)
-    print(utils.create_sql_view(table_name, table, ['id', 'index']),
+    yaml.dump(utils.create_yaml_view(table_name, table, ['entityId', 'name', 'https://uri.etsi.org/ngsi-ld/datasetId']), f)
+    print(utils.create_sql_view(table_name, table, ['entityId', 'name', 'https://uri.etsi.org/ngsi-ld/datasetId']),
           file=sqlitef)
     # attributes_insert upsert-table
     table_name = "attributes-insert"
