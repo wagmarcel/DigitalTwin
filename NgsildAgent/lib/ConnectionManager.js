@@ -1,4 +1,18 @@
-// lib/ConnectionManager.js
+/**
+* Copyright (c) 2023 Intel Corporation
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*    http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 'use strict';
 const mqtt = require('mqtt');
@@ -25,7 +39,6 @@ class ConnectionManager {
     this.isLive = false;
     this.deviceInfo = {};
     this.logger = logger;
-    this.authorized = false; // Initialize the property
   }
 
   async init () {
@@ -75,13 +88,13 @@ class ConnectionManager {
     this.client.on('offline', offline);
     this.client.on('error', error);
     this.client.on('end', end);
-    this.authorized = true; // Set the property upon successful connection
+    this.authorized = true;
   }
 
   async publish (topic, message, options) {
     await this.client.publishAsync(topic, JSON.stringify(message), options);
     return 0;
-  }
+  };
 
   connected () {
     if (this.client !== undefined) {
@@ -89,20 +102,19 @@ class ConnectionManager {
     } else {
       return false;
     }
-  }
+  };
 
-  // Rename the method to avoid conflict
-  isAuthorized () {
+  authorized () {
     return this.authorized || false;
   }
 
   createConnectionError (err) {
     let connerr;
     if (err.errno === -111) {
-      connerr = new ConnectionError(0, err.message); // Corrected order
+      connerr = new ConnectionError(err.message, 0);
     }
     if (err.code === 5) {
-      connerr = new ConnectionError(1, err.message); // Corrected order
+      connerr = new ConnectionError(err.message, 1);
     }
     if (connerr) {
       return connerr;
@@ -112,7 +124,7 @@ class ConnectionManager {
 
   updateDeviceInfo (deviceInfo) {
     this.deviceInfo = deviceInfo;
-  }
+  };
 }
 
 module.exports = ConnectionManager;
