@@ -33,13 +33,13 @@ let logger = require('./logger').init();
  * @param data <object> the will be wrote to filename
  */
 module.exports.writeToJson = function (filename, data) {
-  const err = fs.writeFileSync(filename, JSON.stringify(data, null, 4));
-  if (err) {
-    logger.error('The file could not be written ', err);
-    return true;
-  } else {
+  try {
+    fs.writeFileSync(filename, JSON.stringify(data, null, 4));
     logger.info('Object data saved to ' + filename);
     return false;
+  } catch (err) {
+    logger.error('The file could not be written ', err);
+    return true;
   }
 };
 
@@ -52,8 +52,8 @@ module.exports.readFileToJson = function (filename) {
   let objectFile = null;
   if (fs.existsSync(filename)) {
     try {
-      objectFile = fs.readFileSync(filename);
-      objectFile = JSON.parse(objectFile);
+      const fileContent = fs.readFileSync(filename);
+      objectFile = JSON.parse(fileContent);
     } catch (err) {
       logger.error('Improper JSON format:', err.message);
       logger.error(err.stack);
