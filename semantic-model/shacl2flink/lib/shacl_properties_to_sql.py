@@ -448,7 +448,7 @@ def create_property_sql():
     sql_command_sqlite += "\nUNION ALL"
     sql_command_yaml += Template(sql_check_property_minmax).render(
         operator='>',
-         comparison_value = 'minExclusive',
+        comparison_value = 'minExclusive',
         minmaxname="MinExclusive",
         sqlite=False
     )
@@ -457,7 +457,36 @@ def create_property_sql():
             operator='>',
             comparison_value = 'minExclusive',
             minmaxname="MinExclusive",
-            sqlite=True)    
+            sqlite=True)
+    sql_command_yaml += "\nUNION ALL"
+    sql_command_sqlite += "\nUNION ALL"
+    sql_command_yaml += Template(sql_check_property_minmax).render(
+        operator='<',
+        minmaxname="MaxExclusive",
+        comparison_value = 'maxExclusive',
+        sqlite=False
+    )
+    sql_command_sqlite += \
+        Template(sql_check_property_minmax).render(
+            operator='<',
+            minmaxname="MaxExclusive",
+            comparison_value = 'maxExclusive',
+            sqlite=True)
+    sql_command_yaml += "\nUNION ALL"
+    sql_command_sqlite += "\nUNION ALL"
+    sql_command_yaml += Template(sql_check_property_minmax).render(
+        operator='<=',
+        comparison_value= 'maxInclusive',
+        minmaxname="MaxInclusive",
+        sqlite=False
+    )
+    sql_command_sqlite += \
+        Template(sql_check_property_minmax).render(
+            operator='<=',
+            comparison_value='maxInclusive',
+            minmaxname="MaxInclusive",
+            sqlite=True)
+
     sql_command_sqlite += ";"
     sql_command_yaml += ";"
     return sql_command_sqlite, sql_command_yaml
@@ -632,27 +661,7 @@ def translate(shaclefile, knowledgefile, prefixes):
         #                 sqlite=True,
         #                 constraintname="InConstraintComponent",
         #                 ins=ins)
-        #     if max_exclusive is not None:
-        #         sql_command_yaml += "\nUNION ALL"
-        #         sql_command_sqlite += "\nUNION ALL"
-        #         sql_command_yaml += Template(sql_check_property_minmax).render(
-        #             target_class=target_class,
-        #             property_path=property_path,
-        #             operator='<',
-        #             comparison_value=max_exclusive,
-        #             severity=severitycode,
-        #             minmaxname="MaxExclusive",
-        #             sqlite=False
-        #         )
-        #         sql_command_sqlite += \
-        #             Template(sql_check_property_minmax).render(
-        #                 target_class=target_class,
-        #                 property_path=property_path,
-        #                 operator='<',
-        #                 comparison_value=max_exclusive,
-        #                 severity=severitycode,
-        #                 minmaxname="MaxExclusive",
-        #                 sqlite=True)
+
         #     if max_inclusive is not None:
         #         sql_command_yaml += "\nUNION ALL"
         #         sql_command_sqlite += "\nUNION ALL"
