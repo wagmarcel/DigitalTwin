@@ -48,7 +48,7 @@ sparql_get_all_properties = """
 SELECT
     ?nodeshape ?targetclass ?inheritedTargetclass ?propertypath ?mincount ?maxcount ?attributeclass ?nodekind
     ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode
-    (GROUP_CONCAT(CONCAT('"',?in, '"'); separator=',') as ?ins)
+    (GROUP_CONCAT(CONCAT('"', ?in, '"'); separator=',') as ?ins)
 where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?targetclass .
@@ -195,7 +195,8 @@ WITH A1 AS (SELECT A.id as this,
                    D.maxInclusive as maxInclusive,
                    D.minLength as minLength,
                    D.maxLength as maxLength,
-                   D.pattern as pattern 
+                   D.pattern as pattern,
+                   D.ins as ins
                    FROM `{{target_class}}_view` AS A JOIN `propertyChecksTable` as D ON A.`type` = D.targetClass
             LEFT JOIN attributes_view AS B ON D.propertyPath = B.name
             LEFT JOIN {{rdf_table_name}} as C ON C.subject = '<' || B.`https://uri.etsi.org/ngsi-ld/hasValue` || '>'
@@ -341,24 +342,24 @@ FROM A1
 
 sql_check_literal_in = """
 SELECT this AS resource,
- '{{constraintname}}({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
+ '{{constraintname}}('|| `propertyPath` || '[' || CAST( `index` AS STRING) || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
     {%- else %}
     ARRAY ['SHACL Validator'] AS service,
     {%- endif %}
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND val NOT IN ({% for elem in ins %}'{{ elem }}'{{ ", " if not loop.last else "" }}{% endfor %})
-        THEN '{{severity}}'
+    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND NOT ',' || `ins` || ',' LIKE '%,"' || replace(val, '"', '\\\"') || '",%'
+        THEN `severity`
         ELSE 'ok' END AS severity,
     'customer'  customer,
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND val NOT IN ({% for elem in ins %}'{{ elem }}'{{ ", " if not loop.last else "" }}{% endfor %})
-        THEN 'Model validation for Property {{property_path}} failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' is not allowed.'
+    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND NOT ',' || `ins` || ',' LIKE '%,"' || replace(val, '"', '\\\"') || '",%'
+        THEN 'Model validation for Property propertyPath failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' is not allowed.'
         ELSE 'All ok' END as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1
+FROM A1 where `ins` IS NOT NULL
 """  # noqa: E501
 
 
@@ -486,7 +487,34 @@ def create_property_sql():
             comparison_value='maxInclusive',
             minmaxname="MaxInclusive",
             sqlite=True)
-
+    sql_command_yaml += "\nUNION ALL"
+    sql_command_sqlite += "\nUNION ALL"
+    sql_command_yaml += Template(sql_check_property_minmax).render(
+        operator='>=',
+        comparison_value='minInclusive',
+        minmaxname="MinInclusive",
+        sqlite=False
+    )
+    sql_command_sqlite += \
+        Template(sql_check_property_minmax).render(
+            operator='>=',
+            comparison_value='minInclusive',
+            minmaxname="MinInclusive",
+            sqlite=True)
+    sql_command_yaml += "\nUNION ALL"
+    sql_command_sqlite += "\nUNION ALL"
+    sql_command_yaml += \
+        Template(sql_check_literal_in).render(
+            alerts_bulk_table=alerts_bulk_table,
+            sqlite=False,
+            constraintname="InConstraintComponent"
+            )
+    sql_command_sqlite += \
+        Template(sql_check_literal_in).render(
+            alerts_bulk_table=alerts_bulk_table,
+            sqlite=True,
+            constraintname="InConstraintComponent"
+            )
     sql_command_sqlite += ";"
     sql_command_yaml += ";"
     return sql_command_sqlite, sql_command_yaml
@@ -609,11 +637,11 @@ def translate(shaclefile, knowledgefile, prefixes):
         max_length = row.maxlength.toPython() if row.maxlength is not None \
             else None
         pattern = row.pattern.toPython() if row.pattern is not None else None
-        ins = row.ins.toPython() if row.ins is not None else None
-        if ins is not None and ins != '':
-            reader = csv.reader(StringIO(ins))
-            parsed_list = next(reader)
-            ins = [element.replace("'", "\\'") for element in parsed_list]
+        ins = row.ins.toPython() if str(row.ins) != '' else None
+        #if ins is not None and ins != '':
+        #    reader = csv.reader(StringIO(ins))
+        #    parsed_list = next(reader)
+        #    ins = [element.replace("'", "\\'") for element in parsed_list]
         check['targetClass'] = target_class
         check['propertyPath'] = property_path
         check['propertyClass'] = property_class
@@ -629,38 +657,17 @@ def translate(shaclefile, knowledgefile, prefixes):
         check['maxLength'] = max_length
         check['pattern'] = pattern
         check['ins'] = ins
+        ins_is_broken = False
+        if ins:
+            for in_val in ins:
+                if 'Non-string datatype-literal passes as string' in in_val:
+                    ins_is_broken = True
+        if ins_is_broken:
+            print(f"Warning: Conversion of sh:in list failed for nodeshape {nodeshape}. Please check. Currently only string elements in list are supported.")
+            check['ins'] = None
         property_checks.append(check)
-        # if (nodekind == sh.IRI):
- 
 
 
-        # elif (nodekind == sh.Literal):
-
-        #     if min_exclusive is not None:
-
-        #     if ins is not None and len(ins) != 0:
-        #         sql_command_yaml += "\nUNION ALL"
-        #         sql_command_sqlite += "\nUNION ALL"
-        #         sql_command_yaml += \
-        #             Template(sql_check_literal_in).render(
-        #                 alerts_bulk_table=alerts_bulk_table,
-        #                 target_class=target_class,
-        #                 property_path=property_path,
-        #                 property_class=property_class,
-        #                 severity=severitycode,
-        #                 sqlite=False,
-        #                 constraintname="InConstraintComponent",
-        #                 ins=ins)
-        #         sql_command_sqlite += \
-        #             Template(sql_check_literal_in).render(
-        #                 alerts_bulk_table=alerts_bulk_table,
-        #                 target_class=target_class,
-        #                 property_path=property_path,
-        #                 property_class=property_class,
-        #                 severity=severitycode,
-        #                 sqlite=True,
-        #                 constraintname="InConstraintComponent",
-        #                 ins=ins)
 
         #     if max_inclusive is not None:
         #         sql_command_yaml += "\nUNION ALL"
@@ -684,26 +691,7 @@ def translate(shaclefile, knowledgefile, prefixes):
         #                 minmaxname="MaxInclusive",
         #                 sqlite=True)
         #     if min_inclusive is not None:
-        #         sql_command_yaml += "\nUNION ALL"
-        #         sql_command_sqlite += "\nUNION ALL"
-        #         sql_command_yaml += Template(sql_check_property_minmax).render(
-        #             target_class=target_class,
-        #             property_path=property_path,
-        #             operator='>=',
-        #             comparison_value=min_inclusive,
-        #             severity=severitycode,
-        #             minmaxname="MinInclusive",
-        #             sqlite=False
-        #         )
-        #         sql_command_sqlite += \
-        #             Template(sql_check_property_minmax).render(
-        #                 target_class=target_class,
-        #                 property_path=property_path,
-        #                 operator='>=',
-        #                 comparison_value=min_inclusive,
-        #                 severity=severitycode,
-        #                 minmaxname="MinInclusive",
-        #                 sqlite=True)
+
         #     if pattern is not None:
         #         sql_command_yaml += "\nUNION ALL"
         #         sql_command_sqlite += "\nUNION ALL"

@@ -62,7 +62,8 @@ property_checks_table = [{"targetClass": "STRING"},
                                  {"maxInclusive": "DOUBLE"},
                                  {"minLength": "INTEGER"},
                                  {"maxLength": "INTEGER"},
-                                 {"pattern": "STRING"}
+                                 {"pattern": "STRING"},
+                                 {"ins": "STRING"}
                                 ]
 
 def get_timevars(ctx, vars):
@@ -644,6 +645,7 @@ def add_property_checks(checks, sqldialect):
 {check["maxInclusive"]}, \
 {check["minLength"]}, \
 {check["maxLength"]}, \
-{check["pattern"]})'
+{check["pattern"]}, \
+{check["ins"]})'
     statement += ';'
     return statement
