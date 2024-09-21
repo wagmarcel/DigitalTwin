@@ -273,7 +273,7 @@ FROM A1 WHERE propertyNodetype IS NOT NULL
 
 sql_check_property_minmax = """
 SELECT this AS resource,
- '{{minmaxname}}ConstraintComponent({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
+ '{{minmaxname}}ConstraintComponent(' || `propertyPath` || '[' || CAST( `index` AS STRING) || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -281,18 +281,18 @@ SELECT this AS resource,
     ARRAY ['SHACL Validator'] AS service,
     {%- endif %}
     CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND (CAST(val AS DOUBLE) is NULL or NOT (CAST(val as DOUBLE) {{ operator }} {{ comparison_value }}) )
-        THEN '{{severity}}'
+        THEN `severity`
         ELSE 'ok' END AS severity,
     'customer'  customer,
     CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND (CAST(val AS DOUBLE) is NULL)
-        THEN 'Model validation for Property {{property_path}} failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' not comparable with {{ comparison_value }}.'
-        WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND NOT (CAST(val as DOUBLE) {{ operator }} {{ comparison_value }})
-        THEN 'Model validation for Property {{property_path}} failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' is not {{ operator }} {{ comparison_value }}.'
+        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' not comparable with ' || `{{ comparison_value }}` || '.'
+        WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND NOT (CAST(val as DOUBLE) {{ operator }} CAST( `{{ comparison_value }}` as DOUBLE) )
+        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' is not {{ operator }} ' || `{{ comparison_value }}` || '.'
         ELSE 'All ok' END as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1
+FROM A1 where `{{ comparison_value}}` IS NOT NULL
 """  # noqa: E501
 
 sql_check_string_length = """
@@ -444,6 +444,20 @@ def create_property_sql():
         Template(sql_check_property_iri_class).render(
             alerts_bulk_table=alerts_bulk_table,
             sqlite=True)
+    sql_command_yaml += "\nUNION ALL"
+    sql_command_sqlite += "\nUNION ALL"
+    sql_command_yaml += Template(sql_check_property_minmax).render(
+        operator='>',
+         comparison_value = 'minExclusive',
+        minmaxname="MinExclusive",
+        sqlite=False
+    )
+    sql_command_sqlite += \
+        Template(sql_check_property_minmax).render(
+            operator='>',
+            comparison_value = 'minExclusive',
+            minmaxname="MinExclusive",
+            sqlite=True)    
     sql_command_sqlite += ";"
     sql_command_yaml += ";"
     return sql_command_sqlite, sql_command_yaml
@@ -590,83 +604,11 @@ def translate(shaclefile, knowledgefile, prefixes):
         # if (nodekind == sh.IRI):
  
 
-        #     if property_class:
-        #         sql_command_yaml += "\nUNION ALL"
-        #         sql_command_sqlite += "\nUNION ALL"
-        #         sql_command_yaml += \
-        #             Template(sql_check_property_iri_class).render(
-        #                 alerts_bulk_table=alerts_bulk_table,
-        #                 target_class=target_class,
-        #                 property_path=property_path,
-        #                 property_class=property_class,
-        #                 severity=severitycode,
-        #                 sqlite=False)
-        #         sql_command_sqlite += \
-        #             Template(sql_check_property_iri_class).render(
-        #                 alerts_bulk_table=alerts_bulk_table,
-        #                 target_class=target_class,
-        #                 property_path=property_path,
-        #                 property_class=property_class,
-        #                 severity=severitycode,
-        #                 sqlite=True)
+
         # elif (nodekind == sh.Literal):
-        #     sql_command_yaml = Template(sql_check_property_iri_base).render(
-        #         alerts_bulk_table=alerts_bulk_table,
-        #         target_class=target_class,
-        #         property_path=property_path,
-        #         property_class=property_class,
-        #         rdf_table_name=configs.rdf_table_name,
-        #         severity=severitycode,
-        #         sqlite=False
-        #     )
-        #     sql_command_sqlite = Template(sql_check_property_iri_base).render(
-        #         alerts_bulk_table=alerts_bulk_table,
-        #         target_class=target_class,
-        #         property_path=property_path,
-        #         property_class=property_class,
-        #         rdf_table_name=configs.rdf_table_name,
-        #         severity=severitycode,
-        #         sqlite=True
-        #     )
-        #     sql_command_yaml += Template(sql_check_property_nodeType).render(
-        #         alerts_bulk_table=alerts_bulk_table,
-        #         target_class=target_class,
-        #         property_path=property_path,
-        #         severity=severitycode,
-        #         property_nodetype='@value',
-        #         property_nodetype_description='a Literal',
-        #         sqlite=False
-        #     )
-        #     sql_command_sqlite += Template(sql_check_property_nodeType).render(
-        #         alerts_bulk_table=alerts_bulk_table,
-        #         target_class=target_class,
-        #         property_path=property_path,
-        #         severity=severitycode,
-        #         property_nodetype='@value',
-        #         property_nodetype_description='a Literal',
-        #         sqlite=True
-        #     )
+
         #     if min_exclusive is not None:
-        #         sql_command_yaml += "\nUNION ALL"
-        #         sql_command_sqlite += "\nUNION ALL"
-        #         sql_command_yaml += Template(sql_check_property_minmax).render(
-        #             target_class=target_class,
-        #             property_path=property_path,
-        #             operator='>',
-        #             comparison_value=min_exclusive,
-        #             severity=severitycode,
-        #             minmaxname="MinExclusive",
-        #             sqlite=False
-        #         )
-        #         sql_command_sqlite += \
-        #             Template(sql_check_property_minmax).render(
-        #                 target_class=target_class,
-        #                 property_path=property_path,
-        #                 operator='>',
-        #                 comparison_value=min_exclusive,
-        #                 severity=severitycode,
-        #                 minmaxname="MinExclusive",
-        #                 sqlite=True)
+
         #     if ins is not None and len(ins) != 0:
         #         sql_command_yaml += "\nUNION ALL"
         #         sql_command_sqlite += "\nUNION ALL"
