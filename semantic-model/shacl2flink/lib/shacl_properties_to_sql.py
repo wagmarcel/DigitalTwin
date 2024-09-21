@@ -299,24 +299,24 @@ FROM A1 where `{{ comparison_value}}` IS NOT NULL
 
 sql_check_string_length = """
 SELECT this AS resource,
- '{{minmaxname}}ConstraintComponent({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
+ '{{minmaxname}}ConstraintComponent(' || `propertyPath` || '[' || CAST( `index` AS STRING) || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
     {%- else %}
     ARRAY ['SHACL Validator'] AS service,
     {%- endif %}
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND {%- if sqlite %} LENGTH(val) {%- else  %} CHAR_LENGTH(val) {%- endif %} {{ operator }} {{ comparison_value }}
-        THEN '{{severity}}'
+    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND {%- if sqlite %} LENGTH(val) {%- else  %} CHAR_LENGTH(val) {%- endif %} {{ operator }} `{{ comparison_value }}`
+        THEN `severity`
         ELSE 'ok' END AS severity,
     'customer'  customer,
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND {%- if sqlite %} LENGTH(val) {%- else  %} CHAR_LENGTH(val) {%- endif %} {{ operator }} {{ comparison_value }}
-        THEN 'Model validation for Property {{property_path}} failed for ' || this || '. Length of ' || IFNULL(val, 'NULL') || ' is {{ operator }} {{ comparison_value }}.'
+    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND {%- if sqlite %} LENGTH(val) {%- else  %} CHAR_LENGTH(val) {%- endif %} {{ operator }} `{{ comparison_value }}`
+        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Length of ' || IFNULL(val, 'NULL') || ' is {{ operator }} ' || `{{ comparison_value }}` || '.'
         ELSE 'All ok' END as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1
+FROM A1 WHERE `{{ comparison_value }}` IS NOT NULL
 """  # noqa: E501
 
 sql_check_literal_pattern = """
@@ -534,6 +534,34 @@ def create_property_sql():
     sql_command_sqlite += \
         Template(sql_check_property_count).render(
             sqlite=True)
+    sql_command_yaml += "\nUNION ALL"
+    sql_command_sqlite += "\nUNION ALL"
+    sql_command_yaml += Template(sql_check_string_length).render(
+        operator='<',
+        comparison_value="minLength",
+        minmaxname="MinLength",
+        sqlite=False
+    )
+    sql_command_sqlite += Template(sql_check_string_length).render(
+        operator='<',
+        comparison_value="minLength",
+        minmaxname="MinLength",
+        sqlite=True
+    )
+    sql_command_yaml += "\nUNION ALL"
+    sql_command_sqlite += "\nUNION ALL"
+    sql_command_yaml += Template(sql_check_string_length).render(
+        operator='>',
+        comparison_value="maxLength",
+        minmaxname="MaxLength",
+        sqlite=False
+    )
+    sql_command_sqlite += Template(sql_check_string_length).render(
+        operator='>',
+        comparison_value="maxLength",
+        minmaxname="MaxLength",
+        sqlite=True
+    )
 
     sql_command_sqlite += ";"
     sql_command_yaml += ";"
@@ -698,44 +726,8 @@ def translate(shaclefile, knowledgefile, prefixes):
         #           {nodeshape} is neither IRI nor Literal')
         #     continue
 
-        # if min_length is not None:
-        #     sql_command_yaml += "\nUNION ALL"
-        #     sql_command_sqlite += "\nUNION ALL"
-        #     sql_command_yaml += Template(sql_check_string_length).render(
-        #         property_path=property_path,
-        #         operator='<',
-        #         comparison_value=min_length,
-        #         minmaxname="MinLength",
-        #         severity=severitycode,
-        #         sqlite=False
-        #     )
-        #     sql_command_sqlite += Template(sql_check_string_length).render(
-        #         property_path=property_path,
-        #         operator='<',
-        #         comparison_value=min_length,
-        #         minmaxname="MinLength",
-        #         severity=severitycode,
-        #         sqlite=True
-        #     )
-        # if max_length is not None:
-        #     sql_command_yaml += "\nUNION ALL"
-        #     sql_command_sqlite += "\nUNION ALL"
-        #     sql_command_yaml += Template(sql_check_string_length).render(
-        #         property_path=property_path,
-        #         operator='>',
-        #         comparison_value=max_length,
-        #         minmaxname="MaxLength",
-        #         severity=severitycode,
-        #         sqlite=False
-        #     )
-        #     sql_command_sqlite += Template(sql_check_string_length).render(
-        #         property_path=property_path,
-        #         operator='>',
-        #         comparison_value=max_length,
-        #         minmaxname="MaxLength",
-        #         severity=severitycode,
-        #         sqlite=True
-        #     )
+ 
+
         # sql_command_sqlite += ";"
         # sql_command_yaml += ";"
         # sqlite += sql_command_sqlite
