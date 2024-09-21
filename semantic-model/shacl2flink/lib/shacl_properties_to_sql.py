@@ -19,10 +19,11 @@ alerts_bulk_table = configs.alerts_bulk_table_name
 alerts_bulk_table_object = configs.alerts_bulk_table_object_name
 
 sparql_get_all_relationships = """
-SELECT ?nodeshape ?targetclass ?propertypath ?mincount ?maxcount ?attributeclass ?severitycode
+SELECT ?nodeshape ?targetclass ?inheritedTargetclass ?propertypath ?mincount ?maxcount ?attributeclass ?severitycode
 where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?targetclass .
+    ?inheritedTargetclass rdfs:subClassOf* ?targetclass .
     ?nodeshape sh:property [
         sh:path ?propertypath ;
         sh:property [
@@ -40,17 +41,18 @@ where {
         ?severity rdfs:label ?severitycode .
     }
 }
-order by ?targetclass
+order by ?inhertiedTargetclass
 """  # noqa: E501
 
 sparql_get_all_properties = """
 SELECT
-    ?nodeshape ?targetclass ?propertypath ?mincount ?maxcount ?attributeclass ?nodekind
+    ?nodeshape ?targetclass ?inheritedTargetclass ?propertypath ?mincount ?maxcount ?attributeclass ?nodekind
     ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode
     (GROUP_CONCAT(CONCAT('"',?in, '"'); separator=',') as ?ins)
 where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?targetclass .
+    ?inheritedTargetclass rdfs:subClassOf* ?targetclass .
     ?nodeshape sh:property [
         sh:path ?propertypath ;
         sh:property [
@@ -73,9 +75,8 @@ where {
     OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath; sh:severity ?severity ; ] . ?severity rdfs:label ?severitycode .}
 }
 GROUP BY ?nodeshape ?targetclass ?propertypath ?mincount ?maxcount ?attributeclass ?nodekind
-    ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode
-order by ?targetclass
-
+    ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode ?inheritedTargetclass
+order by ?inheritedTargetclass
 """  # noqa: E501
 sql_check_relationship_base = """
             INSERT {% if sqlite %}OR REPlACE{% endif %} INTO {{alerts_bulk_table}}
@@ -470,7 +471,7 @@ def translate(shaclefile, knowledgefile, prefixes):
         check = {}
         #target_class = utils.camelcase_to_snake_case(utils.strip_class(row.targetclass.toPython())) \
         #    if row.targetclass else None
-        target_class = row.targetclass.toPython() \
+        target_class = row.inheritedTargetclass.toPython() \
             if row.targetclass else None
         property_path = row.propertypath.toPython() if row.propertypath \
             else None
@@ -531,7 +532,7 @@ def translate(shaclefile, knowledgefile, prefixes):
     for row in qres:
         check = {}
         nodeshape = row.nodeshape.toPython()
-        target_class = row.targetclass.toPython() \
+        target_class = row.inheritedTargetclass.toPython() \
             if row.targetclass else None
         property_path = row.propertypath.toPython() if row.propertypath \
             else None

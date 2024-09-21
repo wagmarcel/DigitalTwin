@@ -121,8 +121,8 @@ def main(shaclfile, knowledgefile, output_folder='output'):
                                          utils.SQL_DIALECT.SQLITE),
                   file=sqlitef)
             print('---', file=f)
-            yaml.dump(utils.create_yaml_view(table_name, table), f)
-            print(utils.create_sql_view(table_name, table), file=sqlitef)
+            yaml.dump(utils.create_yaml_view(table_name, table, ['id']), f)
+            print(utils.create_sql_view(table_name, table, ['id']), file=sqlitef)
             print('---', file=fk)
             yaml.dump(utils.create_kafka_topic(f'{configs.kafka_topic_ngsi_prefix}.\
 {utils.class_to_obj_name(table_name)}',
@@ -144,7 +144,7 @@ def main(shaclfile, knowledgefile, output_folder='output'):
         base_entity_table.append({"watermark": "FOR `ts` AS `ts`"})
 
         base_entity_tablename = "entity"
-        base_entity_primary_key = ["id"]
+        base_entity_primary_key = None
         print('---', file=f)
         yaml.dump(utils.create_yaml_table(base_entity_tablename, connector,  base_entity_table,
                                               base_entity_primary_key, "relationshipChecksTable", value), f)
@@ -152,9 +152,9 @@ def main(shaclfile, knowledgefile, output_folder='output'):
                                     utils.SQL_DIALECT.SQLITE),
         file=sqlitef)
         print('---', file=f)
-        
-        yaml.dump(utils.create_yaml_view(base_entity_tablename, base_entity_table), f)
-        print(utils.create_sql_view(base_entity_tablename, base_entity_table), file=sqlitef)
+        base_entity_view_primary_key = ['id']
+        yaml.dump(utils.create_yaml_view(base_entity_tablename, base_entity_table, base_entity_view_primary_key), f)
+        print(utils.create_sql_view(base_entity_tablename, base_entity_table, base_entity_view_primary_key), file=sqlitef)
         # Create property_checks and relational_checks
         print('---', file=f)
 
