@@ -94,7 +94,7 @@ sql_check_relationship_base = """
                     D.minCount as minCount,
                     D.severity as severity 
                     FROM {{target_class}}_view AS A JOIN `relationshipChecksTable` as D ON A.`type` = D.targetClass
-                    LEFT JOIN attributes_view AS B ON B.name = D.propertyPath
+                    LEFT JOIN attributes_view AS B ON B.name = D.propertyPath and B.entityId = A.id
                     LEFT JOIN {{target_class}}_view AS C ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
                     WHERE
                         (B.entityId = A.id OR B.entityId IS NULL)
@@ -198,7 +198,7 @@ WITH A1 AS (SELECT A.id as this,
                    D.pattern as pattern,
                    D.ins as ins
                    FROM `{{target_class}}_view` AS A JOIN `propertyChecksTable` as D ON A.`type` = D.targetClass
-            LEFT JOIN attributes_view AS B ON D.propertyPath = B.name
+            LEFT JOIN attributes_view AS B ON D.propertyPath = B.name and B.entityId = A.id
             LEFT JOIN {{rdf_table_name}} as C ON C.subject = '<' || B.`https://uri.etsi.org/ngsi-ld/hasValue` || '>'
                 and C.predicate = '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>' and C.object = '<' || D.propertyClass || '>'
             )
@@ -206,25 +206,26 @@ WITH A1 AS (SELECT A.id as this,
 
 sql_check_property_count = """
 SELECT this AS resource,
-    'CountConstraintComponent({{property_path}})' AS event,
+    'CountConstraintComponent(' || `propertyPath` || ')' AS event,
     'Development' AS environment,
     {%- if sqlite %}
     '[SHACL Validator]' AS service,
     {%- else %}
     ARRAY ['SHACL Validator'] AS service,
     {%- endif %}
-    CASE WHEN typ IS NOT NULL AND ({%- if maxcount %} count(attr_typ) > {{maxcount}} {%- endif %} {%- if mincount and maxcount %} OR {%- endif %} {%- if mincount %} count(attr_typ) < {{mincount}} {%- endif %})
-        THEN '{{severity}}'
+    CASE WHEN typ IS NOT NULL AND (count(attr_typ) > `maxCount` OR  count(attr_typ) < `minCount`)
+        THEN `severity`
         ELSE 'ok' END AS severity,
     'customer'  customer,
-    CASE WHEN typ IS NOT NULL AND ({%- if maxcount %} count(attr_typ) > {{maxcount}} {%- endif %} {%- if mincount and maxcount %} OR {%- endif %} {%- if mincount %} count(attr_typ) < {{mincount}} {%- endif %})
-        THEN 'Model validation for Property {{property_path}} failed for ' || this || '.  Found ' || CAST(count(attr_typ) AS STRING) || ' relationships instead of
-                            [{%- if mincount %}{{mincount}}{%- else %} 0 {%- endif %},{%if maxcount %}{{maxcount}}]{%- else %}[ {%- endif %}!'
+    CASE WHEN typ IS NOT NULL AND (count(attr_typ) > `maxCount` OR count(attr_typ) < `mincount`)
+        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '.  Found ' || CAST(count(attr_typ) AS STRING) || ' relationships instead of
+                            [' || IFNULL('[' || `mincount`, '[0') || IFNULL(`maxcount` || ']', '[') || '!'
         ELSE 'All ok' END as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1 group by this, typ
+FROM A1  WHERE `minCount` is NOT NULL or `maxCount` is NOT NULL
+group by this, typ, propertyPath
 """  # noqa: E501
 
 sql_check_property_iri_class = """
@@ -320,24 +321,24 @@ FROM A1
 
 sql_check_literal_pattern = """
 SELECT this AS resource,
- '{{validationname}}ConstraintComponent({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
+ '{{validationname}}ConstraintComponent(' || `propertyPath` || '[' || CAST( `index` AS STRING) || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
     {%- else %}
     ARRAY ['SHACL Validator'] AS service,
     {%- endif %}
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND {%- if sqlite %} NOT (val REGEXP '{{pattern}}') {%- else  %} NOT REGEXP(val, '{{pattern}}') {%- endif %}
-        THEN '{{severity}}'
+    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND {%- if sqlite %} NOT (val REGEXP `pattern`) {%- else  %} NOT REGEXP(val, `pattern`) {%- endif %}
+        THEN `severity`
         ELSE 'ok' END AS severity,
     'customer'  customer,
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND {%- if sqlite %} NOT (val REGEXP '{{pattern}}') {%- else  %} NOT REGEXP(val, '{{pattern}}') {%- endif %}
-        THEN 'Model validation for Property {{property_path}} failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' does not match pattern {{ pattern }}'
+    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND {%- if sqlite %} NOT (val REGEXP `pattern`) {%- else  %} NOT REGEXP(val, `pattern`) {%- endif %}
+        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' does not match pattern `pattern`'
         ELSE 'All ok' END as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1
+FROM A1 WHERE `pattern` IS NOT NULL
 """  # noqa: E501
 
 sql_check_literal_in = """
@@ -515,6 +516,25 @@ def create_property_sql():
             sqlite=True,
             constraintname="InConstraintComponent"
             )
+    sql_command_yaml += "\nUNION ALL"
+    sql_command_sqlite += "\nUNION ALL"
+    sql_command_yaml += Template(sql_check_literal_pattern).render(
+        validationname="Pattern",
+        sqlite=False
+    )
+    sql_command_sqlite += \
+        Template(sql_check_literal_pattern).render(
+            validationname="Pattern",
+            sqlite=True)
+    sql_command_yaml += "\nUNION ALL"
+    sql_command_sqlite += "\nUNION ALL"
+    sql_command_yaml += Template(sql_check_property_count).render(
+        sqlite=False
+    )
+    sql_command_sqlite += \
+        Template(sql_check_property_count).render(
+            sqlite=True)
+
     sql_command_sqlite += ";"
     sql_command_yaml += ";"
     return sql_command_sqlite, sql_command_yaml
@@ -669,70 +689,15 @@ def translate(shaclefile, knowledgefile, prefixes):
 
 
 
-        #     if max_inclusive is not None:
-        #         sql_command_yaml += "\nUNION ALL"
-        #         sql_command_sqlite += "\nUNION ALL"
-        #         sql_command_yaml += Template(sql_check_property_minmax).render(
-        #             target_class=target_class,
-        #             property_path=property_path,
-        #             operator='<=',
-        #             comparison_value=max_inclusive,
-        #             severity=severitycode,
-        #             minmaxname="MaxInclusive",
-        #             sqlite=False
-        #         )
-        #         sql_command_sqlite += \
-        #             Template(sql_check_property_minmax).render(
-        #                 target_class=target_class,
-        #                 property_path=property_path,
-        #                 operator='<=',
-        #                 comparison_value=max_inclusive,
-        #                 severity=severitycode,
-        #                 minmaxname="MaxInclusive",
-        #                 sqlite=True)
-        #     if min_inclusive is not None:
 
-        #     if pattern is not None:
-        #         sql_command_yaml += "\nUNION ALL"
-        #         sql_command_sqlite += "\nUNION ALL"
-        #         sql_command_yaml += Template(sql_check_literal_pattern).render(
-        #             property_path=property_path,
-        #             pattern=pattern,
-        #             severity=severitycode,
-        #             validationname="Pattern",
-        #             sqlite=False
-        #         )
-        #         sql_command_sqlite += \
-        #             Template(sql_check_literal_pattern).render(
-        #                 property_path=property_path,
-        #                 pattern=pattern,
-        #                 severity=severitycode,
-        #                 validationname="Pattern",
-        #                 sqlite=True)
+
+
 
         # else:
         #     print(f'WARNING: Property path {property_path} of Nodeshape \
         #           {nodeshape} is neither IRI nor Literal')
         #     continue
-        # if mincount > 0 or maxcount:
-        #     sql_command_yaml += "\nUNION ALL"
-        #     sql_command_sqlite += "\nUNION ALL"
-        #     sql_command_yaml += Template(sql_check_property_count).render(
-        #         target_class=target_class,
-        #         property_path=property_path,
-        #         mincount=mincount,
-        #         maxcount=maxcount,
-        #         severity=severitycode,
-        #         sqlite=False
-        #     )
-        #     sql_command_sqlite += \
-        #         Template(sql_check_property_count).render(
-        #             target_class=target_class,
-        #             property_path=property_path,
-        #             mincount=mincount,
-        #             maxcount=maxcount,
-        #             severity=severitycode,
-        #             sqlite=True)
+
         # if min_length is not None:
         #     sql_command_yaml += "\nUNION ALL"
         #     sql_command_sqlite += "\nUNION ALL"
