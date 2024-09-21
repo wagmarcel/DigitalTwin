@@ -199,7 +199,7 @@ WITH A1 AS (SELECT A.id as this,
                    FROM `{{target_class}}_view` AS A JOIN `propertyChecksTable` as D ON A.`type` = D.targetClass
             LEFT JOIN attributes_view AS B ON D.propertyPath = B.name
             LEFT JOIN {{rdf_table_name}} as C ON C.subject = '<' || B.`https://uri.etsi.org/ngsi-ld/hasValue` || '>'
-                and C.predicate = '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>' and C.object = D.propertyPath
+                and C.predicate = '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>' and C.object = '<' || D.propertyClass || '>'
             )
 """  # noqa: E501
 
@@ -228,7 +228,7 @@ FROM A1 group by this, typ
 
 sql_check_property_iri_class = """
 SELECT this AS resource,
-    'DatatypeConstraintComponent({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
+    'DatatypeConstraintComponent(' || `propertyPath` || '[' || CAST( `index` AS STRING) || '])' AS event,
     'Development' AS environment,
     {%- if sqlite %}
     '[SHACL Validator]' AS service,
@@ -236,16 +236,16 @@ SELECT this AS resource,
     ARRAY ['SHACL Validator'] AS service,
     {%- endif %}
     CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND (val is NULL OR foundVal is NULL)
-        THEN '{{severity}}'
+        THEN `severity`
         ELSE 'ok' END AS severity,
     'customer'  customer,
     CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND (val is NULL OR foundVal is NULL)
-        THEN 'Model validation for Property {{property_path}} failed for ' || this || '. Invalid value ' || IFNULL(val, 'NULL') || ' not type of {{property_class}}'
+        THEN 'Model validation for Property `propertyPath` failed for ' || this || '. Invalid value ' || IFNULL(val, 'NULL')  || ' not type of ' || `propertyClass` || '.'
         ELSE 'All ok' END as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1
+FROM A1  WHERE propertyNodetype = '@id' and propertyClass IS NOT NULL
 """  # noqa: E501
 
 sql_check_property_nodeType = """
@@ -434,6 +434,16 @@ def create_property_sql():
         alerts_bulk_table=alerts_bulk_table,
         sqlite=True
     )
+    sql_command_yaml += "\nUNION ALL"
+    sql_command_sqlite += "\nUNION ALL"
+    sql_command_yaml += \
+        Template(sql_check_property_iri_class).render(
+            alerts_bulk_table=alerts_bulk_table,
+            sqlite=False)
+    sql_command_sqlite += \
+        Template(sql_check_property_iri_class).render(
+            alerts_bulk_table=alerts_bulk_table,
+            sqlite=True)
     sql_command_sqlite += ";"
     sql_command_yaml += ";"
     return sql_command_sqlite, sql_command_yaml
