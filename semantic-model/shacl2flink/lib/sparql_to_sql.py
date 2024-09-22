@@ -449,12 +449,10 @@ def wrap_sql_construct(ctx, node):
             construct_query += "\nUNION ALL\n"
         entityId_varname = entityId_var.toPython()[1:]
         construct_query += "SELECT DISTINCT "
-        construct_query += f'{bounds[entityId_varname]} || \'\\\' || \'{name}\' as id,\n'  # id
         construct_query += f'{bounds[entityId_varname]} as entityId,\n'  # entityId
         construct_query += f'\'{name}\' as name,\n'  # name
         construct_query += f'\'{node_type}\' as nodeType,\n'  # nodeType
         construct_query += 'CAST(NULL as STRING) as valueType,\n'  # valueType
-        construct_query += '0 as `index`,\n'  # index
         construct_query += f'\'{attribute_type}\' as `type`,\n'
         construct_query += '\'@none\' as `datasetId`,\n'
         construct_query += f"{get_bound_trim_string(ctx, value_var)} as `value`,\n"  # value

@@ -59,7 +59,7 @@ sql_check_sparql_base = """
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
 
-            FROM (SELECT A.this as this_left, B.this as this, * FROM (SELECT id as this from {{targetclass}}_view) as A LEFT JOIN ({{sql_expression}}) as B ON A.this = B.this)
+            FROM (SELECT A.this as this_left, B.this as this, * FROM (SELECT id as this, `type` from {{targetclass}}_view where `type` = '{{type}}') as A LEFT JOIN ({{sql_expression}}) as B ON A.this = B.this)
 """  # noqa E501
 
 
@@ -105,8 +105,9 @@ def translate(shaclfile, knowledgefile, prefixes):
         message = row.message.toPython() if row.message else None
         select = row.select.toPython() if row.select else None
         nodeshape = utils.strip_class(row.nodeshape.toPython()) if row.nodeshape else None
-        targetclass = utils.camelcase_to_snake_case(utils.strip_class(row.targetclass.toPython())) \
-            if row.targetclass else None
+        #targetclass = utils.camelcase_to_snake_case(utils.strip_class(row.targetclass.toPython())) \
+        #    if row.targetclass else None
+        targetclass = f'{configs.kafka_topic_ngsi_prefix_name}'
         severitylabel = row.severitylabel.toPython() if row.severitylabel is not None else 'warning'
         sql_expression, tables = translate_sparql(shaclfile, knowledgefile, select, target_class, g)
         sql_expression_yaml = utils.process_sql_dialect(sql_expression, False)
@@ -115,6 +116,7 @@ def translate(shaclfile, knowledgefile, prefixes):
             alerts_bulk_table=alerts_bulk_table,
             sql_expression=sql_expression_yaml,
             targetclass=targetclass,
+            type=target_class,
             message=add_variables_to_message(message),
             nodeshape=nodeshape,
             severity=severitylabel,
@@ -124,6 +126,7 @@ def translate(shaclfile, knowledgefile, prefixes):
             alerts_bulk_table=alerts_bulk_table,
             sql_expression=sql_expression_sqlite,
             targetclass=targetclass,
+            type=target_class,
             message=add_variables_to_message(message),
             nodeshape=nodeshape,
             severity=severitylabel,
