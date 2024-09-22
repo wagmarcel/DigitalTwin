@@ -90,44 +90,44 @@ def nullify(field):
     return field
 
 
-class DatasetIndexManager:
-    def __init__(self):
-        # Dictionary to store (entity_id, name) -> next available number
-        self.tuple_counts = {}
+# class DatasetIndexManager:
+#     def __init__(self):
+#         # Dictionary to store (entity_id, name) -> next available number
+#         self.tuple_counts = {}
 
-        # Dictionary to store the full (entity_id, name, dataset_id) -> assigned number
-        self.assigned_tuples = {}
+#         # Dictionary to store the full (entity_id, name, dataset_id) -> assigned number
+#         self.assigned_tuples = {}
 
-    def assign_number(self, entity_id, name, dataset_id):
-        # Create a key for the full tuple
-        full_key = (entity_id, name, dataset_id)
+#     def assign_number(self, entity_id, name, dataset_id):
+#         # Create a key for the full tuple
+#         full_key = (entity_id, name, dataset_id)
         
-        # If the full tuple already exists, return the assigned number
-        if full_key in self.assigned_tuples:
-            return self.assigned_tuples[full_key]
+#         # If the full tuple already exists, return the assigned number
+#         if full_key in self.assigned_tuples:
+#             return self.assigned_tuples[full_key]
         
-        # Create a key based on (entity_id, name) to track the next number
-        key = (entity_id, name)
+#         # Create a key based on (entity_id, name) to track the next number
+#         key = (entity_id, name)
 
-        # Check if the (entity_id, name) pair already exists
-        if key in self.tuple_counts:
-            # Increment the number for the next dataset_id
-            next_number = self.tuple_counts[key] + 1
-        else:
-            # If the (entity_id, name) pair does not exist, start counting from 1
-            next_number = 1
+#         # Check if the (entity_id, name) pair already exists
+#         if key in self.tuple_counts:
+#             # Increment the number for the next dataset_id
+#             next_number = self.tuple_counts[key] + 1
+#         else:
+#             # If the (entity_id, name) pair does not exist, start counting from 1
+#             next_number = 1
 
-        # Store the next number in the tuple_counts dictionary for the (entity_id, name) pair
-        self.tuple_counts[key] = next_number
+#         # Store the next number in the tuple_counts dictionary for the (entity_id, name) pair
+#         self.tuple_counts[key] = next_number
         
-        # Assign this number to the full (entity_id, name, dataset_id) tuple
-        self.assigned_tuples[full_key] = next_number
+#         # Assign this number to the full (entity_id, name, dataset_id) tuple
+#         self.assigned_tuples[full_key] = next_number
         
-        # Return the assigned number for the tuple
-        return next_number
+#         # Return the assigned number for the tuple
+#         return next_number
 
 def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
-    datasetIndexManager = DatasetIndexManager()
+    #datasetIndexManager = DatasetIndexManager()
     utils.create_output_folder(output_folder)
     with open(os.path.join(output_folder, "ngsild-models.sqlite"), "w")\
             as sqlitef:
@@ -147,12 +147,12 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
         for entityId, name, type, nodeType, valueType, hasValue, \
                 hasObject, observedAt, index in qres:
             #id = entityId.toPython() + "\\\\" + name.toPython()
-            current_index = None
+            #current_index = None
             if index is None:
                 current_index = 0
                 current_dataset_id = "NULL"
             else:
-                current_index = datasetIndexManager(str(entityId), str(name), str(index))
+                #current_index = datasetIndexManager.assign_number(str(entityId), str(name), str(index))
                 current_dataset_id = f"'{index}'"
             valueType = nullify(valueType)
             hasValue = nullify(hasValue)

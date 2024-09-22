@@ -86,7 +86,7 @@ sql_check_relationship_base = """
                            C.`type` AS entity,
                            B.`type` AS link,
                            B.`nodeType` as nodeType,
-                    IFNULL(B.`https://uri.etsi.org/ngsi-ld/datasetId`, 0) as `index`,
+                    IFNULL(B.`https://uri.etsi.org/ngsi-ld/datasetId`, '0') as `index`,
                     D.targetClass as targetClass,
                     D.propertyPath as propertyPath,
                     D.propertyClass as propertyClass,
@@ -105,7 +105,7 @@ sql_check_relationship_base = """
 
 sql_check_relationship_property_class = """
             SELECT this AS resource,
-                'ClassConstraintComponent(' || `propertyPath` || '[' || CAST( `index` AS STRING) || '])' AS event,
+                'ClassConstraintComponent(' || `propertyPath` || '[' || `index` || '])' AS event,
                 'Development' AS environment,
                 {% if sqlite %}
                 '[SHACL Validator]' AS service,
@@ -152,7 +152,7 @@ sql_check_relationship_property_count = """
 
 sql_check_relationship_nodeType = """
             SELECT this AS resource,
-                'NodeKindConstraintComponent(' || `propertyPath` || ')' AS event,
+                'NodeKindConstraintComponent(' || `propertyPath` || '[' || `index` || '])' AS event,
                 'Development' AS environment,
                 {% if sqlite %}
                 '[SHACL Validator]' AS service,
@@ -182,7 +182,7 @@ WITH A1 AS (SELECT A.id as this,
                    B.`type` as attr_typ,
                    C.subject as foundVal,
                    C.object as foundClass,
-                   IFNULL(B.`https://uri.etsi.org/ngsi-ld/datasetId`, 0) as `index`,
+                   IFNULL(B.`https://uri.etsi.org/ngsi-ld/datasetId`, '0') as `index`,
                    D.propertyPath as propertyPath,
                    D.propertyClass as propertyClass,
                    D.propertyNodeType as propertyNodeType,
@@ -230,7 +230,7 @@ group by this, typ, propertyPath
 
 sql_check_property_iri_class = """
 SELECT this AS resource,
-    'DatatypeConstraintComponent(' || `propertyPath` || '[' || CAST( `index` AS STRING) || '])' AS event,
+    'DatatypeConstraintComponent(' || `propertyPath` || '[' || `index` || '])' AS event,
     'Development' AS environment,
     {%- if sqlite %}
     '[SHACL Validator]' AS service,
@@ -252,7 +252,7 @@ FROM A1  WHERE propertyNodetype = '@id' and propertyClass IS NOT NULL
 
 sql_check_property_nodeType = """
 SELECT this AS resource,
- 'NodeKindConstraintComponent(' || `propertyPath` || '[' || CAST( `index` AS STRING) || '])' AS event,
+ 'NodeKindConstraintComponent(' || `propertyPath` || '[' || `index` || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -275,7 +275,7 @@ FROM A1 WHERE propertyNodetype IS NOT NULL
 
 sql_check_property_minmax = """
 SELECT this AS resource,
- '{{minmaxname}}ConstraintComponent(' || `propertyPath` || '[' || CAST( `index` AS STRING) || '])' AS event,
+ '{{minmaxname}}ConstraintComponent(' || `propertyPath` || '[' || `index` || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -299,7 +299,7 @@ FROM A1 where `{{ comparison_value}}` IS NOT NULL
 
 sql_check_string_length = """
 SELECT this AS resource,
- '{{minmaxname}}ConstraintComponent(' || `propertyPath` || '[' || CAST( `index` AS STRING) || '])' AS event,
+ '{{minmaxname}}ConstraintComponent(' || `propertyPath` || '[' || `index` || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -321,7 +321,7 @@ FROM A1 WHERE `{{ comparison_value }}` IS NOT NULL
 
 sql_check_literal_pattern = """
 SELECT this AS resource,
- '{{validationname}}ConstraintComponent(' || `propertyPath` || '[' || CAST( `index` AS STRING) || '])' AS event,
+ '{{validationname}}ConstraintComponent(' || `propertyPath` || '[' || `index` || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -343,7 +343,7 @@ FROM A1 WHERE `pattern` IS NOT NULL
 
 sql_check_literal_in = """
 SELECT this AS resource,
- '{{constraintname}}('|| `propertyPath` || '[' || CAST( `index` AS STRING) || '])' AS event,
+ '{{constraintname}}('|| `propertyPath` || '[' || `index` || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
