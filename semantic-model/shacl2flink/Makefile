@@ -1,6 +1,6 @@
 SHACL:= ../kms/shacl.ttl
 KNOWLEDGE := ../kms/knowledge.ttl
-MODEL := ../kms/model-example.jsonld
+MODEL := ../kms/model-instance.jsonld
 PYTHON := python3
 LINTER := flake8
 PIP := pip
@@ -19,7 +19,7 @@ build: $(SHACL) $(KNOWLEDGE $(MODEL)
 	$(PYTHON) create_rdf_table.py $(KNOWLEDGE) $(KAFKA_TOPICS)
 	$(PYTHON) create_core_tables.py
 	${PYTHON} create_udfs.py
-	$(PYTHON) create_ngsild_tables.py $(SHACL) $(KNOWLEDGE) $(KAFKA_TOPICS)
+	$(PYTHON) create_ngsild_tables.py $(KAFKA_TOPICS)
 	$(PYTHON) create_ngsild_models.py $(SHACL) $(KNOWLEDGE) $(MODEL)
 	$(PYTHON) create_sql_checks_from_shacl.py $(SHACL) $(KNOWLEDGE)
 
