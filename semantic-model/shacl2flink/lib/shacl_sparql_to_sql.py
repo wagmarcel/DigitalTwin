@@ -34,7 +34,14 @@ where {
         ?severity rdfs:label ?severitylabel .
     }
 }
+"""
 
+sparql_get_all_subclasses = """
+SELECT ?targetclass ?subclass
+where {
+    ?subclass rdfs:subClassOf+ ?targetclass .
+    FILTER( ?subclass != ?targetclass)
+}
 """
 
 sql_check_sparql_base = """
@@ -59,7 +66,7 @@ sql_check_sparql_base = """
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
 
-            FROM (SELECT A.this as this_left, B.this as this, * FROM (SELECT id as this, `type` from {{targetclass}}_view where `type` = '{{type}}') as A LEFT JOIN ({{sql_expression}}) as B ON A.this = B.this)
+            FROM (SELECT A.this as this_left, B.this as this, * FROM (SELECT id as this, `type` from {{targetclass}}_view {{types_constraints}}) as A LEFT JOIN ({{sql_expression}}) as B ON A.this = B.this)
 """  # noqa E501
 
 
@@ -98,7 +105,7 @@ def translate(shaclfile, knowledgefile, prefixes):
     tables_all = []
     statementsets = []
     sqlite = ''
-    # Get all NGSI-LD Relationship
+    # Get all SHACL NODES using SPARQL 
     qres = g.query(sparql_get_all_sparql_nodes, initNs=prefixes)
     for row in qres:
         target_class = row.targetclass
@@ -112,11 +119,18 @@ def translate(shaclfile, knowledgefile, prefixes):
         sql_expression, tables = translate_sparql(shaclfile, knowledgefile, select, target_class, g)
         sql_expression_yaml = utils.process_sql_dialect(sql_expression, False)
         sql_expression_sqlite = utils.process_sql_dialect(sql_expression, True)
+        # Get all superclasses and create the proper "where command"
+        initBindings = {"targetclass": target_class}
+        qres_subclasses = g.query(sparql_get_all_subclasses, initNs=prefixes, initBindings=initBindings)
+        types_constraints = f"WHERE (`type` = '{target_class}'"
+        for row_subclass in qres_subclasses:
+            types_constraints += f" OR `type` = '{row_subclass.subclass}'"
+        types_constraints += ')'
         sql_command_yaml = Template(sql_check_sparql_base).render(
             alerts_bulk_table=alerts_bulk_table,
             sql_expression=sql_expression_yaml,
             targetclass=targetclass,
-            type=target_class,
+            types_constraints=types_constraints,
             message=add_variables_to_message(message),
             nodeshape=nodeshape,
             severity=severitylabel,
@@ -126,7 +140,7 @@ def translate(shaclfile, knowledgefile, prefixes):
             alerts_bulk_table=alerts_bulk_table,
             sql_expression=sql_expression_sqlite,
             targetclass=targetclass,
-            type=target_class,
+            types_constraints=types_constraints,
             message=add_variables_to_message(message),
             nodeshape=nodeshape,
             severity=severitylabel,
