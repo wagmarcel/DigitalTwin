@@ -134,20 +134,20 @@ sql_check_relationship_property_count = """
                 {% else %}
                 ARRAY ['SHACL Validator'] AS service,
                 {% endif %}
-                CASE WHEN typ IS NOT NULL AND (count(link) > `maxCount` OR count(link) < `minCount`)
+                CASE WHEN typ IS NOT NULL AND (count(link) > CAST(`maxCount` AS INTEGER) OR count(link) < CAST(`minCount` AS INTEGER))
                     THEN `severity`
                     ELSE 'ok' END AS severity,
                 'customer'  customer,
-                CASE WHEN typ IS NOT NULL AND (count(link) > `maxCount`  OR count(link) < `mincount`)
+                CASE WHEN typ IS NOT NULL AND (count(link) > CAST(`maxCount` AS INTEGER)  OR count(link) < CAST(`minCount` AS INTEGER))
                     THEN
                         'Model validation for relationship ' || `propertyPath` || 'failed for ' || this || ' . Found ' || CAST(count(link) AS STRING) || ' relationships instead of
-                            [' || `mincount` || ', ' || `maxcount` || ']!'
+                            [' || `minCount` || ', ' || `maxCount` || ']!'
                     ELSE 'All ok' END as `text`
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
             FROM A1 WHERE `minCount` is NOT NULL or `maxCount` is NOT NULL
-            group by this, typ, propertyPath 
+            group by this, typ, propertyPath, maxCount, minCount, severity
 """  # noqa: E501
 
 sql_check_relationship_nodeType = """
@@ -185,7 +185,7 @@ WITH A1 AS (SELECT A.id as this,
                    IFNULL(B.`https://uri.etsi.org/ngsi-ld/datasetId`, '0') as `index`,
                    D.propertyPath as propertyPath,
                    D.propertyClass as propertyClass,
-                   D.propertyNodeType as propertyNodeType,
+                   D.propertyNodetype as propertyNodetype,
                    D.maxCount as maxCount,
                    D.minCount as minCount,
                    D.severity as severity,
@@ -195,7 +195,7 @@ WITH A1 AS (SELECT A.id as this,
                    D.maxInclusive as maxInclusive,
                    D.minLength as minLength,
                    D.maxLength as maxLength,
-                   D.pattern as pattern,
+                   D.`pattern` as `pattern`,
                    D.ins as ins
                    FROM `{{target_class}}_view` AS A JOIN `propertyChecksTable` as D ON A.`type` = D.targetClass
             LEFT JOIN attributes_view AS B ON D.propertyPath = B.name and B.entityId = A.id
@@ -213,19 +213,19 @@ SELECT this AS resource,
     {%- else %}
     ARRAY ['SHACL Validator'] AS service,
     {%- endif %}
-    CASE WHEN typ IS NOT NULL AND (count(attr_typ) > `maxCount` OR  count(attr_typ) < `minCount`)
+    CASE WHEN typ IS NOT NULL AND (count(attr_typ) > CAST(`maxCount` AS INTEGER) OR  count(attr_typ) < CAST(`minCount` AS INTEGER))
         THEN `severity`
         ELSE 'ok' END AS severity,
     'customer'  customer,
-    CASE WHEN typ IS NOT NULL AND (count(attr_typ) > `maxCount` OR count(attr_typ) < `mincount`)
+    CASE WHEN typ IS NOT NULL AND (count(attr_typ) > CAST(`maxCount` AS INTEGER) OR count(attr_typ) < CAST(`minCount` AS STRING))
         THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '.  Found ' || CAST(count(attr_typ) AS STRING) || ' relationships instead of
-                            [' || IFNULL('[' || `mincount`, '[0') || IFNULL(`maxcount` || ']', '[') || '!'
+                            [' || IFNULL('[' || `minCount`, '[0') || IFNULL(`maxCount` || ']', '[') || '!'
         ELSE 'All ok' END as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
 FROM A1  WHERE `minCount` is NOT NULL or `maxCount` is NOT NULL
-group by this, typ, propertyPath
+group by this, typ, propertyPath, minCount, maxCount, severity
 """  # noqa: E501
 
 sql_check_property_iri_class = """
@@ -282,11 +282,11 @@ SELECT this AS resource,
     {%- else %}
     ARRAY ['SHACL Validator'] AS service,
     {%- endif %}
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND (CAST(val AS DOUBLE) is NULL or NOT (CAST(val as DOUBLE) {{ operator }} {{ comparison_value }}) )
+    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND (CAST(val AS DOUBLE) is NULL or NOT (CAST(val as DOUBLE) {{ operator }} CAST(`{{ comparison_value }}` AS DOUBLE)) )
         THEN `severity`
         ELSE 'ok' END AS severity,
     'customer'  customer,
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND (CAST(val AS DOUBLE) is NULL)
+    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND (CAST(val AS DOUBLE) is NULL or NOT (CAST(val as DOUBLE) {{ operator }} CAST(`{{ comparison_value }}` AS DOUBLE)) )
         THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' not comparable with ' || `{{ comparison_value }}` || '.'
         WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND NOT (CAST(val as DOUBLE) {{ operator }} CAST( `{{ comparison_value }}` as DOUBLE) )
         THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' is not {{ operator }} ' || `{{ comparison_value }}` || '.'
@@ -306,11 +306,11 @@ SELECT this AS resource,
     {%- else %}
     ARRAY ['SHACL Validator'] AS service,
     {%- endif %}
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND {%- if sqlite %} LENGTH(val) {%- else  %} CHAR_LENGTH(val) {%- endif %} {{ operator }} `{{ comparison_value }}`
+    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND {%- if sqlite %} LENGTH(val) {%- else  %} CHAR_LENGTH(val) {%- endif %} {{ operator }} CAST(`{{ comparison_value }}` AS INTEGER)
         THEN `severity`
         ELSE 'ok' END AS severity,
     'customer'  customer,
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND {%- if sqlite %} LENGTH(val) {%- else  %} CHAR_LENGTH(val) {%- endif %} {{ operator }} `{{ comparison_value }}`
+    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND {%- if sqlite %} LENGTH(val) {%- else  %} CHAR_LENGTH(val) {%- endif %} {{ operator }} CAST(`{{ comparison_value }}` as INTEGER)
         THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Length of ' || IFNULL(val, 'NULL') || ' is {{ operator }} ' || `{{ comparison_value }}` || '.'
         ELSE 'All ok' END as `text`
         {% if sqlite %}
@@ -333,7 +333,7 @@ SELECT this AS resource,
         ELSE 'ok' END AS severity,
     'customer'  customer,
     CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND {%- if sqlite %} NOT (val REGEXP `pattern`) {%- else  %} NOT REGEXP(val, `pattern`) {%- endif %}
-        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' does not match pattern `pattern`'
+        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' does not match pattern ' || `pattern`
         ELSE 'All ok' END as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
@@ -692,7 +692,7 @@ def translate(shaclefile, knowledgefile, prefixes):
     statementsets.append(sql_command_yaml)
     sqlite += '\n'
     sqlite += utils.add_property_checks(property_checks, utils.SQL_DIALECT.SQLITE)
-    sql_command_yaml = utils.add_property_checks(property_checks, utils.SQL_DIALECT.SQLITE)
+    sql_command_yaml = utils.add_property_checks(property_checks, utils.SQL_DIALECT.SQL)
     statementsets.append(sql_command_yaml)
     sqlite += '\n'
     sql_command_sqlite, sql_command_yaml = create_relationship_sql()

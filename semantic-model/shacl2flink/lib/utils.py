@@ -45,23 +45,23 @@ checks_table_primary_key = ["targetClass", "propertyPath"]
 relationship_checks_table = [{"targetClass": "STRING"},
                                  {"propertyPath": "STRING"},
                                      {"propertyClass": "STRING"},
-                                     {"maxCount": "INTEGER"},
-                                     {"minCount": "INTEGER"},
+                                     {"maxCount": "STRING"},
+                                     {"minCount": "STRING"},
                                      {"severity": "STRING"}
                                     ]
 property_checks_table = [{"targetClass": "STRING"},
                                  {"propertyPath": "STRING"},
                                  {"propertyClass": "STRING"},
                                  {"propertyNodetype": "STRING"},
-                                 {"maxCount": "INTEGER"},
-                                 {"minCount": "INTEGER"},
+                                 {"maxCount": "STRING"},
+                                 {"minCount": "STRING"},
                                  {"severity": "STRING"},
-                                 {"minExclusive": "DOUBLE"},
-                                 {"maxExclusive": "DOUBLE"},
-                                 {"minInclusive": "DOUBLE"},
-                                 {"maxInclusive": "DOUBLE"},
-                                 {"minLength": "INTEGER"},
-                                 {"maxLength": "INTEGER"},
+                                 {"minExclusive": "STRING"},
+                                 {"maxExclusive": "STRING"},
+                                 {"minInclusive": "STRING"},
+                                 {"maxInclusive": "STRING"},
+                                 {"minLength": "STRING"},
+                                 {"maxLength": "STRING"},
                                  {"pattern": "STRING"},
                                  {"ins": "STRING"}
                                 ]
@@ -604,7 +604,7 @@ def add_relationship_checks(checks, sqldialect):
         lcheck = {}
         for k, v  in check.items():
             if v is None:
-               lcheck[k] = 'NULL'
+               lcheck[k] = 'CAST(NULL as STRING)'
             else:
                 lcheck[k] = f"'{v}'"
         if first:
@@ -625,7 +625,7 @@ def add_property_checks(checks, sqldialect):
         lcheck = {}
         for k, v  in check.items():
             if v is None:
-               lcheck[k] = 'NULL'
+               lcheck[k] = 'CAST (NULL as STRING)'
             else:
                 lcheck[k] = f"'{v}'"
         if first:
