@@ -593,7 +593,6 @@ def translate(shaclefile, knowledgefile, prefixes):
     sqlite = ''
     # Get all NGSI-LD Relationship
   
- 
     qres = g.query(sparql_get_all_relationships, initNs=prefixes)    
     relationshp_checks = []
     for row in qres:
@@ -617,42 +616,16 @@ def translate(shaclefile, knowledgefile, prefixes):
         check['minCount'] = mincount
         check['severity'] = severitycode
  
-        # if add_union:
-        #     sql_command_yaml += "\nUNION ALL"
-        #     sql_command_sqlite += "\nUNION ALL"
-        # sql_command_yaml += Template(sql_check_relationship_nodeType).render(
-        #     alerts_bulk_table=alerts_bulk_table,
-        #     target_class=target_class,
-        #     property_path=property_path,
-        #     severity=severitycode,
-        #     property_nodetype='@id',
-        #     property_nodetype_description='an IRI',
-        #     sqlite=False
-        # )
-        # sql_command_sqlite += Template(sql_check_relationship_nodeType).render(
-        #     alerts_bulk_table=alerts_bulk_table,
-        #     target_class=target_class,
-        #     property_path=property_path,
-        #     severity=severitycode,
-        #     property_nodetype='@id',
-        #     property_nodetype_description='an IRI',
-        #     sqlite=True
-        # )
-        #sql_command_sqlite += ";"
-        #sql_command_yaml += ";"
-        #statementsets.append(sql_command_yaml)
-        #sqlite += sql_command_sqlite
-
-        target_class_obj = utils.class_to_obj_name(target_class)
-        target_class_obj = utils.class_to_obj_name(target_class)
-        if target_class_obj not in tables:
-            tables.append(target_class_obj)
-            views.append(target_class_obj + "-view")
-        target_class_obj = \
-            utils.class_to_obj_name(utils.strip_class(property_class))
-        if target_class_obj not in tables:
-            tables.append(target_class_obj)
-            views.append(target_class_obj + "-view")
+        #target_class_obj = utils.class_to_obj_name(target_class)
+        #target_class_obj = utils.class_to_obj_name(target_class)
+        # if target_class_obj not in tables:
+        #     tables.append(target_class_obj)
+        #     views.append(target_class_obj + "-view")
+        # target_class_obj = \
+        #     utils.class_to_obj_name(utils.strip_class(property_class))
+        # if target_class_obj not in tables:
+        #     tables.append(target_class_obj)
+        #     views.append(target_class_obj + "-view")
         relationshp_checks.append(check)
     # Get all NGSI-LD Properties
     qres = g.query(sparql_get_all_properties, initNs=prefixes)
@@ -686,10 +659,7 @@ def translate(shaclefile, knowledgefile, prefixes):
             else None
         pattern = row.pattern.toPython() if row.pattern is not None else None
         ins = row.ins.toPython() if str(row.ins) != '' else None
-        #if ins is not None and ins != '':
-        #    reader = csv.reader(StringIO(ins))
-        #    parsed_list = next(reader)
-        #    ins = [element.replace("'", "\\'") for element in parsed_list]
+
         check['targetClass'] = target_class
         check['propertyPath'] = property_path
         check['propertyClass'] = property_class
@@ -714,32 +684,16 @@ def translate(shaclefile, knowledgefile, prefixes):
             print(f"Warning: Conversion of sh:in list failed for nodeshape {nodeshape}. Please check. Currently only string elements in list are supported.")
             check['ins'] = None
         property_checks.append(check)
-
-
-
-
-
-
-
-        # else:
-        #     print(f'WARNING: Property path {property_path} of Nodeshape \
-        #           {nodeshape} is neither IRI nor Literal')
-        #     continue
-
- 
-
-        # sql_command_sqlite += ";"
-        # sql_command_yaml += ";"
-        # sqlite += sql_command_sqlite
-        # statementsets.append(sql_command_yaml)
-        # target_class_obj = utils.class_to_obj_name(target_class)
-        # if target_class_obj not in tables:
-        #     tables.append(target_class_obj)
-        #     views.append(target_class_obj + "-view")
+    tables.append(configs.kafka_topic_ngsi_prefix_name)
+    views.append(configs.kafka_topic_ngsi_prefix_name + "-view")
     sqlite += '\n'
     sqlite += utils.add_relationship_checks(relationshp_checks, utils.SQL_DIALECT.SQLITE)
+    sql_command_yaml = utils.add_relationship_checks(relationshp_checks, utils.SQL_DIALECT.SQL)
+    statementsets.append(sql_command_yaml)
     sqlite += '\n'
     sqlite += utils.add_property_checks(property_checks, utils.SQL_DIALECT.SQLITE)
+    sql_command_yaml = utils.add_property_checks(property_checks, utils.SQL_DIALECT.SQLITE)
+    statementsets.append(sql_command_yaml)
     sqlite += '\n'
     sql_command_sqlite, sql_command_yaml = create_relationship_sql()
     statementsets.append(sql_command_yaml)
@@ -748,4 +702,6 @@ def translate(shaclefile, knowledgefile, prefixes):
     sql_command_sqlite, sql_command_yaml = create_property_sql()
     sqlite += sql_command_sqlite
     statementsets.append(sql_command_yaml)
+    tables.append(utils.class_to_obj_name(utils.relationship_checks_tablename))
+    tables.append(utils.class_to_obj_name(utils.property_checks_tablename))
     return sqlite, (statementsets, tables, views)

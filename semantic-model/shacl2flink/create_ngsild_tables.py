@@ -79,6 +79,13 @@ def main(output_folder='output'):
                 'json.fail-on-missing-field': False,
                 'json.ignore-parse-errors': True
         }
+        kafka = {
+                    'topic': f'{configs.kafka_topic_ngsi_prefix}',
+                    'properties': {'bootstrap.servers':
+                                    configs.kafka_bootstrap},
+                    'scan.startup.mode': 'latest-offset'
+                }
+
         connector = 'kafka'
         base_entity_table = []
         base_entity_table.append({sq("id"): "STRING"})
@@ -90,7 +97,7 @@ def main(output_folder='output'):
         base_entity_primary_key = None
         print('---', file=f)
         yaml.dump(utils.create_yaml_table(base_entity_tablename, connector,  base_entity_table,
-                                              base_entity_primary_key, "relationshipChecksTable", value), f)
+                                              base_entity_primary_key, kafka, value), f)
         print(utils.create_sql_table(base_entity_tablename, base_entity_table, base_entity_primary_key,
                                     utils.SQL_DIALECT.SQLITE),
         file=sqlitef)
@@ -104,9 +111,9 @@ def main(output_folder='output'):
                                                config), fk)
         # Create property_checks and relational_checks
         print('---', file=f)
-        yaml.dump(utils. create_relationship_check_yaml_table(connector, value), f)
+        yaml.dump(utils. create_relationship_check_yaml_table(connector, kafka, value), f)
         print('---', file=f)
-        yaml.dump(utils.create_property_check_yaml_table(connector, value), f)
+        yaml.dump(utils.create_property_check_yaml_table(connector, kafka, value), f)
         print(utils.create_relationship_check_sql_table(),
               file=sqlitef)
         print(utils.create_property_check_sql_table(),

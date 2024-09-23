@@ -578,17 +578,17 @@ def split_statementsets(statementsets, max_map_size):
 
     return grouped_strings
 
-def create_relationship_check_yaml_table(connector, value):
+def create_relationship_check_yaml_table(connector, kafka, value):
     return create_yaml_table(relationship_checks_tablename, connector, relationship_checks_table,
-                      checks_table_primary_key, "relationshipChecksTable", value)
+                      checks_table_primary_key, kafka, value)
 
 def create_relationship_check_sql_table():
     return create_sql_table(relationship_checks_tablename, relationship_checks_table,  checks_table_primary_key,
                                          SQL_DIALECT.SQLITE)
 
-def create_property_check_yaml_table(connector, value):
+def create_property_check_yaml_table(connector, kafka, value):
     return create_yaml_table(property_checks_tablename, connector,  property_checks_table,
-                                               checks_table_primary_key, "propertyChecksTable", value)
+                                               checks_table_primary_key, kafka, value)
     
 def create_property_check_sql_table():
     return create_sql_table(property_checks_tablename, property_checks_table,  checks_table_primary_key,
@@ -598,20 +598,20 @@ def add_relationship_checks(checks, sqldialect):
     if sqldialect == SQL_DIALECT.SQLITE:
         statement = f'INSERT OR REPLACE INTO {relationship_checks_tablename} VALUES'
     else:
-        print("ToDo: Implement property check for FLINK")
-        exit(1)
+        statement = f'INSERT INTO {relationship_checks_tablename} VALUES'
     first = True
     for check in checks:
+        lcheck = {}
         for k, v  in check.items():
             if v is None:
-               check[k] = 'NULL'
+               lcheck[k] = 'NULL'
             else:
-                check[k] = f"'{v}'"
+                lcheck[k] = f"'{v}'"
         if first:
             first = False
         else:
             statement += ', '
-        statement += f'({check["targetClass"]}, {check["propertyPath"]}, {check["propertyClass"]}, {check["maxCount"]}, {check["minCount"]}, {check["severity"]})'
+        statement += f'({lcheck["targetClass"]}, {lcheck["propertyPath"]}, {lcheck["propertyClass"]}, {lcheck["maxCount"]}, {lcheck["minCount"]}, {lcheck["severity"]})'
     statement += ';'
     return statement
 
@@ -619,33 +619,33 @@ def add_property_checks(checks, sqldialect):
     if sqldialect == SQL_DIALECT.SQLITE:
         statement = f'INSERT OR REPLACE INTO {property_checks_tablename} VALUES'
     else:
-        print("ToDo: Implement property check for FLINK")
-        exit(1)
+        statement = f'INSERT INTO {property_checks_tablename} VALUES'
     first = True
     for check in checks:
+        lcheck = {}
         for k, v  in check.items():
             if v is None:
-               check[k] = 'NULL'
+               lcheck[k] = 'NULL'
             else:
-                check[k] = f"'{v}'"
+                lcheck[k] = f"'{v}'"
         if first:
             first = False
         else:
             statement += ', '
-        statement += f'({check["targetClass"]}, \
-{check["propertyPath"]}, \
-{check["propertyClass"]}, \
-{check["propertyNodetype"]}, \
-{check["maxCount"]}, \
-{check["minCount"]}, \
-{check["severity"]}, \
-{check["minExclusive"]}, \
-{check["maxExclusive"]}, \
-{check["minInclusive"]}, \
-{check["maxInclusive"]}, \
-{check["minLength"]}, \
-{check["maxLength"]}, \
-{check["pattern"]}, \
-{check["ins"]})'
+        statement += f'({lcheck["targetClass"]}, \
+{lcheck["propertyPath"]}, \
+{lcheck["propertyClass"]}, \
+{lcheck["propertyNodetype"]}, \
+{lcheck["maxCount"]}, \
+{lcheck["minCount"]}, \
+{lcheck["severity"]}, \
+{lcheck["minExclusive"]}, \
+{lcheck["maxExclusive"]}, \
+{lcheck["minInclusive"]}, \
+{lcheck["maxInclusive"]}, \
+{lcheck["minLength"]}, \
+{lcheck["maxLength"]}, \
+{lcheck["pattern"]}, \
+{lcheck["ins"]})'
     statement += ';'
     return statement
