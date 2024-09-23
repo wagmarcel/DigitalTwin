@@ -83,12 +83,10 @@ spec:
   name: attributes
   connector: kafka
   fields:
-    - 'id': STRING
     - 'entityId': STRING
     - 'name': STRING
     - 'nodeType': STRING
     - 'valueType': STRING
-    - 'index': INTEGER
     - 'type': STRING
     - 'https://uri.etsi.org/ngsi-ld/datasetId': STRING
     - 'https://uri.etsi.org/ngsi-ld/hasValue': STRING
@@ -113,12 +111,10 @@ spec:
   name: attributes_writeback
   connector: upsert-kafka
   fields:
-  - id: STRING
   - entityId: STRING
   - name: STRING
   - nodeType: STRING
   - valueType: STRING
-  - index: INTEGER
   - type: STRING
   - 'https://uri.etsi.org/ngsi-ld/datasetId': STRING
   - 'https://uri.etsi.org/ngsi-ld/hasValue': STRING
@@ -133,8 +129,9 @@ spec:
     json.fail-on-missing-field: false
     json.ignore-parse-errors: true
   primaryKey:
-  - id
-  - index
+  - entityId
+  - name
+  - "`https://uri.etsi.org/ngsi-ld/datasetId`"
 ---
 apiVersion: industry-fusion.com/v1alpha1
 kind: BeamSqlView
@@ -143,17 +140,17 @@ metadata:
 spec:
   name: attributes_view
   sqlstatement: |
-    SELECT id, entityId, name, nodeType, valueType, index, `type`,
+    SELECT entityId, name, nodeType, valueType, `type`,
            `https://uri.etsi.org/ngsi-ld/datasetId`,
            `https://uri.etsi.org/ngsi-ld/hasValue`,
            `https://uri.etsi.org/ngsi-ld/hasObject`,
            `ts`
     FROM (
       SELECT *,
-      ROW_NUMBER() OVER (PARTITION BY `id`
+      ROW_NUMBER() OVER (PARTITION BY `entityId`, `name`, `https://uri.etsi.org/ngsi-ld/datasetId`
          ORDER BY ts DESC) AS rownum
       FROM `attributes`)
-      WHERE rownum = 1 and entityId is NOT NULL;
+      WHERE rownum = 1;
 ---
 apiVersion: industry-fusion.com/v1alpha2
 kind: BeamSqlTable
@@ -163,12 +160,10 @@ spec:
   name: attributes_insert
   connector: upsert-kafka
   fields:
-  - id: STRING
   - entityId: STRING
   - name: STRING
   - nodeType: STRING
   - valueType: STRING
-  - index: INTEGER
   - type: STRING
   - 'https://uri.etsi.org/ngsi-ld/datasetId': STRING
   - 'https://uri.etsi.org/ngsi-ld/hasValue': STRING
@@ -185,8 +180,9 @@ spec:
     json.fail-on-missing-field: false
     json.ignore-parse-errors: true
   primaryKey:
-  - id
-  - index
+  - entityId
+  - name
+  - '`https://uri.etsi.org/ngsi-ld/datasetId`'
 ---
 apiVersion: industry-fusion.com/v1alpha2
 kind: BeamSqlTable
@@ -196,12 +192,10 @@ spec:
   name: attributes_insert_filter
   connector: kafka
   fields:
-  - id: STRING
   - entityId: STRING
   - name: STRING
   - nodeType: STRING
   - valueType: STRING
-  - index: INTEGER
   - type: STRING
   - 'https://uri.etsi.org/ngsi-ld/datasetId': STRING
   - 'https://uri.etsi.org/ngsi-ld/hasValue': STRING
@@ -225,14 +219,14 @@ metadata:
 spec:
   name: attributes_insert_view
   sqlstatement: |
-    SELECT id, entityId, name, nodeType, valueType, index, `type`,
-           'https://uri.etsi.org/ngsi-ld/datasetId',
+    SELECT entityId, name, nodeType, valueType, `type`,
+           `https://uri.etsi.org/ngsi-ld/datasetId`,
            `https://uri.etsi.org/ngsi-ld/hasValue`,
            `https://uri.etsi.org/ngsi-ld/hasObject`,
            `ts`
     FROM (
       SELECT *,
-      ROW_NUMBER() OVER (PARTITION BY `id`
+      ROW_NUMBER() OVER (PARTITION BY `entityId`, `name`, `https://uri.etsi.org/ngsi-ld/datasetId`
          ORDER BY ts DESC) AS rownum
       FROM `attributes_insert_filter`)
       WHERE rownum = 1 and entityId is NOT NULL;

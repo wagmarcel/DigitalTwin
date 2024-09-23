@@ -42,7 +42,7 @@ spec:
                       from (
                           select  window_start, window_end, B.entityId as id, '"' || B.name || '":[' || LISTAGG(B.indexagg) || ']' as attributeagg
                           from(
-                              select window_start, window_end, entityId, name,
+                              select window_start, window_end, entityId, name, `https://uri.etsi.org/ngsi-ld/datasetId`,
                               '{"observedAt": "' || LAST_VALUE(DATE_FORMAT(A.`ts`,  'yyyy-MM-dd''T''HH:mm:ss.') || CAST(EXTRACT(MILLISECOND from A.`ts`) as STRING)) || 'Z", "type": "'
                                       || LAST_VALUE(A.`type`)
                                       || '", "datasetId": "'
@@ -59,22 +59,22 @@ spec:
                                       || '}' as indexagg
                               FROM TABLE( TUMBLE(TABLE attributes, DESCRIPTOR(ts), INTERVAL {{.Values.flink.ngsildUpdateWindow|squote}} second)) as A
                               WHERE A.entityId IS NOT NULL
-                              GROUP BY A.entityId, A.index, A.`https://uri.etsi.org/ngsi-ld/datasetId`, A.name, window_start, window_end) as B
-                          GROUP BY window_start, window_end, entityId, name
+                              GROUP BY A.entityId, A.name, A.`https://uri.etsi.org/ngsi-ld/datasetId`, window_start, window_end) as B
+                          GROUP BY window_start, window_end, entityId, name, `https://uri.etsi.org/ngsi-ld/datasetId`
                       ) GROUP BY window_start, window_end, id;
         - |-
             /* forward only non-retracted attribute changes
             This is part of the core service */
             insert into attributes_writeback
-            select id, entityId, name, nodeType, valueType, `index`, `type`, `value`, `datasetId`, `object` from
-            (select id, last_value(entityId) as entityId, last_value(name) as name, last_value(nodeType) as nodeType, last_value(valueType) as valueType , `index`, last_value(`type`) as `type`,
-            last_value(`https://uri.etsi.org/ngsi-ld/datasetId`) as `datasetId`,
+            select entityId, name, nodeType, valueType, `type`, `value`, `datasetId`, `object` from
+            (select entityId as entityId, name as name, last_value(nodeType) as nodeType, last_value(valueType) as valueType , last_value(`type`) as `type`,
+            `https://uri.etsi.org/ngsi-ld/datasetId` as `datasetId`,
             last_value(`https://uri.etsi.org/ngsi-ld/hasValue`) as `value`,
             last_value(`https://uri.etsi.org/ngsi-ld/hasObject`) as `object`,
               TUMBLE_START(ts, INTERVAL {{ .Values.flink.attributeInsertWindow |squote }} SECOND),
               TUMBLE_END(ts, INTERVAL {{ .Values.flink.attributeInsertWindow |squote }} SECOND)
             from attributes_insert
-            group by id, `index`, TUMBLE(ts, INTERVAL {{ .Values.flink.attributeInsertWindow| squote }} SECOND));
+            group by entityId, name, `https://uri.etsi.org/ngsi-ld/datasetId`, TUMBLE(ts, INTERVAL {{ .Values.flink.attributeInsertWindow| squote }} SECOND));
 
     tables:
         - alerts
