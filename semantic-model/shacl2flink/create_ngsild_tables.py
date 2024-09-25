@@ -110,10 +110,22 @@ def main(output_folder='output'):
                                                f'{configs.kafka_topic_ngsi_prefix}', configs.kafka_topic_object_label,
                                                config), fk)
         # Create property_checks and relational_checks
+        kafka_relationship_checks = {
+            'topic': utils.relationship_checks_tablename,
+            'properties': {'bootstrap.servers':
+                            configs.kafka_bootstrap},
+            'scan.startup.mode': 'earliest-offset'
+        }
+        kafka_property_checks = {
+            'topic': utils.property_checks_tablename,
+            'properties': {'bootstrap.servers':
+                            configs.kafka_bootstrap},
+            'scan.startup.mode': 'earliest-offset'
+        }
         print('---', file=f)
-        yaml.dump(utils. create_relationship_check_yaml_table(connector, kafka, value), f)
+        yaml.dump(utils. create_relationship_check_yaml_table(connector, kafka_relationship_checks, value), f)
         print('---', file=f)
-        yaml.dump(utils.create_property_check_yaml_table(connector, kafka, value), f)
+        yaml.dump(utils.create_property_check_yaml_table(connector, kafka_property_checks, value), f)
         print(utils.create_relationship_check_sql_table(),
               file=sqlitef)
         print(utils.create_property_check_sql_table(),
