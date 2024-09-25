@@ -189,7 +189,6 @@ def main():
              {'https://uri.etsi.org/ngsi-ld/datasetId': 'STRING'},
              {'https://uri.etsi.org/ngsi-ld/hasValue': 'STRING'},
              {'https://uri.etsi.org/ngsi-ld/hasObject': 'STRING'},
-             {'deleted': 'BOOLEAN'}
              ]
     kafka = {
         'topic': kafka_topic_attributes_insert,
@@ -223,7 +222,6 @@ def main():
              {'https://uri.etsi.org/ngsi-ld/datasetId': 'STRING'},
              {'https://uri.etsi.org/ngsi-ld/hasValue': 'STRING'},
              {'https://uri.etsi.org/ngsi-ld/hasObject': 'STRING'},
-             {'deleted': 'BOOLEAN'},
              {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp'"},
              {'watermark': 'FOR `ts` AS `ts`'}]
     kafka = {
