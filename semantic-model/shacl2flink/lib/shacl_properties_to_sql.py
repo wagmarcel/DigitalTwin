@@ -220,11 +220,11 @@ SELECT this AS resource,
     {%- else %}
     ARRAY ['SHACL Validator'] AS service,
     {%- endif %}
-    CASE WHEN typ IS NOT NULL AND (count(attr_typ) > CAST(`maxCount` AS INTEGER) OR  count(attr_typ) < CAST(`minCount` AS INTEGER))
+    CASE WHEN NOT edeleted AND (count(attr_typ) > CAST(`maxCount` AS INTEGER) OR  count(attr_typ) < CAST(`minCount` AS INTEGER))
         THEN `severity`
         ELSE 'ok' END AS severity,
     'customer'  customer,
-    CASE WHEN typ IS NOT NULL AND (count(attr_typ) > CAST(`maxCount` AS INTEGER) OR count(attr_typ) < CAST(`minCount` AS STRING))
+    CASE WHEN NOT edeleted AND (count(attr_typ) > CAST(`maxCount` AS INTEGER) OR count(attr_typ) < CAST(`minCount` AS STRING))
         THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '.  Found ' || CAST(count(attr_typ) AS STRING) || ' relationships instead of
                             [' || IFNULL('[' || `minCount`, '[0') || IFNULL(`maxCount` || ']', '[') || '!'
         ELSE 'All ok' END as `text`
@@ -244,11 +244,11 @@ SELECT this AS resource,
     {%- else %}
     ARRAY ['SHACL Validator'] AS service,
     {%- endif %}
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND (val is NULL OR foundVal is NULL)
+    CASE WHEN NOT edeleted AND NOT IFNULL(adeleted, false) AND (val is NULL OR foundVal is NULL)
         THEN `severity`
         ELSE 'ok' END AS severity,
     'customer'  customer,
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND (val is NULL OR foundVal is NULL)
+    CASE WHEN NOT edeleted AND NOT IFNULL(adeleted, false) AND (val is NULL OR foundVal is NULL)
         THEN 'Model validation for Property `propertyPath` failed for ' || this || '. Invalid value ' || IFNULL(val, 'NULL')  || ' not type of ' || `propertyClass` || '.'
         ELSE 'All ok' END as `text`
         {% if sqlite %}
@@ -266,11 +266,11 @@ SELECT this AS resource,
     {%- else %}
     ARRAY ['SHACL Validator'] AS service,
     {%- endif %}
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND (nodeType is NULL OR nodeType <> `propertyNodetype`)
+    CASE WHEN NOT edeleted AND NOT IFNULL(adeleted, false) AND (nodeType <> `propertyNodetype`)
         THEN `severity`
         ELSE 'ok' END AS severity,
     'customer'  customer,
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND (nodeType is NULL OR nodeType <> `propertyNodetype`)
+    CASE WHEN NOT edeleted AND NOT IFNULL(adeleted, false) AND (nodeType <> `propertyNodetype`)
         THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Node is not ' || 
             CASE WHEN `propertyNodetype` = '@id' THEN ' an IRI' ELSE 'a Literal' END
         ELSE 'All ok' END as `text`
@@ -289,11 +289,11 @@ SELECT this AS resource,
     {%- else %}
     ARRAY ['SHACL Validator'] AS service,
     {%- endif %}
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND (CAST(val AS DOUBLE) is NULL or NOT (CAST(val as DOUBLE) {{ operator }} CAST(`{{ comparison_value }}` AS DOUBLE)) )
+    CASE WHEN NOT edeleted AND NOT IFNULL(adeleted, false) AND (CAST(val AS DOUBLE) is NULL or NOT (CAST(val as DOUBLE) {{ operator }} CAST(`{{ comparison_value }}` AS DOUBLE)) )
         THEN `severity`
         ELSE 'ok' END AS severity,
     'customer'  customer,
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND (CAST(val AS DOUBLE) is NULL or NOT (CAST(val as DOUBLE) {{ operator }} CAST(`{{ comparison_value }}` AS DOUBLE)) )
+    CASE WHEN NOT edeleted AND NOT IFNULL(adeleted, false) AND (CAST(val AS DOUBLE) is NULL or NOT (CAST(val as DOUBLE) {{ operator }} CAST(`{{ comparison_value }}` AS DOUBLE)) )
         THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' not comparable with ' || `{{ comparison_value }}` || '.'
         WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND NOT (CAST(val as DOUBLE) {{ operator }} CAST( `{{ comparison_value }}` as DOUBLE) )
         THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' is not {{ operator }} ' || `{{ comparison_value }}` || '.'
