@@ -232,7 +232,7 @@ SELECT this AS resource,
         ,CURRENT_TIMESTAMP
         {% endif %}
 FROM A1  WHERE `minCount` is NOT NULL or `maxCount` is NOT NULL
-group by this, typ, propertyPath, minCount, maxCount, severity
+group by this, typ, propertyPath, minCount, maxCount, severity, edeleted
 """  # noqa: E501
 
 sql_check_property_iri_class = """
