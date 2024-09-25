@@ -136,16 +136,16 @@ sql_check_relationship_property_count = """
                 {% else %}
                 ARRAY ['SHACL Validator'] AS service,
                 {% endif %}
-                CASE WHEN NOT edeleted AND (count(link) > CAST(`maxCount` AS INTEGER) 
-                                            OR count(link) < CAST(`minCount` AS INTEGER))
+                CASE WHEN NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) > CAST(`maxCount` AS INTEGER) 
+                                            OR count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) < CAST(`minCount` AS INTEGER))
                     THEN `severity`
                     ELSE 'ok' END AS severity,
                 'customer'  customer,
-                CASE WHEN NOT edeleted AND (count(link) > CAST(`maxCount` AS INTEGER)  
-                                            OR count(link) < CAST(`minCount` AS INTEGER))
+                CASE WHEN NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) > CAST(`maxCount` AS INTEGER)  
+                                            OR count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) < CAST(`minCount` AS INTEGER))
                     THEN
                         'Model validation for relationship ' || `propertyPath` || 'failed for ' || this || ' . Found ' || 
-                            CAST(count(link) AS STRING) || ' relationships instead of
+                            CAST(count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) AS STRING) || ' relationships instead of
                             [' || `minCount` || ', ' || `maxCount` || ']!'
                     ELSE 'All ok' END as `text`
                 {%- if sqlite %}
@@ -220,12 +220,12 @@ SELECT this AS resource,
     {%- else %}
     ARRAY ['SHACL Validator'] AS service,
     {%- endif %}
-    CASE WHEN NOT edeleted AND (count(attr_typ) > CAST(`maxCount` AS INTEGER) OR  count(attr_typ) < CAST(`minCount` AS INTEGER))
+    CASE WHEN NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) > CAST(`maxCount` AS INTEGER) OR  count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) < CAST(`minCount` AS INTEGER))
         THEN `severity`
         ELSE 'ok' END AS severity,
     'customer'  customer,
-    CASE WHEN NOT edeleted AND (count(attr_typ) > CAST(`maxCount` AS INTEGER) OR count(attr_typ) < CAST(`minCount` AS STRING))
-        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '.  Found ' || CAST(count(attr_typ) AS STRING) || ' relationships instead of
+    CASE WHEN NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) > CAST(`maxCount` AS INTEGER) OR count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) < CAST(`minCount` AS STRING))
+        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '.  Found ' || CAST(count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) AS STRING) || ' relationships instead of
                             [' || IFNULL('[' || `minCount`, '[0') || IFNULL(`maxCount` || ']', '[') || '!'
         ELSE 'All ok' END as `text`
         {% if sqlite %}
