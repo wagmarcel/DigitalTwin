@@ -313,11 +313,11 @@ SELECT this AS resource,
     {%- else %}
     ARRAY ['SHACL Validator'] AS service,
     {%- endif %}
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND {%- if sqlite %} LENGTH(val) {%- else  %} CHAR_LENGTH(val) {%- endif %} {{ operator }} CAST(`{{ comparison_value }}` AS INTEGER)
+    CASE WHEN NOT edeleted  AND attr_typ IS NOT NULL AND {%- if sqlite %} LENGTH(val) {%- else  %} CHAR_LENGTH(val) {%- endif %} {{ operator }} CAST(`{{ comparison_value }}` AS INTEGER)
         THEN `severity`
         ELSE 'ok' END AS severity,
     'customer'  customer,
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND {%- if sqlite %} LENGTH(val) {%- else  %} CHAR_LENGTH(val) {%- endif %} {{ operator }} CAST(`{{ comparison_value }}` as INTEGER)
+    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND {%- if sqlite %} LENGTH(val) {%- else  %} CHAR_LENGTH(val) {%- endif %} {{ operator }} CAST(`{{ comparison_value }}` as INTEGER)
         THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Length of ' || IFNULL(val, 'NULL') || ' is {{ operator }} ' || `{{ comparison_value }}` || '.'
         ELSE 'All ok' END as `text`
         {% if sqlite %}
@@ -335,11 +335,11 @@ SELECT this AS resource,
     {%- else %}
     ARRAY ['SHACL Validator'] AS service,
     {%- endif %}
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND {%- if sqlite %} NOT (val REGEXP `pattern`) {%- else  %} NOT REGEXP(val, `pattern`) {%- endif %}
+    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND {%- if sqlite %} NOT (val REGEXP `pattern`) {%- else  %} NOT REGEXP(val, `pattern`) {%- endif %}
         THEN `severity`
         ELSE 'ok' END AS severity,
     'customer'  customer,
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND {%- if sqlite %} NOT (val REGEXP `pattern`) {%- else  %} NOT REGEXP(val, `pattern`) {%- endif %}
+    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND {%- if sqlite %} NOT (val REGEXP `pattern`) {%- else  %} NOT REGEXP(val, `pattern`) {%- endif %}
         THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' does not match pattern ' || `pattern`
         ELSE 'All ok' END as `text`
         {% if sqlite %}
@@ -357,11 +357,11 @@ SELECT this AS resource,
     {%- else %}
     ARRAY ['SHACL Validator'] AS service,
     {%- endif %}
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND NOT ',' || `ins` || ',' LIKE '%,"' || replace(val, '"', '\\\"') || '",%'
+    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND NOT ',' || `ins` || ',' LIKE '%,"' || replace(val, '"', '\\\"') || '",%'
         THEN `severity`
         ELSE 'ok' END AS severity,
     'customer'  customer,
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND NOT ',' || `ins` || ',' LIKE '%,"' || replace(val, '"', '\\\"') || '",%'
+    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND NOT ',' || `ins` || ',' LIKE '%,"' || replace(val, '"', '\\\"') || '",%'
         THEN 'Model validation for Property propertyPath failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' is not allowed.'
         ELSE 'All ok' END as `text`
         {% if sqlite %}
