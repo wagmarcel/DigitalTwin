@@ -231,7 +231,11 @@ module.exports = function DebeziumBridge (conf) {
         const obj = beforeAttrs[key].reduce((accum, element) => {
           const obj = {};
           obj.id = element.id;
+          obj.type = element.type;
+          obj.entityId = element.entityId;
+          obj.name = element.name;
           obj.index = element.index;
+          obj['https://uri.etsi.org/ngsi-ld/datasetId'] = element['https://uri.etsi.org/ngsi-ld/datasetId'];
           accum.push(obj);
           return accum;
         }, []);

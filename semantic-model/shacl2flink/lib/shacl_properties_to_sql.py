@@ -82,41 +82,43 @@ sql_check_relationship_base = """
             INSERT {% if sqlite %}OR REPlACE{% endif %} INTO {{alerts_bulk_table}}
             WITH A1 as (
                     SELECT A.id AS this,
-                           A.`type` as typ,
-                           C.`type` AS entity,
-                           B.`type` AS link,
-                           B.`nodeType` as nodeType,
-                    IFNULL(B.`https://uri.etsi.org/ngsi-ld/datasetId`, '0') as `index`,
-                    D.targetClass as targetClass,
-                    D.propertyPath as propertyPath,
-                    D.propertyClass as propertyClass,
-                    D.maxCount as maxCount,
-                    D.minCount as minCount,
-                    D.severity as severity 
+                        A.`type` as typ,
+                        IFNULL(A.`deleted`, false) as edeleted,
+                        C.`type` AS entity,
+                        B.`type` AS link,
+                        B.`nodeType` as nodeType,
+                        B.`deleted` as `adeleted`,
+                        IFNULL(B.`https://uri.etsi.org/ngsi-ld/datasetId`, '@none') as `index`,
+                        D.targetClass as targetClass,
+                        D.propertyPath as propertyPath,
+                        D.propertyClass as propertyClass,
+                        D.maxCount as maxCount,
+                        D.minCount as minCount,
+                        D.severity as severity 
                     FROM {{target_class}}_view AS A JOIN `relationshipChecksTable` as D ON A.`type` = D.targetClass
                     LEFT JOIN attributes_view AS B ON B.name = D.propertyPath and B.entityId = A.id
                     LEFT JOIN {{target_class}}_view AS C ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
-                    WHERE
-                        (B.entityId = A.id OR B.entityId IS NULL)
-                        AND (B.name = D.propertyPath OR B.name IS NULL)
+                    -- WHERE
+                    --    (B.entityId = A.id OR B.entityId IS NULL)
+                    --    AND (B.name = D.propertyPath OR B.name IS NULL)
 
             )
 """  # noqa: E501
 
 sql_check_relationship_property_class = """
             SELECT this AS resource,
-                'ClassConstraintComponent(' || `propertyPath` || '[' || `index` || '])' AS event,
+                'ClassConstraintComponent(' || `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || '])' AS event,
                 'Development' AS environment,
                 {% if sqlite %}
                 '[SHACL Validator]' AS service,
                 {% else %}
                 ARRAY ['SHACL Validator'] AS service,
                 {% endif %}
-                CASE WHEN typ IS NOT NULL AND link IS NOT NULL AND entity IS NULL THEN `severity`
+                CASE WHEN NOT edeleted AND NOT IFNULL(adeleted, false) AND link IS NOT NULL AND entity IS NULL THEN `severity`
                     ELSE 'ok' END AS severity,
                 'customer'  customer,
 
-                CASE WHEN typ IS NOT NULL AND link IS NOT NULL AND entity IS NULL
+                CASE WHEN NOT edeleted AND NOT IFNULL(adeleted, false) AND link IS NOT NULL AND entity IS NULL
                         THEN 'Model validation for relationship' || `propertyPath` || 'failed for '|| this || '. Relationship not linked to existing entity of type ' ||  `propertyClass` || '.'
                     ELSE 'All ok' END as `text`
                 {%- if sqlite %}
@@ -134,36 +136,39 @@ sql_check_relationship_property_count = """
                 {% else %}
                 ARRAY ['SHACL Validator'] AS service,
                 {% endif %}
-                CASE WHEN typ IS NOT NULL AND (count(link) > CAST(`maxCount` AS INTEGER) OR count(link) < CAST(`minCount` AS INTEGER))
+                CASE WHEN NOT edeleted AND (count(link) > CAST(`maxCount` AS INTEGER) 
+                                            OR count(link) < CAST(`minCount` AS INTEGER))
                     THEN `severity`
                     ELSE 'ok' END AS severity,
                 'customer'  customer,
-                CASE WHEN typ IS NOT NULL AND (count(link) > CAST(`maxCount` AS INTEGER)  OR count(link) < CAST(`minCount` AS INTEGER))
+                CASE WHEN NOT edeleted AND (count(link) > CAST(`maxCount` AS INTEGER)  
+                                            OR count(link) < CAST(`minCount` AS INTEGER))
                     THEN
-                        'Model validation for relationship ' || `propertyPath` || 'failed for ' || this || ' . Found ' || CAST(count(link) AS STRING) || ' relationships instead of
+                        'Model validation for relationship ' || `propertyPath` || 'failed for ' || this || ' . Found ' || 
+                            CAST(count(link) AS STRING) || ' relationships instead of
                             [' || `minCount` || ', ' || `maxCount` || ']!'
                     ELSE 'All ok' END as `text`
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
             FROM A1 WHERE `minCount` is NOT NULL or `maxCount` is NOT NULL
-            group by this, typ, propertyPath, maxCount, minCount, severity
+            group by this, edeleted, propertyPath, maxCount, minCount, severity
 """  # noqa: E501
 
 sql_check_relationship_nodeType = """
             SELECT this AS resource,
-                'NodeKindConstraintComponent(' || `propertyPath` || '[' || `index` || '])' AS event,
+                'NodeKindConstraintComponent(' || `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || '])' AS event,
                 'Development' AS environment,
                 {% if sqlite %}
                 '[SHACL Validator]' AS service,
                 {% else %}
                 ARRAY ['SHACL Validator'] AS service,
                 {% endif %}
-                CASE WHEN typ IS NOT NULL AND link IS NOT NULL AND (nodeType is NULL OR nodeType <> '{{ property_nodetype }}')
+                CASE WHEN NOT edeleted AND NOT IFNULL(`adeleted`, false) AND (nodeType <> '{{ property_nodetype }}')
                     THEN `severity`
                     ELSE 'ok' END AS severity,
                 'customer'  customer,
-                CASE WHEN typ IS NOT NULL AND  link IS NOT NULL AND (nodeType is NULL OR nodeType <> '{{ property_nodetype }}')
+                CASE WHEN NOT edeleted AND NOT IFNULL(`adeleted`, false) AND (nodeType <> '{{ property_nodetype }}')
                     THEN
                         'Model validation for relationship ' || `propertyPath` || ' failed for ' || this || ' . NodeType is '|| nodeType || ' but must be an IRI.'
                     ELSE 'All ok' END as `text`
@@ -177,12 +182,14 @@ sql_check_property_iri_base = """
 INSERT {% if sqlite %} OR REPlACE{% endif %} INTO {{alerts_bulk_table}}
 WITH A1 AS (SELECT A.id as this,
                    A.`type` as typ,
+                   IFNULL(A.`deleted`, false) as edeleted,
                    B.`https://uri.etsi.org/ngsi-ld/hasValue` as val,
                    B.`nodeType` as nodeType,
                    B.`type` as attr_typ,
+                   B.`deleted` as `adeleted`,
                    C.subject as foundVal,
                    C.object as foundClass,
-                   IFNULL(B.`https://uri.etsi.org/ngsi-ld/datasetId`, '0') as `index`,
+                   IFNULL(B.`https://uri.etsi.org/ngsi-ld/datasetId`, '@none') as `index`,
                    D.propertyPath as propertyPath,
                    D.propertyClass as propertyClass,
                    D.propertyNodetype as propertyNodetype,
@@ -230,7 +237,7 @@ group by this, typ, propertyPath, minCount, maxCount, severity
 
 sql_check_property_iri_class = """
 SELECT this AS resource,
-    'DatatypeConstraintComponent(' || `propertyPath` || '[' || `index` || '])' AS event,
+    'DatatypeConstraintComponent(' || `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || '])' AS event,
     'Development' AS environment,
     {%- if sqlite %}
     '[SHACL Validator]' AS service,
@@ -252,7 +259,7 @@ FROM A1  WHERE propertyNodetype = '@id' and propertyClass IS NOT NULL
 
 sql_check_property_nodeType = """
 SELECT this AS resource,
- 'NodeKindConstraintComponent(' || `propertyPath` || '[' || `index` || '])' AS event,
+ 'NodeKindConstraintComponent(' || `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -275,7 +282,7 @@ FROM A1 WHERE propertyNodetype IS NOT NULL
 
 sql_check_property_minmax = """
 SELECT this AS resource,
- '{{minmaxname}}ConstraintComponent(' || `propertyPath` || '[' || `index` || '])' AS event,
+ '{{minmaxname}}ConstraintComponent(' || `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -299,7 +306,7 @@ FROM A1 where `{{ comparison_value}}` IS NOT NULL
 
 sql_check_string_length = """
 SELECT this AS resource,
- '{{minmaxname}}ConstraintComponent(' || `propertyPath` || '[' || `index` || '])' AS event,
+ '{{minmaxname}}ConstraintComponent(' || `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -321,7 +328,7 @@ FROM A1 WHERE `{{ comparison_value }}` IS NOT NULL
 
 sql_check_literal_pattern = """
 SELECT this AS resource,
- '{{validationname}}ConstraintComponent(' || `propertyPath` || '[' || `index` || '])' AS event,
+ '{{validationname}}ConstraintComponent(' || `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -343,7 +350,7 @@ FROM A1 WHERE `pattern` IS NOT NULL
 
 sql_check_literal_in = """
 SELECT this AS resource,
- '{{constraintname}}('|| `propertyPath` || '[' || `index` || '])' AS event,
+ '{{constraintname}}('|| `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,

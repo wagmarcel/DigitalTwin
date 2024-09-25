@@ -170,7 +170,7 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                   name.toPython() +
                   "', '" + nodeType + "', " + valueType + ", '" + type.toPython() + "', " + str(current_dataset_id) +
                   "," + hasValue + ", " +
-                  hasObject + ", " + current_timestamp + ")", end='',
+                  hasObject + ", CAST(NULL AS BOOLEAN), " + current_timestamp + ")", end='',
                   file=sqlitef)
         print(";", file=sqlitef)
 
@@ -193,6 +193,7 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                 tables[key][idstr] = []
                 tables[key][idstr].append(idstr)
                 tables[key][idstr].append(type.toPython())
+                tables[key][idstr].append('CAST(NULL as BOOLEAN)')
                 tables[key][idstr].append('CURRENT_TIMESTAMP')
         #    tables[key][idstr].append(idstr + "\\\\" +
         #                              field.toPython())
@@ -208,7 +209,7 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                     else:
                         print(", ", end='', file=sqlitef)
                     if isinstance(field, str) and not field ==\
-                            'CURRENT_TIMESTAMP':
+                            'CURRENT_TIMESTAMP' and not 'CAST(' in field:
                         print("'" + field + "'", end='', file=sqlitef)
                     else:
                         print(field, end='', file=sqlitef)

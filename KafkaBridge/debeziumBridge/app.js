@@ -179,32 +179,34 @@ const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, delet
   const topicMessages = [];
   // if only updates are detected, no update of entity is needed
   if (!updateOnly) {
-    let subClasses = await getSubClasses(entity.type);
-    if (subClasses.length === 0) {
-      subClasses = [entity.type];
-    }
+    // let subClasses = await getSubClasses(entity.type);
+    // if (subClasses.length === 0) {
+    //   subClasses = [entity.type];
+    // }
     // Now remove type. This has been determined earlier.
     if (removeType) {
       // delete of entities is done by set everything to NULL
-      delete entity.type;
+      //delete entity.type;
+      entity.deleted = true;
     }
 
-    subClasses.forEach((element) => {
+    //subClasses.forEach((element) => {
       const obj = {};
-      const entityTopic = config.debeziumBridge.entityTopicPrefix + '.' + getTopic(element);
+      const entityTopic = config.debeziumBridge.entityTopicPrefix;
       obj.topic = entityTopic;
       obj.messages = [{
         key: genKey,
         value: JSON.stringify(entity)
       }];
       topicMessages.push(obj);
-    });
+    //});
   }
 
   if (deletedAttrs !== null && deletedAttrs !== undefined && Object.keys(deletedAttrs).length > 0) {
     // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
     const deleteMessages = Object.entries(deletedAttrs).flatMap(([key, value]) =>
       value.map(val => {
+        val.deleted = true;
         return { key: genKey, value: JSON.stringify(val) };
       })
     );

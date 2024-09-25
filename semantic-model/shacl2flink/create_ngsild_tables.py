@@ -90,6 +90,7 @@ def main(output_folder='output'):
         base_entity_table = []
         base_entity_table.append({sq("id"): "STRING"})
         base_entity_table.append({sq("type"): "STRING"})
+        base_entity_table.append({sq("deleted"): "BOOLEAN"})
         base_entity_table.append({sq("ts"): "TIMESTAMP(3) METADATA FROM 'timestamp'"})
         base_entity_table.append({"watermark": "FOR `ts` AS `ts`"})
 
