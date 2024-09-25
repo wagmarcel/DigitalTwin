@@ -249,12 +249,12 @@ SELECT this AS resource,
         ELSE 'ok' END AS severity,
     'customer'  customer,
     CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND (val is NULL OR foundVal is NULL)
-        THEN 'Model validation for Property `propertyPath` failed for ' || this || '. Invalid value ' || IFNULL(val, 'NULL')  || ' not type of ' || `propertyClass` || '.'
+        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Invalid value ' || IFNULL(val, 'NULL')  || ' not type of ' || `propertyClass` || '.'
         ELSE 'All ok' END as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1  WHERE propertyNodetype = '@id' and propertyClass IS NOT NULL
+FROM A1  WHERE propertyNodetype = '@id' and propertyClass IS NOT NULL and NOT IFNULL(adeleted, false)
 """  # noqa: E501
 
 sql_check_property_nodeType = """
