@@ -136,16 +136,16 @@ sql_check_relationship_property_count = """
                 {% else %}
                 ARRAY ['SHACL Validator'] AS service,
                 {% endif %}
-                CASE WHEN NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) > CAST(`maxCount` AS INTEGER) 
-                                            OR count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) < CAST(`minCount` AS INTEGER))
+                CASE WHEN NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER) 
+                                            OR count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) < SQL_DIALECT_CAST(`minCount` AS INTEGER))
                     THEN `severity`
                     ELSE 'ok' END AS severity,
                 'customer'  customer,
-                CASE WHEN NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) > CAST(`maxCount` AS INTEGER)  
-                                            OR count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) < CAST(`minCount` AS INTEGER))
+                CASE WHEN NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER)  
+                                            OR count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) < SQL_DIALECT_CAST(`minCount` AS INTEGER))
                     THEN
                         'Model validation for relationship ' || `propertyPath` || 'failed for ' || this || ' . Found ' || 
-                            CAST(count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) AS STRING) || ' relationships instead of
+                            SQL_DIALECT_CAST(count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) AS STRING) || ' relationships instead of
                             [' || `minCount` || ', ' || `maxCount` || ']!'
                     ELSE 'All ok' END as `text`
                 {%- if sqlite %}
@@ -220,12 +220,12 @@ SELECT this AS resource,
     {%- else %}
     ARRAY ['SHACL Validator'] AS service,
     {%- endif %}
-    CASE WHEN NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) > CAST(`maxCount` AS INTEGER) OR  count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) < CAST(`minCount` AS INTEGER))
+    CASE WHEN NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER) OR  count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) < SQL_DIALECT_CAST(`minCount` AS INTEGER))
         THEN `severity`
         ELSE 'ok' END AS severity,
     'customer'  customer,
-    CASE WHEN NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) > CAST(`maxCount` AS INTEGER) OR count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) < CAST(`minCount` AS STRING))
-        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '.  Found ' || CAST(count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) AS STRING) || ' relationships instead of
+    CASE WHEN NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER) OR count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) < SQL_DIALECT_CAST(`minCount` AS STRING))
+        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '.  Found ' || SQL_DIALECT_CAST(count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) AS STRING) || ' relationships instead of
                             [' || IFNULL('[' || `minCount`, '[0') || IFNULL(`maxCount` || ']', '[') || '!'
         ELSE 'All ok' END as `text`
         {% if sqlite %}
@@ -289,13 +289,13 @@ SELECT this AS resource,
     {%- else %}
     ARRAY ['SHACL Validator'] AS service,
     {%- endif %}
-    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND (CAST(val AS DOUBLE) is NULL or NOT (CAST(val as DOUBLE) {{ operator }} CAST(`{{ comparison_value }}` AS DOUBLE)) )
+    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND (SQL_DIALECT_CAST(val AS DOUBLE) is NULL or NOT (SQL_DIALECT_CAST(val as DOUBLE) {{ operator }} SQL_DIALECT_CAST(`{{ comparison_value }}` AS DOUBLE)) )
         THEN `severity`
         ELSE 'ok' END AS severity,
     'customer'  customer,
-    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND (CAST(val AS DOUBLE) is NULL or NOT (CAST(val as DOUBLE) {{ operator }} CAST(`{{ comparison_value }}` AS DOUBLE)) )
+    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND (SQL_DIALECT_CAST(val AS DOUBLE) is NULL or NOT (SQL_DIALECT_CAST(val as DOUBLE) {{ operator }} SQL_DIALECT_CAST(`{{ comparison_value }}` AS DOUBLE)) )
         THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' not comparable with ' || `{{ comparison_value }}` || '.'
-        WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND NOT (CAST(val as DOUBLE) {{ operator }} CAST( `{{ comparison_value }}` as DOUBLE) )
+        WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND NOT (SQL_DIALECT_CAST(val as DOUBLE) {{ operator }} SQL_DIALECT_CAST( `{{ comparison_value }}` as DOUBLE) )
         THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' is not {{ operator }} ' || `{{ comparison_value }}` || '.'
         ELSE 'All ok' END as `text`
         {% if sqlite %}
@@ -313,11 +313,11 @@ SELECT this AS resource,
     {%- else %}
     ARRAY ['SHACL Validator'] AS service,
     {%- endif %}
-    CASE WHEN NOT edeleted  AND attr_typ IS NOT NULL AND {%- if sqlite %} LENGTH(val) {%- else  %} CHAR_LENGTH(val) {%- endif %} {{ operator }} CAST(`{{ comparison_value }}` AS INTEGER)
+    CASE WHEN NOT edeleted  AND attr_typ IS NOT NULL AND {%- if sqlite %} LENGTH(val) {%- else  %} CHAR_LENGTH(val) {%- endif %} {{ operator }} SQL_DIALECT_CAST(`{{ comparison_value }}` AS INTEGER)
         THEN `severity`
         ELSE 'ok' END AS severity,
     'customer'  customer,
-    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND {%- if sqlite %} LENGTH(val) {%- else  %} CHAR_LENGTH(val) {%- endif %} {{ operator }} CAST(`{{ comparison_value }}` as INTEGER)
+    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND {%- if sqlite %} LENGTH(val) {%- else  %} CHAR_LENGTH(val) {%- endif %} {{ operator }} SQL_DIALECT_CAST(`{{ comparison_value }}` as INTEGER)
         THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Length of ' || IFNULL(val, 'NULL') || ' is {{ operator }} ' || `{{ comparison_value }}` || '.'
         ELSE 'All ok' END as `text`
         {% if sqlite %}
@@ -418,6 +418,8 @@ def create_relationship_sql():
     )
     sql_command_sqlite += ";"
     sql_command_yaml += ";"
+    sql_command_sqlite = utils.process_sql_dialect(sql_command_sqlite, True)
+    sql_command_yaml = utils.process_sql_dialect(sql_command_yaml, False)
     return sql_command_sqlite, sql_command_yaml
 
 
@@ -572,6 +574,8 @@ def create_property_sql():
 
     sql_command_sqlite += ";"
     sql_command_yaml += ";"
+    sql_command_sqlite = utils.process_sql_dialect(sql_command_sqlite, True)
+    sql_command_yaml = utils.process_sql_dialect(sql_command_yaml, False)
     return sql_command_sqlite, sql_command_yaml
 
 

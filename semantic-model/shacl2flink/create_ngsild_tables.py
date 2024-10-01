@@ -115,14 +115,22 @@ def main(output_folder='output'):
             'topic': utils.relationship_checks_tablename,
             'properties': {'bootstrap.servers':
                             configs.kafka_bootstrap},
-            'scan.startup.mode': 'earliest-offset'
+            'key.format': 'json'
+
         }
         kafka_property_checks = {
             'topic': utils.property_checks_tablename,
             'properties': {'bootstrap.servers':
                             configs.kafka_bootstrap},
-            'scan.startup.mode': 'earliest-offset'
+            'key.format': 'json'
         }
+        
+        value = {
+                'format': 'json',
+                'json.fail-on-missing-field': False,
+                'json.ignore-parse-errors': True
+        }
+        connector = 'upsert-kafka'
         print('---', file=f)
         yaml.dump(utils. create_relationship_check_yaml_table(connector, kafka_relationship_checks, value), f)
         print('---', file=f)
