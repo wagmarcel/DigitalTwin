@@ -178,7 +178,7 @@ def translate(ctx, elem):
         return utils.format_node_type(elem)
     elif isinstance(elem, Variable):
         try:
-            return utils.unwrap_variables(ctx, elem)
+            return utils.wrap_ngsild_variable(ctx, elem)
         except Exception as e:
             raise utils.SparqlValidationFailed(f"Error while unwrapping variables: {str(e)} \
 while processing {ctx['query']}")
