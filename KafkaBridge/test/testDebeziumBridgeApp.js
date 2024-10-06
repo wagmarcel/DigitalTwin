@@ -95,9 +95,6 @@ describe('Test sendUpdates', function () {
     const deletedAttrs = {
       deleteKey: [{ deleteValueKey: 'deleteValueValue' }]
     };
-    const getSubClasses = function () {
-      return ['klass', 'subklass'];
-    };
     const revert = toTest.__set__('producer', producer);
     toTest.__set__('config', config);
     await sendUpdates({ entity, updatedAttrs, deletedAttrs });
