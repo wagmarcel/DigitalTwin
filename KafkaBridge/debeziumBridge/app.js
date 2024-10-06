@@ -22,8 +22,6 @@ const { Kafka } = require('kafkajs');
 const config = require('../config/config.json');
 const DebeziumBridge = require('../lib/debeziumBridge.js');
 const Logger = require('../lib/logger.js');
-const newEngine = require('@comunica/actor-init-sparql-file').newEngine;
-const iffEngine = newEngine();
 const runningAsMain = require.main === module;
 
 const debeziumBridge = new DebeziumBridge(config);
@@ -93,47 +91,6 @@ const startListener = async function () {
   }
 };
 
-/**
- *
- * @param klass {string} - a RDF klass
- * @returns {array<string>} RDF subclasses of klass, e.g.
- *                          'plasmacutter' => cutter, device
- */
-const getSubClasses = async function (klass) {
-  // TODO: needs caching
-  const queryTerm = `
-    PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-    SELECT ?o WHERE {
-    <${klass}> rdfs:subClassOf* ?o.
-    } LIMIT 100`;
-
-  const result = await iffEngine.query(queryTerm, {
-    sources: config.debeziumBridge.rdfSources
-  });
-  const bindings = await result.bindings();
-  const subClasses = bindings.reduce((accum, element) => { accum.push(element.get('?o').value); return accum; }, []);
-  return subClasses;
-};
-
-/**
- * Converts PascalCase/camelCase to snake_case
- * e.g. PascalCase => pascal_case
- *      camelCase => camel_case
- * @param {*} str string in Pascal/camelCase
- */
-const pascalCaseToSnakeCase = function (str) {
-  return str.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase();
-};
-
-/**
- * returns type-part of uri, e.g. https://test/Device => Device
- * @param topic {string}
- * @returns
- */
-const getTopic = function (topic) {
-  return pascalCaseToSnakeCase(topic.match(/([^/#]*)$/)[0]);
-};
-
 const checkTimestamp = function (val) {
   let isotimestamp = null;
   let timestamp = null;
@@ -186,20 +143,17 @@ const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, delet
     // Now remove type. This has been determined earlier.
     if (removeType) {
       // delete of entities is done by set everything to NULL
-      //delete entity.type;
       entity.deleted = true;
     }
 
-    //subClasses.forEach((element) => {
-      const obj = {};
-      const entityTopic = config.debeziumBridge.entityTopicPrefix;
-      obj.topic = entityTopic;
-      obj.messages = [{
-        key: genKey,
-        value: JSON.stringify(entity)
-      }];
-      topicMessages.push(obj);
-    //});
+    const obj = {};
+    const entityTopic = config.debeziumBridge.entityTopicPrefix;
+    obj.topic = entityTopic;
+    obj.messages = [{
+      key: genKey,
+      value: JSON.stringify(entity)
+    }];
+    topicMessages.push(obj);
   }
 
   if (deletedAttrs !== null && deletedAttrs !== undefined && Object.keys(deletedAttrs).length > 0) {
