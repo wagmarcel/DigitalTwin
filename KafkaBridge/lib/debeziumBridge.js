@@ -386,7 +386,7 @@ module.exports = function DebeziumBridge (conf) {
         'entityId',
         'type',
         'https://uri.etsi.org/ngsi-ld/datasetId',
-        'index',
+        'index'
       ];
       const deletedAttrObj = pickFields(attrObj, fields);
       deletedAttrs[attrName].push(deletedAttrObj);
@@ -394,5 +394,4 @@ module.exports = function DebeziumBridge (conf) {
 
     return { insertedAttrs, updatedAttrs, deletedAttrs };
   };
-
 };

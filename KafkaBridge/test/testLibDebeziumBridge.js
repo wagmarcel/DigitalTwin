@@ -214,7 +214,7 @@ describe('Test diffAttributes', function () {
     const revert = ToTest.__set__('Logger', Logger);
     const debeziumBridge = new ToTest(config);
     const result = debeziumBridge.diffAttributes(beforeAttrs, afterAttrs, 'observedAt');
-    assert.deepEqual(result.updatedAttrs, { attr1: [{ id: 'id3', value: 'value4', index: 0, 'https://uri.etsi.org/ngsi-ld/datasetId': '@none' }]});
+    assert.deepEqual(result.updatedAttrs, { attr1: [{ id: 'id3', value: 'value4', index: 0, 'https://uri.etsi.org/ngsi-ld/datasetId': '@none' }] });
     assert.deepEqual(result.deletedAttrs, { attr2: [{ id: 'id2', index: 0, 'https://uri.etsi.org/ngsi-ld/datasetId': '@none' }] });
     revert();
   });
