@@ -544,9 +544,9 @@ def wrap_ngsild_variable(ctx, var):
             return "'<' || " + bounds[varname] + " || '>'"
         else:
             return "'\"' || " + bounds[varname] + " || '\"'"
-    elif var in entity_variables:
-        raise SparqlValidationFailed(f'Cannot bind enttiy variable {varname} to \
-plain RDF context')
+    #elif var in entity_variables:
+    #    raise SparqlValidationFailed(f'Cannot bind enttiy variable {varname} to \
+#plain RDF context')
     elif var in time_variables:
         if varname in bounds:
             return f"SQL_DIALECT_TIME_TO_MILLISECONDS{{{bounds[varname]}}}"

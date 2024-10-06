@@ -347,7 +347,7 @@ def translate_function(ctx, function):
             else:
                 result = f'SQL_DIALECT_CAST(SQL_DIALECT_STRIP_IRI{{{expression}}} as {cast})'
         else:
-            result = f'SQL_DIALECT_TIME_TO_MILLISECONDS{{{expression}}}'
+            result = f'SQL_DIALECT_TIME_TO_MILLISECONDS{{SQL_DIALECT_STRIP_LITERAL{{{expression}}}}}'
     elif iri in IFA:
         udf = utils.strip_class(iri)
         result = f'{udf}('
