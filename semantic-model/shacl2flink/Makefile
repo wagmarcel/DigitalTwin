@@ -27,8 +27,8 @@ helm: export IFF_HELM=true
 helm: build
 	mkdir -p ${HELM_DIR}
 	rm -rf ${HELM_DIR}/templates 
-	mv ${OUTPUTDIR} ${HELM_DIR}/templates
-	rm -f ${HELM_DIR}/templates/*.sqlite ${HELM_DIR}/templates/core.yaml ${HELM_DIR}/templates/knowledge.yaml
+	cp -rf ${OUTPUTDIR} ${HELM_DIR}/templates
+	rm -f ${HELM_DIR}/templates/*.sqlite ${HELM_DIR}/templates/core.yaml ${HELM_DIR}/templates/knowledge.yaml ${HELM_DIR}/templates/rdf-maps.yaml
 	cp Chart.yaml ${HELM_DIR}
 
 test: requirements-dev.txt
@@ -97,10 +97,11 @@ flink-deploy: clean
 	@echo deploy helm package
 	make helm
 	make disable-strimzi || echo "Can fail"
-	make build || make enable-strimzi
+	# make build || make enable-strimzi
 	kubectl -n $(NAMESPACE) delete -f output/ngsild-kafka.yaml --ignore-not-found || make enable-strimzi
 	kubectl -n $(NAMESPACE) delete -f output/rdf-kafka.yaml --ignore-not-found || make enable-strimzi
 	kubectl -n $(NAMESPACE) delete -f output/knowledge-configmap.yaml --ignore-not-found
+	kubectl -n $(NAMESPACE) delete -f output/rdf-maps.yaml --ignore-not-found
 	cd ../../helm && ./helmfile -f helmfile-shacl.yaml apply || make enable-strimzi
 	make enable-strimzi
 	make test-flink-is-deployed
