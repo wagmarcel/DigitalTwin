@@ -39,32 +39,36 @@ class DnsNameNotCompliant(Exception):
     Exception for non compliant DNS name
     """
 
+
 relationship_checks_tablename = "relationshipChecksTable"
 property_checks_tablename = "propertyChecksTable"
 checks_table_primary_key = ["targetClass", "propertyPath"]
-relationship_checks_table = [{"targetClass": "STRING"},
-                                 {"propertyPath": "STRING"},
-                                     {"propertyClass": "STRING"},
-                                     {"maxCount": "STRING"},
-                                     {"minCount": "STRING"},
-                                     {"severity": "STRING"}
-                                    ]
-property_checks_table = [{"targetClass": "STRING"},
-                                 {"propertyPath": "STRING"},
-                                 {"propertyClass": "STRING"},
-                                 {"propertyNodetype": "STRING"},
-                                 {"maxCount": "STRING"},
-                                 {"minCount": "STRING"},
-                                 {"severity": "STRING"},
-                                 {"minExclusive": "STRING"},
-                                 {"maxExclusive": "STRING"},
-                                 {"minInclusive": "STRING"},
-                                 {"maxInclusive": "STRING"},
-                                 {"minLength": "STRING"},
-                                 {"maxLength": "STRING"},
-                                 {"pattern": "STRING"},
-                                 {"ins": "STRING"}
-                                ]
+relationship_checks_table = [
+    {"targetClass": "STRING"},
+    {"propertyPath": "STRING"},
+    {"propertyClass": "STRING"},
+    {"maxCount": "STRING"},
+    {"minCount": "STRING"},
+    {"severity": "STRING"}
+]
+property_checks_table = [
+    {"targetClass": "STRING"},
+    {"propertyPath": "STRING"},
+    {"propertyClass": "STRING"},
+    {"propertyNodetype": "STRING"},
+    {"maxCount": "STRING"},
+    {"minCount": "STRING"},
+    {"severity": "STRING"},
+    {"minExclusive": "STRING"},
+    {"maxExclusive": "STRING"},
+    {"minInclusive": "STRING"},
+    {"maxInclusive": "STRING"},
+    {"minLength": "STRING"},
+    {"maxLength": "STRING"},
+    {"pattern": "STRING"},
+    {"ins": "STRING"}
+]
+
 
 def get_timevars(ctx, vars):
     """calculate time-attribute of variables
@@ -527,7 +531,6 @@ def wrap_ngsild_variable(ctx, var):
         raise TypeError("NGSI-LD Wrapping of non-variables is not allowed.")
     bounds = ctx['bounds']
     property_variables = ctx['property_variables']
-    entity_variables = ctx['entity_variables']
     time_variables = ctx['time_variables']
     varname = create_varname(var)
     add_aggregate_var_to_context(ctx, varname)
@@ -539,9 +542,6 @@ def wrap_ngsild_variable(ctx, var):
             return "'<' || " + bounds[varname] + " || '>'"
         else:
             return "'\"' || " + bounds[varname] + " || '\"'"
-    #elif var in entity_variables:
-    #    raise SparqlValidationFailed(f'Cannot bind enttiy variable {varname} to \
-#plain RDF context')
     elif var in time_variables:
         if varname in bounds:
             return f"SQL_DIALECT_TIME_TO_MILLISECONDS{{{bounds[varname]}}}"
@@ -573,21 +573,26 @@ def split_statementsets(statementsets, max_map_size):
 
     return grouped_strings
 
+
 def create_relationship_check_yaml_table(connector, kafka, value):
     return create_yaml_table(relationship_checks_tablename, connector, relationship_checks_table,
-                      checks_table_primary_key, kafka, value)
+                             checks_table_primary_key, kafka, value)
+
 
 def create_relationship_check_sql_table():
-    return create_sql_table(relationship_checks_tablename, relationship_checks_table,  checks_table_primary_key,
-                                         SQL_DIALECT.SQLITE)
+    return create_sql_table(relationship_checks_tablename, relationship_checks_table, checks_table_primary_key,
+                            SQL_DIALECT.SQLITE)
+
 
 def create_property_check_yaml_table(connector, kafka, value):
-    return create_yaml_table(property_checks_tablename, connector,  property_checks_table,
-                                               checks_table_primary_key, kafka, value)
-    
+    return create_yaml_table(property_checks_tablename, connector, property_checks_table,
+                             checks_table_primary_key, kafka, value)
+
+
 def create_property_check_sql_table():
-    return create_sql_table(property_checks_tablename, property_checks_table,  checks_table_primary_key,
-                                         SQL_DIALECT.SQLITE)
+    return create_sql_table(property_checks_tablename, property_checks_table, checks_table_primary_key,
+                            SQL_DIALECT.SQLITE)
+
 
 def add_relationship_checks(checks, sqldialect):
     if sqldialect == SQL_DIALECT.SQLITE:
@@ -597,18 +602,20 @@ def add_relationship_checks(checks, sqldialect):
     first = True
     for check in checks:
         lcheck = {}
-        for k, v  in check.items():
+        for k, v in check.items():
             if v is None:
-               lcheck[k] = 'CAST(NULL as STRING)'
+                lcheck[k] = 'CAST(NULL as STRING)'
             else:
                 lcheck[k] = f"'{v}'"
         if first:
             first = False
         else:
             statement += ', '
-        statement += f'({lcheck["targetClass"]}, {lcheck["propertyPath"]}, {lcheck["propertyClass"]}, {lcheck["maxCount"]}, {lcheck["minCount"]}, {lcheck["severity"]})'
+        statement += f'({lcheck["targetClass"]}, {lcheck["propertyPath"]}, {lcheck["propertyClass"]}, \
+{lcheck["maxCount"]}, {lcheck["minCount"]}, {lcheck["severity"]})'
     statement += ';'
     return statement
+
 
 def add_property_checks(checks, sqldialect):
     if sqldialect == SQL_DIALECT.SQLITE:
@@ -618,9 +625,9 @@ def add_property_checks(checks, sqldialect):
     first = True
     for check in checks:
         lcheck = {}
-        for k, v  in check.items():
+        for k, v in check.items():
             if v is None:
-               lcheck[k] = 'CAST (NULL as STRING)'
+                lcheck[k] = 'CAST (NULL as STRING)'
             else:
                 lcheck[k] = f"'{v}'"
         if first:

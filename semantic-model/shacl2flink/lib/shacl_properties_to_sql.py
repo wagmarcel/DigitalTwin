@@ -1,9 +1,7 @@
-from rdflib import Graph, Namespace
+from rdflib import Graph
 from rdflib.namespace import SH
 import os
 import sys
-import csv
-from io import StringIO
 import ruamel.yaml
 from jinja2 import Template
 
@@ -94,7 +92,7 @@ sql_check_relationship_base = """
                         D.propertyClass as propertyClass,
                         D.maxCount as maxCount,
                         D.minCount as minCount,
-                        D.severity as severity 
+                        D.severity as severity
                     FROM {{target_class}}_view AS A JOIN `relationshipChecksTable` as D ON A.`type` = D.targetClass
                     LEFT JOIN attributes_view AS B ON B.name = D.propertyPath and B.entityId = A.id
                     LEFT JOIN {{target_class}}_view AS C ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
@@ -136,15 +134,15 @@ sql_check_relationship_property_count = """
                 {% else %}
                 ARRAY ['SHACL Validator'] AS service,
                 {% endif %}
-                CASE WHEN NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER) 
+                CASE WHEN NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER)
                                             OR count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) < SQL_DIALECT_CAST(`minCount` AS INTEGER))
                     THEN `severity`
                     ELSE 'ok' END AS severity,
                 'customer'  customer,
-                CASE WHEN NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER)  
+                CASE WHEN NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER)
                                             OR count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) < SQL_DIALECT_CAST(`minCount` AS INTEGER))
                     THEN
-                        'Model validation for relationship ' || `propertyPath` || 'failed for ' || this || ' . Found ' || 
+                        'Model validation for relationship ' || `propertyPath` || 'failed for ' || this || ' . Found ' ||
                             SQL_DIALECT_CAST(count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) AS STRING) || ' relationships instead of
                             [' || `minCount` || ', ' || `maxCount` || ']!'
                     ELSE 'All ok' END as `text`
@@ -271,7 +269,7 @@ SELECT this AS resource,
         ELSE 'ok' END AS severity,
     'customer'  customer,
     CASE WHEN NOT edeleted AND NOT IFNULL(adeleted, false) AND (nodeType <> `propertyNodetype`)
-        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Node is not ' || 
+        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Node is not ' ||
             CASE WHEN `propertyNodetype` = '@id' THEN ' an IRI' ELSE 'a Literal' END
         ELSE 'All ok' END as `text`
         {% if sqlite %}
@@ -425,11 +423,12 @@ def create_relationship_sql():
 
 def create_property_sql():
 
-    sql_command_yaml = Template(sql_check_property_iri_base).render(
-    alerts_bulk_table=alerts_bulk_table,
-    target_class="entity",
-    rdf_table_name=configs.rdf_table_name,
-    sqlite=False
+    sql_command_yaml = Template(
+        sql_check_property_iri_base).render(
+        alerts_bulk_table=alerts_bulk_table,
+        target_class="entity",
+        rdf_table_name=configs.rdf_table_name,
+        sqlite=False
     )
     sql_command_sqlite = Template(sql_check_property_iri_base).render(
         alerts_bulk_table=alerts_bulk_table,
@@ -437,9 +436,10 @@ def create_property_sql():
         rdf_table_name=configs.rdf_table_name,
         sqlite=True
     )
-    sql_command_yaml += Template(sql_check_property_nodeType).render(
-    alerts_bulk_table=alerts_bulk_table,
-    sqlite=False
+    sql_command_yaml += Template(
+        sql_check_property_nodeType).render(
+        alerts_bulk_table=alerts_bulk_table,
+        sqlite=False
     )
     sql_command_sqlite += Template(sql_check_property_nodeType).render(
         alerts_bulk_table=alerts_bulk_table,
@@ -459,14 +459,14 @@ def create_property_sql():
     sql_command_sqlite += "\nUNION ALL"
     sql_command_yaml += Template(sql_check_property_minmax).render(
         operator='>',
-        comparison_value = 'minExclusive',
+        comparison_value='minExclusive',
         minmaxname="MinExclusive",
         sqlite=False
     )
     sql_command_sqlite += \
         Template(sql_check_property_minmax).render(
             operator='>',
-            comparison_value = 'minExclusive',
+            comparison_value='minExclusive',
             minmaxname="MinExclusive",
             sqlite=True)
     sql_command_yaml += "\nUNION ALL"
@@ -474,20 +474,20 @@ def create_property_sql():
     sql_command_yaml += Template(sql_check_property_minmax).render(
         operator='<',
         minmaxname="MaxExclusive",
-        comparison_value = 'maxExclusive',
+        comparison_value='maxExclusive',
         sqlite=False
     )
     sql_command_sqlite += \
         Template(sql_check_property_minmax).render(
             operator='<',
             minmaxname="MaxExclusive",
-            comparison_value = 'maxExclusive',
+            comparison_value='maxExclusive',
             sqlite=True)
     sql_command_yaml += "\nUNION ALL"
     sql_command_sqlite += "\nUNION ALL"
     sql_command_yaml += Template(sql_check_property_minmax).render(
         operator='<=',
-        comparison_value= 'maxInclusive',
+        comparison_value='maxInclusive',
         minmaxname="MaxInclusive",
         sqlite=False
     )
@@ -513,18 +513,16 @@ def create_property_sql():
             sqlite=True)
     sql_command_yaml += "\nUNION ALL"
     sql_command_sqlite += "\nUNION ALL"
-    sql_command_yaml += \
-        Template(sql_check_literal_in).render(
-            alerts_bulk_table=alerts_bulk_table,
-            sqlite=False,
-            constraintname="InConstraintComponent"
-            )
-    sql_command_sqlite += \
-        Template(sql_check_literal_in).render(
-            alerts_bulk_table=alerts_bulk_table,
-            sqlite=True,
-            constraintname="InConstraintComponent"
-            )
+    sql_command_yaml += Template(sql_check_literal_in).render(
+        alerts_bulk_table=alerts_bulk_table,
+        sqlite=False,
+        constraintname="InConstraintComponent"
+    )
+    sql_command_sqlite += Template(sql_check_literal_in).render(
+        alerts_bulk_table=alerts_bulk_table,
+        sqlite=True,
+        constraintname="InConstraintComponent"
+    )
     sql_command_yaml += "\nUNION ALL"
     sql_command_sqlite += "\nUNION ALL"
     sql_command_yaml += Template(sql_check_literal_pattern).render(
@@ -596,20 +594,17 @@ def translate(shaclefile, knowledgefile, prefixes):
     g.parse(shaclefile)
     h.parse(knowledgefile)
     g += h
-    sh = Namespace("http://www.w3.org/ns/shacl#")
     tables = [alerts_bulk_table_object, configs.attributes_table_obj_name,
               configs.rdf_table_obj_name]
     views = [configs.attributes_view_obj_name]
     statementsets = []
     sqlite = ''
     # Get all NGSI-LD Relationship
-  
-    qres = g.query(sparql_get_all_relationships, initNs=prefixes)    
+
+    qres = g.query(sparql_get_all_relationships, initNs=prefixes)
     relationshp_checks = []
     for row in qres:
         check = {}
-        #target_class = utils.camelcase_to_snake_case(utils.strip_class(row.targetclass.toPython())) \
-        #    if row.targetclass else None
         target_class = row.inheritedTargetclass.toPython() \
             if row.targetclass else None
         property_path = row.propertypath.toPython() if row.propertypath \
@@ -626,21 +621,9 @@ def translate(shaclefile, knowledgefile, prefixes):
         check['maxCount'] = maxcount
         check['minCount'] = mincount
         check['severity'] = severitycode
- 
-        #target_class_obj = utils.class_to_obj_name(target_class)
-        #target_class_obj = utils.class_to_obj_name(target_class)
-        # if target_class_obj not in tables:
-        #     tables.append(target_class_obj)
-        #     views.append(target_class_obj + "-view")
-        # target_class_obj = \
-        #     utils.class_to_obj_name(utils.strip_class(property_class))
-        # if target_class_obj not in tables:
-        #     tables.append(target_class_obj)
-        #     views.append(target_class_obj + "-view")
         relationshp_checks.append(check)
     # Get all NGSI-LD Properties
     qres = g.query(sparql_get_all_properties, initNs=prefixes)
-    #qres = []
     property_checks = []
     for row in qres:
         check = {}
@@ -692,7 +675,8 @@ def translate(shaclefile, knowledgefile, prefixes):
                 if 'Non-string datatype-literal passes as string' in in_val:
                     ins_is_broken = True
         if ins_is_broken:
-            print(f"Warning: Conversion of sh:in list failed for nodeshape {nodeshape}. Please check. Currently only string elements in list are supported.")
+            print(f"Warning: Conversion of sh:in list failed for nodeshape {nodeshape}. Please check. Currently only \
+string elements in list are supported.")
             check['ins'] = None
         property_checks.append(check)
     tables.append(configs.kafka_topic_ngsi_prefix_name)
