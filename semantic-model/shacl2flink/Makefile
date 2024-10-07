@@ -24,7 +24,7 @@ build: $(SHACL) $(KNOWLEDGE $(MODEL)
 	$(PYTHON) create_sql_checks_from_shacl.py $(SHACL) $(KNOWLEDGE)
 
 helm: export IFF_HELM=true
-helm: build
+helm:
 	mkdir -p ${HELM_DIR}
 	rm -rf ${HELM_DIR}/templates 
 	cp -rf ${OUTPUTDIR} ${HELM_DIR}/templates
@@ -43,6 +43,12 @@ setup: requirements.txt setup-dev
 	echo ".mode column" >> ~/.sqliterc
 	echo ".load /usr/lib/sqlite3/pcre.so" >> ~/.sqliterc
 
+update-rdf-cm: delete-rdf-cm
+	kubectl -n $(NAMESPACE) create -f output/rdf-maps.yaml
+	rm -f ${HELM_DIR}/templates/rdf-maps.yaml
+
+ delete-rdf-cm:
+	kubectl -n $(NAMESPACE) delete configmap -l "shacl-data"="rdf-configmap"
 
 
 setup-dev: requirements-dev.txt
@@ -95,13 +101,14 @@ enable-strimzi:
 
 flink-deploy: clean
 	@echo deploy helm package
+	make build
 	make helm
+	make update-rdf-cm
 	make disable-strimzi || echo "Can fail"
 	# make build || make enable-strimzi
 	kubectl -n $(NAMESPACE) delete -f output/ngsild-kafka.yaml --ignore-not-found || make enable-strimzi
 	kubectl -n $(NAMESPACE) delete -f output/rdf-kafka.yaml --ignore-not-found || make enable-strimzi
 	kubectl -n $(NAMESPACE) delete -f output/knowledge-configmap.yaml --ignore-not-found
-	kubectl -n $(NAMESPACE) delete -f output/rdf-maps.yaml --ignore-not-found
 	cd ../../helm && ./helmfile -f helmfile-shacl.yaml apply || make enable-strimzi
 	make enable-strimzi
 	make test-flink-is-deployed
@@ -109,7 +116,7 @@ flink-deploy: clean
 	kubectl -n $(NAMESPACE) -l "app.kubernetes.io/instance"="kafka-connect" delete pod
 
 
-flink-undeploy:
+flink-undeploy: delete-rdf-cm
 	@echo undeploy helm package
 	cd ../../helm && ./helmfile -f helmfile-shacl.yaml destroy
 	make test-flink-is-undeployed

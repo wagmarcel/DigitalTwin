@@ -298,25 +298,20 @@ def create_sql_view(table_name, table, primary_key=None,
     return sqlstatement
 
 
-def create_configmap(object_name, sqlstatementset):
-    # yaml_cm = {}
-    # yaml_cm['apiVersion'] = 'v1'
-    # yaml_cm['kind'] = 'ConfigMap'
-    # metadata = {}
-    # yaml_cm['metadata'] = metadata
-    # metadata['name'] = object_name
+def create_configmap(object_name, sqlstatementset, labels=None):
     data = {}
-    # yaml_cm['data'] = data
     for index, value in enumerate(sqlstatementset):
         data[index] = value
-    return create_configmap_generic(object_name, data)
+    return create_configmap_generic(object_name, data, labels)
 
 
-def create_configmap_generic(object_name, data):
+def create_configmap_generic(object_name, data, labels=None):
     yaml_cm = {}
     yaml_cm['apiVersion'] = 'v1'
     yaml_cm['kind'] = 'ConfigMap'
     metadata = {}
+    if labels is not None:
+        metadata['labels'] = labels
     yaml_cm['metadata'] = metadata
     metadata['name'] = object_name
     yaml_cm['data'] = data
