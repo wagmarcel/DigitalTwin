@@ -14,8 +14,6 @@
 # limitations under the License.
 #
 
-from rdflib import Graph
-from rdflib.namespace import OWL
 import os
 import sys
 import argparse
@@ -23,7 +21,6 @@ import ruamel.yaml
 import lib.utils as utils
 import lib.configs as configs
 from ruamel.yaml.scalarstring import (SingleQuotedScalarString as sq)
-import owlrl
 
 
 field_query = """
@@ -55,8 +52,6 @@ where {
 
 def parse_args(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='create_ngsild_tables.py')
-    #parser.add_argument('shaclfile', help='Path to the SHACL file')
-    #parser.add_argument('knowledgefile', help='Path to the Knowledge file')
     parsed_args = parser.parse_args(args)
     return parsed_args
 
@@ -64,7 +59,6 @@ def parse_args(args=sys.argv[1:]):
 def main(output_folder='output'):
     yaml = ruamel.yaml.YAML()
     utils.create_output_folder(output_folder)
-
 
     # Kafka topic object for RDF
     config = {}
@@ -75,16 +69,15 @@ def main(output_folder='output'):
 
         # Create "entity"
         value = {
-                'format': 'json',
-                'json.fail-on-missing-field': False,
-                'json.ignore-parse-errors': True
+            'format': 'json',
+            'json.fail-on-missing-field': False,
+            'json.ignore-parse-errors': True
         }
         kafka = {
-                    'topic': f'{configs.kafka_topic_ngsi_prefix}',
-                    'properties': {'bootstrap.servers':
-                                    configs.kafka_bootstrap},
-                    'scan.startup.mode': 'latest-offset'
-                }
+            'topic': f'{configs.kafka_topic_ngsi_prefix}',
+            'properties': {'bootstrap.servers': configs.kafka_bootstrap},
+            'scan.startup.mode': 'latest-offset'
+        }
 
         connector = 'kafka'
         base_entity_table = []
@@ -97,38 +90,38 @@ def main(output_folder='output'):
         base_entity_tablename = configs.kafka_topic_ngsi_prefix_name
         base_entity_primary_key = None
         print('---', file=f)
-        yaml.dump(utils.create_yaml_table(base_entity_tablename, connector,  base_entity_table,
-                                              base_entity_primary_key, kafka, value), f)
+        yaml.dump(utils.create_yaml_table(base_entity_tablename, connector, base_entity_table,
+                                          base_entity_primary_key, kafka, value), f)
         print(utils.create_sql_table(base_entity_tablename, base_entity_table, base_entity_primary_key,
-                                    utils.SQL_DIALECT.SQLITE),
-        file=sqlitef)
+                                     utils.SQL_DIALECT.SQLITE),
+              file=sqlitef)
         print('---', file=f)
         base_entity_view_primary_key = ['id']
         yaml.dump(utils.create_yaml_view(base_entity_tablename, base_entity_table, base_entity_view_primary_key), f)
-        print(utils.create_sql_view(base_entity_tablename, base_entity_table, base_entity_view_primary_key), file=sqlitef)
+        print(utils.create_sql_view(base_entity_tablename, base_entity_table, base_entity_view_primary_key),
+              file=sqlitef)
         print('---', file=fk)
         yaml.dump(utils.create_kafka_topic(f'{configs.kafka_topic_ngsi_prefix}',
-                                               f'{configs.kafka_topic_ngsi_prefix}', configs.kafka_topic_object_label,
-                                               config), fk)
+                                           f'{configs.kafka_topic_ngsi_prefix}', configs.kafka_topic_object_label,
+                                           config),
+                  fk)
         # Create property_checks and relational_checks
         kafka_relationship_checks = {
             'topic': utils.relationship_checks_tablename,
-            'properties': {'bootstrap.servers':
-                            configs.kafka_bootstrap},
+            'properties': {'bootstrap.servers': configs.kafka_bootstrap},
             'key.format': 'json'
 
         }
         kafka_property_checks = {
             'topic': utils.property_checks_tablename,
-            'properties': {'bootstrap.servers':
-                            configs.kafka_bootstrap},
+            'properties': {'bootstrap.servers': configs.kafka_bootstrap},
             'key.format': 'json'
         }
-        
+
         value = {
-                'format': 'json',
-                'json.fail-on-missing-field': False,
-                'json.ignore-parse-errors': True
+            'format': 'json',
+            'json.fail-on-missing-field': False,
+            'json.ignore-parse-errors': True
         }
         connector = 'upsert-kafka'
         print('---', file=f)
@@ -139,6 +132,8 @@ def main(output_folder='output'):
               file=sqlitef)
         print(utils.create_property_check_sql_table(),
               file=sqlitef)
+
+
 if __name__ == '__main__':
     args = parse_args()
     main()
