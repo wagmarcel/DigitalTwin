@@ -145,17 +145,18 @@ def main():
     spec_name = "attributes"
     connector = 'kafka'
     table = [
-             {'entityId': 'STRING'},
-             {'name': 'STRING'},
-             {'nodeType': 'STRING'},
-             {'valueType': 'STRING'},
-             {'type': 'STRING'},
-             {'https://uri.etsi.org/ngsi-ld/datasetId': 'STRING'},
-             {'https://uri.etsi.org/ngsi-ld/hasValue': 'STRING'},
-             {'https://uri.etsi.org/ngsi-ld/hasObject': 'STRING'},
-             {'deleted': 'BOOLEAN'},
-             {'watermark': 'FOR `ts` AS `ts`'},
-             {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp'"}]
+        {'entityId': 'STRING'},
+        {'name': 'STRING'},
+        {'nodeType': 'STRING'},
+        {'valueType': 'STRING'},
+        {'type': 'STRING'},
+        {'https://uri.etsi.org/ngsi-ld/datasetId': 'STRING'},
+        {'https://uri.etsi.org/ngsi-ld/hasValue': 'STRING'},
+        {'https://uri.etsi.org/ngsi-ld/hasObject': 'STRING'},
+        {'deleted': 'BOOLEAN'},
+        {'watermark': 'FOR `ts` AS `ts`'},
+        {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp'"}
+    ]
     primary_key = None
     kafka = {
         'topic': kafka_topic_attributes,
@@ -173,7 +174,8 @@ def main():
     print(utils.create_sql_table(table_name, table, primary_key,
                                  utils.SQL_DIALECT.SQLITE), file=sqlitef)
     print('---', file=f)
-    yaml.dump(utils.create_yaml_view(table_name, table, ['entityId', 'name', 'https://uri.etsi.org/ngsi-ld/datasetId']), f)
+    yaml.dump(utils.create_yaml_view(table_name, table, ['entityId', 'name',
+                                                         'https://uri.etsi.org/ngsi-ld/datasetId']), f)
     print(utils.create_sql_view(table_name, table, ['entityId', 'name', 'https://uri.etsi.org/ngsi-ld/datasetId']),
           file=sqlitef)
     # attributes_insert upsert-table
@@ -181,15 +183,15 @@ def main():
     spec_name = "attributes_insert"
     connector = 'upsert-kafka'
     table = [
-             {'entityId': 'STRING'},
-             {'name': 'STRING'},
-             {'nodeType': 'STRING'},
-             {'valueType': 'STRING'},
-             {'type': 'STRING'},
-             {'https://uri.etsi.org/ngsi-ld/datasetId': 'STRING'},
-             {'https://uri.etsi.org/ngsi-ld/hasValue': 'STRING'},
-             {'https://uri.etsi.org/ngsi-ld/hasObject': 'STRING'},
-             ]
+        {'entityId': 'STRING'},
+        {'name': 'STRING'},
+        {'nodeType': 'STRING'},
+        {'valueType': 'STRING'},
+        {'type': 'STRING'},
+        {'https://uri.etsi.org/ngsi-ld/datasetId': 'STRING'},
+        {'https://uri.etsi.org/ngsi-ld/hasValue': 'STRING'},
+        {'https://uri.etsi.org/ngsi-ld/hasObject': 'STRING'},
+    ]
     kafka = {
         'topic': kafka_topic_attributes_insert,
         'properties': {'bootstrap.servers': kafka_bootstrap},
@@ -214,16 +216,17 @@ def main():
     spec_name = "attributes_insert_filter"
     connector = 'kafka'
     table = [
-             {'entityId': 'STRING'},
-             {'name': 'STRING'},
-             {'nodeType': 'STRING'},
-             {'valueType': 'STRING'},
-             {'type': 'STRING'},
-             {'https://uri.etsi.org/ngsi-ld/datasetId': 'STRING'},
-             {'https://uri.etsi.org/ngsi-ld/hasValue': 'STRING'},
-             {'https://uri.etsi.org/ngsi-ld/hasObject': 'STRING'},
-             {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp'"},
-             {'watermark': 'FOR `ts` AS `ts`'}]
+        {'entityId': 'STRING'},
+        {'name': 'STRING'},
+        {'nodeType': 'STRING'},
+        {'valueType': 'STRING'},
+        {'type': 'STRING'},
+        {'https://uri.etsi.org/ngsi-ld/datasetId': 'STRING'},
+        {'https://uri.etsi.org/ngsi-ld/hasValue': 'STRING'},
+        {'https://uri.etsi.org/ngsi-ld/hasObject': 'STRING'},
+        {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp'"},
+        {'watermark': 'FOR `ts` AS `ts`'}
+    ]
     kafka = {
         'topic': f'{kafka_topic_attributes_insert}',
         'properties': {'bootstrap.servers': kafka_bootstrap},
