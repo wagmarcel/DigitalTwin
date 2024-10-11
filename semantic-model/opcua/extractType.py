@@ -353,15 +353,19 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
         relid = scan_entity(o, classtype, id, shacl_rule['optional'])
         if relid is not None:
             has_components = True
-            instance[f'{entity_ontology_prefix}:{attributename}'] = {
+            full_attribute_name = f'{entity_ontology_prefix}:{attributename}'
+            if instance.get(full_attribute_name) is None:
+                instance[full_attribute_name] = []
+            attr_instance = {
                 'type': 'Relationship',
                 'object': relid
             }
             if is_placeholder and datasetId is not None:
-                instance[f'{entity_ontology_prefix}:{attributename}']['datasetId'] = datasetId
+                attr_instance['datasetId'] = datasetId
             if debug:
-                instance[f'{entity_ontology_prefix}:{attributename}']['debug'] = \
+                attr_instance['debug'] = \
                     f'{entity_ontology_prefix}:{attributename}'
+            instance[full_attribute_name].append(attr_instance)
             shacl_rule['contentclass'] = classtype
             minshaclg.copy_property_from_shacl(shaclg, instance['type'], entity_namespace[attributename])
         if not shacl_rule['optional']:
