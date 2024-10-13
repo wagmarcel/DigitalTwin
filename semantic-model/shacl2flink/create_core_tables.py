@@ -154,6 +154,7 @@ def main():
         {'https://uri.etsi.org/ngsi-ld/hasValue': 'STRING'},
         {'https://uri.etsi.org/ngsi-ld/hasObject': 'STRING'},
         {'deleted': 'BOOLEAN'},
+        {'synched': 'BOOLEAN'},
         {'watermark': 'FOR `ts` AS `ts`'},
         {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp'"}
     ]

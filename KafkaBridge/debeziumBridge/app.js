@@ -161,6 +161,7 @@ const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, delet
     const deleteMessages = Object.entries(deletedAttrs).flatMap(([key, value]) =>
       value.map(val => {
         val.deleted = true;
+        val.synched = true;
         return { key: genKey, value: JSON.stringify(val) };
       })
     );
@@ -173,6 +174,7 @@ const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, delet
     // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
     const updateMessages = Object.entries(updatedAttrs).flatMap(([key, value]) => {
       return value.map(val => {
+        val.synched = true;
         const timestamp = checkTimestamp(val);
         const result = { key: genKey, value: JSON.stringify(val) };
         if (timestamp !== null) {
@@ -190,6 +192,7 @@ const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, delet
     // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
     const insertMessages = Object.entries(insertedAttrs).flatMap(([key, value]) => {
       return value.map(val => {
+        val.synched = true;
         const timestamp = checkTimestamp(val);
         const result = { key: genKey, value: JSON.stringify(val) };
         if (timestamp !== null) {
