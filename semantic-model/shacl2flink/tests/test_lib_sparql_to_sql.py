@@ -451,3 +451,52 @@ def test_merge_bgp_context():
     expression, where = lib.sparql_to_sql.merge_bgp_context(bgp_context, True)
     assert where == 'join_condition'
     assert expression == 'statement JOIN statement2 ON join_condition2'
+
+
+@patch('utils.unwrap_variables')
+def test_translate_additive_expression(mock_unwrap_variables):
+    ctx = MagicMock()
+    elem = MagicMock()
+    elem.expr = term.Variable('var1')
+    elem.op = ['+']
+    elem.other = [term.Variable('var2')]
+    
+    # Mocking utility functions
+    def unwrap_mock(ctx, variable):
+        if variable.toPython() == '?var1':
+            return 'var1_value'
+        elif variable.toPython() == '?var2':
+            return 'var2_value'
+        return ''
+
+    mock_unwrap_variables.side_effect = unwrap_mock
+    
+    result = lib.sparql_to_sql.translate_additive_expression(ctx, elem)
+    assert result == "var1_value + var2_value "
+    assert mock_unwrap_variables.call_count == 2
+
+
+@patch('utils.set_is_aggregate_var')
+@patch('lib.sparql_to_sql.translate')
+@patch('utils.create_varname')
+def test_process_aggregate(mock_create_varname, mock_translate, mock_set_is_aggregate_var):
+    ctx = {
+        'bounds': {'var': 'resolved_var'},
+        'time_variables': {},
+    }
+    elem = MagicMock()
+    elem.distinct = 'DISTINCT'
+    elem.vars = term.Variable('var')
+    
+    # Mocking utility functions
+    mock_create_varname.return_value = 'var'
+    mock_translate.return_value = 'translated_var'
+    
+    # Run the function
+    result_expression, result_distinct = lib.sparql_to_sql.process_aggregate(ctx, elem)
+    
+    # Asserting the results
+    assert result_expression == 'translated_var'
+    assert result_distinct == 'DISTINCT'
+    assert mock_translate.called
+    assert mock_set_is_aggregate_var.call_count == 2

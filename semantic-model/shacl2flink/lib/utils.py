@@ -252,7 +252,7 @@ def create_yaml_view(name, table, primary_key=None):
                 sqlstatement += f',\n `{field_name}`'
     sqlstatement += " FROM (\n  SELECT *,\nROW_NUMBER() OVER (PARTITION BY "
     first = True
-    for key in primary_key:
+    for key in (primary_key or []):
         if first:
             first = False
         else:
@@ -291,7 +291,7 @@ def create_sql_view(table_name, table, primary_key=None,
                 sqlstatement += f'`{field_name}`'
     sqlstatement += " FROM (\n  SELECT *,\nROW_NUMBER() OVER (PARTITION BY "
     first = True
-    for key in primary_key:
+    for key in (primary_key or []):
         if first:
             first = False
         else:
