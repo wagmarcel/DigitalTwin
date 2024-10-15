@@ -460,7 +460,7 @@ def test_translate_additive_expression(mock_unwrap_variables):
     elem.expr = term.Variable('var1')
     elem.op = ['+']
     elem.other = [term.Variable('var2')]
-    
+
     # Mocking utility functions
     def unwrap_mock(ctx, variable):
         if variable.toPython() == '?var1':
@@ -470,7 +470,7 @@ def test_translate_additive_expression(mock_unwrap_variables):
         return ''
 
     mock_unwrap_variables.side_effect = unwrap_mock
-    
+
     result = lib.sparql_to_sql.translate_additive_expression(ctx, elem)
     assert result == "var1_value + var2_value "
     assert mock_unwrap_variables.call_count == 2
@@ -487,14 +487,14 @@ def test_process_aggregate(mock_create_varname, mock_translate, mock_set_is_aggr
     elem = MagicMock()
     elem.distinct = 'DISTINCT'
     elem.vars = term.Variable('var')
-    
+
     # Mocking utility functions
     mock_create_varname.return_value = 'var'
     mock_translate.return_value = 'translated_var'
-    
+
     # Run the function
     result_expression, result_distinct = lib.sparql_to_sql.process_aggregate(ctx, elem)
-    
+
     # Asserting the results
     assert result_expression == 'translated_var'
     assert result_distinct == 'DISTINCT'

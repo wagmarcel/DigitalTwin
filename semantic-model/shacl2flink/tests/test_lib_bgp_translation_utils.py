@@ -717,7 +717,8 @@ def test_process_ngsild_spo_obj_defined(mock_isentity, mock_create_table_name, m
     assert local_ctx['bgp_sql_expression'] == [
         {'statement': 'attributes_view AS FHAS_FILTERTABLE', 'join_condition': 'FHAS_FILTERTABLE.\
 `https://uri.etsi.org/ngsi-ld/hasObject` = FTABLE.id'},
-        {'statement': 'entity_view AS FTABLE', 'join_condition': "FHAS_FILTERTABLE.name = 'https://industry-fusion.com/types/v0.9/hasFilter' and FHAS_FILTERTABLE.entityId = FTABLE.id"}]
+        {'statement': 'entity_view AS FTABLE', 'join_condition': "FHAS_FILTERTABLE.name = \
+'https://industry-fusion.com/types/v0.9/hasFilter' and FHAS_FILTERTABLE.entityId = FTABLE.id"}]
 
 
 @patch('lib.bgp_translation_utils.get_random_string')
