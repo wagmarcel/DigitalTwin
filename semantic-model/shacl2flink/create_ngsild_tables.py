@@ -23,33 +23,6 @@ import lib.configs as configs
 from ruamel.yaml.scalarstring import (SingleQuotedScalarString as sq)
 
 
-field_query = """
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
-PREFIX sh: <http://www.w3.org/ns/shacl#>
-
-SELECT DISTINCT ?path ?shacltype
-where {
-  {    ?nodeshape a sh:NodeShape .
-      ?nodeshape sh:targetClass ?shacltypex .
-      ?shacltype rdfs:subClassOf* ?shacltypex .
-      ?nodeshape sh:property [ sh:path ?path ; ] .
-
-  }
-    UNION
-  {    ?nodeshape a sh:NodeShape .
-      ?nodeshape sh:targetClass ?shacltypex .
-      ?shacltype rdfs:subClassOf* ?shacltypex .
-      FILTER NOT EXISTS {
-          ?nodeshape sh:property [ sh:path ?path ; ] .
-      }
-    BIND(owl:Nothing as ?path)
-  }
-}
-    ORDER BY STR(?path)
-"""
-
-
 def parse_args(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='create_ngsild_tables.py')
     parsed_args = parser.parse_args(args)

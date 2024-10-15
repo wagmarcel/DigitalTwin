@@ -31,11 +31,9 @@ class dotdict(dict):
 
 
 @patch('create_ngsild_tables.ruamel.yaml')
-@patch('create_ngsild_tables.Graph')
 @patch('create_ngsild_tables.configs')
 @patch('create_ngsild_tables.utils')
-@patch('create_ngsild_tables.owlrl')
-def test_main(mock_owlrl, mock_utils, mock_configs, mock_graph,
+def test_main(mock_utils, mock_configs,
               mock_yaml, tmp_path):
     mock_configs.kafka_topic_ngsi_prefix = 'ngsild_prefix'
     mock_configs.kafka_bootstrap = 'bootstrap'
@@ -45,19 +43,11 @@ def test_main(mock_owlrl, mock_utils, mock_configs, mock_graph,
     mock_utils.create_yaml_view.return_value = "yamlview"
     mock_utils.camelcase_to_snake_case.return_value = 'shacltype'
     mock_yaml.dump.return_value = "dump"
-    g = mock_graph.return_value
-    g.__contains__.return_value = True
-    g.__iadd__.return_value = g
-    g.triples.return_value = [(ex.test, RDF.type, sh.NodeShape)]
-    g.value.return_value = [(ex.test, sh.targetClass, ex.test2)]
-    g.return_value = [(ex.test, sh.property, None)]
     shacltype = MagicMock()
     shacltype.toPython.return_value = 'shacltype'
     row = {'shacltype': shacltype, 'path': 'path'}
     row = dotdict(row)
-    g.query.return_value = [row]
-    mock_owlrl.DeductiveClosure.expand.return_value = True
-    create_ngsild_tables.main('kms/shacl.ttl', 'kms/knowledge.ttl', tmp_path)
+    create_ngsild_tables.main(tmp_path)
 
     assert os.path.exists(os.path.join(tmp_path, 'ngsild.yaml')) is True
     assert os.path.exists(os.path.join(tmp_path, 'ngsild.sqlite')) is True
