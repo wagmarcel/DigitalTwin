@@ -66,15 +66,15 @@ spec:
             /* forward only non-retracted attribute changes
             This is part of the core service */
             insert into attributes_writeback
-            select entityId, name, nodeType, valueType, `type`, `datasetId`, `value`, `object` from
+            select entityId, name, nodeType, valueType, `type`, `https://uri.etsi.org/ngsi-ld/datasetId`, `https://uri.etsi.org/ngsi-ld/hasValue`, `https://uri.etsi.org/ngsi-ld/hasObject` from
             (select entityId as entityId, name as name, last_value(nodeType) as nodeType, last_value(valueType) as valueType , last_value(`type`) as `type`,
-            `https://uri.etsi.org/ngsi-ld/datasetId` as `datasetId`,
-            last_value(`https://uri.etsi.org/ngsi-ld/hasValue`) as `value`,
-            last_value(`https://uri.etsi.org/ngsi-ld/hasObject`) as `object`,
+            `https://uri.etsi.org/ngsi-ld/datasetId` as `https://uri.etsi.org/ngsi-ld/datasetId`,
+            last_value(`https://uri.etsi.org/ngsi-ld/hasValue`) as `https://uri.etsi.org/ngsi-ld/hasValue`,
+            last_value(`https://uri.etsi.org/ngsi-ld/hasObject`) as `https://uri.etsi.org/ngsi-ld/hasObject`,
               TUMBLE_START(ts, INTERVAL {{ .Values.flink.attributeInsertWindow |squote }} SECOND),
               TUMBLE_END(ts, INTERVAL {{ .Values.flink.attributeInsertWindow |squote }} SECOND)
             from attributes_insert
-            group by entityId, name, `https://uri.etsi.org/ngsi-ld/datasetId`, TUMBLE(ts, INTERVAL {{ .Values.flink.attributeInsertWindow| squote }} SECOND));
+            group by entityId, name, `https://uri.etsi.org/ngsi-ld/datasetId`, TUMBLE(ts, INTERVAL {{ .Values.flink.attributeInsertWindow |squote }} SECOND));
 
     tables:
         - alerts
