@@ -16,7 +16,6 @@
 
 from unittest.mock import patch, MagicMock
 from rdflib import Namespace
-from rdflib.namespace import RDF
 import create_ngsild_tables
 import os
 

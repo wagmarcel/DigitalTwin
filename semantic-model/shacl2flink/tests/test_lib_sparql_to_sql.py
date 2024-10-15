@@ -404,17 +404,17 @@ def test_wrap_sql_construct(attribute_column_mock, get_bound_trim_string_mock):
         'where': 'where'
     }
     lib.sparql_to_sql.wrap_sql_construct(ctx, node)
-    assert node['target_sql'] == "SQL_DIALECT_INSERT_ATTRIBUTES\nSELECT DISTINCT TABLE.`id` || '\\' || 'name' as id,\
-\nTABLE.`id` as entityId,\
+    assert node['target_sql'] == "SQL_DIALECT_INSERT_ATTRIBUTES\
+\nSELECT DISTINCT TABLE.`id` as entityId,\
 \n'name' as name,\
 \n'nodetype' as nodeType,\
 \nCAST(NULL as STRING) as valueType,\
-\n0 as `index`,\
 \n'type' as `type`,\
 \n'@none' as `datasetId`,\
 \nbound_trim_string as `value`,\
-\nCAST(NULL as STRING) as `object`\n,\
-SQL_DIALECT_SQLITE_TIMESTAMP\nFROM target_sql WHERE where"
+\nCAST(NULL as STRING) as `object`\
+\n,SQL_DIALECT_SQLITE_TIMESTAMP\
+\nFROM target_sql WHERE where"
 
 
 @patch('lib.sparql_to_sql.translate')
