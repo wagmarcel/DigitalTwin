@@ -23,68 +23,6 @@ const sinon = require('sinon');
 const rewire = require('rewire');
 const toTest = rewire('../debeziumBridge/app.js');
 
-describe('Test GetTopic', function () {
-  it('Should return last part of url path', async function () {
-    const getTopic = toTest.__get__('getTopic');
-    const result = getTopic('http://example/Device');
-    result.should.equal('device');
-  });
-  it('Should return last part in snake_case', async function () {
-    const getTopic = toTest.__get__('getTopic');
-    const result = getTopic('http://example/Device_Test_WithUnderscore');
-    result.should.equal('device__test__with_underscore');
-  });
-  it('Should return reference part of url', async function () {
-    const getTopic = toTest.__get__('getTopic');
-    const result = getTopic('http://example/Device#realDevice');
-    result.should.equal('real_device');
-  });
-  it('Should return snake_case', async function () {
-    const getTopic = toTest.__get__('getTopic');
-    const result = getTopic('http://example/Device#RealDevice');
-    result.should.equal('real_device');
-  });
-});
-
-describe('Test getSubclasses', function () {
-  it('Should construct queryterm and use right rdfSource', async function () {
-    const config = {
-      debeziumBridge: {
-        rdfSources: 'rdfSource'
-      }
-    };
-    const klass = 'klass';
-    const queryTermExpected = `
-    PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-    SELECT ?o WHERE {
-    <${klass}> rdfs:subClassOf* ?o.
-    } LIMIT 100`;
-    const res = {
-      bindings: () => new Promise(function (resolve, reject) {
-        resolve([
-          {
-            get: (arg) => { arg.should.equal('?o'); return { value: 'subklass' }; }
-          }
-        ]);
-      })
-    };
-    const iffEngine = {
-      query: function (queryTerm, { sources }) {
-        return new Promise(function (resolve, reject) {
-          sources.should.equal(config.debeziumBridge.rdfSources);
-          queryTerm.should.equal(queryTermExpected);
-          resolve(res);
-        });
-      }
-    };
-    const revert = toTest.__set__('iffEngine', iffEngine);
-    toTest.__set__('config', config);
-    const getSubClasses = toTest.__get__('getSubClasses');
-    const result = await getSubClasses(klass);
-    result[0].should.equal('subklass');
-    revert();
-  });
-});
 describe('Test sendUpdates', function () {
   it('Should update and delete attributes', async function () {
     const messages = [

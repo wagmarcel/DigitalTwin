@@ -91,47 +91,6 @@ const startListener = async function () {
   }
 };
 
-/**
- *
- * @param klass {string} - a RDF klass
- * @returns {array<string>} RDF subclasses of klass, e.g.
- *                          'plasmacutter' => cutter, device
- */
-const getSubClasses = async function (klass) {
-  // TODO: needs caching
-  const queryTerm = `
-    PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-    SELECT ?o WHERE {
-    <${klass}> rdfs:subClassOf* ?o.
-    } LIMIT 100`;
-
-  const result = await iffEngine.query(queryTerm, {
-    sources: config.debeziumBridge.rdfSources
-  });
-  const bindings = await result.bindings();
-  const subClasses = bindings.reduce((accum, element) => { accum.push(element.get('?o').value); return accum; }, []);
-  return subClasses;
-};
-
-/**
- * Converts PascalCase/camelCase to snake_case
- * e.g. PascalCase => pascal_case
- *      camelCase => camel_case
- * @param {*} str string in Pascal/camelCase
- */
-const pascalCaseToSnakeCase = function (name) {
-  return name.replace(/(?<!^)(?=[A-Z])/g, '_').toLowerCase();
-};
-
-/**
- * returns type-part of uri, e.g. https://test/Device => Device
- * @param topic {string}
- * @returns
- */
-const getTopic = function (topic) {
-  return pascalCaseToSnakeCase(topic.match(/([^/#]*)$/)[0]);
-};
-
 const checkTimestamp = function (val) {
   let isotimestamp = null;
   let timestamp = null;
