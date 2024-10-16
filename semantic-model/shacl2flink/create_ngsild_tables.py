@@ -38,39 +38,7 @@ def main(output_folder='output'):
     config['retention.ms'] = configs.kafka_topic_ngsi_retention
     with open(os.path.join(output_folder, "ngsild.yaml"), "w") as f, \
             open(os.path.join(output_folder, "ngsild.sqlite"), "w") as sqlitef, \
-            open(os.path.join(output_folder, "ngsild-kafka.yaml"), "w") as fk, \
-            open(os.path.join(output_folder, "ngsild.flinksql.debug"), "w") as dt:
-        for table_name, table in tables.items():
-            connector = 'kafka'
-            primary_key = None
-            kafka = {'topic':
-                     f'{configs.kafka_topic_ngsi_prefix}.{table_name}',
-                     'properties': {'bootstrap.servers':
-                                    configs.kafka_bootstrap},
-                     'scan.startup.mode': 'latest-offset'
-                     }
-            value = {
-                'format': 'json',
-                'json.fail-on-missing-field': False,
-                'json.ignore-parse-errors': True
-            }
-            print('---', file=f)
-            yaml.dump(utils.create_yaml_table(table_name, connector, table,
-                                              primary_key, kafka, value), f)
-            print(utils.create_sql_table(table_name, table, primary_key,
-                                         utils.SQL_DIALECT.SQLITE),
-                  file=sqlitef)
-            print('---', file=f)
-            yaml.dump(utils.create_yaml_view(table_name, table, ['id']), f)
-            print(utils.create_sql_view(table_name, table, ['id']), file=sqlitef)
-            print('---', file=fk)
-            yaml.dump(utils.create_kafka_topic(f'{configs.kafka_topic_ngsi_prefix}.\
-{utils.class_to_obj_name(table_name)}',
-                                               f'{configs.kafka_topic_ngsi_prefix}.\
-{table_name}', configs.kafka_topic_object_label,
-                                               config), fk)
-            print(utils.create_flink_debug_table(table_name, connector, table, primary_key, kafka, value), file=dt)
-            print(utils.create_sql_view(table_name, table), file=dt)
+            open(os.path.join(output_folder, "ngsild-kafka.yaml"), "w") as fk:
 
         # Create "entity"
         value = {

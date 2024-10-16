@@ -105,7 +105,7 @@ sql_check_relationship_base = """
 
 sql_check_relationship_property_class = """
             SELECT this AS resource,
-                'ClassConstraintComponent({{property_path}}[' || SQL_DIALECT_CAST( `index` AS STRING) || '])' AS event,
+                'ClassConstraintComponent(' || `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || '])' AS event,
                 'Development' AS environment,
                 {% if sqlite %}
                 '[SHACL Validator]' AS service,
@@ -142,8 +142,9 @@ sql_check_relationship_property_count = """
                 CASE WHEN NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER)
                                             OR count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) < SQL_DIALECT_CAST(`minCount` AS INTEGER))
                     THEN
-                        'Model validation for relationship {{property_path}} failed for ' || this || ' . Found ' || SQL_DIALECT_CAST(count(link) AS STRING) || ' relationships instead of
-                            [{%- if mincount %}{{mincount}}{%- else %} 0 {%- endif %},{%if maxcount %}{{maxcount}}]{%- else %}[ {%- endif %}!'
+                        'Model validation for relationship ' || `propertyPath` || 'failed for ' || this || ' . Found ' ||
+                            SQL_DIALECT_CAST(count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) AS STRING) || ' relationships instead of
+                            [' || `minCount` || ', ' || `maxCount` || ']!'
                     ELSE 'All ok' END as `text`
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
@@ -221,9 +222,9 @@ SELECT this AS resource,
         THEN `severity`
         ELSE 'ok' END AS severity,
     'customer'  customer,
-    CASE WHEN typ IS NOT NULL AND ({%- if maxcount %} count(attr_typ) > {{maxcount}} {%- endif %} {%- if mincount and maxcount %} OR {%- endif %} {%- if mincount %} count(attr_typ) < {{mincount}} {%- endif %})
-        THEN 'Model validation for Property {{property_path}} failed for ' || this || '.  Found ' || SQL_DIALECT_CAST(count(attr_typ) AS STRING) || ' relationships instead of
-                            [{%- if mincount %}{{mincount}}{%- else %} 0 {%- endif %},{%if maxcount %}{{maxcount}}]{%- else %}[ {%- endif %}!'
+    CASE WHEN NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER) OR count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) < SQL_DIALECT_CAST(`minCount` AS STRING))
+        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '.  Found ' || SQL_DIALECT_CAST(count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) AS STRING) || ' relationships instead of
+                            [' || IFNULL('[' || `minCount`, '[0') || IFNULL(`maxCount` || ']', '[') || '!'
         ELSE 'All ok' END as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
@@ -234,7 +235,7 @@ group by this, typ, propertyPath, minCount, maxCount, severity, edeleted
 
 sql_check_property_iri_class = """
 SELECT this AS resource,
-    'DatatypeConstraintComponent({{property_path}}[' || SQL_DIALECT_CAST( `index` AS STRING) || '])' AS event,
+    'DatatypeConstraintComponent(' || `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || '])' AS event,
     'Development' AS environment,
     {%- if sqlite %}
     '[SHACL Validator]' AS service,
@@ -256,7 +257,7 @@ FROM A1  WHERE propertyNodetype = '@id' and propertyClass IS NOT NULL and NOT IF
 
 sql_check_property_nodeType = """
 SELECT this AS resource,
- 'NodeKindConstraintComponent({{property_path}}[' || SQL_DIALECT_CAST( `index` AS STRING) || '])' AS event,
+ 'NodeKindConstraintComponent(' || `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -279,20 +280,21 @@ FROM A1 WHERE propertyNodetype IS NOT NULL
 
 sql_check_property_minmax = """
 SELECT this AS resource,
- '{{minmaxname}}ConstraintComponent({{property_path}}[' || SQL_DIALECT_CAST( `index` AS STRING) || '])' AS event,
+ '{{minmaxname}}ConstraintComponent(' || `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
     {%- else %}
     ARRAY ['SHACL Validator'] AS service,
     {%- endif %}
-    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND NOT (SQL_DIALECT_CAST(val as DOUBLE) {{ operator }} {{ comparison_value }})
-        THEN '{{severity}}'
+    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND (SQL_DIALECT_CAST(val AS DOUBLE) is NULL or NOT (SQL_DIALECT_CAST(val as DOUBLE) {{ operator }} SQL_DIALECT_CAST(`{{ comparison_value }}` AS DOUBLE)) )
+        THEN `severity`
         ELSE 'ok' END AS severity,
     'customer'  customer,
-    CASE
-        WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND NOT (SQL_DIALECT_CAST(val as DOUBLE) {{ operator }} {{ comparison_value }})
-        THEN 'Model validation for Property {{property_path}} failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' is not {{ operator }} {{ comparison_value }}.'
+    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND (SQL_DIALECT_CAST(val AS DOUBLE) is NULL or NOT (SQL_DIALECT_CAST(val as DOUBLE) {{ operator }} SQL_DIALECT_CAST(`{{ comparison_value }}` AS DOUBLE)) )
+        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' not comparable with ' || `{{ comparison_value }}` || '.'
+        WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND NOT (SQL_DIALECT_CAST(val as DOUBLE) {{ operator }} SQL_DIALECT_CAST( `{{ comparison_value }}` as DOUBLE) )
+        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' is not {{ operator }} ' || `{{ comparison_value }}` || '.'
         ELSE 'All ok' END as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
@@ -302,7 +304,7 @@ FROM A1 where `{{ comparison_value}}` IS NOT NULL
 
 sql_check_string_length = """
 SELECT this AS resource,
- '{{minmaxname}}ConstraintComponent({{property_path}}[' || SQL_DIALECT_CAST( `index` AS STRING) || '])' AS event,
+ '{{minmaxname}}ConstraintComponent(' || `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -324,7 +326,7 @@ FROM A1 WHERE `{{ comparison_value }}` IS NOT NULL
 
 sql_check_literal_pattern = """
 SELECT this AS resource,
- '{{validationname}}ConstraintComponent({{property_path}}[' || SQL_DIALECT_CAST( `index` AS STRING) || '])' AS event,
+ '{{validationname}}ConstraintComponent(' || `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -346,7 +348,7 @@ FROM A1 WHERE `pattern` IS NOT NULL
 
 sql_check_literal_in = """
 SELECT this AS resource,
- '{{constraintname}}({{property_path}}[' || SQL_DIALECT_CAST( `index` AS STRING) || '])' AS event,
+ '{{constraintname}}('|| `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -619,45 +621,6 @@ def translate(shaclefile, knowledgefile, prefixes):
         check['maxCount'] = maxcount
         check['minCount'] = mincount
         check['severity'] = severitycode
- 
-        # if add_union:
-        #     sql_command_yaml += "\nUNION ALL"
-        #     sql_command_sqlite += "\nUNION ALL"
-        # sql_command_yaml += Template(sql_check_relationship_nodeType).render(
-        #     alerts_bulk_table=alerts_bulk_table,
-        #     target_class=target_class,
-        #     property_path=property_path,
-        #     severity=severitycode,
-        #     property_nodetype='@id',
-        #     property_nodetype_description='an IRI',
-        #     sqlite=False
-        # )
-        # sql_command_sqlite += Template(sql_check_relationship_nodeType).render(
-        #     alerts_bulk_table=alerts_bulk_table,
-        #     target_class=target_class,
-        #     property_path=property_path,
-        #     severity=severitycode,
-        #     property_nodetype='@id',
-        #     property_nodetype_description='an IRI',
-        #     sqlite=True
-        # )
-        sql_command_sqlite += ";"
-        sql_command_yaml += ";"
-        sql_command_sqlite = utils.process_sql_dialect(sql_command_sqlite, True)
-        sql_command_yaml = utils.process_sql_dialect(sql_command_yaml, False)
-        statementsets.append(sql_command_yaml)
-        sqlite += sql_command_sqlite
-
-        target_class_obj = utils.class_to_obj_name(target_class)
-        target_class_obj = utils.class_to_obj_name(target_class)
-        if target_class_obj not in tables:
-            tables.append(target_class_obj)
-            views.append(target_class_obj + "-view")
-        target_class_obj = \
-            utils.class_to_obj_name(utils.strip_class(property_class))
-        if target_class_obj not in tables:
-            tables.append(target_class_obj)
-            views.append(target_class_obj + "-view")
         relationshp_checks.append(check)
     # Get all NGSI-LD Properties
     qres = g.query(sparql_get_all_properties, initNs=prefixes)
@@ -716,78 +679,8 @@ def translate(shaclefile, knowledgefile, prefixes):
 string elements in list are supported.")
             check['ins'] = None
         property_checks.append(check)
-
-        else:
-            print(f'WARNING: Property path {property_path} of Nodeshape \
-                  {nodeshape} is neither IRI nor Literal')
-            continue
-        if mincount > 0 or maxcount:
-            sql_command_yaml += "\nUNION ALL"
-            sql_command_sqlite += "\nUNION ALL"
-            sql_command_yaml += Template(sql_check_property_count).render(
-                target_class=target_class,
-                property_path=property_path,
-                mincount=mincount,
-                maxcount=maxcount,
-                severity=severitycode,
-                sqlite=False
-            )
-            sql_command_sqlite += \
-                Template(sql_check_property_count).render(
-                    target_class=target_class,
-                    property_path=property_path,
-                    mincount=mincount,
-                    maxcount=maxcount,
-                    severity=severitycode,
-                    sqlite=True)
-        if min_length is not None:
-            sql_command_yaml += "\nUNION ALL"
-            sql_command_sqlite += "\nUNION ALL"
-            sql_command_yaml += Template(sql_check_string_length).render(
-                property_path=property_path,
-                operator='<',
-                comparison_value=min_length,
-                minmaxname="MinLength",
-                severity=severitycode,
-                sqlite=False
-            )
-            sql_command_sqlite += Template(sql_check_string_length).render(
-                property_path=property_path,
-                operator='<',
-                comparison_value=min_length,
-                minmaxname="MinLength",
-                severity=severitycode,
-                sqlite=True
-            )
-        if max_length is not None:
-            sql_command_yaml += "\nUNION ALL"
-            sql_command_sqlite += "\nUNION ALL"
-            sql_command_yaml += Template(sql_check_string_length).render(
-                property_path=property_path,
-                operator='>',
-                comparison_value=max_length,
-                minmaxname="MaxLength",
-                severity=severitycode,
-                sqlite=False
-            )
-            sql_command_sqlite += Template(sql_check_string_length).render(
-                property_path=property_path,
-                operator='>',
-                comparison_value=max_length,
-                minmaxname="MaxLength",
-                severity=severitycode,
-                sqlite=True
-            )
-        sql_command_sqlite += ";"
-        sql_command_yaml += ";"
-        sql_command_sqlite = utils.process_sql_dialect(sql_command_sqlite, True)
-        sqlite += sql_command_sqlite
-        sql_command_yaml = utils.process_sql_dialect(sql_command_yaml, False)
-        statementsets.append(sql_command_yaml)
-        target_class_obj = utils.class_to_obj_name(target_class)
-        if target_class_obj not in tables:
-            tables.append(target_class_obj)
-            views.append(target_class_obj + "-view")
+    tables.append(configs.kafka_topic_ngsi_prefix_name)
+    views.append(configs.kafka_topic_ngsi_prefix_name + "-view")
     sqlite += '\n'
     sqlite += utils.add_relationship_checks(relationshp_checks, utils.SQL_DIALECT.SQLITE)
     sql_command_yaml = utils.add_relationship_checks(relationshp_checks, utils.SQL_DIALECT.SQL)

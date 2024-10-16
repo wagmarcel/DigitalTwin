@@ -27,8 +27,8 @@ helm: export IFF_HELM=true
 helm:
 	mkdir -p ${HELM_DIR}
 	rm -rf ${HELM_DIR}/templates 
-	mv ${OUTPUTDIR} ${HELM_DIR}/templates
-	rm -f ${HELM_DIR}/templates/*.sqlite ${HELM_DIR}/templates/core.yaml ${HELM_DIR}/templates/knowledge.yaml ${HELM_DIR}/templates/*.debug
+	cp -rf ${OUTPUTDIR} ${HELM_DIR}/templates
+	rm -f ${HELM_DIR}/templates/*.sqlite ${HELM_DIR}/templates/core.yaml ${HELM_DIR}/templates/knowledge.yaml ${HELM_DIR}/templates/rdf-maps.yaml
 	cp Chart.yaml ${HELM_DIR}
 
 test: requirements-dev.txt
