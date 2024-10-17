@@ -23,23 +23,40 @@ from lib.jsonld import JsonLd
 
 
 query_minmax = """
-SELECT ?mincount ?maxcount WHERE {
-     ?shape sh:targetClass ?targetclass .
-     OPTIONAL{
-        ?shape sh:property [
-            sh:path ?path;
-            sh:maxCount ?maxcount
-      ]
-    }
-     OPTIONAL{
-        ?shape sh:property [
-            sh:path ?path;
-            sh:minCount ?mincount
-      ]
-    }
-}
-"""
+SELECT ?path ?pattern ?mincount ?maxcount ?localName
+WHERE {
+    ?shape a sh:NodeShape ;
+           sh:property ?property ;
+           sh:targetClass ?targetclass . 
 
+    ?property sh:path ?path ;
+  		sh:property [ sh:class ?attributeclass ] .
+    OPTIONAL {
+        ?property base:hasPlaceHolderPattern ?pattern .
+    }
+
+    OPTIONAL {
+        ?property sh:maxCount ?maxcount .
+    }
+
+    OPTIONAL {
+        ?property sh:minCount ?mincount .
+    }
+
+    # Extract the local name from the path (after the last occurrence of '/', '#' or ':')
+    BIND(REPLACE(str(?path), '.*[#/](?=[^#/]*$)', '') AS ?localName)
+
+    # Conditional filtering based on whether the pattern exists
+    FILTER (
+        IF(bound(?pattern), 
+           regex(?name, ?pattern),  # If pattern exists, use regex
+           ?localName = ?prefixname        # Otherwise, match the local name
+        )
+    )
+  BIND(IF(?localName = ?prefixname, 0, 1) AS ?order)
+}
+ORDER BY ?order
+"""
 
 class Shacl:
     def __init__(self, namespace_prefix, basens, opcuans):
@@ -60,7 +77,7 @@ class Shacl:
         return shapename
 
     def create_shacl_property(self, shapename, path, optional, is_array, is_property, is_iri, contentclass, datatype,
-                              is_subcomponent=False):
+                              is_subcomponent=False, placeholder_pattern=None):
         innerproperty = BNode()
         property = BNode()
         maxCount = 1
@@ -80,6 +97,8 @@ class Shacl:
             self.shaclg.add((innerproperty, SH.path, self.ngsildns['hasObject']))
             if is_array:
                 self.shaclg.add((property, self.basens['isPlaceHolder'], Literal(True)))
+            if placeholder_pattern is not None:
+                self.shaclg.add((property, self.basens['hasPlaceHolderPattern'], Literal(placeholder_pattern)))
             if is_subcomponent:
                 self.shaclg.add((property, RDF.type, self.basens['SubComponentRelationship']))
             else:
@@ -128,24 +147,31 @@ class Shacl:
             else:
                 shacl_rule['is_iri'] = False
                 shacl_rule['contentclass'] = None
+                shacl_rule['datatype'] = None
         except:
             shacl_rule['is_iri'] = False
             shacl_rule['contentclass'] = None
+            shacl_rule['datatype'] = None
 
-    def get_modelling_rule(self, path, target_class):
-        bindings = {'targetclass': target_class, 'path': path}
+    def get_modelling_rule_and_path(self, name, target_class, attributeclass, prefix):
+        bindings = {'targetclass': target_class, 'name': Literal(name), 'attributeclass': attributeclass, 'prefixname': Literal(f'{prefix}{name}')}
         optional = True
         array = True
+        path = None
         try:
-            results = list(self.shaclg.query(query_minmax, initBindings=bindings, initNs={'sh': SH}))
+            results = list(self.shaclg.query(query_minmax, initBindings=bindings, initNs={'sh': SH, 'base': self.basens}))
             if len(results) > 0:
-                if int(results[0][0]) > 0:
+                if results[0][0] is not None:
+                    path = results[0][0]
+                if int(results[0][2]) > 0:
                     optional = False
-                if int(results[0][1]) <= 1:
+                if int(results[0][3]) <= 1:
                     array = False
+            if len(results) > 1:
+                print("Warning: more than one path match for {path}")
         except:
             pass
-        return optional, array
+        return optional, array, path
 
     def attribute_is_indomain(self, targetclass, attributename):
         property = self._get_property(targetclass, attributename)
@@ -168,6 +194,8 @@ class Shacl:
 
     def is_placeholder(self, targetclass, attributename):
         property = self._get_property(targetclass, attributename)
+        if property is None:
+            return False
         try:
             return bool(next(self.shaclg.objects(property, self.basens['isPlaceHolder'])))
         except:
@@ -191,7 +219,7 @@ class Shacl:
             pass
 
     def copy_property_from_shacl(self, source_graph, targetclass, propertypath):
-        print(f"woudld copy  {targetclass}=>{propertypath}")
+        #print(f"woudld copy  {targetclass}=>{propertypath}")
         shape = self.create_shape_if_not_exists(source_graph, targetclass)
         if shape is None:
             return
