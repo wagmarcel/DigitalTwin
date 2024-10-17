@@ -359,7 +359,7 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
         if original_attributename is None:
             raise Exception(f"No original_attributename given but datasetId neeeded for {decoded_attributename}")
         datasetId = f'{datasetid_urn}:{original_attributename}'
-        attributename = urllib.parse.quote(decoded_attributename)
+    attributename = urllib.parse.quote(decoded_attributename)
     #shacl_rule['path'] = attributename
 
     if rdfutils.isObjectNodeClass(nodeclass):
