@@ -355,5 +355,61 @@ class TestShacl(unittest.TestCase):
         result = self.shacl_instance._get_property(targetclass, propertypath)
         self.assertIsNone(result)
 
+    @patch.object(Graph, 'objects')
+    def test_get_shclass_from_property(self, mock_objects):
+        """Test retrieving the SHACL class from a property."""
+        property_node = BNode()
+        subproperty_node = BNode()
+        expected_class = URIRef("http://example.org/Class")
+
+        # Mock the objects method to return the subproperty node and the class
+        mock_objects.side_effect = [
+            iter([subproperty_node]),  # First call returns the subproperty node
+            iter([expected_class])     # Second call returns the class associated with the subproperty
+        ]
+
+        result = self.shacl_instance._get_shclass_from_property(property_node)
+
+        # Check that the result is the expected class URI
+        self.assertEqual(result, expected_class)
+        mock_objects.assert_any_call(property_node, SH.property)
+        mock_objects.assert_any_call(subproperty_node, SH['class'])
+
+        # Case where the property does not have a subproperty or class
+        mock_objects.side_effect = [
+            iter([]),  # No subproperty found
+        ]
+        result = self.shacl_instance._get_shclass_from_property(property_node)
+        self.assertIsNone(result)
+
+    @patch.object(Graph, 'objects')
+    @patch.object(Shacl, '_get_property')
+    def test_is_placeholder(self, mock_get_property, mock_objects):
+        """Test determining if an attribute is a placeholder."""
+        targetclass = URIRef("http://example.org/TargetClass")
+        attributename = "attributeName"
+        property_node = BNode()
+
+        # Mock _get_property to return a property node
+        mock_get_property.return_value = property_node
+
+        # Case 1: Placeholder is found
+        mock_objects.return_value = iter([Literal(True)])
+        result = self.shacl_instance.is_placeholder(targetclass, attributename)
+        self.assertTrue(result)
+        mock_get_property.assert_called_once_with(targetclass, attributename)
+        mock_objects.assert_called_once_with(property_node, self.basens['isPlaceHolder'])
+
+        # Case 2: Placeholder is not found
+        mock_objects.return_value = iter([])
+        result = self.shacl_instance.is_placeholder(targetclass, attributename)
+        self.assertFalse(result)
+
+        # Case 3: Property is None
+        mock_get_property.return_value = None
+        result = self.shacl_instance.is_placeholder(targetclass, attributename)
+        self.assertFalse(result)
+
+
 if __name__ == "__main__":
     unittest.main()
