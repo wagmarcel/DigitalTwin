@@ -317,7 +317,6 @@ class RdfUtils:
                 is_optional = True
             elif int(modelling_rule) == modelling_nodeid_mandatory:
                 is_optional = False
-                use_instance_declaration = True
             elif int(modelling_rule) == modelling_nodeid_optional_array:
                 is_optional = True
                 use_instance_declaration = True

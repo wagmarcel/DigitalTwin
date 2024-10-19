@@ -238,7 +238,7 @@ class Shacl:
         for s, p, o in source_graph.get_graph().triples((bnode, None, None)):
             # Add the triple to the target graph
             self.shaclg.add((s, p, o))
-            print(f"Adding: {s}, {p}, {o}")
+            #print(f"Adding: {s}, {p}, {o}")
 
             # If the object is another blank node, recurse into it
             if isinstance(o, BNode):
