@@ -91,7 +91,7 @@ class TestUtils(unittest.TestCase):
         """Test normalizing a name by removing angle bracket content."""
         input_str = "example<test>123"
         result = normalize_angle_bracket_name(input_str)
-        self.assertEqual(result, "example")
+        self.assertEqual(result, ("example123", "example[a-zA-Z0-9_-]+123"))
 
     def test_contains_both_angle_brackets(self):
         """Test checking if a string contains both angle brackets."""
