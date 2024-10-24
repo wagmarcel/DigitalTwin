@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 from rdflib import Graph, Namespace, URIRef, Literal, BNode
 from rdflib.namespace import RDFS, XSD, OWL
-from lib.utils import RdfUtils, downcase_string, isNodeId, convert_to_json_type, idtype2String, extract_namespaces, get_datatype, attributename_from_type, get_default_value, normalize_angle_bracket_name, contains_both_angle_brackets, get_typename
+from lib.utils import RdfUtils, downcase_string, isNodeId, convert_to_json_type, idtype2String, extract_namespaces, get_datatype, attributename_from_type, get_default_value, normalize_angle_bracket_name, contains_both_angle_brackets, get_typename, get_common_supertype
 
 class TestUtils(unittest.TestCase):
 
@@ -12,6 +12,10 @@ class TestUtils(unittest.TestCase):
         self.basens = Namespace("http://example.org/base/")
         self.opcuans = Namespace("http://example.org/opcua/")
         self.rdf_utils = RdfUtils(self.basens, self.opcuans)
+        self.graph = Graph()
+        self.ns = Namespace("http://example.org/")
+        self.class1 = URIRef(self.ns['Class1'])
+        self.class2 = URIRef(self.ns['Class2'])
 
     def test_downcase_string(self):
         """Test downcasing the first character of a string."""
@@ -143,9 +147,6 @@ class TestUtils(unittest.TestCase):
         mock_query.assert_called_once()
 
 
-
-    #@patch.object(Graph, 'objects')
-    #@patch.object(Graph, 'subjects')
     def test_get_all_supertypes(self):
         """Test retrieving all supertypes for a given node."""
         graph = MagicMock()
@@ -228,6 +229,35 @@ class TestUtils(unittest.TestCase):
             (URIRef("http://example.org/InstanceType"), node)
         ]
         self.assertEqual(supertypes, expected_supertypes)
+
+
+    @patch.object(Graph, 'query')
+    def test_get_common_supertype(self, mock_query):
+        """Test finding common superclass of two classes."""
+        # Set up the mocked return value of the query
+        mock_query.return_value = [
+            {
+                'commonSuperclass': URIRef("http://example.org/CommonSuperclass")
+            }
+        ]
+
+        # Call the function under test
+        result = get_common_supertype(self.graph, self.class1, self.class2)
+
+        # Check if the result is as expected
+        self.assertEqual(result, URIRef("http://example.org/CommonSuperclass"))
+        
+        # Verify that the query was called once
+        mock_query.assert_called_once()
+
+    @patch.object(Graph, 'query', side_effect=Exception("Query failed"))
+    def test_get_common_supertype_query_failure(self, mock_query):
+        """Test handling of an exception when query fails."""
+        # Call the function under test
+        result = get_common_supertype(self.graph, self.class1, self.class2)
+
+        # Ensure the result is None when an exception occurs
+        self.assertIsNone(result)
 
 if __name__ == "__main__":
     unittest.main()
