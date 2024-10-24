@@ -16,6 +16,9 @@ class TestUtils(unittest.TestCase):
         self.ns = Namespace("http://example.org/")
         self.class1 = URIRef(self.ns['Class1'])
         self.class2 = URIRef(self.ns['Class2'])
+        self.node = URIRef(self.ns['Node'])
+        self.shacl_rule = {}
+        self.instancetype = URIRef(self.ns['InstanceType'])
 
     def test_downcase_string(self):
         """Test downcasing the first character of a string."""
@@ -258,6 +261,37 @@ class TestUtils(unittest.TestCase):
 
         # Ensure the result is None when an exception occurs
         self.assertIsNone(result)
+
+    @patch.object(Graph, 'objects')
+    def test_get_modelling_rule(self, mock_objects):
+        """Test retrieving the modelling rule of a node."""
+        # Set up the mocked return values for objects
+        mock_objects.side_effect = [
+            iter([URIRef("http://example.org/ModellingNode")]),
+            iter([Literal(1)])  # Assuming modelling_nodeid_optional or similar value
+        ]
+
+        # Call the function under test
+        is_optional, use_instance_declaration = self.rdf_utils.get_modelling_rule(self.graph, self.node, self.shacl_rule, self.instancetype)
+
+        # Check if the results are as expected
+        self.assertTrue(is_optional)
+        self.assertFalse(use_instance_declaration)
+        self.assertTrue(self.shacl_rule['optional'])
+        self.assertFalse(self.shacl_rule['array'])
+
+    @patch.object(Graph, 'objects', side_effect=StopIteration)
+    def test_get_modelling_rule_no_modelling_node(self, mock_objects):
+        """Test handling when there is no modelling node found."""
+        # Call the function under test
+        is_optional, use_instance_declaration = self.rdf_utils.get_modelling_rule(self.graph, self.node, self.shacl_rule, self.instancetype)
+
+        # Ensure the default values are returned when no modelling node is found
+        self.assertTrue(is_optional)
+        self.assertFalse(use_instance_declaration)
+        self.assertTrue(self.shacl_rule['optional'])
+        self.assertFalse(self.shacl_rule['array'])
+
 
 if __name__ == "__main__":
     unittest.main()
