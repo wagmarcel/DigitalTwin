@@ -149,7 +149,7 @@ def get_default_value(datatype):
     if datatype == XSD.boolean:
         return False
     if datatype == RDF.JSON:
-        return {'@value': {}, '@type': '@json'}
+        return { '@value': {}, '@type': '@json'}
     if datatype == XSD.dateTime:
         return {'@value': '1970-1-1T00:00:00', '@type': 'xsd.dateTime'}
     print(f'Warning: unknown default value for datatype {datatype}')
@@ -165,11 +165,10 @@ def get_value(value, datatype):
     if datatype == XSD.boolean:
         return bool(value)
     if datatype == RDF.JSON:
-        return {'@value': str(value), '@type': '@json'}
+        return { '@value': str(value), '@type': '@json'}
     if datatype == XSD.dateTime:
         return {'@value': str(value), '@type': 'xsd:dateTime'}
     return str(value)
-
 
 def normalize_angle_bracket_name(s):
     # Check if there are any angle brackets in the input string
@@ -363,7 +362,7 @@ class OntologyLoader:
         self.ig = Graph()
         self.loaded_ontologies = set()  # Track loaded ontology IRIs
         self.visited_files = set()  # Track visited files/URLs
-        self.verbose = verbose
+        self.verbose=verbose
 
     def init_imports(self, base_ontologies):
         for file in base_ontologies:
@@ -397,10 +396,10 @@ class OntologyLoader:
         # If no IRI is found, fall back to using the file/URL location
         if ontology_iri is None:
             ontology_iri = ontology_str
-
+        
         # Add the ontology IRI to the loaded set
         self.loaded_ontologies.add(ontology_iri)
-
+        
         # Add triples to the main graph
         if self.verbose:
             print(f"Importing {ontology_iri} from url {ontology}.")

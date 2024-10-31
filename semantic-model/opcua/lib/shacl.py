@@ -141,7 +141,8 @@ class Shacl:
             shacl_type, shacl_pattern = JsonLd.map_datatype_to_jsonld(data_type, self.opcuans)
             shacl_rule['pattern'] = shacl_pattern
             if data_type is not None:
-                base_data_type = next(g.objects(data_type, RDFS.subClassOf))  # Todo: This must become a sparql query
+                #shacl_rule['datatype'], pattern = JsonLd.map_datatype_to_jsonld(data_type, self.opcuans)
+                base_data_type = next(g.objects(data_type, RDFS.subClassOf)) # Todo: This must become a sparql query
                 is_abstract = None
                 try:
                     is_abstract = bool(next(g.objects(data_type, self.basens['isAbstract'])))
@@ -176,9 +177,8 @@ class Shacl:
         try:
             results = list(self.shaclg.query(query_minmax, initBindings=bindings,
                                              initNs={'sh': SH, 'base': self.basens}))
-            if len(results) > 1:  # try similarity between options
-                print("Warning, found ambigous path match. Most likely due to use of generic FolderType \
-or placeholders or both. Will try to guess the right value, but this can go wrong ...")
+            if len(results) > 1: # try similarity between options
+                print("Warning, found ambigous path match. Most likely due to use of generic FolderType or placeholders or both. Will try to guess the right value, but this can go wrong ...")
                 similarity = []
                 for result in results:
                     similarity.append(SequenceMatcher(None, name, str(result[4])).ratio())

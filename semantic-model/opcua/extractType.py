@@ -266,14 +266,8 @@ def scan_type_recursive(o, node, instancetype, shapename):
             return False
         shacl_rule['is_property'] = True
         shaclg.get_shacl_iri_and_contentclass(g, o, shacl_rule)
-        shaclg.create_shacl_property(shapename,
-                                     shacl_rule['path'],
-                                     shacl_rule['optional'],
-                                     shacl_rule['array'],
-                                     True, shacl_rule['is_iri'],
-                                     shacl_rule['contentclass'],
-                                     shacl_rule['datatype'],
-                                     pattern=shacl_rule['pattern'])
+        shaclg.create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], shacl_rule['array'],
+                                     True, shacl_rule['is_iri'], shacl_rule['contentclass'], shacl_rule['datatype'], pattern=shacl_rule['pattern'])
         e.add_enum_class(g, shacl_rule['contentclass'])
     return has_components
 
@@ -365,8 +359,7 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
         is_placeholder = False
     if is_placeholder:
         if original_attributename is None:
-            print(f"Warning: No original_attributename given but datasetId neeeded for {decoded_attributename}. \
-Chosing default datasetId.")
+            print(f"Warning: No original_attributename given but datasetId neeeded for {decoded_attributename}. Chosing default datasetId.")
             datasetId = "@none"
         else:
             datasetId = f'{datasetid_urn}:{original_attributename}'
@@ -399,8 +392,7 @@ Chosing default datasetId.")
         shacl_rule['is_property'] = True
         shaclg.get_shacl_iri_and_contentclass(g, o, shacl_rule)
         if shacl_rule['isAbstract']:
-            print(f"Warning: Abstract OPCUA DataType {str(shacl_rule['data_type'])} \
-in attribute {entity_ontology_prefix}:{attributename}.")
+            print(f"Warning: Abstract OPCUA DataType {str(shacl_rule['data_type'])} in attribute {entity_ontology_prefix}:{attributename}.")
         try:
             value = next(g.objects(o, basens['hasValue']))
             if not shacl_rule['is_iri']:
@@ -428,8 +420,7 @@ in attribute {entity_ontology_prefix}:{attributename}.")
             }
         minshaclg.copy_property_from_shacl(shaclg, instance['type'], entity_namespace[attributename])
         if debug:
-            instance[f'{entity_ontology_prefix}:{attributename}']['debug'] = \
-                f'{entity_ontology_prefix}:{attributename}, {str(node)}'
+            instance[f'{entity_ontology_prefix}:{attributename}']['debug'] = f'{entity_ontology_prefix}:{attributename}, {str(node)}'
         try:
             is_updating = bool(next(g.objects(o, basens['isUpdating'])))
         except:

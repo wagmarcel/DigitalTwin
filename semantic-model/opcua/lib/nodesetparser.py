@@ -121,8 +121,7 @@ baseVariableType = '62'
 
 class NodesetParser:
 
-    def __init__(self, args, opcua_nodeset, opcua_inputs, version_iri, data_schema,
-                 imported_ontologies, isstrict=False):
+    def __init__(self, args, opcua_nodeset, opcua_inputs, version_iri, data_schema, imported_ontologies, isstrict=False):
         self.known_opcua_ns = {
             'http://opcfoundation.org/UA/': 'opcua'
         }
