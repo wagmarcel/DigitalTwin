@@ -8,6 +8,55 @@ import traceback
 
 sys.setrecursionlimit(1500)  # Increase the recursion limit to avoid maximum recursion depth error
 
+# Define aliases dictionary for commonly used NodeIds
+ALIASES = {
+    "Boolean": "i=1",
+    "SByte": "i=2",
+    "Byte": "i=3",
+    "Int16": "i=4",
+    "UInt16": "i=5",
+    "Int32": "i=6",
+    "UInt32": "i=7",
+    "Int64": "i=8",
+    "UInt64": "i=9",
+    "Float": "i=10",
+    "Double": "i=11",
+    "String": "i=12",
+    "DateTime": "i=13",
+    "Guid": "i=14",
+    "ByteString": "i=15",
+    "XmlElement": "i=16",
+    "NodeId": "i=17",
+    "ExpandedNodeId": "i=18",
+    "StatusCode": "i=19",
+    "QualifiedName": "i=20",
+    "LocalizedText": "i=21",
+    "Structure": "i=22",
+    "DataValue": "i=23",
+    "BaseDataType": "i=24",
+    "DiagnosticInfo": "i=25",
+    "Number": "i=26",
+    "Integer": "i=27",
+    "UInteger": "i=28",
+    "Enumeration": "i=29",
+    "HasComponent": "i=47",
+    "Organizes": "i=35",
+    "HasModellingRule": "i=37",
+    "HasEncoding": "i=38",
+    "HasDescription": "i=39",
+    "HasTypeDefinition": "i=40",
+    "GeneratesEvent": "i=41",
+    "HasSubtype": "i=45",
+    "HasProperty": "i=46",
+    "IdType": "i=256",
+    "NumericRange": "i=291",
+    "Argument": "i=296",
+    "Range": "i=884",
+    "EUInformation": "i=887",
+    "EnumValueType": "i=7594",
+    "HasInterface": "i=17603"
+}
+
 def format_nodeid(nodeid):
     """
     Format the NodeId depending on its type.
@@ -20,7 +69,12 @@ def format_nodeid(nodeid):
         raise ValueError("NodeId has an undefined identifier, which is not supported.")
 
     try:
-        if identifier_type == NodeIdType.Numeric:
+        if identifier_type == NodeIdType.Numeric or identifier_type == NodeIdType.TwoByte or identifier_type == NodeIdType.FourByte:
+            # Check if the identifier has an alias, including explicit ns=0
+            if namespace_index == 0:
+                alias = next((key for key, value in ALIASES.items() if value in [f"i={identifier}", f"ns=0;i={identifier}"]), None)
+                if alias:
+                    return alias
             return f"ns={namespace_index};i={identifier}"
         elif identifier_type == NodeIdType.String:
             return f"ns={namespace_index};s={identifier}"
@@ -113,6 +167,13 @@ async def main():
         for uri in namespace_uris:
             uri_element = ET.SubElement(namespace_uris_element, 'Uri')
             uri_element.text = uri
+
+        # Create Aliases element
+        aliases_element = ET.SubElement(xml_root, 'Aliases')
+        for alias, node_id in ALIASES.items():
+            alias_element = ET.SubElement(aliases_element, 'Alias')
+            alias_element.set('Alias', alias)
+            alias_element.text = node_id
 
         # Get the starting node
         start_node = client.get_node(args.start_node)
