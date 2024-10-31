@@ -82,10 +82,6 @@ def format_nodeid(nodeid):
             return f"ns={namespace_index};g={identifier}"
         elif identifier_type == NodeIdType.ByteString:
             return f"ns={namespace_index};b={identifier.hex()}" if isinstance(identifier, bytes) else f"ns={namespace_index};b={identifier}"
-        elif identifier_type == NodeIdType.TwoByte:
-            return f"ns={namespace_index};i={identifier}"  # Assuming TwoByte is treated similar to a Numeric identifier
-        elif identifier_type == NodeIdType.FourByte:
-            return f"ns={namespace_index};i={identifier}"  # Assuming FourByte is treated similar to a Numeric identifier
         else:
             raise ValueError(f"Unsupported NodeId type: {identifier_type}")
     except Exception as e:
@@ -93,7 +89,7 @@ def format_nodeid(nodeid):
         traceback.print_exc()
         raise
 
-async def browse_node(client, node, xml_root, visited_nodes):
+async def browse_node(client, node, xml_root, visited_nodes, export_namespace_indexes):
     """
     Browse the given node and add its information to the XML in a flat structure.
     """
@@ -107,24 +103,30 @@ async def browse_node(client, node, xml_root, visited_nodes):
         # Format NodeId using the helper function
         node_id = format_nodeid(node.nodeid)
 
+        # Always browse children, but only add nodes with relevant namespaces to XML
         browse_name = await node.read_browse_name()
         display_name = await node.read_display_name()
         node_class = await node.read_node_class()
 
-        # Format BrowseName as "prefix:name"
-        browse_name_str = f"{browse_name.NamespaceIndex}:{browse_name.Name}"
+        # If the node belongs to a relevant namespace, add it to the XML
+        xml_node = None
+        if node.nodeid.NamespaceIndex in export_namespace_indexes:
+            # Format BrowseName as "prefix:name"
+            browse_name_str = f"{browse_name.NamespaceIndex}:{browse_name.Name}"
 
-        # Create an XML element for the node in the flat structure
-        xml_node = ET.SubElement(xml_root, f'UA{node_class.name}')
-        xml_node.set('NodeId', str(node_id))
-        xml_node.set('BrowseName', browse_name_str)
+            # Create an XML element for the node in the flat structure
+            xml_node = ET.SubElement(xml_root, f'UA{node_class.name}')
+            xml_node.set('NodeId', str(node_id))
+            xml_node.set('BrowseName', browse_name_str)
 
-        # Add DisplayName as a sub-element
-        display_name_element = ET.SubElement(xml_node, 'DisplayName')
-        display_name_element.text = str(display_name.Text)
+            # Add DisplayName as a sub-element
+            display_name_element = ET.SubElement(xml_node, 'DisplayName')
+            display_name_element.text = str(display_name.Text)
 
-        # Add References as a sub-element
-        references_element = ET.SubElement(xml_node, 'References')
+            # Add References as a sub-element
+            references_element = ET.SubElement(xml_node, 'References')
+        else:
+            references_element = None
 
         # Browse children nodes and add them to the XML root
         references = await node.get_references()
@@ -132,15 +134,16 @@ async def browse_node(client, node, xml_root, visited_nodes):
             reference_type = format_nodeid(ref.ReferenceTypeId)
             is_forward = ref.IsForward
 
-            # Create a Reference element for each reference
-            ref_element = ET.SubElement(references_element, 'Reference')
-            ref_element.set('ReferenceType', reference_type)
-            ref_element.set('IsForward', str(is_forward).lower())  # Set IsForward as a boolean string (true/false)
-            ref_element.text = format_nodeid(ref.NodeId)
+            # Always browse the child nodes
+            child_node = client.get_node(ref.NodeId)
+            await browse_node(client, child_node, xml_root, visited_nodes, export_namespace_indexes)
 
-            if is_forward:
-                child_node = client.get_node(ref.NodeId)
-                await browse_node(client, child_node, xml_root, visited_nodes)
+            # If the reference points to a relevant namespace, add the reference to the XML
+            if ref.NodeId.NamespaceIndex in export_namespace_indexes and xml_node is not None:
+                ref_element = ET.SubElement(references_element, 'Reference')
+                ref_element.set('ReferenceType', reference_type)
+                ref_element.set('IsForward', str(is_forward).lower())  # Set IsForward as a boolean string (true/false)
+                ref_element.text = format_nodeid(ref.NodeId)
 
     except Exception as e:
         print(f"Error browsing node: {e}")
@@ -152,6 +155,7 @@ async def main():
     parser.add_argument('--server-url', type=str, default='opc.tcp://localhost:4840/freeopcua/server/', help='OPC UA server URL (default is opc.tcp://localhost:4840/freeopcua/server/)')
     parser.add_argument('--start-node', type=str, default='i=84', help='Node ID to start browsing from (default is the Root node, i=84)')
     parser.add_argument('--output-file', type=str, default='nodeset2.xml', help='Output XML file name (default is nodeset2.xml)')
+    parser.add_argument('--ignore-namespaces', type=str, nargs='*', default=['http://opcfoundation.org/UA/'], help='List of additional namespaces to ignore (default is OPC UA standard namespaces)')
     args = parser.parse_args()
 
     # Connect to the OPC UA server
@@ -164,9 +168,15 @@ async def main():
 
         # Create NamespaceUris element
         namespace_uris_element = ET.SubElement(xml_root, 'NamespaceUris')
-        for uri in namespace_uris:
+        export_namespace_indexes = []
+
+        for index, uri in enumerate(namespace_uris):
+            # Add all namespaces, whether they are ignored or not
             uri_element = ET.SubElement(namespace_uris_element, 'Uri')
             uri_element.text = uri
+            # Only add to exportable namespaces if not ignored
+            if uri not in args.ignore_namespaces:
+                export_namespace_indexes.append(index)
 
         # Create Aliases element
         aliases_element = ET.SubElement(xml_root, 'Aliases')
@@ -180,7 +190,7 @@ async def main():
 
         # Start browsing from the specified start node
         visited_nodes = set()  # Track visited nodes to avoid infinite recursion
-        await browse_node(client, start_node, xml_root, visited_nodes)
+        await browse_node(client, start_node, xml_root, visited_nodes, export_namespace_indexes)
 
         # Generate the XML tree
         tree = ET.ElementTree(xml_root)
