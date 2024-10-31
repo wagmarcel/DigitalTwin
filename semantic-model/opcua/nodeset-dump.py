@@ -64,7 +64,6 @@ async def browse_node(client, node, xml_root, visited_nodes):
         xml_node = ET.SubElement(xml_root, f'UA{node_class.name}')
         xml_node.set('NodeId', str(node_id))
         xml_node.set('BrowseName', browse_name_str)
-        
 
         # Add DisplayName as a sub-element
         display_name_element = ET.SubElement(xml_node, 'DisplayName')
@@ -103,11 +102,20 @@ async def main():
 
     # Connect to the OPC UA server
     async with Client(url=args.server_url) as client:
-        # Get the starting node
-        start_node = client.get_node(args.start_node)
-
         # Create XML root for the NodeSet
         xml_root = ET.Element('UANodeSet')
+
+        # Get the namespace URIs from the server
+        namespace_uris = await client.get_namespace_array()
+
+        # Create NamespaceUris element
+        namespace_uris_element = ET.SubElement(xml_root, 'NamespaceUris')
+        for uri in namespace_uris:
+            uri_element = ET.SubElement(namespace_uris_element, 'Uri')
+            uri_element.text = uri
+
+        # Get the starting node
+        start_node = client.get_node(args.start_node)
 
         # Start browsing from the specified start node
         visited_nodes = set()  # Track visited nodes to avoid infinite recursion
@@ -119,7 +127,7 @@ async def main():
         # Write to the nodeset2.xml file with pretty formatting
         from xml.dom import minidom
         xml_str = ET.tostring(xml_root, encoding='utf-8')
-        pretty_xml_str = minidom.parseString(xml_str).toprettyxml(indent="    ", encoding='utf-8').decode('utf-8')
+        pretty_xml_str = minidom.parseString(xml_str).toprettyxml(indent="    ")
         with open(args.output_file, "w", encoding='utf-8') as f:
             f.write(pretty_xml_str)
 
