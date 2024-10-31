@@ -152,7 +152,7 @@ async def browse_node(client, node, xml_root, visited_nodes, export_namespace_in
 async def main():
     # Setup argument parser
     parser = argparse.ArgumentParser(description='Dump OPC UA server nodeset to XML.')
-    parser.add_argument('--server-url', type=str, default='opc.tcp://localhost:4840/freeopcua/server/', help='OPC UA server URL (default is opc.tcp://localhost:4840/freeopcua/server/)')
+    parser.add_argument('--server-url', type=str, default='opc.tcp://localhost:4840/freeopcua/server/', help='OPC UA server URL (default is opc.tcp://localhost:4840/freeopcua/server/')
     parser.add_argument('--start-node', type=str, default='i=84', help='Node ID to start browsing from (default is the Root node, i=84)')
     parser.add_argument('--output-file', type=str, default='nodeset2.xml', help='Output XML file name (default is nodeset2.xml)')
     parser.add_argument('--ignore-namespaces', type=str, nargs='*', default=['http://opcfoundation.org/UA/'], help='List of additional namespaces to ignore (default is OPC UA standard namespaces)')
@@ -200,7 +200,11 @@ async def main():
         xml_str = ET.tostring(xml_root, encoding='utf-8')
         pretty_xml_str = minidom.parseString(xml_str).toprettyxml(indent="    ")
         with open(args.output_file, "w", encoding='utf-8') as f:
-            f.write(pretty_xml_str)
+            # Write the corrected XML header with encoding and the pretty XML content
+            #f.write('<?xml version="1.0" encoding="utf-8"?>\n')
+            for line in pretty_xml_str.splitlines():
+                if line.strip():  # Avoid writing empty lines from prettify
+                    f.write(line + "\n")
 
 if __name__ == "__main__":
     asyncio.run(main())
