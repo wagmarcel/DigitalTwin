@@ -58,13 +58,13 @@ async def browse_node(client, node, xml_root, visited_nodes):
         node_class = await node.read_node_class()
 
         # Format BrowseName as "prefix:name"
-        browse_name_str = f"ns={browse_name.NamespaceIndex}:{browse_name.Name}"
+        browse_name_str = f"{browse_name.NamespaceIndex}:{browse_name.Name}"
 
         # Create an XML element for the node in the flat structure
-        xml_node = ET.SubElement(xml_root, 'Node')
+        xml_node = ET.SubElement(xml_root, f'UA{node_class.name}')
         xml_node.set('NodeId', str(node_id))
         xml_node.set('BrowseName', browse_name_str)
-        xml_node.set('NodeClass', node_class.name)
+        
 
         # Add DisplayName as a sub-element
         display_name_element = ET.SubElement(xml_node, 'DisplayName')
@@ -107,7 +107,7 @@ async def main():
         start_node = client.get_node(args.start_node)
 
         # Create XML root for the NodeSet
-        xml_root = ET.Element('Nodeset')
+        xml_root = ET.Element('UANodeSet')
 
         # Start browsing from the specified start node
         visited_nodes = set()  # Track visited nodes to avoid infinite recursion
@@ -119,7 +119,7 @@ async def main():
         # Write to the nodeset2.xml file with pretty formatting
         from xml.dom import minidom
         xml_str = ET.tostring(xml_root, encoding='utf-8')
-        pretty_xml_str = minidom.parseString(xml_str).toprettyxml(indent="    ")
+        pretty_xml_str = minidom.parseString(xml_str).toprettyxml(indent="    ", encoding='utf-8').decode('utf-8')
         with open(args.output_file, "w", encoding='utf-8') as f:
             f.write(pretty_xml_str)
 
