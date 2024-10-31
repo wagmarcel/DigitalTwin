@@ -113,9 +113,9 @@ async def browse_node(client, node, xml_root, visited_nodes, export_namespace_in
         if node.nodeid.NamespaceIndex in export_namespace_indexes:
             # Format BrowseName as "prefix:name"
             if parent_node_id is not None:
-                        parent_node_id_str = format_nodeid(parent_node_id)
+                parent_node_id_str = format_nodeid(parent_node_id)
             else:
-                        parent_node_id_str = ''
+                parent_node_id_str = ''
             browse_name_str = f"{browse_name.NamespaceIndex}:{browse_name.Name}"
 
             # Create an XML element for the node in the flat structure
@@ -123,11 +123,37 @@ async def browse_node(client, node, xml_root, visited_nodes, export_namespace_in
             xml_node.set('NodeId', str(node_id))
             xml_node.set('BrowseName', browse_name_str)
             if parent_node_id_str:
-                        xml_node.set('ParentNodeId', parent_node_id_str)
+                xml_node.set('ParentNodeId', parent_node_id_str)
 
             # Add DisplayName as a sub-element
             display_name_element = ET.SubElement(xml_node, 'DisplayName')
             display_name_element.text = str(display_name.Text)
+
+            # Conditionally add properties based on node class
+            if node_class.name == 'ObjectType' or node_class.name == 'VariableType':
+                is_abstract = await node.read_is_abstract()
+                xml_node.set('IsAbstract', str(is_abstract).lower())
+
+            if node_class.name == 'Variable' or node_class.name == 'VariableType':
+                value = await node.read_value() if node_class.name == 'Variable' else None
+                if value is not None:
+                    value_element = ET.SubElement(xml_node, 'Value')
+                    value_element.text = str(value)
+                data_type = await node.read_data_type()
+                xml_node.set('DataType', format_nodeid(data_type))
+                value_rank = await node.read_value_rank()
+                xml_node.set('ValueRank', str(value_rank))
+                array_dimensions = await node.read_array_dimensions()
+                if array_dimensions:
+                    array_dimensions_element = ET.SubElement(xml_node, 'ArrayDimensions')
+                    array_dimensions_element.text = ','.join(map(str, array_dimensions))
+
+            if node_class.name == 'ReferenceType':
+                symmetric = await node.read_symmetric()
+                xml_node.set('Symmetric', str(symmetric).lower())
+                inverse_name = await node.read_inverse_name()
+                inverse_name_element = ET.SubElement(xml_node, 'InverseName')
+                inverse_name_element.text = str(inverse_name.Text)
 
             # Add References as a sub-element
             references_element = ET.SubElement(xml_node, 'References')
@@ -158,7 +184,7 @@ async def browse_node(client, node, xml_root, visited_nodes, export_namespace_in
 async def main():
     # Setup argument parser
     parser = argparse.ArgumentParser(description='Dump OPC UA server nodeset to XML.')
-    parser.add_argument('--server-url', type=str, default='opc.tcp://localhost:4840/freeopcua/server/', help='OPC UA server URL (default is opc.tcp://localhost:4840/freeopcua/server/')
+    parser.add_argument('--server-url', type=str, default='opc.tcp://localhost:4840/freeopcua/server/', help='OPC UA server URL (default is opc.tcp://localhost:4840/freeopcua/server/)')
     parser.add_argument('--start-node', type=str, default='i=84', help='Node ID to start browsing from (default is the Root node, i=84)')
     parser.add_argument('--output-file', type=str, default='nodeset2.xml', help='Output XML file name (default is nodeset2.xml)')
     parser.add_argument('--ignore-namespaces', type=str, nargs='*', default=['http://opcfoundation.org/UA/'], help='List of additional namespaces to ignore (default is OPC UA standard namespaces)')
@@ -196,7 +222,7 @@ async def main():
 
         # Start browsing from the specified start node
         visited_nodes = set()  # Track visited nodes to avoid infinite recursion
-        await browse_node(client, start_node, xml_root, visited_nodes, export_namespace_indexes, parent_node_id=None)
+        await browse_node(client, start_node, xml_root, visited_nodes, export_namespace_indexes)
 
         # Generate the XML tree
         tree = ET.ElementTree(xml_root)
@@ -206,11 +232,7 @@ async def main():
         xml_str = ET.tostring(xml_root, encoding='utf-8')
         pretty_xml_str = minidom.parseString(xml_str).toprettyxml(indent="    ")
         with open(args.output_file, "w", encoding='utf-8') as f:
-            # Write the corrected XML header with encoding and the pretty XML content
-            #f.write('<?xml version="1.0" encoding="utf-8"?>\n')
-            for line in pretty_xml_str.splitlines():
-                if line.strip():  # Avoid writing empty lines from prettify
-                    f.write(line + "\n")
+            f.write(pretty_xml_str)
 
 if __name__ == "__main__":
     asyncio.run(main())
