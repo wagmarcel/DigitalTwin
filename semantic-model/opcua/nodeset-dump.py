@@ -89,7 +89,7 @@ def format_nodeid(nodeid):
         traceback.print_exc()
         raise
 
-async def browse_node(client, node, xml_root, visited_nodes, export_namespace_indexes):
+async def browse_node(client, node, xml_root, visited_nodes, export_namespace_indexes, parent_node_id=None):
     """
     Browse the given node and add its information to the XML in a flat structure.
     """
@@ -112,12 +112,18 @@ async def browse_node(client, node, xml_root, visited_nodes, export_namespace_in
         xml_node = None
         if node.nodeid.NamespaceIndex in export_namespace_indexes:
             # Format BrowseName as "prefix:name"
+            if parent_node_id is not None:
+                        parent_node_id_str = format_nodeid(parent_node_id)
+            else:
+                        parent_node_id_str = ''
             browse_name_str = f"{browse_name.NamespaceIndex}:{browse_name.Name}"
 
             # Create an XML element for the node in the flat structure
             xml_node = ET.SubElement(xml_root, f'UA{node_class.name}')
             xml_node.set('NodeId', str(node_id))
             xml_node.set('BrowseName', browse_name_str)
+            if parent_node_id_str:
+                        xml_node.set('ParentNodeId', parent_node_id_str)
 
             # Add DisplayName as a sub-element
             display_name_element = ET.SubElement(xml_node, 'DisplayName')
@@ -136,7 +142,7 @@ async def browse_node(client, node, xml_root, visited_nodes, export_namespace_in
 
             # Always browse the child nodes
             child_node = client.get_node(ref.NodeId)
-            await browse_node(client, child_node, xml_root, visited_nodes, export_namespace_indexes)
+            await browse_node(client, child_node, xml_root, visited_nodes, export_namespace_indexes, parent_node_id=node.nodeid)
 
             # If the reference points to a relevant namespace, add the reference to the XML
             if ref.NodeId.NamespaceIndex in export_namespace_indexes and xml_node is not None:
@@ -190,7 +196,7 @@ async def main():
 
         # Start browsing from the specified start node
         visited_nodes = set()  # Track visited nodes to avoid infinite recursion
-        await browse_node(client, start_node, xml_root, visited_nodes, export_namespace_indexes)
+        await browse_node(client, start_node, xml_root, visited_nodes, export_namespace_indexes, parent_node_id=None)
 
         # Generate the XML tree
         tree = ET.ElementTree(xml_root)
