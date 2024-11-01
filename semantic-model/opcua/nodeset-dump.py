@@ -1,10 +1,12 @@
 import asyncio
 import argparse
 from asyncua import Client
+from asyncua import ua
 import xml.etree.ElementTree as ET
 import sys
 from asyncua.ua import NodeIdType
 import traceback
+import json
 
 sys.setrecursionlimit(1500)  # Increase the recursion limit to avoid maximum recursion depth error
 
@@ -89,6 +91,33 @@ def format_nodeid(nodeid):
         traceback.print_exc()
         raise
 
+async def handle_node_value(node_class, node, xml_node):
+    """
+    Handle special cases for node values and serialize appropriately.
+    """
+    try:
+        value = await node.read_value() if node_class == 'Variable' else None
+        if value is not None:
+            value_element = ET.SubElement(xml_node, 'Value')
+            if isinstance(value, list) and len(value) > 0 and hasattr(value[0], 'Name'):
+                # Serialize special value types like Argument to JSON format
+                value_json = [
+                    {
+                        "Name": arg.Name,
+                        "DataType": format_nodeid(arg.DataType),
+                        "NodeIdType": arg.DataType.NodeIdType.name if arg.DataType else None,
+                        "ValueRank": arg.ValueRank,
+                        "ArrayDimensions": arg.ArrayDimensions,
+                        "Description": arg.Description.Text if arg.Description else None
+                    } for arg in value
+                ]
+                value_element.text = json.dumps(value_json)
+            else:
+                value_element.text = str(value)
+    except Exception as e:
+        print(f"Error handling node value: {e}")
+        traceback.print_exc()
+
 async def browse_node(client, node, xml_root, visited_nodes, export_namespace_indexes, parent_node_id=None):
     """
     Browse the given node and add its information to the XML in a flat structure.
@@ -131,14 +160,12 @@ async def browse_node(client, node, xml_root, visited_nodes, export_namespace_in
 
             # Conditionally add properties based on node class
             if node_class.name == 'ObjectType' or node_class.name == 'VariableType':
-                is_abstract = await node.read_is_abstract()
+                attributes = await node.read_attributes([ua.AttributeIds.IsAbstract])
+                is_abstract = attributes[0].Value.Value if attributes and attributes[0].Value is not None else False
                 xml_node.set('IsAbstract', str(is_abstract).lower())
 
             if node_class.name == 'Variable' or node_class.name == 'VariableType':
-                value = await node.read_value() if node_class.name == 'Variable' else None
-                if value is not None:
-                    value_element = ET.SubElement(xml_node, 'Value')
-                    value_element.text = str(value)
+                await handle_node_value(node_class.name, node, xml_node)
                 data_type = await node.read_data_type()
                 xml_node.set('DataType', format_nodeid(data_type))
                 value_rank = await node.read_value_rank()
