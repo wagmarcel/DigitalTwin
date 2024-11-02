@@ -1,12 +1,19 @@
 import asyncio
 import argparse
 from asyncua import Client
-from asyncua import ua
-import xml.etree.ElementTree as ET
 import sys
-from asyncua.ua import NodeIdType
 import traceback
 from asyncua.common.xmlexporter import XmlExporter
+import importlib
+
+Client = None
+
+try:
+    asyncua = importlib.import_module('asyncua')
+    Client = asyncua.Client
+except ImportError:
+    print("The 'asyncua' library is not installed. Please install it separately to use this tool.")
+    exit(1)
 
 sys.setrecursionlimit(1500)  # Increase the recursion limit to avoid maximum recursion depth error
 
@@ -20,10 +27,10 @@ async def browse_node(client, node, exported_nodes, visited_nodes, export_namesp
         if node.nodeid in visited_nodes:
             return
         visited_nodes.add(node.nodeid)
-        print(f"visited: {node.nodeid.NamespaceIndex}:{node.nodeid.Identifier}") if debug else False
+        if debug:
+            print(f"visited: {node.nodeid.NamespaceIndex}:{node.nodeid.Identifier}")
 
         # If the node belongs to a relevant namespace, add it to the XML
-        xml_node = None
         if node.nodeid.NamespaceIndex in export_namespace_indexes:
             exported_nodes.append(node)
 
@@ -84,11 +91,6 @@ async def main():
         await exporter.build_etree(exported_nodes)
 
         # Write to the nodeset2.xml file with pretty formatting
-        #from xml.dom import minidom
-        #xml_str = ET.tostring(xml_root, encoding='utf-8')
-        #pretty_xml_str = minidom.parseString(xml_str).toprettyxml(indent="    ")
-        #with open(args.output_file, "w", encoding='utf-8') as f:
-        #    f.write(pretty_xml_str)
         await exporter.write_xml(args.output_file)
 
 if __name__ == "__main__":
