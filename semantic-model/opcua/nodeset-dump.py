@@ -6,119 +6,12 @@ import xml.etree.ElementTree as ET
 import sys
 from asyncua.ua import NodeIdType
 import traceback
-import json
+from asyncua.common.xmlexporter import XmlExporter
 
 sys.setrecursionlimit(1500)  # Increase the recursion limit to avoid maximum recursion depth error
 
-# Define aliases dictionary for commonly used NodeIds
-ALIASES = {
-    "Boolean": "i=1",
-    "SByte": "i=2",
-    "Byte": "i=3",
-    "Int16": "i=4",
-    "UInt16": "i=5",
-    "Int32": "i=6",
-    "UInt32": "i=7",
-    "Int64": "i=8",
-    "UInt64": "i=9",
-    "Float": "i=10",
-    "Double": "i=11",
-    "String": "i=12",
-    "DateTime": "i=13",
-    "Guid": "i=14",
-    "ByteString": "i=15",
-    "XmlElement": "i=16",
-    "NodeId": "i=17",
-    "ExpandedNodeId": "i=18",
-    "StatusCode": "i=19",
-    "QualifiedName": "i=20",
-    "LocalizedText": "i=21",
-    "Structure": "i=22",
-    "DataValue": "i=23",
-    "BaseDataType": "i=24",
-    "DiagnosticInfo": "i=25",
-    "Number": "i=26",
-    "Integer": "i=27",
-    "UInteger": "i=28",
-    "Enumeration": "i=29",
-    "HasComponent": "i=47",
-    "Organizes": "i=35",
-    "HasModellingRule": "i=37",
-    "HasEncoding": "i=38",
-    "HasDescription": "i=39",
-    "HasTypeDefinition": "i=40",
-    "GeneratesEvent": "i=41",
-    "HasSubtype": "i=45",
-    "HasProperty": "i=46",
-    "IdType": "i=256",
-    "NumericRange": "i=291",
-    "Argument": "i=296",
-    "Range": "i=884",
-    "EUInformation": "i=887",
-    "EnumValueType": "i=7594",
-    "HasInterface": "i=17603"
-}
-
-def format_nodeid(nodeid):
-    """
-    Format the NodeId depending on its type.
-    """
-    namespace_index = nodeid.NamespaceIndex
-    identifier = nodeid.Identifier
-    identifier_type = nodeid.NodeIdType  # Corrected to use NodeIdType property
-
-    if identifier is None:
-        raise ValueError("NodeId has an undefined identifier, which is not supported.")
-
-    try:
-        if identifier_type == NodeIdType.Numeric or identifier_type == NodeIdType.TwoByte or identifier_type == NodeIdType.FourByte:
-            # Check if the identifier has an alias, including explicit ns=0
-            if namespace_index == 0:
-                alias = next((key for key, value in ALIASES.items() if value in [f"i={identifier}", f"ns=0;i={identifier}"]), None)
-                if alias:
-                    return alias
-            return f"ns={namespace_index};i={identifier}"
-        elif identifier_type == NodeIdType.String:
-            return f"ns={namespace_index};s={identifier}"
-        elif identifier_type == NodeIdType.Guid:
-            return f"ns={namespace_index};g={identifier}"
-        elif identifier_type == NodeIdType.ByteString:
-            return f"ns={namespace_index};b={identifier.hex()}" if isinstance(identifier, bytes) else f"ns={namespace_index};b={identifier}"
-        else:
-            raise ValueError(f"Unsupported NodeId type: {identifier_type}")
-    except Exception as e:
-        print(f"Error formatting NodeId: {e}")
-        traceback.print_exc()
-        raise
-
-async def handle_node_value(node_class, node, xml_node):
-    """
-    Handle special cases for node values and serialize appropriately.
-    """
-    try:
-        value = await node.read_value() if node_class == 'Variable' else None
-        if value is not None:
-            value_element = ET.SubElement(xml_node, 'Value')
-            if isinstance(value, list) and len(value) > 0 and hasattr(value[0], 'Name'):
-                # Serialize special value types like Argument to JSON format
-                value_json = [
-                    {
-                        "Name": arg.Name,
-                        "DataType": format_nodeid(arg.DataType),
-                        "NodeIdType": arg.DataType.NodeIdType.name if arg.DataType else None,
-                        "ValueRank": arg.ValueRank,
-                        "ArrayDimensions": arg.ArrayDimensions,
-                        "Description": arg.Description.Text if arg.Description else None
-                    } for arg in value
-                ]
-                value_element.text = json.dumps(value_json)
-            else:
-                value_element.text = str(value)
-    except Exception as e:
-        print(f"Error handling node value: {e}")
-        traceback.print_exc()
-
-async def browse_node(client, node, xml_root, visited_nodes, export_namespace_indexes, parent_node_id=None):
+debug = False
+async def browse_node(client, node, exported_nodes, visited_nodes, export_namespace_indexes, parent_node_id=None):
     """
     Browse the given node and add its information to the XML in a flat structure.
     """
@@ -127,139 +20,76 @@ async def browse_node(client, node, xml_root, visited_nodes, export_namespace_in
         if node.nodeid in visited_nodes:
             return
         visited_nodes.add(node.nodeid)
-        print(f"visited: {node.nodeid.NamespaceIndex}:{node.nodeid.Identifier}")
-
-        # Format NodeId using the helper function
-        node_id = format_nodeid(node.nodeid)
-
-        # Always browse children, but only add nodes with relevant namespaces to XML
-        browse_name = await node.read_browse_name()
-        display_name = await node.read_display_name()
-        node_class = await node.read_node_class()
+        print(f"visited: {node.nodeid.NamespaceIndex}:{node.nodeid.Identifier}") if debug else False
 
         # If the node belongs to a relevant namespace, add it to the XML
         xml_node = None
         if node.nodeid.NamespaceIndex in export_namespace_indexes:
-            # Format BrowseName as "prefix:name"
-            if parent_node_id is not None:
-                parent_node_id_str = format_nodeid(parent_node_id)
-            else:
-                parent_node_id_str = ''
-            browse_name_str = f"{browse_name.NamespaceIndex}:{browse_name.Name}"
-
-            # Create an XML element for the node in the flat structure
-            xml_node = ET.SubElement(xml_root, f'UA{node_class.name}')
-            xml_node.set('NodeId', str(node_id))
-            xml_node.set('BrowseName', browse_name_str)
-            if parent_node_id_str:
-                xml_node.set('ParentNodeId', parent_node_id_str)
-
-            # Add DisplayName as a sub-element
-            display_name_element = ET.SubElement(xml_node, 'DisplayName')
-            display_name_element.text = str(display_name.Text)
-
-            # Conditionally add properties based on node class
-            if node_class.name == 'ObjectType' or node_class.name == 'VariableType':
-                attributes = await node.read_attributes([ua.AttributeIds.IsAbstract])
-                is_abstract = attributes[0].Value.Value if attributes and attributes[0].Value is not None else False
-                xml_node.set('IsAbstract', str(is_abstract).lower())
-
-            if node_class.name == 'Variable' or node_class.name == 'VariableType':
-                await handle_node_value(node_class.name, node, xml_node)
-                data_type = await node.read_data_type()
-                xml_node.set('DataType', format_nodeid(data_type))
-                value_rank = await node.read_value_rank()
-                xml_node.set('ValueRank', str(value_rank))
-                array_dimensions = await node.read_array_dimensions()
-                if array_dimensions:
-                    array_dimensions_element = ET.SubElement(xml_node, 'ArrayDimensions')
-                    array_dimensions_element.text = ','.join(map(str, array_dimensions))
-
-            if node_class.name == 'ReferenceType':
-                symmetric = await node.read_symmetric()
-                xml_node.set('Symmetric', str(symmetric).lower())
-                inverse_name = await node.read_inverse_name()
-                inverse_name_element = ET.SubElement(xml_node, 'InverseName')
-                inverse_name_element.text = str(inverse_name.Text)
-
-            # Add References as a sub-element
-            references_element = ET.SubElement(xml_node, 'References')
-        else:
-            references_element = None
+            exported_nodes.append(node)
 
         # Browse children nodes and add them to the XML root
         references = await node.get_references()
         for ref in references:
-            reference_type = format_nodeid(ref.ReferenceTypeId)
-            is_forward = ref.IsForward
-
-            # Always browse the child nodes
+            # Always browse the child nodes, filter them later
             child_node = client.get_node(ref.NodeId)
-            await browse_node(client, child_node, xml_root, visited_nodes, export_namespace_indexes, parent_node_id=node.nodeid)
-
-            # If the reference points to a relevant namespace, add the reference to the XML
-            if ref.NodeId.NamespaceIndex in export_namespace_indexes and xml_node is not None:
-                ref_element = ET.SubElement(references_element, 'Reference')
-                ref_element.set('ReferenceType', reference_type)
-                ref_element.set('IsForward', str(is_forward).lower())  # Set IsForward as a boolean string (true/false)
-                ref_element.text = format_nodeid(ref.NodeId)
+            await browse_node(client, child_node, exported_nodes, visited_nodes, export_namespace_indexes, parent_node_id=node.nodeid)
 
     except Exception as e:
         print(f"Error browsing node: {e}")
         traceback.print_exc()
 
 async def main():
+    global debug
     # Setup argument parser
     parser = argparse.ArgumentParser(description='Dump OPC UA server nodeset to XML.')
     parser.add_argument('--server-url', type=str, default='opc.tcp://localhost:4840/freeopcua/server/', help='OPC UA server URL (default is opc.tcp://localhost:4840/freeopcua/server/)')
     parser.add_argument('--start-node', type=str, default='i=84', help='Node ID to start browsing from (default is the Root node, i=84)')
     parser.add_argument('--output-file', type=str, default='nodeset2.xml', help='Output XML file name (default is nodeset2.xml)')
-    parser.add_argument('--ignore-namespaces', type=str, nargs='*', default=['http://opcfoundation.org/UA/'], help='List of additional namespaces to ignore (default is OPC UA standard namespaces)')
+    parser.add_argument('--namespaces', type=str, nargs='*', help='List of Namespaces to collect nodes from.')
+    parser.add_argument('-d','--debug', action="store_true", default=False, help="Set debug flag.")
     args = parser.parse_args()
 
+    debug = args.debug
     # Connect to the OPC UA server
     async with Client(url=args.server_url) as client:
         # Create XML root for the NodeSet
-        xml_root = ET.Element('UANodeSet')
+        exporter = XmlExporter(client, export_values=True)
 
         # Get the namespace URIs from the server
         namespace_uris = await client.get_namespace_array()
 
         # Create NamespaceUris element
-        namespace_uris_element = ET.SubElement(xml_root, 'NamespaceUris')
+        #namespace_uris_element = ET.SubElement(xml_root, 'NamespaceUris')
         export_namespace_indexes = []
 
+        if args.namespaces is None:
+            print(f"Please provide a namespace, e.g. one of {namespace_uris}.")
+            exit(1)
         for index, uri in enumerate(namespace_uris):
-            # Add all namespaces, whether they are ignored or not
-            uri_element = ET.SubElement(namespace_uris_element, 'Uri')
-            uri_element.text = uri
-            # Only add to exportable namespaces if not ignored
-            if uri not in args.ignore_namespaces:
-                export_namespace_indexes.append(index)
+            # Only resolve requested namespaces
+            if uri in args.namespaces:
+                nsidx = await client.get_namespace_index(uri)
+                export_namespace_indexes.append(nsidx)
 
-        # Create Aliases element
-        aliases_element = ET.SubElement(xml_root, 'Aliases')
-        for alias, node_id in ALIASES.items():
-            alias_element = ET.SubElement(aliases_element, 'Alias')
-            alias_element.set('Alias', alias)
-            alias_element.text = node_id
 
         # Get the starting node
+        exported_nodes = []
         start_node = client.get_node(args.start_node)
 
         # Start browsing from the specified start node
         visited_nodes = set()  # Track visited nodes to avoid infinite recursion
-        await browse_node(client, start_node, xml_root, visited_nodes, export_namespace_indexes)
+        await browse_node(client, start_node, exported_nodes, visited_nodes, export_namespace_indexes)
 
         # Generate the XML tree
-        tree = ET.ElementTree(xml_root)
+        await exporter.build_etree(exported_nodes)
 
         # Write to the nodeset2.xml file with pretty formatting
-        from xml.dom import minidom
-        xml_str = ET.tostring(xml_root, encoding='utf-8')
-        pretty_xml_str = minidom.parseString(xml_str).toprettyxml(indent="    ")
-        with open(args.output_file, "w", encoding='utf-8') as f:
-            f.write(pretty_xml_str)
+        #from xml.dom import minidom
+        #xml_str = ET.tostring(xml_root, encoding='utf-8')
+        #pretty_xml_str = minidom.parseString(xml_str).toprettyxml(indent="    ")
+        #with open(args.output_file, "w", encoding='utf-8') as f:
+        #    f.write(pretty_xml_str)
+        await exporter.write_xml(args.output_file)
 
 if __name__ == "__main__":
     asyncio.run(main())
