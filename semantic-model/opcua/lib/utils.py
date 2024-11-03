@@ -15,8 +15,8 @@
 #
 
 from urllib.parse import urlparse
-from rdflib.namespace import RDFS, XSD
-from rdflib import URIRef, Namespace
+from rdflib.namespace import RDFS, XSD, OWL, RDF
+from rdflib import URIRef, Namespace, Graph
 import re
 import os
 
@@ -336,3 +336,58 @@ class RdfUtils:
         result = graph.query(query_ignored_references, initNs={'opcua': self.opcuans})
         first_elements = [t[0] for t in set(result)]
         return first_elements
+
+
+class OntologyLoader:
+    def __init__(self, verbose=False):
+        self.ig = Graph()
+        self.loaded_ontologies = set()  # Track loaded ontology IRIs
+        self.visited_files = set()  # Track visited files/URLs
+        self.verbose=verbose
+
+    def init_imports(self, base_ontologies):
+        for file in base_ontologies:
+            self.load_ontology(file)
+
+    def get_graph(self):
+        return self.ig
+
+    def load_ontology(self, ontology):
+        ontology_str = str(ontology)
+
+        # Check if the file has already been visited
+        if ontology_str in self.visited_files:
+            return
+
+        # Load the ontology into a temporary graph
+        hgraph = Graph()
+        hgraph.parse(ontology)
+        self.visited_files.add(ontology_str)
+
+        # Find the ontology URI (subject of type owl:Ontology)
+        ontology_iri = None
+        for s in hgraph.subjects(RDF.type, OWL.Ontology):
+            ontology_iri = str(s)  # Convert to string for comparison
+            break
+
+        # If the ontology has an IRI, use it to track loaded ontologies
+        if ontology_iri and ontology_iri in self.loaded_ontologies:
+            return
+
+        # If no IRI is found, fall back to using the file/URL location
+        if ontology_iri is None:
+            ontology_iri = ontology_str
+        
+        # Add the ontology IRI to the loaded set
+        self.loaded_ontologies.add(ontology_iri)
+        
+        # Add triples to the main graph
+        if self.verbose:
+            print(f"Importing {ontology_iri} from url {ontology}.")
+        self.ig += hgraph
+
+        # Find owl:imports and load them recursively
+        for imported_ontology in hgraph.objects(None, OWL.imports):
+            imported_ontology_str = str(imported_ontology)
+            if imported_ontology_str not in self.loaded_ontologies and imported_ontology_str not in self.visited_files:
+                self.load_ontology(imported_ontology)
