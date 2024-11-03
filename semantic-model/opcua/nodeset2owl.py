@@ -42,6 +42,7 @@ parse nodeset and create RDF-graph <nodeset2.xml>')
     parser.add_argument('-t', '--typesxsd', help='Schema for value definitions, e.g. Opc.Ua.Types.xsd',
                         default='https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/\
 Schema/Opc.Ua.Types.xsd')
+    parser.add_argument('--strict', action="store_true", default=False, help='Strict interpretation of OPCUA, e.g. only import direct dependencies.')
     parsed_args = parser.parse_args(args)
     return parsed_args
 
@@ -80,6 +81,6 @@ if __name__ == '__main__':
     prefix = args.prefix
     data_schema = xmlschema.XMLSchema(args.typesxsd)
     versionIRI = URIRef(args.versionIRI) if args.versionIRI is not None else None
-    nodesetparser = NodesetParser(args, opcua_nodeset, opcua_inputs, versionIRI, data_schema, imported_ontologies)
+    nodesetparser = NodesetParser(args, opcua_nodeset, opcua_inputs, versionIRI, data_schema, imported_ontologies, args.strict)
     nodesetparser.parse()
     nodesetparser.write_graph(opcua_output)
