@@ -120,7 +120,7 @@ baseVariableType = '62'
 
 class NodesetParser:
 
-    def __init__(self, args, opcua_nodeset, opcua_inputs, version_iri, data_schema, imported_ontologies):
+    def __init__(self, args, opcua_nodeset, opcua_inputs, version_iri, data_schema, imported_ontologies, isstrict=False):
         self.known_opcua_ns = {
             'http://opcfoundation.org/UA/': 'opcua'
         }
@@ -140,6 +140,7 @@ class NodesetParser:
         self.aliases = {}
         self.opcua_inputs = opcua_inputs
         self.versionIRI = version_iri
+        self.isstrict = isstrict
         self.xml_ns = {
             'opcua': 'http://opcfoundation.org/UA/2011/03/UANodeSet.xsd',
             'xsd': 'http://opcfoundation.org/UA/2008/02/Types.xsd'
@@ -223,13 +224,15 @@ class NodesetParser:
             self.add_uadatatype(uadatatype)
 
     def init_imports(self, base_ontologies):
-        loader = utils.OntologyLoader(verbose=True)
-        loader.init_imports(base_ontologies)
-        self.ig = loader.get_graph()
-        #for file in base_ontologies:
-        #    hgraph = Graph()
-        #    hgraph.parse(file)
-        #    self.ig += hgraph
+        if not self.isstrict:
+            loader = utils.OntologyLoader(verbose=True)
+            loader.init_imports(base_ontologies)
+            self.ig = loader.get_graph()
+        else:
+            for file in base_ontologies:
+                hgraph = Graph()
+                hgraph.parse(file)
+                self.ig += hgraph
 
     def get_all_node_ids(self):
         query_result = self.ig.query(query_nodeIds, initNs=self.rdf_ns)
@@ -270,7 +273,7 @@ class NodesetParser:
         corens = list(self.known_opcua_ns.keys())[0]
         for uri, prefix, ns in query_result:
             if str(uri) != corens:
-                print(f"found {prefix}: {uri}  with namespaceclass {ns}")
+                print(f"Found RDF Prefix {prefix}: {uri}  with namespaceclass {ns}")
                 self.known_opcua_ns[str(uri)] = str(prefix)
                 self.known_ns_classes[str(uri)] = ns
                 self.rdf_ns[str(prefix)] = Namespace(str(uri))
