@@ -223,10 +223,13 @@ class NodesetParser:
             self.add_uadatatype(uadatatype)
 
     def init_imports(self, base_ontologies):
-        for file in base_ontologies:
-            hgraph = Graph()
-            hgraph.parse(file)
-            self.ig += hgraph
+        loader = utils.OntologyLoader(verbose=True)
+        loader.init_imports(base_ontologies)
+        self.ig = loader.get_graph()
+        #for file in base_ontologies:
+        #    hgraph = Graph()
+        #    hgraph.parse(file)
+        #    self.ig += hgraph
 
     def get_all_node_ids(self):
         query_result = self.ig.query(query_nodeIds, initNs=self.rdf_ns)
@@ -237,7 +240,10 @@ class NodesetParser:
             self.nodeIds.append({})
             self.typeIds.append({})
         for nodeId, uri, nodeIri in query_result:
-            ns = urimap[str(uri)]
+            if str(uri) in urimap.keys():
+                ns = urimap[str(uri)]
+            else:
+                continue
             try:
                 self.nodeIds[ns][str(nodeId)] = nodeIri
             except:
@@ -248,7 +254,10 @@ class NodesetParser:
     def get_all_types(self):
         query_result = self.ig.query(query_types, initNs=self.rdf_ns)
         for nodeId, uri, type in query_result:
-            ns = self.urimap[str(uri)]
+            if str(uri) in self.urimap.keys():
+                ns = self.urimap[str(uri)]
+            else:
+                continue
             self.typeIds[ns][str(nodeId)] = type
 
     def get_all_references(self):
