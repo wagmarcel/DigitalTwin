@@ -54,13 +54,14 @@ async def main():
     parser.add_argument('--output-file', type=str, default='nodeset2.xml', help='Output XML file name (default is nodeset2.xml)')
     parser.add_argument('--namespaces', type=str, nargs='*', help='List of Namespaces to collect nodes from.')
     parser.add_argument('-d','--debug', action="store_true", default=False, help="Set debug flag.")
+    parser.add_argument('-v','--values', action="store_true", default=False, help="Export values.")
     args = parser.parse_args()
 
     debug = args.debug
     # Connect to the OPC UA server
     async with Client(url=args.server_url) as client:
         # Create XML root for the NodeSet
-        exporter = XmlExporter(client, export_values=True)
+        exporter = XmlExporter(client, export_values=args.values)
 
         # Get the namespace URIs from the server
         namespace_uris = await client.get_namespace_array()
