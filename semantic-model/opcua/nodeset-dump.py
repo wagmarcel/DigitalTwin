@@ -4,6 +4,7 @@ from asyncua import Client
 import sys
 import traceback
 from asyncua.common.xmlexporter import XmlExporter
+from asyncua import ua
 import importlib
 
 Client = None
@@ -18,7 +19,7 @@ except ImportError:
 sys.setrecursionlimit(1500)  # Increase the recursion limit to avoid maximum recursion depth error
 
 debug = False
-async def browse_node(client, node, exported_nodes, visited_nodes, export_namespace_indexes, parent_node_id=None):
+async def browse_node(client, node, exported_nodes, visited_nodes, excluded, export_namespace_indexes, parent_node_id=None):
     """
     Browse the given node and add its information to the XML in a flat structure.
     """
@@ -31,7 +32,7 @@ async def browse_node(client, node, exported_nodes, visited_nodes, export_namesp
             print(f"visited: {node.nodeid.NamespaceIndex}:{node.nodeid.Identifier}")
 
         # If the node belongs to a relevant namespace, add it to the XML
-        if node.nodeid.NamespaceIndex in export_namespace_indexes:
+        if node.nodeid.NamespaceIndex in export_namespace_indexes and node.nodeid not in excluded:
             exported_nodes.append(node)
 
         # Browse children nodes and add them to the XML root
@@ -39,7 +40,7 @@ async def browse_node(client, node, exported_nodes, visited_nodes, export_namesp
         for ref in references:
             # Always browse the child nodes, filter them later
             child_node = client.get_node(ref.NodeId)
-            await browse_node(client, child_node, exported_nodes, visited_nodes, export_namespace_indexes, parent_node_id=node.nodeid)
+            await browse_node(client, child_node, exported_nodes, visited_nodes, excluded, export_namespace_indexes, parent_node_id=node.nodeid)
 
     except Exception as e:
         print(f"Error browsing node: {e}")
@@ -53,8 +54,10 @@ async def main():
     parser.add_argument('--start-node', type=str, default='i=84', help='Node ID to start browsing from (default is the Root node, i=84)')
     parser.add_argument('--output-file', type=str, default='nodeset2.xml', help='Output XML file name (default is nodeset2.xml)')
     parser.add_argument('--namespaces', type=str, nargs='*', help='List of Namespaces to collect nodes from.')
+    parser.add_argument('--excluded', type=str, nargs='*', help='List of Nodes to exclude from export.')
     parser.add_argument('-d','--debug', action="store_true", default=False, help="Set debug flag.")
     parser.add_argument('-v','--values', action="store_true", default=False, help="Export values.")
+    parser.add_argument('-s', '--single', action="store_true", default=False, help="Export single node.")
     args = parser.parse_args()
 
     debug = args.debug
@@ -83,14 +86,21 @@ async def main():
         # Get the starting node
         exported_nodes = []
         start_node = client.get_node(args.start_node)
+        excluded = []
+        for nodeid in args.excluded or []:
+            excluded.append(ua.NodeId.from_string(nodeid))
 
+        single_node = args.single
         # Start browsing from the specified start node
         visited_nodes = set()  # Track visited nodes to avoid infinite recursion
-        await browse_node(client, start_node, exported_nodes, visited_nodes, export_namespace_indexes)
-
+        if not single_node:
+            await browse_node(client, start_node, exported_nodes, visited_nodes, excluded, export_namespace_indexes)
         # Generate the XML tree
-        await exporter.build_etree(exported_nodes)
-
+        if not single_node:
+            await exporter.build_etree(exported_nodes)
+        else:
+            exporter.aliases = {}
+            await exporter.node_to_etree(start_node)
         # Write to the nodeset2.xml file with pretty formatting
         await exporter.write_xml(args.output_file)
 
