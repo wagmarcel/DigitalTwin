@@ -19,7 +19,7 @@ except ImportError:
 sys.setrecursionlimit(1500)  # Increase the recursion limit to avoid maximum recursion depth error
 
 debug = False
-async def browse_node(client, node, exported_nodes, visited_nodes, excluded, export_namespace_indexes, parent_node_id=None):
+async def browse_node(client, node, exported_nodes, visited_nodes, excluded, export_namespace_indexes, parent_node_id=None, follow_backward_references=False):
     """
     Browse the given node and add its information to the XML in a flat structure.
     """
@@ -39,8 +39,11 @@ async def browse_node(client, node, exported_nodes, visited_nodes, excluded, exp
         references = await node.get_references()
         for ref in references:
             # Always browse the child nodes, filter them later
+            # Except there is a backward reference
+            if ref.IsForward is False and follow_backward_references is not True:
+                continue
             child_node = client.get_node(ref.NodeId)
-            await browse_node(client, child_node, exported_nodes, visited_nodes, excluded, export_namespace_indexes, parent_node_id=node.nodeid)
+            await browse_node(client, child_node, exported_nodes, visited_nodes, excluded, export_namespace_indexes, parent_node_id=node.nodeid, follow_backward_references=follow_backward_references)
 
     except Exception as e:
         print(f"Error browsing node: {e}")
@@ -58,6 +61,7 @@ async def main():
     parser.add_argument('-d','--debug', action="store_true", default=False, help="Set debug flag.")
     parser.add_argument('-v','--values', action="store_true", default=False, help="Export values.")
     parser.add_argument('-s', '--single', action="store_true", default=False, help="Export single node.")
+    parser.add_argument('-b', '--backward', action="store_true", default=False, help="Consider forward and backward references.")
     args = parser.parse_args()
 
     debug = args.debug
@@ -90,11 +94,22 @@ async def main():
         for nodeid in args.excluded or []:
             excluded.append(ua.NodeId.from_string(nodeid))
 
+
         single_node = args.single
         # Start browsing from the specified start node
         visited_nodes = set()  # Track visited nodes to avoid infinite recursion
         if not single_node:
-            await browse_node(client, start_node, exported_nodes, visited_nodes, excluded, export_namespace_indexes)
+            await browse_node(client, start_node, exported_nodes, visited_nodes, excluded, export_namespace_indexes, follow_backward_references=args.backward)
+        for node in exported_nodes:
+            try:
+                node_class = await node.read_node_class()
+                # Check if the node is a Variable type
+                if node_class == ua.NodeClass.Variable:
+                    await node.read_value()
+            except:
+                exported_nodes.remove(node)
+                print("Removing node {node.nodeid} since it cannot export values.")
+                # remove the node since this will create exceptions later
         # Generate the XML tree
         if not single_node:
             await exporter.build_etree(exported_nodes)
