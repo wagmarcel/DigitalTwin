@@ -210,8 +210,15 @@ class NodesetParser:
         # Create Type Hierarchy
         for tag_name, _ in type_nodeclasses:
             uanodes = self.root.findall(tag_name, self.xml_ns)
+            firstpass = True
             for uanode in uanodes:
-                self.add_type(uanode)
+                try:
+                    self.add_type(uanode)
+                except:
+                    firstpass = False
+            if not firstpass:
+                for uanode in uanodes:
+                    self.add_type(uanode)
         # Type objects and varialbes
         for tag_name, _ in typed_nodeclasses:
             uanodes = self.root.findall(tag_name, self.xml_ns)
