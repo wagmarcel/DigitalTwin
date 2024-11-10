@@ -165,7 +165,7 @@ class Shacl:
             results = list(self.shaclg.query(query_minmax, initBindings=bindings,
                                              initNs={'sh': SH, 'base': self.basens}))
             if len(results) > 1: # try similarity between options
-                print("Warning, found ambigue path match. Most likely due to use of generic FolderType or placeholders or both. Will try to guess the right value, but this can go wrong ...")
+                print("Warning, found ambigous path match. Most likely due to use of generic FolderType or placeholders or both. Will try to guess the right value, but this can go wrong ...")
                 similarity = []
                 for result in results:
                     similarity.append(SequenceMatcher(None, name, str(result[4])).ratio())
