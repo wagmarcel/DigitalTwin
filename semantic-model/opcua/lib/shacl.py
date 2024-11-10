@@ -15,6 +15,7 @@
 #
 
 import os
+from difflib import SequenceMatcher
 from urllib.parse import urlparse
 from rdflib import Graph, Namespace, Literal, URIRef, BNode
 from rdflib.namespace import RDF, RDFS, SH
@@ -163,15 +164,23 @@ class Shacl:
         try:
             results = list(self.shaclg.query(query_minmax, initBindings=bindings,
                                              initNs={'sh': SH, 'base': self.basens}))
+            if len(results) > 1: # try similarity between options
+                print("Warning, found ambigue path match. Most likely due to use of generic FolderType or placeholders or both. Will try to guess the right value, but this can go wrong ...")
+                similarity = []
+                for result in results:
+                    similarity.append(SequenceMatcher(None, name, str(result[4])).ratio())
+                target_index = similarity.index(max(similarity))
+            if len(results) == 1:
+                target_index = 0
             if len(results) > 0:
-                if results[0][0] is not None:
-                    path = results[0][0]
-                if int(results[0][2]) > 0:
+                if results[target_index][0] is not None:
+                    path = results[target_index][0]
+                if int(results[target_index][2]) > 0:
                     optional = False
-                if int(results[0][3]) <= 1:
+                if int(results[target_index][3]) <= 1:
                     array = False
             if len(results) > 1:
-                print("Warning: more than one path match for {path}")
+                print(f"Guessed to use {path} for {name} and class {target_class}")
         except:
             pass
         return optional, array, path

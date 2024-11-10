@@ -622,7 +622,14 @@ Did you forget to import it?")
             if (isforward == 'false'):
                 print(f"Warning: IsForward=false makes not sense here: {classiri}")
             else:
-                self.g.add((classiri, RDF.type, self.typeIds[typedef_index][typedef_id]))
+                try:
+                    self.g.add((classiri, RDF.type, self.typeIds[typedef_index][typedef_id]))
+                except IndexError as e:
+                    print(f"Could not find namespace with id {typedef_index}")
+                    raise e
+                except Exception as e:
+                    print(f"Could not find type with id {typedef_id} in namespace {self.opcua_ns[typedef_index]}")
+                    raise e
 
     def add_typedef(self, node):
         _, browsename = self.getBrowsename(node)

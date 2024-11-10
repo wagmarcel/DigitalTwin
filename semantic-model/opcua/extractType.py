@@ -359,8 +359,10 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
         is_placeholder = False
     if is_placeholder:
         if original_attributename is None:
-            raise Exception(f"No original_attributename given but datasetId neeeded for {decoded_attributename}")
-        datasetId = f'{datasetid_urn}:{original_attributename}'
+            print(f"Warning: No original_attributename given but datasetId neeeded for {decoded_attributename}. Chosing default datasetId.")
+            datasetId = "@none"
+        else:
+            datasetId = f'{datasetid_urn}:{original_attributename}'
     attributename = urllib.parse.quote(decoded_attributename)
 
     if rdfutils.isObjectNodeClass(nodeclass):
@@ -532,6 +534,9 @@ if __name__ == '__main__':
     scan_type(root, rootinstancetype)
     # Then scan the entity with the real values
     rootentity = next(g.subjects(RDF.type, URIRef(rootinstancetype)))
+    if shaclname is not None:
+        shaclg.serialize(destination=shaclname)
+        minshaclg.serialize(destination=f'min_{shaclname}')
     scan_entity(rootentity, URIRef(rootinstancetype), entity_id)
     # Add types to entities
     for type in types:
