@@ -87,7 +87,7 @@ WHERE {
 }
 """
 basic_types = ['String', 'Boolean', 'Byte', 'SByte', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Uin64', 'Int64', 'Float',
-               'DateTime', 'Guid', 'ByteString', 'Double']
+               'DateTime', 'Guid', 'ByteString', 'Double', 'Number']
 basic_types_map = {'String': 'string',
                    'Boolean': 'boolean',
                    'Byte': 'integer',
@@ -102,7 +102,8 @@ basic_types_map = {'String': 'string',
                    'DateTime': 'string',
                    'Guid': 'string',
                    'ByteString': 'string',
-                   'Double': 'number'}
+                   'Double': 'number',
+                   'Number': 'number'}
 
 hasSubtypeId = '45'
 hasPropertyId = '46'

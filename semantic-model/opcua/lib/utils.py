@@ -148,6 +148,8 @@ def get_default_value(datatype):
         return ''
     if datatype == XSD.boolean:
         return False
+    if datatype == RDF.JSON:
+        return { '@value': {}, '@type': '@json'}
     print(f'Warning: unknown default value for datatype {datatype}')
 
 

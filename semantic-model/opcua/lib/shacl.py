@@ -79,7 +79,7 @@ class Shacl:
         return shapename
 
     def create_shacl_property(self, shapename, path, optional, is_array, is_property, is_iri, contentclass, datatype,
-                              is_subcomponent=False, placeholder_pattern=None):
+                              is_subcomponent=False, placeholder_pattern=None, pattern=None):
         innerproperty = BNode()
         property = BNode()
         maxCount = 1
@@ -113,7 +113,8 @@ class Shacl:
             self.shaclg.add((innerproperty, SH.nodeKind, SH.Literal))
             if datatype is not None:
                 self.shaclg.add((innerproperty, SH.datatype, datatype))
-
+        if pattern is not None:
+            self.shaclg.add((innerproperty, SH['pattern'], Literal(pattern)))
         self.shaclg.add((innerproperty, SH.minCount, Literal(1)))
         self.shaclg.add((innerproperty, SH.maxCount, Literal(1)))
 
@@ -137,9 +138,19 @@ class Shacl:
     def get_shacl_iri_and_contentclass(self, g, node, shacl_rule):
         try:
             data_type = utils.get_datatype(g, node, self.basens)
+            shacl_type, shacl_pattern = JsonLd.map_datatype_to_jsonld(data_type, self.opcuans)
+            shacl_rule['pattern'] = shacl_pattern
             if data_type is not None:
-                shacl_rule['datatype'] = JsonLd.map_datatype_to_jsonld(data_type, self.opcuans)
-                base_data_type = next(g.objects(data_type, RDFS.subClassOf))
+                #shacl_rule['datatype'], pattern = JsonLd.map_datatype_to_jsonld(data_type, self.opcuans)
+                base_data_type = next(g.objects(data_type, RDFS.subClassOf)) # Todo: This must become a sparql query
+                is_abstract = None
+                try:
+                    is_abstract = bool(next(g.objects(data_type, self.basens['isAbstract'])))
+                except:
+                    pass
+                shacl_rule['isAbstract'] = is_abstract
+                shacl_rule['datatype'] = shacl_type
+                shacl_rule['pattern'] = shacl_pattern
                 if base_data_type != self.opcuans['Enumeration']:
                     shacl_rule['is_iri'] = False
                     shacl_rule['contentclass'] = None
@@ -150,10 +161,12 @@ class Shacl:
                 shacl_rule['is_iri'] = False
                 shacl_rule['contentclass'] = None
                 shacl_rule['datatype'] = None
+                shacl_rule['isAbstract'] = None
         except:
             shacl_rule['is_iri'] = False
             shacl_rule['contentclass'] = None
             shacl_rule['datatype'] = None
+            shacl_rule['isAbstract'] = None
 
     def get_modelling_rule_and_path(self, name, target_class, attributeclass, prefix):
         bindings = {'targetclass': target_class, 'name': Literal(name), 'attributeclass': attributeclass,

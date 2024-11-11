@@ -267,7 +267,7 @@ def scan_type_recursive(o, node, instancetype, shapename):
         shacl_rule['is_property'] = True
         shaclg.get_shacl_iri_and_contentclass(g, o, shacl_rule)
         shaclg.create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], shacl_rule['array'],
-                                     True, shacl_rule['is_iri'], shacl_rule['contentclass'], shacl_rule['datatype'])
+                                     True, shacl_rule['is_iri'], shacl_rule['contentclass'], shacl_rule['datatype'], pattern=shacl_rule['pattern'])
         e.add_enum_class(g, shacl_rule['contentclass'])
     return has_components
 
@@ -381,7 +381,7 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
                 attr_instance['datasetId'] = datasetId
             if debug:
                 attr_instance['debug'] = \
-                    f'{entity_ontology_prefix}:{attributename}'
+                    f'{entity_ontology_prefix}:{attributename}, {str(node)}'
             instance[full_attribute_name].append(attr_instance)
             shacl_rule['contentclass'] = classtype
             minshaclg.copy_property_from_shacl(shaclg, instance['type'], entity_namespace[attributename])
@@ -391,13 +391,14 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
     elif rdfutils.isVariableNodeClass(nodeclass):
         shacl_rule['is_property'] = True
         shaclg.get_shacl_iri_and_contentclass(g, o, shacl_rule)
+        if shacl_rule['isAbstract']:
+            print(f"Warning: Abstract OPCUA DataType {str(shacl_rule['data_type'])} in attribute {entity_ontology_prefix}:{attributename}.")
         try:
             value = next(g.objects(o, basens['hasValue']))
             if not shacl_rule['is_iri']:
                 value = value.toPython()
             else:
                 value = e.get_contentclass(shacl_rule['contentclass'], value)
-
                 value = value.toPython()
         except StopIteration:
             if not shacl_rule['is_iri']:
@@ -419,7 +420,7 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
             }
         minshaclg.copy_property_from_shacl(shaclg, instance['type'], entity_namespace[attributename])
         if debug:
-            instance[f'{entity_ontology_prefix}:{attributename}']['debug'] = f'{entity_ontology_prefix}:{attributename}'
+            instance[f'{entity_ontology_prefix}:{attributename}']['debug'] = f'{entity_ontology_prefix}:{attributename}, {str(node)}'
         try:
             is_updating = bool(next(g.objects(o, basens['isUpdating'])))
         except:
@@ -534,9 +535,6 @@ if __name__ == '__main__':
     scan_type(root, rootinstancetype)
     # Then scan the entity with the real values
     rootentity = next(g.subjects(RDF.type, URIRef(rootinstancetype)))
-    if shaclname is not None:
-        shaclg.serialize(destination=shaclname)
-        minshaclg.serialize(destination=f'min_{shaclname}')
     scan_entity(rootentity, URIRef(rootinstancetype), entity_id)
     # Add types to entities
     for type in types:
