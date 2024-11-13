@@ -111,13 +111,13 @@ function addProperties (message, metric) {
       const index = metric.properties.keys.indexOf('datasetId');
       if (index !== -1 && index < metric.properties.values.length) {
         const value = metric.properties.values[index];
-        message.datasetId = value;
+        message['https://uri.etsi.org/ngsi-ld/datasetId'] = value;
       }
     }
   }
 
-  if (!('datasetId' in message)) {
-    message.datasetId = '@none';
+  if (!('https://uri.etsi.org/ngsi-ld/datasetId' in message)) {
+    message['https://uri.etsi.org/ngsi-ld/datasetId'] = '@none';
   }
 }
 

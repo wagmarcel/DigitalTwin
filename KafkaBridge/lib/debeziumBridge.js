@@ -67,6 +67,7 @@ module.exports = function DebeziumBridge (conf) {
       deletedEntity = beforeEntity;
       // Type will be removed later to signal deletion
     }
+    //console.log("Type check " + String(deletedEntity not null && "type" in deletedEntity) + " test " + String(afterEntity not null && "type" in afterEntity) + String(isEntityUpdate || isAttributesChanged));
     if (isEntityUpdated || isAttributesChanged) {
       result = {
         entity: isEntityUpdated || isAttributesChanged ? afterEntity : null,
@@ -75,6 +76,9 @@ module.exports = function DebeziumBridge (conf) {
         deletedAttrs: isAttributesChanged ? deletedAttrs : null,
         insertedAttrs: isAttributesChanged ? insertedAttrs : null
       };
+    }
+    if (result !== null) {
+      console.log(JSON.stringify(result.entity) + "------------------------------------" +  JSON.stringify(result.deletedEntity))
     }
     return result;
   };
@@ -232,6 +236,11 @@ module.exports = function DebeziumBridge (conf) {
           const obj = {};
           obj.id = element.id;
           obj.index = element.index;
+          if (element['https://uri.etsi.org/ngsi-ld/datasetId'] === undefined) {
+            obj['https://uri.etsi.org/ngsi-ld/datasetId'] = '@none';
+          } else {
+            obj['https://uri.etsi.org/ngsi-ld/datasetId'] = element['https://uri.etsi.org/ngsi-ld/datasetId'];
+          }
           accum.push(obj);
           return accum;
         }, []);
@@ -263,6 +272,11 @@ module.exports = function DebeziumBridge (conf) {
           for (let i = afterAttrs[key].length; i < beforeAttrs[key].length; i++) {
             const delement = {};
             delement.id = beforeAttrs[key][i].id;
+            if (beforeAttrs[key][i]['https://uri.etsi.org/ngsi-ld/datasetId'] === undefined) {
+              delement['https://uri.etsi.org/ngsi-ld/datasetId'] = '@none';
+            } else {
+              delement['https://uri.etsi.org/ngsi-ld/datasetId'] = beforeAttrs[key][i]['https://uri.etsi.org/ngsi-ld/datasetId'];
+            }
             delement.index = i;
             delementArray.push(delement);
           }

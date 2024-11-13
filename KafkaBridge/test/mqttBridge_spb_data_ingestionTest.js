@@ -487,7 +487,7 @@ describe(fileToTest, function () {
               const value = {
                 id: 'deviceId' + '\\' + 'https://industry-fusion.com/types/v0.9/hasFilter',
                 entityId: 'deviceId',
-                datasetId: '@none',
+                'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
                 name: 'https://industry-fusion.com/types/v0.9/hasFilter',
                 type: 'https://uri.etsi.org/ngsi-ld/Relationship',
                 'https://uri.etsi.org/ngsi-ld/hasObject': 'value',
@@ -554,7 +554,7 @@ describe(fileToTest, function () {
               const value = {
                 id: 'deviceId' + '\\' + 'https://industry-fusion.com/types/v0.9/hasFilter',
                 entityId: 'deviceId',
-                datasetId: '@none',
+                'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
                 nodeType: '@value',
                 name: 'https://industry-fusion.com/types/v0.9/hasFilter',
                 type: 'https://uri.etsi.org/ngsi-ld/Property',

@@ -116,7 +116,13 @@ describe('Test diffAttributes', function () {
     const debeziumBridge = new ToTest(config);
     const result = debeziumBridge.diffAttributes(beforeAttrs, afterAttrs);
     assert.deepEqual(result.updatedAttrs, {});
-    assert.deepEqual(result.deletedAttrs, { attr2: [{ id: 'id2', index: 0 }] });
+    assert.deepEqual(result.deletedAttrs, {
+      attr2: [{
+        id: 'id2',
+        index: 0,
+        'https://uri.etsi.org/ngsi-ld/datasetId': '@none'
+      }]
+    });
     revert();
   });
   it('Should delete higher index value and update changed value', async function () {
@@ -134,11 +140,13 @@ describe('Test diffAttributes', function () {
           id: 'id',
           value: 'value',
           observedAt: 'observedAt',
+          'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
           index: 0
         },
         {
           id: 'id',
           value: 'value2',
+          'https://uri.etsi.org/ngsi-ld/datasetId': 'urn:test:test1',
           index: 1
         }
       ],
@@ -153,6 +161,7 @@ describe('Test diffAttributes', function () {
         {
           id: 'id3',
           value: 'value4',
+          'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
           index: 0
         }
       ]
@@ -160,8 +169,26 @@ describe('Test diffAttributes', function () {
     const revert = ToTest.__set__('Logger', Logger);
     const debeziumBridge = new ToTest(config);
     const result = debeziumBridge.diffAttributes(beforeAttrs, afterAttrs, 'observedAt');
-    assert.deepEqual(result.updatedAttrs, { attr1: [{ id: 'id3', value: 'value4', index: 0 }] });
-    assert.deepEqual(result.deletedAttrs, { attr2: [{ id: 'id2', index: 0 }], attr1: [{ id: 'id', index: 1 }] });
+    assert.deepEqual(result.updatedAttrs, {
+      attr1: [{
+        id: 'id3',
+        value: 'value4',
+        index: 0,
+        'https://uri.etsi.org/ngsi-ld/datasetId': '@none'
+      }]
+    });
+    assert.deepEqual(result.deletedAttrs, {
+      attr2: [{
+        id: 'id2',
+        index: 0,
+        'https://uri.etsi.org/ngsi-ld/datasetId': '@none'
+      }],
+      attr1: [{
+        id: 'id',
+        index: 1,
+        'https://uri.etsi.org/ngsi-ld/datasetId': 'urn:test:test1'
+      }]
+    });
     revert();
   });
 });

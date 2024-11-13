@@ -27,6 +27,9 @@ module.exports = function Alerta (conf) {
   let headers;
 
   this.sendAlert = async function (body) {
+    if (body == null) {
+      return;
+    }
     headers = {};
     headers.Authorization = 'Key ' + token;
 
@@ -41,6 +44,8 @@ module.exports = function Alerta (conf) {
       method: 'POST',
       headers: headers
     };
-    return await rest.postBody({ options, body, disableChunks: true });
+    const result = await rest.postBody({ options, body, disableChunks: true });
+    logger.debug('Result: ' + JSON.stringify(result.statusCode));
+    return result;
   };
 };

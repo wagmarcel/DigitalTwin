@@ -86,7 +86,7 @@ sql_check_relationship_base = """
                            {%- endif %}
                            B.`type` AS link,
                            B.`nodeType` as nodeType,
-                    IFNULL(B.`index`, 0) as `index` FROM {{target_class}}_view AS A
+                    IFNULL(B.`https://uri.etsi.org/ngsi-ld/datasetId`, '@none') as `index` FROM {{target_class}}_view AS A
                     LEFT JOIN attributes_view AS B ON B.id = A.`{{property_path}}`
                     {%- if property_class %}
                     LEFT JOIN {{property_class}}_view AS C ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
@@ -100,7 +100,7 @@ sql_check_relationship_base = """
 
 sql_check_relationship_property_class = """
             SELECT this AS resource,
-                'ClassConstraintComponent({{property_path}}[' || SQL_DIALECT_CAST( `index` AS STRING) || '])' AS event,
+                'ClassConstraintComponent({{property_path}}[' || `index` || '])' AS event,
                 'Development' AS environment,
                 {% if sqlite %}
                 '[SHACL Validator]' AS service,
@@ -179,7 +179,7 @@ WITH A1 AS (SELECT A.id as this,
                    C.subject as foundVal,
                    C.object as foundClass,
                    {%- endif %}
-                   IFNULL(B.`index`, 0) as `index` FROM `{{target_class}}_view` AS A
+                   IFNULL(B.`https://uri.etsi.org/ngsi-ld/datasetId`, '@none') as `index` FROM `{{target_class}}_view` AS A
             LEFT JOIN attributes_view AS B ON A.`{{property_path}}` = B.id
             {% if property_class -%}
             LEFT JOIN {{rdf_table_name}} as C ON C.subject = '<' || B.`https://uri.etsi.org/ngsi-ld/hasValue` || '>'
@@ -213,7 +213,7 @@ FROM A1 group by this, typ
 
 sql_check_property_iri_class = """
 SELECT this AS resource,
-    'DatatypeConstraintComponent({{property_path}}[' || SQL_DIALECT_CAST( `index` AS STRING) || '])' AS event,
+    'DatatypeConstraintComponent({{property_path}}[' || `index` || '])' AS event,
     'Development' AS environment,
     {%- if sqlite %}
     '[SHACL Validator]' AS service,
@@ -235,7 +235,7 @@ FROM A1
 
 sql_check_property_nodeType = """
 SELECT this AS resource,
- 'NodeKindConstraintComponent({{property_path}}[' || SQL_DIALECT_CAST( `index` AS STRING) || '])' AS event,
+ 'NodeKindConstraintComponent({{property_path}}[' || `index` || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -257,7 +257,7 @@ FROM A1
 
 sql_check_property_minmax = """
 SELECT this AS resource,
- '{{minmaxname}}ConstraintComponent({{property_path}}[' || SQL_DIALECT_CAST( `index` AS STRING) || '])' AS event,
+ '{{minmaxname}}ConstraintComponent({{property_path}}[' || `index` || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -280,7 +280,7 @@ FROM A1
 
 sql_check_string_length = """
 SELECT this AS resource,
- '{{minmaxname}}ConstraintComponent({{property_path}}[' || SQL_DIALECT_CAST( `index` AS STRING) || '])' AS event,
+ '{{minmaxname}}ConstraintComponent({{property_path}}[' || `index` || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -302,7 +302,7 @@ FROM A1
 
 sql_check_literal_pattern = """
 SELECT this AS resource,
- '{{validationname}}ConstraintComponent({{property_path}}[' || SQL_DIALECT_CAST( `index` AS STRING) || '])' AS event,
+ '{{validationname}}ConstraintComponent({{property_path}}[' || `index` || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -324,7 +324,7 @@ FROM A1
 
 sql_check_literal_in = """
 SELECT this AS resource,
- '{{constraintname}}({{property_path}}[' || SQL_DIALECT_CAST( `index` AS STRING) || '])' AS event,
+ '{{constraintname}}({{property_path}}[' || `index` || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,

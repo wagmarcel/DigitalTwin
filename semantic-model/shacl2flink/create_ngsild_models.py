@@ -158,6 +158,8 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                         current_index = string_indexer.add_or_get_index(id, utils.strip_class(current_index.toPython()))
                     except:
                         current_index = 0
+            if index is None or index == 0:
+                index = '@none'
             valueType = nullify(valueType)
             hasValue = nullify(hasValue)
             hasObject = nullify(hasObject)

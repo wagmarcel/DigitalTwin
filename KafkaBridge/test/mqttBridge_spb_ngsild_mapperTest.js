@@ -30,7 +30,7 @@ describe(fileToTest, function () {
     const expected = {
       id: 'deviceId' + '\\' + 'name',
       entityId: deviceId,
-      datasetId: '@none',
+      'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
       name: 'name',
       type: 'https://uri.etsi.org/ngsi-ld/Relationship',
       'https://uri.etsi.org/ngsi-ld/hasObject': 'value',
@@ -59,7 +59,7 @@ describe(fileToTest, function () {
       'https://uri.etsi.org/ngsi-ld/hasObject': 'value',
       nodeType: '@id',
       index: 0,
-      datasetId: 'datasetId'
+      'https://uri.etsi.org/ngsi-ld/datasetId': 'datasetId'
     };
     const result = ToTest.mapSpbRelationshipToKafka(deviceId, metric);
     assert.deepEqual(result, expected);
@@ -74,7 +74,7 @@ describe(fileToTest, function () {
     const expected = {
       id: 'deviceId' + '\\' + 'name',
       entityId: deviceId,
-      datasetId: '@none',
+      'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
       name: 'name',
       type: 'https://uri.etsi.org/ngsi-ld/Property',
       'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
@@ -94,7 +94,7 @@ describe(fileToTest, function () {
     const expected = {
       id: 'deviceId' + '\\' + 'name',
       entityId: deviceId,
-      datasetId: '@none',
+      'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
       name: 'name',
       type: 'https://uri.etsi.org/ngsi-ld/Property',
       'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
@@ -122,7 +122,7 @@ describe(fileToTest, function () {
       type: 'https://uri.etsi.org/ngsi-ld/Property',
       'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
       nodeType: '@value',
-      datasetId: 'datasetId',
+      'https://uri.etsi.org/ngsi-ld/datasetId': 'datasetId',
       index: 0
     };
     const result = ToTest.mapSpbPropertyToKafka(deviceId, metric);
@@ -146,7 +146,7 @@ describe(fileToTest, function () {
       type: 'https://uri.etsi.org/ngsi-ld/Property',
       'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
       nodeType: '@id',
-      datasetId: 'datasetId',
+      'https://uri.etsi.org/ngsi-ld/datasetId': 'datasetId',
       index: 0
     };
     const result = ToTest.mapSpbPropertyIriToKafka(deviceId, metric);
@@ -162,7 +162,7 @@ describe(fileToTest, function () {
     const expected = {
       id: 'deviceId' + '\\' + 'name',
       entityId: deviceId,
-      datasetId: '@none',
+      'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
       name: 'name',
       type: 'https://uri.etsi.org/ngsi-ld/Property',
       'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
@@ -182,7 +182,7 @@ describe(fileToTest, function () {
     const expected = {
       id: 'deviceId' + '\\' + 'name',
       entityId: deviceId,
-      datasetId: '@none',
+      'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
       name: 'name',
       type: 'https://uri.etsi.org/ngsi-ld/Property',
       'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
@@ -210,7 +210,7 @@ describe(fileToTest, function () {
       type: 'https://uri.etsi.org/ngsi-ld/Property',
       'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
       nodeType: '@json',
-      datasetId: 'datasetId',
+      'https://uri.etsi.org/ngsi-ld/datasetId': 'datasetId',
       index: 0
     };
     const result = ToTest.mapSpbPropertyJsonToKafka(deviceId, metric);
@@ -226,7 +226,7 @@ describe(fileToTest, function () {
       }
     };
     const expected = {
-      datasetId: 'datasetId'
+      'https://uri.etsi.org/ngsi-ld/datasetId': 'datasetId'
     };
     const addProperties = ToTest.__get__('addProperties');
     addProperties(message, metric);
@@ -242,7 +242,7 @@ describe(fileToTest, function () {
       }
     };
     const expected = {
-      datasetId: '@none'
+      'https://uri.etsi.org/ngsi-ld/datasetId': '@none'
     };
     const addProperties = ToTest.__get__('addProperties');
     addProperties(message, metric);
@@ -256,7 +256,7 @@ describe(fileToTest, function () {
       }
     };
     const expected = {
-      datasetId: '@none'
+      'https://uri.etsi.org/ngsi-ld/datasetId': '@none'
     };
     const addProperties = ToTest.__get__('addProperties');
     addProperties(message, metric);

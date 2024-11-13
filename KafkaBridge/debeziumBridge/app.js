@@ -37,27 +37,65 @@ const kafka = new Kafka({
 const consumer = kafka.consumer({ groupId: GROUPID, allowAutoTopicCreation: false });
 const producer = kafka.producer();
 
+const BATCH_SIZE = 500; // Define the batch size
+const BATCH_INTERVAL_MS = 100; // Define the batch interval in milliseconds
+
 const startListener = async function () {
   await consumer.connect();
   await consumer.subscribe({ topic: config.debeziumBridge.topic, fromBeginning: false });
   await producer.connect();
 
+  let messageBuffer = [];
+  let batchTimeout = null;
+
+  const processBuffer = async () => {
+    if (messageBuffer.length > 0) {
+      await processBatch(messageBuffer);
+      messageBuffer = []; // Clear the buffer after processing
+    }
+  };
+
   await consumer.run({
-    eachMessage: async ({ topic, partition, message }) => {
-      try {
-        const body = JSON.parse(message.value);
-        const result = await debeziumBridge.parse(body);
-        if (result !== null) {
-          await sendUpdates({
-            entity: result.entity,
-            deletedEntity: result.deletedEntity,
-            updatedAttrs: result.updatedAttrs,
-            deletedAttrs: result.deletedAttrs,
-            insertedAttrs: result.insertedAttrs
-          });
+    eachBatch: async ({ batch, resolveOffset, heartbeat, isRunning, isStale }) => {
+      for (const message of batch.messages) {
+        if (!isRunning() || isStale()) break;
+        try {
+          const body = JSON.parse(message.value);
+          const result = await debeziumBridge.parse(body);
+          if (result !== null) {
+            messageBuffer.push({
+              entity: result.entity,
+              deletedEntity: result.deletedEntity,
+              updatedAttrs: result.updatedAttrs,
+              deletedAttrs: result.deletedAttrs,
+              insertedAttrs: result.insertedAttrs
+            });
+          }
+
+          // If message buffer reaches the batch size, process the batch
+          if (messageBuffer.length >= BATCH_SIZE) {
+            clearTimeout(batchTimeout); // Clear any existing timeout
+            await processBuffer();
+          } else {
+            // Set a timeout to process the batch after a fixed interval
+            if (!batchTimeout) {
+              batchTimeout = setTimeout(async () => {
+                await processBuffer();
+                batchTimeout = null;
+              }, BATCH_INTERVAL_MS);
+            }
+          }
+
+          resolveOffset(message.offset);
+          await heartbeat();
+        } catch (e) {
+          logger.error('could not process message: ' + e.stack);
         }
-      } catch (e) {
-        logger.error('could not process message: ' + e.stack);
+      }
+
+      // If there are remaining messages in the buffer, process them
+      if (messageBuffer.length > 0) {
+        await processBuffer();
       }
     }
   }).catch(e => logger.error(`[StateUpdater/consumer] ${e.message}`, e));
@@ -85,11 +123,20 @@ const startListener = async function () {
         process.kill(process.pid, type);
       }
     }));
+
   try {
     fs.writeFileSync('/tmp/ready', 'ready');
     fs.writeFileSync('/tmp/healthy', 'healthy');
   } catch (err) {
     logger.error(err);
+  }
+};
+
+const processBatch = async function (batch) {
+  try {
+    await sendUpdates(batch);
+  } catch (e) {
+    logger.error('could not process batch: ' + e.stack);
   }
 };
 
@@ -152,102 +199,120 @@ const checkTimestamp = function (val) {
  * @param deleteAttrs {object} - contains the list of attributes of the entity which have to be deleted
  * @returns
  */
-const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, deletedAttrs, insertedAttrs }) {
-  let removeType = false;
-  let updateOnly = false;
+const sendUpdates = async function (batch) {
+  const entityMessages = [];
+  const propertyMessages = [];
+  //const relationshipMessages = [];
 
-  // Remember deletion after subclasses have been determined.
-  // Then remove type later
-  if (deletedEntity !== undefined && deletedEntity !== null) {
-    entity = deletedEntity;
-    removeType = true;
-  }
-  // if attributes are updated ONLY - no entity refresh/update is needed
-  if (updatedAttrs !== undefined && updatedAttrs !== null && Object.keys(updatedAttrs).length > 0 &&
-      (insertedAttrs === undefined || insertedAttrs === null || Object.keys(insertedAttrs).length === 0) &&
-      (deletedAttrs === undefined || deletedAttrs === null || Object.keys(deletedAttrs).length === 0)) {
-    updateOnly = true;
-  }
+  const collectUpdates = async function ({ entity, deletedEntity, updatedAttrs, deletedAttrs, insertedAttrs }) {
+    let removeType = false;
+    let updateOnly = false;
 
-  if (entity === null || entity.id === undefined || entity.id === null || entity.type === undefined || entity.type === null) {
-    logger.warn('No entity definition given. Will not forward updates.');
-    return;
-  }
-
-  const genKey = entity.id;
-
-  const topicMessages = [];
-  // if only updates are detected, no update of entity is needed
-  if (!updateOnly) {
-    let subClasses = await getSubClasses(entity.type);
-    if (subClasses.length === 0) {
-      subClasses = [entity.type];
+    // Remember deletion after subclasses have been determined.
+    // Then remove type later
+    if (deletedEntity !== undefined && deletedEntity !== null) {
+      entity = deletedEntity;
+      removeType = true;
     }
-    // Now remove type. This has been determined earlier.
-    if (removeType) {
-      // delete of entities is done by set everything to NULL
-      delete entity.type;
+    // if attributes are updated ONLY - no entity refresh/update is needed
+    if (updatedAttrs !== undefined && updatedAttrs !== null && Object.keys(updatedAttrs).length > 0 &&
+        (insertedAttrs === undefined || insertedAttrs === null || Object.keys(insertedAttrs).length === 0) &&
+        (deletedAttrs === undefined || deletedAttrs === null || Object.keys(deletedAttrs).length === 0)) {
+      updateOnly = true;
     }
 
-    subClasses.forEach((element) => {
-      const obj = {};
-      const entityTopic = config.debeziumBridge.entityTopicPrefix + '.' + getTopic(element);
-      obj.topic = entityTopic;
-      obj.messages = [{
-        key: genKey,
-        value: JSON.stringify(entity)
-      }];
-      topicMessages.push(obj);
+    if (entity === null || entity.id === undefined || entity.id === null || entity.type === undefined || entity.type === null) {
+      logger.warn('No entity definition given. Will not forward updates.');
+      console.log(entity.id)
+      return;
+    }
+
+    const genKey = entity.id;
+
+    // if only updates are detected, no update of entity is needed
+    if (!updateOnly) {
+      let subClasses = await getSubClasses(entity.type);
+      if (subClasses.length === 0) {
+        subClasses = [entity.type];
+      }
+      // Now remove type. This has been determined earlier.
+      if (removeType) {
+        // delete of entities is done by set everything to NULL
+        delete entity.type;
+      }
+
+      subClasses.forEach((element) => {
+        const obj = {};
+        const entityTopic = config.debeziumBridge.entityTopicPrefix + '.' + getTopic(element);
+        obj.topic = entityTopic;
+        obj.messages = [{
+          key: genKey,
+          value: JSON.stringify(entity)
+        }];
+        entityMessages.push(obj);
+      });
+    }
+
+    if (deletedAttrs !== null && deletedAttrs !== undefined && Object.keys(deletedAttrs).length > 0) {
+      // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
+      const deleteMessages = Object.entries(deletedAttrs).flatMap(([key, value]) =>
+        value.map(val => {
+          return { key: genKey, value: JSON.stringify(val) };
+        })
+      );
+      propertyMessages.push({
+        topic: config.debeziumBridge.attributesTopic,
+        messages: deleteMessages
+      });
+    }
+    if (updatedAttrs !== null && updatedAttrs !== undefined && Object.keys(updatedAttrs).length > 0) {
+      // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
+      const updateMessages = Object.entries(updatedAttrs).flatMap(([key, value]) => {
+        return value.map(val => {
+          const timestamp = checkTimestamp(val);
+          const result = { key: genKey, value: JSON.stringify(val) };
+          if (timestamp !== null) {
+            result.timestamp = timestamp;
+          }
+          return result;
+        });
+      });
+      propertyMessages.push({
+        topic: config.debeziumBridge.attributesTopic,
+        messages: updateMessages
+      });
+    }
+    if (insertedAttrs !== null && insertedAttrs !== undefined && Object.keys(insertedAttrs).length > 0) {
+      // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
+      const insertMessages = Object.entries(insertedAttrs).flatMap(([key, value]) => {
+        return value.map(val => {
+          const timestamp = checkTimestamp(val);
+          const result = { key: genKey, value: JSON.stringify(val) };
+          if (timestamp !== null) {
+            result.timestamp = timestamp;
+          }
+          return result;
+        });
+      });
+      propertyMessages.push({
+        topic: config.debeziumBridge.attributesTopic,
+        messages: insertMessages
+      });
+    }
+  };
+
+  for (const message of batch) {
+    await collectUpdates({
+      entity: message.entity,
+      deletedEntity: message.deletedEntity,
+      updatedAttrs: message.updatedAttrs,
+      deletedAttrs: message.deleteAttrs,
+      insertedAttrs: message.insertedAttrs
     });
   }
 
-  if (deletedAttrs !== null && deletedAttrs !== undefined && Object.keys(deletedAttrs).length > 0) {
-    // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
-    const deleteMessages = Object.entries(deletedAttrs).flatMap(([key, value]) =>
-      value.map(val => {
-        return { key: genKey, value: JSON.stringify(val) };
-      })
-    );
-    topicMessages.push({
-      topic: config.debeziumBridge.attributesTopic,
-      messages: deleteMessages
-    });
-  }
-  if (updatedAttrs !== null && updatedAttrs !== undefined && Object.keys(updatedAttrs).length > 0) {
-    // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
-    const updateMessages = Object.entries(updatedAttrs).flatMap(([key, value]) => {
-      return value.map(val => {
-        const timestamp = checkTimestamp(val);
-        const result = { key: genKey, value: JSON.stringify(val) };
-        if (timestamp !== null) {
-          result.timestamp = timestamp;
-        }
-        return result;
-      });
-    });
-    topicMessages.push({
-      topic: config.debeziumBridge.attributesTopic,
-      messages: updateMessages
-    });
-  }
-  if (insertedAttrs !== null && insertedAttrs !== undefined && Object.keys(insertedAttrs).length > 0) {
-    // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
-    const insertMessages = Object.entries(insertedAttrs).flatMap(([key, value]) => {
-      return value.map(val => {
-        const timestamp = checkTimestamp(val);
-        const result = { key: genKey, value: JSON.stringify(val) };
-        if (timestamp !== null) {
-          result.timestamp = timestamp;
-        }
-        return result;
-      });
-    });
-    topicMessages.push({
-      topic: config.debeziumBridge.attributesTopic,
-      messages: insertMessages
-    });
-  }
-  await producer.sendBatch({ topicMessages });
+  await producer.sendBatch({ topicMessages: entityMessages });
+  await producer.sendBatch({ topicMessages: propertyMessages });
 };
 if (runningAsMain) {
   logger.info('Now starting Kafka listener');
