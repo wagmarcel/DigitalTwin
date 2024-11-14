@@ -205,6 +205,8 @@ const sendUpdates = async function (batch) {
   //const relationshipMessages = [];
 
   const collectUpdates = async function ({ entity, deletedEntity, updatedAttrs, deletedAttrs, insertedAttrs }) {
+    console.log("Now What " + JSON.stringify(entity) + "------------------------------------" +  JSON.stringify(deletedEntity))
+
     let removeType = false;
     let updateOnly = false;
 
