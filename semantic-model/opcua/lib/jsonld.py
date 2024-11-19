@@ -91,6 +91,8 @@ class JsonLd:
             return XSD.string, None
         if data_type in regexp_types:
             return None, regexp_map[data_type]
+        if data_type == opcuans['DateTime']:
+            return XSD.dateTime, None
         return RDF.JSON, None
 
     def generate_node_id(self, graph, rootentity, node, id):

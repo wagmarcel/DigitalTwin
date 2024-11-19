@@ -396,7 +396,7 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
         try:
             value = next(g.objects(o, basens['hasValue']))
             if not shacl_rule['is_iri']:
-                value = value.toPython()
+                value = utils.get_value(value, shacl_rule['datatype'])
             else:
                 value = e.get_contentclass(shacl_rule['contentclass'], value)
                 value = value.toPython()

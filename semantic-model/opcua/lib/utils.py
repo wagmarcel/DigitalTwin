@@ -150,8 +150,25 @@ def get_default_value(datatype):
         return False
     if datatype == RDF.JSON:
         return { '@value': {}, '@type': '@json'}
+    if datatype == XSD.dateTime:
+        return {'@value': '1970-1-1T00:00:00', '@type': 'xsd.dateTime'}
     print(f'Warning: unknown default value for datatype {datatype}')
 
+
+def get_value(value, datatype):
+    if datatype == XSD.integer:
+        return int(value)
+    if datatype == XSD.double:
+        return float(value)
+    if datatype == XSD.string:
+        return str(value)
+    if datatype == XSD.boolean:
+        return bool(value)
+    if datatype == RDF.JSON:
+        return { '@value': str(value), '@type': '@json'}
+    if datatype == XSD.dateTime:
+        return {'@value': str(value), '@type': 'xsd:dateTime'}
+    return str(value)
 
 def normalize_angle_bracket_name(s):
     # Check if there are any angle brackets in the input string
