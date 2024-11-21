@@ -54,29 +54,25 @@ const startListener = async function () {
   let committedOffsets = [];
   await consumer.run({
     autoCommit: false,
-    eachMessage: async ({ topic, partition, message, pause }) => {
+    eachMessage: async ({ topic, partition, message }) => {
       let body = null;
       try {
         body = JSON.parse(message.value);
       } catch (e) {
         logger.error(`Could not deserialize message ${message.value}`);
       }
-      if (body !== null && body.resource !== null && body.resource !== '' && body.event !== null && body.event !== '') {
-        const result = await alerta.sendAlert(body, config.alerta.requestTimeout)
-          .catch((err) => {
-            logger.error('Could not send Alert: ' + err);
-            committedOffsets = commitAppliedMessages(consumer, committedOffsets);
-            pauseresume(consumer, topic);
-            throw new Error('Could not send Alert ' + err);
-          });
-        logger.debug(`Alerta Result ${result.statusCode}}`);
-        if (result.statusCode !== 201) {
-          logger.error(`submission to Alerta failed with statuscode ${result.statusCode} and ${JSON.stringify(result.body)}`);
-          committedOffsets = commitAppliedMessages(consumer, committedOffsets);
-          pauseresume(consumer, topic);
-          throw new Error('Retry submission of Alert.');
-        } else {
-          committedOffsets.push({ topic, partition, offset: message.offset });
+      try {
+        if (body !== null && body.resource !== null && body.resource !== '' && body.event !== null && body.event !== '') {
+          const result = await alerta.sendAlert(body).catch((err) => { logger.error('Could not send Alert: ' + err); console.error(err); });
+          logger.debug(`Alerta Result ${result.statusCode}}`);
+          if (result.statusCode !== 201) {
+            logger.error(`submission to Alerta failed with statuscode ${result.statusCode} and ${JSON.stringify(result.body)}`);
+          } else {
+            consumer.commitOffsets([{ topic, partition, offset: message.offset }]);
+          }
+        }
+        else {
+          logger.debug('Ignoring ' + JSON.stringify(body));
         }
       } else {
         logger.debug('Ignoring ' + JSON.stringify(body));
@@ -125,27 +121,21 @@ const startListener = async function () {
 };
 
 const startPeriodicProducer = async function () {
-  if (config.alerta.heartbeatInterval === 0 || config.alerta.heartbeatInterval === undefined) {
-    return;
-  }
-  logger.info(`Starting heartbeat to topic ${config.alerta.heartbeatTopic} with interval ${config.alerta.heartbeatInterval} and delay ${config.alerta.heartbeatDelay}`);
   await producer.connect();
   const heartbeat = {
-    key: '{"resource":"heartbeat-owner","event":"heartbeat"}',
+    key: '{"resource":"hearbeat-owner","event":"heartbeat"}',
     value: null,
-    topic: config.alerta.heartbeatTopic
+    topic: config.alerta.topic
   };
 
   setInterval(async () => {
     try {
-      const timestamp = Date.now() - config.alerta.heartbeatDelay; // Current Kafka timestamp - 5 seconds
       await producer.send({
         topic: heartbeat.topic,
         messages: [
           {
             key: heartbeat.key,
-            value: heartbeat.value,
-            timestamp: timestamp.toString()
+            value: heartbeat.value
           }
         ]
       });
@@ -153,7 +143,7 @@ const startPeriodicProducer = async function () {
     } catch (err) {
       logger.error('Could not send heartbeat: ' + err);
     }
-  }, config.alerta.heartbeatInterval); // Send every second
+  }, 1000); // Send every second
 };
 logger.info('Now staring Kafka listener');
 startListener();
