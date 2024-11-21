@@ -8,3 +8,32 @@ This document describes how to map OPCUA data into Semantic Web [6] data, more s
 The files are all represented in Resource Description Format[6] serialized in the Turtle[5] or JSON-LD.
 
 
+# Setup for Linux
+
+Target System Linux, tested on `Ubuntu 22.04`.
+
+In additiona the following must be installed:
+
+- Python3 >= 3.10
+- Make
+- Bash
+
+Get the code from the IndustryFusion Foundation repo:
+
+```
+git clone https://github.com/IndustryFusion/DigitalTwin.git
+```
+
+Find the right directory:
+
+```
+cd DigitalTwin/semantic-model/opcua/
+```
+
+and install the dependencies:
+
+```
+make setup
+```
+
+

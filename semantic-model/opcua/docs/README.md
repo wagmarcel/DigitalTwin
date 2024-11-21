@@ -1,6 +1,6 @@
 # Table of Contents
 
-1. [Overview](#overview)
+1. [Overview & Setup](./overview.md)
 2. [Example & Tutorial](./simple-example.md)
 3. [Building Companion Specifications](./building-companion-specifications.md)
 3. [Mapping concept](./mapping-concept.md)
