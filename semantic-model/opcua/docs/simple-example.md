@@ -40,7 +40,11 @@ The result of this step is the file `example.ttl` which contains the OWL represe
 
 ## Extract SHACL and NGSI-LD files from OWL
 
-Now, having `core.ttl` and `example.ttl` finally the instance description in `NGSI-LD` and the `SHACL` constraints can be extracted:
+Now, having `core.ttl` and `example.ttl` finally the instance description in `NGSI-LD` and the `SHACL` constraints can be extracted. The following parameters have to be added:
+
+`-t` The type of the root Object which should be extracted (in this case `http://my.test/AlphaType`)
+`-n` The namespace of the NGSI-LD objects (use `http://demo.machine/` if the default @context is used)
+`-i` the prefix for the object URNs (must start with urn, e.g. `urn:test)
 
 ```
 python3 ./extractType.py -t http://my.test/AlphaType -n http://demo.machine/  example.ttl -i urn:test
@@ -99,3 +103,57 @@ Conforms: True
 ```
 This is explained in the picture below.
 ![Image](./images/validation-success.PNG)
+
+
+# Advanced Example: Build the Pump Example
+
+In this section, we are going to build one of the official OPCUA examples, the instance example for a pump:
+
+    https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/Pumps/instanceexample.xml
+    
+
+## Build the dependent Companion Specifications
+
+Looking at the raw file, it can be determined that there is no `<Models>` description. But, alternatively, the dependencies in the `<NamespaceUris>` is considered:
+
+    <NamespaceUris>
+        <Uri>http://yourorganisation.org/InstanceExample/</Uri>
+        <Uri>http://opcfoundation.org/UA/Pumps/</Uri>
+        <Uri>http://opcfoundation.org/UA/Machinery/</Uri>
+        <Uri>http://opcfoundation.org/UA/DI/</Uri>
+    </NamespaceUris>
+
+This list suggests that the dependencies are `core.ttl`, `devices.ttl`, `machinery.ttl` and `pump.ttl`.
+
+    NODESET_VERSION=UA-1.05.03-2023-12-15
+    CORE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Schema/Opc.Ua.NodeSet2.xml
+    DI_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/DI/Opc.Ua.Di.NodeSet2.xml
+    MACHINERY_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Machinery/Opc.Ua.Machinery.NodeSet2.xml
+    PUMPS_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Pumps/Opc.Ua.Pumps.NodeSet2.xml
+    BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl
+    PUMP_EXAMPLE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Pumps/instanceexample.xml
+
+    python3 nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -p opcua -o core.ttl
+    python3 nodeset2owl.py  ${DI_NODESET} -i ${BASE_ONTOLOGY} core.ttl  -p devices -o devices.ttl
+    python3 nodeset2owl.py ${MACHINERY_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl -p machinery -o machinery.ttl
+    python3 nodeset2owl.py  ${PUMPS_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl machinery.ttl -p pumps -o pumps.ttl
+    python3 nodeset2owl.py  ${PUMP_EXAMPLE_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl machinery.ttl pumps.ttl -n http://yourorganisation.org/InstanceExample/  -p pumpexample -o pumpexample.ttl
+
+
+
+The extraction of the resulting SHACL, NGSI-LD and OWL we need again determine the root object type, which is http://opcfoundation.org/UA/Pumps/PumpType, and the ontology containing the pump example `pumpexample.ttl`. The other parameters  for `-n` and `-i` stay the same, compared to the simple example above.
+
+    python3 ./extractType.py -t http://opcfoundation.org/UA/Pumps/PumpType -n http://demo.machine/ pumpexample.ttl -i urn:test
+
+
+Again the resulting `instances.jsonld`, `shacl.ttl` and `entities.ttl` can be validated by `pyshacl`:
+
+    pyshacl -s shacl.ttl -e entities.ttl -df json-ld instances.jsonld
+
+which will be successful:
+
+    Validation Report
+    Conforms: True
+
+
+
