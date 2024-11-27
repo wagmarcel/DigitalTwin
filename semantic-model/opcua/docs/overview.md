@@ -8,15 +8,17 @@ This document describes how to map OPCUA data into Semantic Web [6] data, more s
 The files are all represented in Resource Description Format[6] serialized in the Turtle[5] or JSON-LD.
 
 
-# Setup for Linux
+# Setup for Linux/Windows
 
+## For Linux and Windows
 Target System Linux, tested on `Ubuntu 22.04`.
 
 In additiona the following must be installed:
 
 - Python3 >= 3.10
-- Make
-- Bash
+- VSCode
+- Make, bash, git (for Linux)
+- GitBash (for Windows)
 
 Get the code from the IndustryFusion Foundation repo:
 
@@ -35,5 +37,16 @@ and install the dependencies:
 ```
 make setup
 ```
+
+## For Windows only
+
+In this document, the Python 3 executable is named `python3` which can create a mismatch with the Windows installation. Therefore, the gitBash needs to define an alias for `python3`.
+
+    code ~/.bashrc
+
+And then add to the end to the file (or to the beginning if it does not exist)
+
+    alias python3="python"
+
 
 

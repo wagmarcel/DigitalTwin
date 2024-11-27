@@ -9,11 +9,9 @@
 
 # References
 
-[1] SHACL
-[2] OWL
-[3] JSON-LD
-[4] JSON-LD
-[5] TURTLE
-[6] Semantic Web
-[7] NGSI-LD
-[8] Pro
+[1] W3C. (2017). SHACL (Shapes Constraint Language). W3C Recommendation. Available at: https://www.w3.org/TR/shacl/
+[2] W3C. (2012). OWL 2 Web Ontology Language: Document Overview. W3C Recommendation. Available at: https://www.w3.org/TR/owl2-overview/
+[3] W3C. (2020). JSON-LD 1.1: A JSON-based Serialization for Linked Data. W3C Recommendation. Available at: https://www.w3.org/TR/json-ld11/
+[4] ETSI. (2019). NGSI-LD API: Linked Data-based API for context information management. ETSI GS CIM 009 V1.1.1. Available at: 
+[5] W3C. (2014). Turtle - Terse RDF Triple Language. W3C Recommendation. Available at: https://www.w3.org/TR/turtle/
+[6] Berners-Lee, T., Hendler, J., & Lassila, O. (2001). The Semantic Web. Scientific American, 284(5), 34-43.
