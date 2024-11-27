@@ -262,7 +262,9 @@ def get_common_supertype(graph, class1, class2):
     return superclass
 
 def file_path_to_uri(file_path):
-    path = Path(str(file_path))
+    if str(file_path).startswith('http'):
+        return URIRef(str(file_path))
+    path = Path(os.path.abspath(str(file_path)))
     return URIRef(path.as_uri())
 
 
