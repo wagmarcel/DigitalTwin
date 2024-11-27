@@ -17,6 +17,7 @@
 from urllib.parse import urlparse
 from rdflib.namespace import RDFS, XSD, OWL, RDF
 from rdflib import URIRef, Namespace, Graph
+from pathlib import Path
 import re
 import os
 
@@ -259,6 +260,10 @@ def get_common_supertype(graph, class1, class2):
         print(f"Error: {e}")
         pass
     return superclass
+
+def file_path_to_uri(file_path):
+    path = Path(str(file_path))
+    return URIRef(path.as_uri())
 
 
 class RdfUtils:
