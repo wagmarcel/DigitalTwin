@@ -19,6 +19,8 @@ To transform the data, first the relevant OPCUA companion specifications must be
 ```
 export NODESET_VERSION=UA-1.05.03-2023-12-15
 export BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl
+export CORE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Schema/Opc.Ua.NodeSet2.xml
+
 python3 nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o core.ttl
 
 ```
