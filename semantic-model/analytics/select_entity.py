@@ -13,7 +13,7 @@ db_config = {
 }
 
 id = 'urn:plasmacutter-test:1234567'
-targetDate = '2025-01-22 10:44:26'
+targetDate = '2025-01-23 23:40:26'
 
 # SQL query
 sql_query_attributes_temp = '''
