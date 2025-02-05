@@ -1,7 +1,9 @@
 import psycopg2
 from psycopg2.extras import DictCursor
 from string import Template
-import time
+import argparse
+import json
+#from pyld import jsonld
 
 # Database connection details
 db_config = {
@@ -12,10 +14,7 @@ db_config = {
     "port": 5432          # default PostgreSQL port
 }
 
-id = 'urn:plasmacutter-test:1234567'
-targetDate = '2025-01-23 23:40:26'
-
-# SQL query
+# SQL query templates
 sql_query_attributes_temp = '''
 SELECT *
 FROM (
@@ -46,11 +45,13 @@ sql_query_entities = Template(sql_query_entities_temp)
 def convertSQLDateTimeToTimestamp(value):
     return value.strftime('%Y-%m-%dT%H:%M:%S.%f')
 
+
 def build_ngsild_from_sql(entity_row, attribute_rows):
     parentIds = {}
+
     def add_attribute(obj, row):
         attribute_id = row['attributeId']
-        if attribute_id not in obj: 
+        if attribute_id not in obj:
             obj[attribute_id] = []
         attribute = {}
         attribute['type'] = row.get('attributeType')
@@ -58,21 +59,24 @@ def build_ngsild_from_sql(entity_row, attribute_rows):
         node_type = row.get('nodeType')
         if node_type == '@value':
             attribute['value'] = row.get('value')
-        else:
+        elif node_type == '@value':
             if row.get('attributeType').endswith('Property'):
                 attribute['value'] = {
                     '@id': row.get('value')
                 }
             elif row.get('attributeType').endswith('Relationship'):
                 attribute['object'] = row.get('value')
+        elif node_type == '@json':
+            avalue = row.get('value')
+        
+            attribute['value'] = json.loads(avalue)
+        
         attribute['observedAt'] = convertSQLDateTimeToTimestamp(row.get('observedAt'))
         attribute['modifiedAt'] = convertSQLDateTimeToTimestamp(row.get('modifiedAt'))
         
         if row['id'] in parentIds:
-            # children = []
             for r in parentIds[row['id']]:
-                # child_attribute_id = r['attributeId']
-                add_attribute( attribute, r)
+                add_attribute(attribute, r)
 
         obj[attribute_id].append(attribute)
    
@@ -80,60 +84,84 @@ def build_ngsild_from_sql(entity_row, attribute_rows):
     erow = dict(entity_row[0])
     ngsild_object['id'] = erow['id']
     ngsild_object['type'] = erow['type']
-    # First cache parentIds
+    # Cache parentIds for nested attributes
     for row in attribute_rows:
         arow = dict(row)
         parentId = arow['parentId']
         if parentId is not None:
             if parentId not in parentIds:
                 parentIds[parentId] = []
-            datasetId = arow.get('datasetId')
             parentIds[parentId].append(arow)
-    # Now process attributes recursively
+    # Process top-level attributes recursively
     for row in attribute_rows:
         arow = dict(row)
-        parentId = arow.get('parentId')
-        if parentId is None:
+        if arow.get('parentId') is None:
             add_attribute(ngsild_object, arow)
         
-    
     print(ngsild_object)
 
+def main():
+    # Set up command-line argument parsing
+    parser = argparse.ArgumentParser(
+        description="Execute SQL queries using the provided 'id' and 'targetDate' values."
+    )
+    parser.add_argument(
+        '--id',
+        type=str,
+        required=True,
+        help="Entity id (e.g., 'urn:plasmacutter-test:1234567')"
+    )
+    parser.add_argument(
+        '--targetDate',
+        type=str,
+        required=True,
+        help="Target date in the format 'YYYY-MM-DD HH:MM:SS' (e.g., '2025-01-23 23:40:26')"
+    )
+    args = parser.parse_args()
 
-try:
-    # Connect to the database
-    conn = psycopg2.connect(**db_config)
-    cursor = conn.cursor(cursor_factory=DictCursor)
-    
-    # Read SQL commands from the file
-    #with open(sql_file_path, "r") as file:
-    #    sql_commands = file.read()
-    
-    # Execute the SQL commands
-    cursor.execute(sql_query_attributes.substitute(entityId=id, targetDate=targetDate))
-    attribute_rows = cursor.fetchall()
-    
-    cursor.execute(sql_query_entities.substitute(id=id, targetDate=targetDate))
-    entity_row = cursor.fetchall()
-    
-    # List all retrieved rows
-    for row in attribute_rows:
-        print(dict(row))
-    # Commit changes (if needed)
-    conn.commit()
-    print("SQL script executed successfully.")
-    build_ngsild_from_sql(entity_row, attribute_rows)
-    
+    # Assign the command-line arguments to variables
+    entity_id = args.id
+    target_date = args.targetDate
 
-except Exception as e:
-    raise e
-    print(f"Error: {e}")
-    if conn:
-        conn.rollback()  # Roll back in case of an error
+    try:
+        # Connect to the database
+        conn = psycopg2.connect(**db_config)
+        cursor = conn.cursor(cursor_factory=DictCursor)
+        
+        # Execute the SQL query for attributes
+        cursor.execute(
+            sql_query_attributes.substitute(entityId=entity_id, targetDate=target_date)
+        )
+        attribute_rows = cursor.fetchall()
+        
+        # Execute the SQL query for entities
+        cursor.execute(
+            sql_query_entities.substitute(id=entity_id, targetDate=target_date)
+        )
+        entity_row = cursor.fetchall()
+        
+        if attribute_rows is not None and len(attribute_rows) > 0:
+            # Print retrieved attribute rows
+            for row in attribute_rows:
+                print(dict(row))
+                
+            # Commit changes if needed
+            conn.commit()
+            print("SQL script executed successfully.")
+            build_ngsild_from_sql(entity_row, attribute_rows)
+        else:
+            print("Nothing retrieved!")
+    except Exception as e:
+        print(f"Error: {e}")
+        if conn:
+            conn.rollback()  # Roll back in case of an error
 
-finally:
-    # Close the connection
-    if cursor:
-        cursor.close()
-    if conn:
-        conn.close()
+    finally:
+        # Close the connection and cursor
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if 'conn' in locals() and conn:
+            conn.close()
+
+if __name__ == '__main__':
+    main()
