@@ -1,9 +1,8 @@
 import psycopg2
 from psycopg2.extras import DictCursor
-from string import Template
 import argparse
 import json
-#from pyld import jsonld
+from jinja2 import Template
 
 # Database connection details
 db_config = {
@@ -11,42 +10,49 @@ db_config = {
     "user": "ngb",
     "password": "5t2Aop2p9Uo12Ewq5HvQZcsH2mn5Skuk",
     "host": "acid-cluster",  # or the IP of your PostgreSQL server
-    "port": 5432          # default PostgreSQL port
+    "port": 5432           # default PostgreSQL port
 }
 
-# SQL query templates
-sql_query_attributes_temp = '''
+# SQL query template for attributes using Jinja2
+sql_query_attributes_template = """
 SELECT *
 FROM (
   SELECT *,
          ROW_NUMBER() OVER (PARTITION BY "id" ORDER BY "observedAt" DESC) AS row_num
   FROM attributes AS A
-  WHERE "entityId" = '${entityId}'
-    AND "observedAt" < '${targetDate}'
+  WHERE "observedAt" < '{{ targetDate }}'
+  {% if entityIds %}
+    AND "entityId" IN ({{ entityIds | join(', ') }})
+  {% endif %}
+  {% if entityIdPattern %}
+    AND "entityId" LIKE '{{ entityIdPattern }}'
+  {% endif %}
 ) subquery
 WHERE row_num = 1;
-'''
+"""
 
-sql_query_entities_temp = '''
+# SQL query template for entities using Jinja2
+sql_query_entities_template = """
 SELECT *
 FROM (
   SELECT *,
          ROW_NUMBER() OVER (PARTITION BY "id" ORDER BY "observedAt" DESC) AS row_num
   FROM entities AS A
-  WHERE "id" = '${id}'
-    AND "observedAt" < '${targetDate}'
+  WHERE "observedAt" < '{{ targetDate }}'
+  {% if ids %}
+    AND "id" IN ({{ ids | join(', ') }})
+  {% endif %}
+  {% if idPattern %}
+    AND "id" LIKE '{{ idPattern }}'
+  {% endif %}
 ) subquery
 WHERE row_num = 1;
-'''
-
-sql_query_attributes = Template(sql_query_attributes_temp)
-sql_query_entities = Template(sql_query_entities_temp)
+"""
 
 def convertSQLDateTimeToTimestamp(value):
     return value.strftime('%Y-%m-%dT%H:%M:%S.%f')
 
-
-def build_ngsild_from_sql(entity_row, attribute_rows):
+def build_ngsild_from_sql(entity_rows, attribute_rows):
     parentIds = {}
 
     def add_attribute(obj, row):
@@ -59,16 +65,13 @@ def build_ngsild_from_sql(entity_row, attribute_rows):
         node_type = row.get('nodeType')
         if node_type == '@value':
             attribute['value'] = row.get('value')
-        elif node_type == '@value':
+        elif node_type == '@object':
             if row.get('attributeType').endswith('Property'):
-                attribute['value'] = {
-                    '@id': row.get('value')
-                }
+                attribute['value'] = { '@id': row.get('value') }
             elif row.get('attributeType').endswith('Relationship'):
                 attribute['object'] = row.get('value')
         elif node_type == '@json':
             avalue = row.get('value')
-        
             attribute['value'] = json.loads(avalue)
         
         attribute['observedAt'] = convertSQLDateTimeToTimestamp(row.get('observedAt'))
@@ -80,36 +83,46 @@ def build_ngsild_from_sql(entity_row, attribute_rows):
 
         obj[attribute_id].append(attribute)
    
-    ngsild_object = {}
-    erow = dict(entity_row[0])
-    ngsild_object['id'] = erow['id']
-    ngsild_object['type'] = erow['type']
-    # Cache parentIds for nested attributes
+    ngsild_objects = {}
+    for entity_row in entity_rows: 
+        erow = dict(entity_row)
+        ngsild_object = {}
+        id = erow['id']
+        ngsild_object['id'] = id
+        ngsild_object['type'] = erow['type']
+        ngsild_objects[id] = ngsild_object
+
+    # Build a parent-to-children mapping for nested attributes
     for row in attribute_rows:
         arow = dict(row)
-        parentId = arow['parentId']
+        parentId = arow.get('parentId')
         if parentId is not None:
             if parentId not in parentIds:
                 parentIds[parentId] = []
             parentIds[parentId].append(arow)
+    
     # Process top-level attributes recursively
     for row in attribute_rows:
         arow = dict(row)
+        entity_id = arow['entityId']
+        ngsild_object = ngsild_objects[entity_id]
         if arow.get('parentId') is None:
             add_attribute(ngsild_object, arow)
-        
-    print(ngsild_object)
+    
+    for entity_id, ngsild_object in ngsild_objects.items(): 
+        print(ngsild_object)
 
 def main():
     # Set up command-line argument parsing
     parser = argparse.ArgumentParser(
-        description="Execute SQL queries using the provided 'id' and 'targetDate' values."
+        description="Execute SQL queries using provided 'id' and 'targetDate' values."
     )
     parser.add_argument(
         '--id',
         type=str,
+        nargs='+',  # Allow one or more IDs
         required=True,
-        help="Entity id (e.g., 'urn:plasmacutter-test:1234567')"
+        help="Entity id(s) (e.g., 'urn:plasmacutter-test:1234567'). You can provide multiple IDs separated by spaces."
     )
     parser.add_argument(
         '--targetDate',
@@ -119,43 +132,62 @@ def main():
     )
     args = parser.parse_args()
 
-    # Assign the command-line arguments to variables
-    entity_id = args.id
+    # Command-line values
+    # args.id is now a list of one or more IDs.
+    entity_ids_list = args.id
     target_date = args.targetDate
 
+    # Optionally, set additional filter variables.
+    # Quote each id for SQL if you're directly inserting them into the template.
+    # Note: In production use parameterized queries to prevent SQL injection.
+    quoted_entity_ids = [f"'{eid}'" for eid in entity_ids_list]
+
+    # For the entities query, use the same list of ids.
+    quoted_ids = quoted_entity_ids
+
+    # You can also set patterns if desired. Set to None if not used.
+    entityIdPattern = None  # For attributes query (e.g., "'%sensor%'")
+    idPattern = None        # For entities query (e.g., "'%device%'")
+
+    # Render SQL queries with Jinja2
+    attributes_query = Template(sql_query_attributes_template).render(
+        targetDate=target_date,
+        entityIds=quoted_entity_ids,
+        entityIdPattern=entityIdPattern
+    )
+    entities_query = Template(sql_query_entities_template).render(
+        targetDate=target_date,
+        ids=quoted_ids,
+        idPattern=idPattern
+    )
+
     try:
-        # Connect to the database
         conn = psycopg2.connect(**db_config)
         cursor = conn.cursor(cursor_factory=DictCursor)
         
-        # Execute the SQL query for attributes
-        cursor.execute(
-            sql_query_attributes.substitute(entityId=entity_id, targetDate=target_date)
-        )
+        # Execute the attributes query
+        cursor.execute(attributes_query)
         attribute_rows = cursor.fetchall()
         
-        # Execute the SQL query for entities
-        cursor.execute(
-            sql_query_entities.substitute(id=entity_id, targetDate=target_date)
-        )
-        entity_row = cursor.fetchall()
+        # Execute the entities query
+        cursor.execute(entities_query)
+        entity_rows = cursor.fetchall()
         
-        if attribute_rows is not None and len(attribute_rows) > 0:
+        if attribute_rows and len(attribute_rows) > 0:
             # Print retrieved attribute rows
             for row in attribute_rows:
                 print(dict(row))
                 
-            # Commit changes if needed
             conn.commit()
             print("SQL script executed successfully.")
-            build_ngsild_from_sql(entity_row, attribute_rows)
+            build_ngsild_from_sql(entity_rows, attribute_rows)
         else:
             print("Nothing retrieved!")
     except Exception as e:
         print(f"Error: {e}")
         if conn:
             conn.rollback()  # Roll back in case of an error
-
+        raise e
     finally:
         # Close the connection and cursor
         if 'cursor' in locals() and cursor:
