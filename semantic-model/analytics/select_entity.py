@@ -80,7 +80,7 @@ FROM (
     AND "entityId" LIKE '{{ entityIdPattern }}'
   {% endif %}
 ) subquery
-WHERE row_num = 1;
+WHERE row_num = 1 and "deleted" = false;
 """
 
 # SQL query template for entities using Jinja2
@@ -98,7 +98,7 @@ FROM (
     AND "id" LIKE '{{ idPattern }}'
   {% endif %}
 ) subquery
-WHERE row_num = 1;
+WHERE row_num = 1 and "deleted" = false;
 """
 
 def convertSQLDateTimeToTimestamp(value):
