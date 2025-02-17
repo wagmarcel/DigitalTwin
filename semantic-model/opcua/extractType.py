@@ -19,7 +19,7 @@ from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import OWL, RDF, SH
 import argparse
 import lib.utils as utils
-from lib.utils import RdfUtils
+from lib.utils import RdfUtils, OntologyLoader
 from lib.bindings import Bindings
 from lib.jsonld import JsonLd
 from lib.entity import Entity
@@ -141,6 +141,11 @@ parse nodeset instance and create ngsi-ld model')
                         help='prefix in context for entities',
                         default="uaentity",
                         required=False)
+    parser.add_argument('-r', '--recursive-import',
+                        help='Import dependencies of dependencies',
+                        required=False,
+                        default=False,
+                        action='store_true')
     parsed_args = parser.parse_args(args)
     return parsed_args
 
@@ -489,6 +494,7 @@ if __name__ == '__main__':
     entity_namespace = args.entity_namespace
     entity_prefix = args.entity_prefix
 
+
     entity_namespace = Namespace(f'{namespace_prefix}entity/') if entity_namespace is None else entity_namespace
     shacl_namespace = Namespace(f'{namespace_prefix}shacl/')
     binding_namespace = Namespace(f'{namespace_prefix}bindings/')
@@ -498,14 +504,19 @@ if __name__ == '__main__':
     # get all owl imports
     mainontology = next(g.subjects(RDF.type, OWL.Ontology))
     imports = g.objects(mainontology, OWL.imports)
-    for imprt in imports:
-        h = Graph(store="Oxigraph")
-        print(f'Importing ontology {imprt}')
-        h.parse(imprt)
-        g += h
-        for k, v in list(h.namespaces()):
-            if k != '':
-                g.bind(k, v)
+    if args.recursive_import:
+        ontology_loader = OntologyLoader(True)
+        ontology_loader.init_imports(imports)
+        g += ontology_loader.get_graph()
+    else:
+        for imprt in imports:
+            h = Graph(store="Oxigraph")
+            print(f'Importing ontology {imprt}')
+            h.parse(imprt)
+            g += h
+            for k, v in list(h.namespaces()):
+                if k != '':
+                    g.bind(k, v)
 
     types = []
     basens = next(Namespace(uri) for prefix, uri in list(g.namespaces()) if prefix == 'base')
@@ -548,7 +559,10 @@ if __name__ == '__main__':
         exit(1)
     scan_type(root, rootinstancetype)
     # Then scan the entity with the real values
-    rootentity = next(g.subjects(RDF.type, URIRef(rootinstancetype)))
+    rootentity = next(g.subjects(RDF.type, URIRef(rootinstancetype)), None)
+    if rootentity is None:
+        print(f"The provided type {rootinstancetype} could not be found in this ontology.")
+        exit(1)
     scan_entity(rootentity, URIRef(rootinstancetype), entity_id)
     # Add types to entities
     for type in types:
