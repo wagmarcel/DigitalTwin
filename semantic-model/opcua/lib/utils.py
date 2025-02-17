@@ -18,6 +18,7 @@ from urllib.parse import urlparse
 from rdflib.namespace import RDFS, XSD, OWL, RDF
 from rdflib import URIRef, Namespace, Graph
 from pathlib import Path
+import json
 import re
 import os
 
@@ -140,10 +141,12 @@ def attributename_from_type(type):
     return basename
 
 
-def get_default_value(datatype):
+def get_default_value(datatype, orig_datatype=None):
+    if orig_datatype is not None and datatype is None:
+        datatype = orig_datatype
     if datatype == XSD.integer:
         return 0
-    if datatype == XSD.double:
+    if datatype == XSD.double or datatype == URIRef('http://opcfoundation.org/UA/Number'):
         return 0.0
     if datatype == XSD.string:
         return ''
@@ -154,9 +157,15 @@ def get_default_value(datatype):
     if datatype == XSD.dateTime:
         return {'@value': '1970-1-1T00:00:00', '@type': 'xsd.dateTime'}
     print(f'Warning: unknown default value for datatype {datatype}')
-
+    return 'null'
 
 def get_value(value, datatype):
+    try:
+        decoded = json.loads(value)
+        if isinstance(decoded, list):
+            return decoded
+    except:
+        pass
     if datatype == XSD.integer:
         return int(value)
     if datatype == XSD.double:
