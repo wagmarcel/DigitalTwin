@@ -153,6 +153,7 @@ kafka:
     logRetentionHours: {{ .StateValues.kafka.config.logRetentionHours }}
 
 kafkaBridge:
+  hashlength: {{ .StateValues.kafkaBridge.hashlength }}
   debezium:
     replicaCount: 1
     listenTopic: "iff.ngsild.public.entity"
