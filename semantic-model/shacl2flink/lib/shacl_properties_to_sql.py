@@ -1,15 +1,17 @@
 from rdflib import Graph
-from rdflib.namespace import SH
+from rdflib.namespace import SH, RDF
 import os
 import sys
 import ruamel.yaml
 from jinja2 import Template
+from lib.utils import get_full_path_of_shacl_property
 
 file_dir = os.path.dirname(__file__)
 sys.path.append(file_dir)
 import configs  # noqa: E402
 import utils  # noqa: E402
 
+MAX_SUBPROPERTY_DEPTH = 1
 
 yaml = ruamel.yaml.YAML()
 
@@ -17,25 +19,26 @@ alerts_bulk_table = configs.alerts_bulk_table_name
 alerts_bulk_table_object = configs.alerts_bulk_table_object_name
 
 sparql_get_all_relationships = """
-SELECT ?nodeshape ?targetclass ?inheritedTargetclass ?propertypath ?mincount ?maxcount ?attributeclass ?severitycode
+SELECT ?nodeshape ?targetclass ?inheritedTargetclass ?propertypath ?mincount ?maxcount ?attributeclass ?severitycode ?property
 where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?targetclass .
     ?inheritedTargetclass rdfs:subClassOf* ?targetclass .
-    ?nodeshape sh:property [
+    ?nodeshape sh:property* ?property .
+  ?property  
         sh:path ?propertypath ;
         sh:property [
             sh:path ngsi-ld:hasObject ;
             sh:class ?attributeclass ;
         ]
-    ] .
-    OPTIONAL{?nodeshape sh:property [ sh:path ?propertypath; sh:maxCount ?maxcount ]}
-    OPTIONAL{?nodeshape sh:property [ sh:path ?propertypath; sh:minCount ?mincount ]}
+     .
+    OPTIONAL{?proprety  sh:path ?propertypath; sh:maxCount ?maxcount }
+    OPTIONAL{?property  sh:path ?propertypath; sh:minCount ?mincount }
     OPTIONAL {
-        ?nodeshape sh:property [
+        ?property 
             sh:path ?propertypath;
             sh:severity ?severity ;
-        ] .
+         .
         ?severity rdfs:label ?severitycode .
     }
 }
@@ -45,35 +48,34 @@ order by ?inhertiedTargetclass
 sparql_get_all_properties = """
 SELECT
     ?nodeshape ?targetclass ?inheritedTargetclass ?propertypath ?mincount ?maxcount ?attributeclass ?nodekind
-    ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode
+    ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode ?property
     (GROUP_CONCAT(CONCAT('"', ?in, '"'); separator=',') as ?ins)
 where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?targetclass .
     ?inheritedTargetclass rdfs:subClassOf* ?targetclass .
-    ?nodeshape sh:property [
+    ?nodeshape sh:property ?property .
+    ?property 
         sh:path ?propertypath ;
         sh:property [
             sh:path ngsi-ld:hasValue ;
             sh:nodeKind ?nodekind ;
-        ] ;
-
-    ] .
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:minCount ?mincount ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:maxCount ?maxcount ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:minExclusive ?minexclusive ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:maxExclusive ?maxexclusive ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:minInclusive ?mininclusive ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:maxInclusive ?maxinclusive ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:minLength ?minlength ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:maxLength ?maxlength ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:pattern ?pattern ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:in/(rdf:rest*/rdf:first)+ ?in ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:class ?attributeclass ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath; sh:severity ?severity ; ] . ?severity rdfs:label ?severitycode .}
+        ] .
+    OPTIONAL { ?property sh:path ?propertypath ; sh:minCount ?mincount ; }
+    OPTIONAL { ?property sh:path ?propertypath ; sh:maxCount ?maxcount ; }
+    OPTIONAL { ?property sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:minExclusive ?minexclusive ;] ; }
+    OPTIONAL { ?property sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:maxExclusive ?maxexclusive ;] ; }
+    OPTIONAL { ?property sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:minInclusive ?mininclusive ;] ; }
+    OPTIONAL { ?property sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:maxInclusive ?maxinclusive ;] ; }
+    OPTIONAL { ?property sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:minLength ?minlength ;] ; }
+    OPTIONAL { ?property sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:maxLength ?maxlength ;] ; }
+    OPTIONAL { ?property sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:pattern ?pattern ;] ; }
+    OPTIONAL { ?property sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:in/(rdf:rest*/rdf:first)+ ?in ;] ; }
+    OPTIONAL { ?property sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:class ?attributeclass ;] ; }
+    OPTIONAL { ?property sh:path ?propertypath; sh:severity ?severity . ?severity rdfs:label ?severitycode .}
 }
 GROUP BY ?nodeshape ?targetclass ?propertypath ?mincount ?maxcount ?attributeclass ?nodekind
-    ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode ?inheritedTargetclass
+    ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode ?inheritedTargetclass ?property
 order by ?inheritedTargetclass
 """  # noqa: E501
 sql_check_relationship_base = """
@@ -83,10 +85,10 @@ sql_check_relationship_base = """
                         A.`type` as typ,
                         IFNULL(A.`deleted`, false) as edeleted,
                         C.`type` AS entity,
-                        B.`type` AS link,
-                        B.`nodeType` as nodeType,
-                        B.`deleted` as `adeleted`,
-                        B.`datasetId` as `index`,
+                        COALESCE(E.`type`, B.`type`) AS link,
+                        COALESCE(E.`nodeType`, B.`nodeType`) as nodeType,
+                        COALESCE(E.`deleted`, B.`deleted`) as `adeleted`,
+                        COALESCE(E.`datasetId`, B.`datasetId`) as `index`,
                         D.targetClass as targetClass,
                         D.propertyPath as propertyPath,
                         D.propertyClass as propertyClass,
@@ -94,7 +96,8 @@ sql_check_relationship_base = """
                         D.minCount as minCount,
                         D.severity as severity
                     FROM {{target_class}}_view AS A JOIN `relationshipChecksTable` as D ON A.`type` = D.targetClass
-                    LEFT JOIN attributes_view AS B ON B.name = D.propertyPath and B.entityId = A.id and parentId IS NULL
+                    LEFT JOIN attributes_view AS B ON B.name = D.propertyPath and B.entityId = A.id and B.parentId IS NULL and D.subpropertyPath IS NULL
+                    LEFT JOIN attributes_view AS E ON E.name = D.subpropertyPath and E.entityId = A.id and E.parentId = B.id
                     LEFT JOIN {{target_class}}_view AS C ON B.`attributeValue` = C.id and B.`type` = 'https://uri.etsi.org/ngsi-ld/Relationship'
 
             )
@@ -178,13 +181,13 @@ INSERT {% if sqlite %} OR REPlACE{% endif %} INTO {{alerts_bulk_table}}
 WITH A1 AS (SELECT A.id as this,
                    A.`type` as typ,
                    IFNULL(A.`deleted`, false) as edeleted,
-                   B.`attributeValue` as val,
-                   B.`nodeType` as nodeType,
-                   B.`type` as attr_typ,
-                   B.`deleted` as `adeleted`,
+                   COALESCE(E.`attributeValue` ,B.`attributeValue`) as val,
+                   COALESCE(E.`nodeType`, B.`nodeType`) as nodeType,
+                   COALESCE(E.`type`, B.`type`) as attr_typ,
+                   COALESCE(E.`deleted`, B.`deleted`) as `adeleted`,
                    C.subject as foundVal,
                    C.object as foundClass,
-                   B.`datasetId` as `index`,
+                   COALESCE(E.`datasetId`, B.`datasetId`) as `index`,
                    D.propertyPath as propertyPath,
                    D.propertyClass as propertyClass,
                    D.propertyNodetype as propertyNodetype,
@@ -200,8 +203,9 @@ WITH A1 AS (SELECT A.id as this,
                    D.`pattern` as `pattern`,
                    D.ins as ins
                    FROM `{{target_class}}_view` AS A JOIN `propertyChecksTable` as D ON A.`type` = D.targetClass
-            LEFT JOIN attributes_view AS B ON D.propertyPath = B.name and B.entityId = A.id and B.parentId IS NULL
-            LEFT JOIN {{rdf_table_name}} as C ON C.subject = '<' || B.`attributeValue` || '>' and B.`type` = 'https://uri.etsi.org/ngsi-ld/Property'
+            LEFT JOIN attributes_view AS B ON D.propertyPath = B.name and B.entityId = A.id and B.parentId IS NULL and D.subpropertyPath IS NULL
+             LEFT JOIN attributes_view AS E ON D.subpropertyPath = E.name and E.entityId = A.id and B.id = E.parentId
+            LEFT JOIN {{rdf_table_name}} as C ON C.subject = '<' || COALESCE(E.attributeValue, B.attributeValue) || '>' and COALESCE(E.`type`, B.`type`) = 'https://uri.etsi.org/ngsi-ld/Property'
                 and C.predicate = '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>' and C.object = '<' || D.propertyClass || '>'
             )
 """  # noqa: E501
@@ -601,6 +605,10 @@ def translate(shaclefile, knowledgefile, prefixes):
     qres = g.query(sparql_get_all_relationships, initNs=prefixes)
     relationshp_checks = []
     for row in qres:
+        paths = get_full_path_of_shacl_property(g, row.property)
+        if len(paths) > MAX_SUBPROPERTY_DEPTH +1:
+            print(f"Warning, subproperty depth {len(paths)} not supported in paths {paths}")
+            continue
         check = {}
         target_class = row.inheritedTargetclass.toPython() \
             if row.targetclass else None
@@ -613,7 +621,12 @@ def translate(shaclefile, knowledgefile, prefixes):
         severitycode = row.severitycode.toPython() if row.severitycode \
             else 'warning'
         check['targetClass'] = target_class
-        check['propertyPath'] = property_path
+        if len(paths) >= 2:
+            check['subpropertyPath'] = property_path
+            check['propertyPath'] = paths[1]
+        else:
+            check['propertyPath'] = property_path
+            check['subpropertyPath'] = None
         check['propertyClass'] = property_class
         check['maxCount'] = maxcount
         check['minCount'] = mincount
@@ -623,6 +636,10 @@ def translate(shaclefile, knowledgefile, prefixes):
     qres = g.query(sparql_get_all_properties, initNs=prefixes)
     property_checks = []
     for row in qres:
+        paths = get_full_path_of_shacl_property(g, row.property)
+        if len(paths) > MAX_SUBPROPERTY_DEPTH +1:
+            print(f"Warning, subproperty depth {len(paths)} not supported in paths {paths}")
+            continue
         check = {}
         nodeshape = row.nodeshape.toPython()
         target_class = row.inheritedTargetclass.toPython() \
@@ -652,7 +669,12 @@ def translate(shaclefile, knowledgefile, prefixes):
         ins = row.ins.toPython() if str(row.ins) != '' else None
 
         check['targetClass'] = target_class
-        check['propertyPath'] = property_path
+        if len(paths) >= 2:
+            check['subpropertyPath'] = property_path
+            check['propertyPath'] = paths[1]
+        else:
+            check['propertyPath'] = property_path
+            check['subpropertyPath'] = None
         check['propertyClass'] = property_class
         check['propertyNodetype'] = '@id' if nodekind == SH.IRI else '@value'
         check['maxCount'] = maxcount

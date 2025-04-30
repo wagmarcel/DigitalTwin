@@ -20,6 +20,7 @@ import sys
 import argparse
 import lib.utils as utils
 import lib.configs as configs
+from lib.utils import NGSILD
 
 
 def parse_args(args=sys.argv[1:]):
@@ -111,22 +112,25 @@ class StringIndexer:
             return id_map['string_to_index'][string]
 
 
-def get_entity_id_and_parentId(node, name, g):
+def get_entity_id_and_parentId(node, name, target_datasetId, g):
     # go up the graph to find entityId and construct parentId
     id = ''
     entityId = node
+    if target_datasetId is None:
+        target_datasetId = '@none'
     while type(entityId) == BNode:
         try:
+            datasetId = next(g.objects((entityId, NGSILD.datasetId)), '@none')
             uptriples = next(g.triples((None, None, entityId)))
             entityId = uptriples[0]
-            id = f'\\{uptriples[1]}{id}'
+            id = f'\\{uptriples[1]}\\{datasetId}{id}'
         except:
             pass
     if id != '':
         parentId = f'\'{entityId}{id}\''
-        id = f'{entityId}{id}\\{name}'
+        id = f'{entityId}{id}\\{name}\\{target_datasetId}'
     else:
-        id = f'{entityId}\\{name}'
+        id = f'{entityId}\\{name}\\{target_datasetId}'
         parentId = 'CAST(NULL as STRING)'
     return id, entityId, parentId
 
@@ -150,7 +154,7 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                   file=sqlitef)
         for entityId, name, type, nodeType, valueType, hasValue, \
                 hasObject, observedAt, index, unitCode in qres:
-            id, entityId, parentId = get_entity_id_and_parentId(entityId, name, attributes_model)
+            id, entityId, parentId = get_entity_id_and_parentId(entityId, name, index, attributes_model)
 
             if index is None:
                 current_dataset_id = "'@none'"

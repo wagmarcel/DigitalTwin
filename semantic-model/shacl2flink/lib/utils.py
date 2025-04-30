@@ -19,8 +19,10 @@ import re
 import rdflib
 from urllib.parse import urlparse
 from enum import Enum
-from rdflib import Graph, RDFS, RDF, OWL, XSD, Literal
+from rdflib import Graph, RDFS, RDF, OWL, XSD, Literal, SH, Namespace
 from collections import deque
+
+NGSILD = Namespace('https://uri.etsi.org/ngsi-ld/')
 
 
 class WrongSparqlStructure(Exception):
@@ -48,6 +50,7 @@ checks_table_primary_key = ["targetClass", "propertyPath"]
 relationship_checks_table = [
     {"targetClass": "STRING"},
     {"propertyPath": "STRING"},
+    {"subpropertyPath": "STRING"},
     {"propertyClass": "STRING"},
     {"maxCount": "STRING"},
     {"minCount": "STRING"},
@@ -56,6 +59,7 @@ relationship_checks_table = [
 property_checks_table = [
     {"targetClass": "STRING"},
     {"propertyPath": "STRING"},
+    {"subpropertyPath": "STRING"},
     {"propertyClass": "STRING"},
     {"propertyNodetype": "STRING"},
     {"maxCount": "STRING"},
@@ -70,6 +74,18 @@ property_checks_table = [
     {"pattern": "STRING"},
     {"ins": "STRING"}
 ]
+
+
+def get_full_path_of_shacl_property(g, property):
+    cur_property = property
+    paths = []
+    while(cur_property is not None):
+        path = g.value(cur_property, SH.path)
+        if path is not None:
+            paths.append(path)
+        next_property = next(g.subjects(SH.property, cur_property), None)
+        cur_property = next_property
+    return paths
 
 
 def get_timevars(ctx, vars):
@@ -614,8 +630,8 @@ def add_relationship_checks(checks, sqldialect):
             first = False
         else:
             statement += ', '
-        statement += f'({lcheck["targetClass"]}, {lcheck["propertyPath"]}, {lcheck["propertyClass"]}, \
-{lcheck["maxCount"]}, {lcheck["minCount"]}, {lcheck["severity"]})'
+        statement += f'({lcheck["targetClass"]}, {lcheck["propertyPath"]}, {lcheck["subpropertyPath"]}, \
+{lcheck["propertyClass"]}, {lcheck["maxCount"]}, {lcheck["minCount"]}, {lcheck["severity"]})'
     statement += ';'
     return statement
 
@@ -639,6 +655,7 @@ def add_property_checks(checks, sqldialect):
             statement += ', '
         statement += f'({lcheck["targetClass"]}, \
 {lcheck["propertyPath"]}, \
+{lcheck["subpropertyPath"]}, \
 {lcheck["propertyClass"]}, \
 {lcheck["propertyNodetype"]}, \
 {lcheck["maxCount"]}, \
