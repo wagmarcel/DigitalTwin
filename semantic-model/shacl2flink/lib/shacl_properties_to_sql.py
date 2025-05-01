@@ -130,7 +130,7 @@ sql_check_relationship_property_class = """
 
 sql_check_relationship_property_count = """
             SELECT this AS resource,
-                'CountConstraintComponent(' || `propertyPath` || ')' AS event,
+                'CountConstraintComponent(' || `parentPath` || `propertyPath` || ')' AS event,
                 'Development' AS environment,
                 {% if sqlite %}
                 '[SHACL Validator]' AS service,
