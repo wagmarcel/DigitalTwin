@@ -108,7 +108,7 @@ sql_check_relationship_base = """
 
 sql_check_relationship_property_class = """
             SELECT this AS resource,
-                'ClassConstraintComponent(' || `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || '])' AS event,
+                'ClassConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
                 'Development' AS environment,
                 {% if sqlite %}
                 '[SHACL Validator]' AS service,
@@ -158,7 +158,7 @@ sql_check_relationship_property_count = """
 
 sql_check_relationship_nodeType = """
             SELECT this AS resource,
-                'NodeKindConstraintComponent(' || `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || '])' AS event,
+                'NodeKindConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
                 'Development' AS environment,
                 {% if sqlite %}
                 '[SHACL Validator]' AS service,
