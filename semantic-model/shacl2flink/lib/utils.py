@@ -52,6 +52,7 @@ relationship_checks_table = [
     {"propertyPath": "STRING"},
     {"subpropertyPath": "STRING"},
     {"propertyClass": "STRING"},
+    {"attributeType": "STRING"},
     {"maxCount": "STRING"},
     {"minCount": "STRING"},
     {"severity": "STRING"}
@@ -62,6 +63,7 @@ property_checks_table = [
     {"subpropertyPath": "STRING"},
     {"propertyClass": "STRING"},
     {"propertyNodetype": "STRING"},
+    {"attributeType": "STRING"},
     {"maxCount": "STRING"},
     {"minCount": "STRING"},
     {"severity": "STRING"},
@@ -631,7 +633,7 @@ def add_relationship_checks(checks, sqldialect):
         else:
             statement += ', '
         statement += f'({lcheck["targetClass"]}, {lcheck["propertyPath"]}, {lcheck["subpropertyPath"]}, \
-{lcheck["propertyClass"]}, {lcheck["maxCount"]}, {lcheck["minCount"]}, {lcheck["severity"]})'
+{lcheck["propertyClass"]}, {lcheck["attributeType"]}, {lcheck["maxCount"]}, {lcheck["minCount"]}, {lcheck["severity"]})'
     statement += ';'
     return statement
 
@@ -658,6 +660,7 @@ def add_property_checks(checks, sqldialect):
 {lcheck["subpropertyPath"]}, \
 {lcheck["propertyClass"]}, \
 {lcheck["propertyNodetype"]}, \
+{lcheck["attributeType"]}, \
 {lcheck["maxCount"]}, \
 {lcheck["minCount"]}, \
 {lcheck["severity"]}, \

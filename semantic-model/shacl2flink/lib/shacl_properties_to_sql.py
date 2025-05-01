@@ -54,25 +54,25 @@ where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?targetclass .
     ?inheritedTargetclass rdfs:subClassOf* ?targetclass .
-    ?nodeshape sh:property ?property .
+    ?nodeshape sh:property* ?property .
     ?property 
         sh:path ?propertypath ;
         sh:property [
             sh:path ngsi-ld:hasValue ;
             sh:nodeKind ?nodekind ;
         ] .
-    OPTIONAL { ?property sh:path ?propertypath ; sh:minCount ?mincount ; }
-    OPTIONAL { ?property sh:path ?propertypath ; sh:maxCount ?maxcount ; }
-    OPTIONAL { ?property sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:minExclusive ?minexclusive ;] ; }
-    OPTIONAL { ?property sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:maxExclusive ?maxexclusive ;] ; }
-    OPTIONAL { ?property sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:minInclusive ?mininclusive ;] ; }
-    OPTIONAL { ?property sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:maxInclusive ?maxinclusive ;] ; }
-    OPTIONAL { ?property sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:minLength ?minlength ;] ; }
-    OPTIONAL { ?property sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:maxLength ?maxlength ;] ; }
-    OPTIONAL { ?property sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:pattern ?pattern ;] ; }
-    OPTIONAL { ?property sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:in/(rdf:rest*/rdf:first)+ ?in ;] ; }
-    OPTIONAL { ?property sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:class ?attributeclass ;] ; }
-    OPTIONAL { ?property sh:path ?propertypath; sh:severity ?severity . ?severity rdfs:label ?severitycode .}
+    OPTIONAL { ?property  sh:minCount ?mincount ; }
+    OPTIONAL { ?property sh:maxCount ?maxcount ; }
+    OPTIONAL { ?property sh:property [sh:path ngsi-ld:hasValue ; sh:minExclusive ?minexclusive ;] ; }
+    OPTIONAL { ?property sh:property [sh:path ngsi-ld:hasValue ; sh:maxExclusive ?maxexclusive ;] ; }
+    OPTIONAL { ?property sh:property [sh:path ngsi-ld:hasValue ; sh:minInclusive ?mininclusive ;] ; }
+    OPTIONAL { ?property sh:property [sh:path ngsi-ld:hasValue ; sh:maxInclusive ?maxinclusive ;] ; }
+    OPTIONAL { ?property sh:property [sh:path ngsi-ld:hasValue ; sh:minLength ?minlength ;] ; }
+    OPTIONAL { ?property sh:property [sh:path ngsi-ld:hasValue ; sh:maxLength ?maxlength ;] ; }
+    OPTIONAL { ?property sh:property [sh:path ngsi-ld:hasValue ; sh:pattern ?pattern ;] ; }
+    OPTIONAL { ?property sh:property [sh:path ngsi-ld:hasValue ; sh:in/(rdf:rest*/rdf:first)+ ?in ;] ; }
+    OPTIONAL { ?property sh:property [sh:path ngsi-ld:hasValue ; sh:class ?attributeclass ;] ; }
+    OPTIONAL { ?property sh:severity ?severity . ?severity rdfs:label ?severitycode .}
 }
 GROUP BY ?nodeshape ?targetclass ?propertypath ?mincount ?maxcount ?attributeclass ?nodekind
     ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode ?inheritedTargetclass ?property
@@ -92,13 +92,14 @@ sql_check_relationship_base = """
                         D.targetClass as targetClass,
                         D.propertyPath as propertyPath,
                         D.propertyClass as propertyClass,
+                        D.attributeType as attributeType,
                         D.maxCount as maxCount,
                         D.minCount as minCount,
                         D.severity as severity
                     FROM {{target_class}}_view AS A JOIN `relationshipChecksTable` as D ON A.`type` = D.targetClass
                     LEFT JOIN attributes_view AS B ON B.name = D.propertyPath and B.entityId = A.id and B.parentId IS NULL and D.subpropertyPath IS NULL
                     LEFT JOIN attributes_view AS E ON E.name = D.subpropertyPath and E.entityId = A.id and E.parentId = B.id
-                    LEFT JOIN {{target_class}}_view AS C ON B.`attributeValue` = C.id and B.`type` = 'https://uri.etsi.org/ngsi-ld/Relationship'
+                    LEFT JOIN {{target_class}}_view AS C ON B.`attributeValue` = C.id
 
             )
 """  # noqa: E501
@@ -162,13 +163,13 @@ sql_check_relationship_nodeType = """
                 {% else %}
                 ARRAY ['SHACL Validator'] AS service,
                 {% endif %}
-                CASE WHEN NOT edeleted AND NOT IFNULL(`adeleted`, false) AND (nodeType <> '{{ property_nodetype }}')
+                CASE WHEN NOT edeleted AND NOT IFNULL(`adeleted`, false) AND (nodeType <> '{{ property_nodetype }}'  OR link <> attributeType)
                     THEN `severity`
                     ELSE 'ok' END AS severity,
                 'customer'  customer,
-                CASE WHEN NOT edeleted AND NOT IFNULL(`adeleted`, false) AND (nodeType <> '{{ property_nodetype }}')
+                CASE WHEN NOT edeleted AND NOT IFNULL(`adeleted`, false) AND (nodeType <> '{{ property_nodetype }}'  OR link <> attributeType)
                     THEN
-                        'Model validation for relationship ' || `propertyPath` || ' failed for ' || this || ' . NodeType is '|| nodeType || ' but must be an IRI.'
+                        'Model validation for relationship ' || `propertyPath` || ' failed for ' || this || ' . Either NodeType '|| nodeType || ' is not an IRI or type is not a Relationship.'
                     ELSE 'All ok' END as `text`
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
@@ -188,9 +189,12 @@ WITH A1 AS (SELECT A.id as this,
                    C.subject as foundVal,
                    C.object as foundClass,
                    COALESCE(E.`datasetId`, B.`datasetId`) as `index`,
-                   D.propertyPath as propertyPath,
+                   COALESCE(D.subpropertyPath, D.propertyPath) as propertyPath,
+                   CASE WHEN D.subpropertyPath IS NULL THEN '' ELSE D.propertyPath || '[' || CASE WHEN B.`datasetId` = '@none' THEN '0' ELSE B.`datasetId` END || '] ==> ' END as parentPath,
+                   `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || ']' as printPath,
                    D.propertyClass as propertyClass,
                    D.propertyNodetype as propertyNodetype,
+                   D.attributeType as attributeType,
                    D.maxCount as maxCount,
                    D.minCount as minCount,
                    D.severity as severity,
@@ -203,16 +207,17 @@ WITH A1 AS (SELECT A.id as this,
                    D.`pattern` as `pattern`,
                    D.ins as ins
                    FROM `{{target_class}}_view` AS A JOIN `propertyChecksTable` as D ON A.`type` = D.targetClass
-            LEFT JOIN attributes_view AS B ON D.propertyPath = B.name and B.entityId = A.id and B.parentId IS NULL and D.subpropertyPath IS NULL
+            LEFT JOIN attributes_view AS B ON D.propertyPath = B.name and B.entityId = A.id and B.parentId IS NULL
              LEFT JOIN attributes_view AS E ON D.subpropertyPath = E.name and E.entityId = A.id and B.id = E.parentId
-            LEFT JOIN {{rdf_table_name}} as C ON C.subject = '<' || COALESCE(E.attributeValue, B.attributeValue) || '>' and COALESCE(E.`type`, B.`type`) = 'https://uri.etsi.org/ngsi-ld/Property'
+            LEFT JOIN {{rdf_table_name}} as C ON C.subject = '<' || COALESCE(E.attributeValue, B.attributeValue) || '>'
                 and C.predicate = '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>' and C.object = '<' || D.propertyClass || '>'
+             WHERE D.subpropertyPath IS NULL or E.id is not NULL
             )
 """  # noqa: E501
 
 sql_check_property_count = """
 SELECT this AS resource,
-    'CountConstraintComponent(' || `propertyPath` || ')' AS event,
+    'CountConstraintComponent(' || `parentPath` || `propertyPath` || ')' AS event,
     'Development' AS environment,
     {%- if sqlite %}
     '[SHACL Validator]' AS service,
@@ -265,13 +270,13 @@ SELECT this AS resource,
     {%- else %}
     ARRAY ['SHACL Validator'] AS service,
     {%- endif %}
-    CASE WHEN NOT edeleted AND NOT IFNULL(adeleted, false) AND (nodeType <> `propertyNodetype`)
+    CASE WHEN NOT edeleted AND NOT IFNULL(adeleted, false) AND (nodeType <> `propertyNodetype` OR attr_typ <> attributeType)
         THEN `severity`
         ELSE 'ok' END AS severity,
     'customer'  customer,
-    CASE WHEN NOT edeleted AND NOT IFNULL(adeleted, false) AND (nodeType <> `propertyNodetype`)
+    CASE WHEN NOT edeleted AND NOT IFNULL(adeleted, false) AND (nodeType <> `propertyNodetype`  OR attr_typ <> attributeType)
         THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Node is not ' ||
-            CASE WHEN `propertyNodetype` = '@id' THEN ' an IRI' ELSE 'a Literal' END
+            CASE WHEN `propertyNodetype` = '@id' THEN ' an IRI' ELSE 'a Literal' END || 'or not of type ' || attributeType
         ELSE 'All ok' END as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
@@ -628,6 +633,7 @@ def translate(shaclefile, knowledgefile, prefixes):
             check['propertyPath'] = property_path
             check['subpropertyPath'] = None
         check['propertyClass'] = property_class
+        check['attributeType'] = 'https://uri.etsi.org/ngsi-ld/Relationship'
         check['maxCount'] = maxcount
         check['minCount'] = mincount
         check['severity'] = severitycode
@@ -677,6 +683,7 @@ def translate(shaclefile, knowledgefile, prefixes):
             check['subpropertyPath'] = None
         check['propertyClass'] = property_class
         check['propertyNodetype'] = '@id' if nodekind == SH.IRI else '@value'
+        check['attributeType'] = 'https://uri.etsi.org/ngsi-ld/Property'
         check['maxCount'] = maxcount
         check['minCount'] = mincount
         check['severity'] = severitycode
