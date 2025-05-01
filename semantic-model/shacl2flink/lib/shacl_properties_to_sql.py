@@ -90,17 +90,19 @@ sql_check_relationship_base = """
                         COALESCE(E.`deleted`, B.`deleted`) as `adeleted`,
                         COALESCE(E.`datasetId`, B.`datasetId`) as `index`,
                         D.targetClass as targetClass,
-                        D.propertyPath as propertyPath,
+                        COALESCE(D.subpropertyPath, D.propertyPath) as propertyPath,
+                        CASE WHEN D.subpropertyPath IS NULL THEN '' ELSE D.propertyPath || '[' || CASE WHEN B.`datasetId` = '@none' THEN '0' ELSE B.`datasetId` END || '] ==> ' END as parentPath,
+                        COALESCE(D.subpropertyPath, D.propertyPath) || '[' || CASE WHEN  COALESCE(E.`datasetId`, B.`datasetId`) = '@none' THEN '0' ELSE  COALESCE(E.`datasetId`, B.`datasetId`) END || ']' as printPath,
                         D.propertyClass as propertyClass,
                         D.attributeType as attributeType,
                         D.maxCount as maxCount,
                         D.minCount as minCount,
                         D.severity as severity
                     FROM {{target_class}}_view AS A JOIN `relationshipChecksTable` as D ON A.`type` = D.targetClass
-                    LEFT JOIN attributes_view AS B ON B.name = D.propertyPath and B.entityId = A.id and B.parentId IS NULL and D.subpropertyPath IS NULL
+                    LEFT JOIN attributes_view AS B ON B.name = D.propertyPath and B.entityId = A.id and B.parentId IS NULL
                     LEFT JOIN attributes_view AS E ON E.name = D.subpropertyPath and E.entityId = A.id and E.parentId = B.id
-                    LEFT JOIN {{target_class}}_view AS C ON B.`attributeValue` = C.id
-
+                    LEFT JOIN {{target_class}}_view AS C ON COALESCE(E.`attributeValue`, B.`attributeValue`) = C.id
+                    WHERE D.subpropertyPath IS NULL or E.id is not NULL
             )
 """  # noqa: E501
 
@@ -191,7 +193,7 @@ WITH A1 AS (SELECT A.id as this,
                    COALESCE(E.`datasetId`, B.`datasetId`) as `index`,
                    COALESCE(D.subpropertyPath, D.propertyPath) as propertyPath,
                    CASE WHEN D.subpropertyPath IS NULL THEN '' ELSE D.propertyPath || '[' || CASE WHEN B.`datasetId` = '@none' THEN '0' ELSE B.`datasetId` END || '] ==> ' END as parentPath,
-                   COALESCE(D.subpropertyPath, D.propertyPath) || '[' || CASE WHEN B.`datasetId` = '@none' THEN '0' ELSE `index` END || ']' as printPath,
+                   COALESCE(D.subpropertyPath, D.propertyPath) || '[' || CASE WHEN  COALESCE(E.`datasetId`, B.`datasetId`) = '@none' THEN '0' ELSE  COALESCE(E.`datasetId`, B.`datasetId`) END || ']' as printPath,
                    D.propertyClass as propertyClass,
                    D.propertyNodetype as propertyNodetype,
                    D.attributeType as attributeType,
