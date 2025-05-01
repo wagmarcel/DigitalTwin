@@ -191,7 +191,7 @@ WITH A1 AS (SELECT A.id as this,
                    COALESCE(E.`datasetId`, B.`datasetId`) as `index`,
                    COALESCE(D.subpropertyPath, D.propertyPath) as propertyPath,
                    CASE WHEN D.subpropertyPath IS NULL THEN '' ELSE D.propertyPath || '[' || CASE WHEN B.`datasetId` = '@none' THEN '0' ELSE B.`datasetId` END || '] ==> ' END as parentPath,
-                   `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || ']' as printPath,
+                   COALESCE(D.subpropertyPath, D.propertyPath) || '[' || CASE WHEN B.`datasetId` = '@none' THEN '0' ELSE `index` END || ']' as printPath,
                    D.propertyClass as propertyClass,
                    D.propertyNodetype as propertyNodetype,
                    D.attributeType as attributeType,
@@ -241,7 +241,7 @@ group by this, typ, propertyPath, minCount, maxCount, severity, edeleted
 
 sql_check_property_iri_class = """
 SELECT this AS resource,
-    'DatatypeConstraintComponent(' || `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || '])' AS event,
+    'DatatypeConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
     'Development' AS environment,
     {%- if sqlite %}
     '[SHACL Validator]' AS service,
@@ -263,7 +263,7 @@ FROM A1  WHERE propertyNodetype = '@id' and propertyClass IS NOT NULL and NOT IF
 
 sql_check_property_nodeType = """
 SELECT this AS resource,
- 'NodeKindConstraintComponent(' || `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || '])' AS event,
+ 'NodeKindConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -286,7 +286,7 @@ FROM A1 WHERE propertyNodetype IS NOT NULL and `index` IS NOT NULL
 
 sql_check_property_minmax = """
 SELECT this AS resource,
- '{{minmaxname}}ConstraintComponent(' || `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || '])' AS event,
+ '{{minmaxname}}ConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -310,7 +310,7 @@ FROM A1 where `{{ comparison_value}}` IS NOT NULL and `index` IS NOT NULL
 
 sql_check_string_length = """
 SELECT this AS resource,
- '{{minmaxname}}ConstraintComponent(' || `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || '])' AS event,
+ '{{minmaxname}}ConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -332,7 +332,7 @@ FROM A1 WHERE `{{ comparison_value }}` IS NOT NULL and `index` IS NOT NULL
 
 sql_check_literal_pattern = """
 SELECT this AS resource,
- '{{validationname}}ConstraintComponent(' || `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || '])' AS event,
+ '{{validationname}}ConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -354,7 +354,7 @@ FROM A1 WHERE `pattern` IS NOT NULL and `index` IS NOT NULL
 
 sql_check_literal_in = """
 SELECT this AS resource,
- '{{constraintname}}('|| `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || '])' AS event,
+ '{{constraintname}}(' || `parentPath` || `printPath` || ')' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
