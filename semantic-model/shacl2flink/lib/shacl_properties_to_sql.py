@@ -4,7 +4,7 @@ import os
 import sys
 import ruamel.yaml
 from jinja2 import Template
-from lib.utils import get_full_path_of_shacl_property
+from lib.utils import get_full_path_of_shacl_property, NGSILD
 
 file_dir = os.path.dirname(__file__)
 sys.path.append(file_dir)
@@ -48,7 +48,7 @@ order by ?inhertiedTargetclass
 sparql_get_all_properties = """
 SELECT
     ?nodeshape ?targetclass ?inheritedTargetclass ?propertypath ?mincount ?maxcount ?attributeclass ?nodekind
-    ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode ?property
+    ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode ?property ?valuepath
     (GROUP_CONCAT(CONCAT('"', ?in, '"'); separator=',') as ?ins)
 where {
     ?nodeshape a sh:NodeShape .
@@ -58,26 +58,27 @@ where {
     ?property 
         sh:path ?propertypath ;
         sh:property [
-            sh:path ngsi-ld:hasValue ;
-            sh:nodeKind ?nodekind ;
+            sh:path ?valuepath ;
         ] .
+    FILTER(?valuepath = ngsi-ld:hasValue || ?valuepath = ngsi-ld:hasValueList || ?valuepath = ngsi-ld:hasJSON)
     OPTIONAL { ?property  sh:minCount ?mincount ; }
     OPTIONAL { ?property sh:maxCount ?maxcount ; }
-    OPTIONAL { ?property sh:property [sh:path ngsi-ld:hasValue ; sh:minExclusive ?minexclusive ;] ; }
-    OPTIONAL { ?property sh:property [sh:path ngsi-ld:hasValue ; sh:maxExclusive ?maxexclusive ;] ; }
-    OPTIONAL { ?property sh:property [sh:path ngsi-ld:hasValue ; sh:minInclusive ?mininclusive ;] ; }
-    OPTIONAL { ?property sh:property [sh:path ngsi-ld:hasValue ; sh:maxInclusive ?maxinclusive ;] ; }
-    OPTIONAL { ?property sh:property [sh:path ngsi-ld:hasValue ; sh:minLength ?minlength ;] ; }
-    OPTIONAL { ?property sh:property [sh:path ngsi-ld:hasValue ; sh:maxLength ?maxlength ;] ; }
-    OPTIONAL { ?property sh:property [sh:path ngsi-ld:hasValue ; sh:pattern ?pattern ;] ; }
-    OPTIONAL { ?property sh:property [sh:path ngsi-ld:hasValue ; sh:in/(rdf:rest*/rdf:first)+ ?in ;] ; }
-    OPTIONAL { ?property sh:property [sh:path ngsi-ld:hasValue ; sh:class ?attributeclass ;] ; }
+    OPTIONAL { ?property sh:property [sh:path ?valuepath; sh:minExclusive ?minexclusive ;] ; }
+    OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:maxExclusive ?maxexclusive ;] ; }
+    OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:minInclusive ?mininclusive ;] ; }
+    OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:maxInclusive ?maxinclusive ;] ; }
+    OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:minLength ?minlength ;] ; }
+    OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:maxLength ?maxlength ;] ; }
+    OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:pattern ?pattern ;] ; }
+    OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:in/(rdf:rest*/rdf:first)+ ?in ;] ; }
+    OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:class ?attributeclass ;] ; }
+  OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:nodeKind ?nodekind ;] ; }
     OPTIONAL { ?property sh:severity ?severity . ?severity rdfs:label ?severitycode .}
 }
 GROUP BY ?nodeshape ?targetclass ?propertypath ?mincount ?maxcount ?attributeclass ?nodekind
-    ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode ?inheritedTargetclass ?property
+    ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode ?inheritedTargetclass ?property ?valuepath
 order by ?inheritedTargetclass
-"""  # noqa: E501
+"""  # noqa: E501   
 sql_check_relationship_base = """
             INSERT {% if sqlite %}OR REPlACE{% endif %} INTO {{alerts_bulk_table}}
             WITH A1 as (
@@ -195,7 +196,7 @@ WITH A1 AS (SELECT A.id as this,
                    CASE WHEN D.subpropertyPath IS NULL THEN '' ELSE D.propertyPath || '[' || CASE WHEN B.`datasetId` = '@none' THEN '0' ELSE B.`datasetId` END || '] ==> ' END as parentPath,
                    COALESCE(D.subpropertyPath, D.propertyPath) || '[' || CASE WHEN  COALESCE(E.`datasetId`, B.`datasetId`) = '@none' THEN '0' ELSE  COALESCE(E.`datasetId`, B.`datasetId`) END || ']' as printPath,
                    D.propertyClass as propertyClass,
-                   D.propertyNodetype as propertyNodetype,
+                   IFNULL(D.propertyNodetype, 'null') as propertyNodetype,
                    D.attributeType as attributeType,
                    D.maxCount as maxCount,
                    D.minCount as minCount,
@@ -660,7 +661,8 @@ def translate(shaclefile, knowledgefile, prefixes):
         maxcount = row.maxcount.toPython() if row.maxcount else None
         severitycode = row.severitycode.toPython() if row.severitycode \
             else 'warning'
-        nodekind = row.nodekind
+        nodekind = row.nodekind if row.mincount else None
+        valuepath = row.valuepath
         min_exclusive = row.minexclusive.toPython() if row.minexclusive \
             is not None else None
         max_exclusive = row.maxexclusive.toPython() if row.maxexclusive \
@@ -684,8 +686,18 @@ def translate(shaclefile, knowledgefile, prefixes):
             check['propertyPath'] = property_path
             check['subpropertyPath'] = None
         check['propertyClass'] = property_class
-        check['propertyNodetype'] = '@id' if nodekind == SH.IRI else '@value'
-        check['attributeType'] = 'https://uri.etsi.org/ngsi-ld/Property'
+        if nodekind == SH.IRI:
+            check['propertyNodetype'] = '@id'
+        elif nodekind == SH.Literal:
+            check['propertyNodetype'] = '@value'
+        else:
+            check['propertyNodetype'] = None
+        if valuepath == NGSILD['hasValue']:
+            check['attributeType'] = 'https://uri.etsi.org/ngsi-ld/Property'
+        elif valuepath == NGSILD['hasJSON']:
+            check['attributeType'] = 'https://uri.etsi.org/ngsi-ld/JsonProperty'
+        elif valuepath == NGSILD['hasValueList']:
+            check['attributeType'] = 'https://uri.etsi.org/ngsi-ld/ListProperty'
         check['maxCount'] = maxcount
         check['minCount'] = mincount
         check['severity'] = severitycode

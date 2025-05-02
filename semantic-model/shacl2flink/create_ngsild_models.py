@@ -40,7 +40,7 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 SELECT DISTINCT (?a as ?entityId) (?b as ?name) (?e as ?type) (IF(bound(?g), IF(isIRI(?g), '@id', '@value'), IF(isIRI(?f), '@id', '@value')) as ?nodeType)
-(datatype(?g) as ?valueType) (?f as ?hasValue) (?g as ?hasObject) ?observedAt ?index ?unitCode
+(datatype(?g) as ?valueType) (?f as ?hasValue) (?g as ?hasObject) (?h as ?hasValueList) (?i as ?hasJSON) ?observedAt ?index ?unitCode
 where {
     ?a a ?subclass .
     {?a ?b [ ngsild:hasObject ?g ] .
@@ -56,6 +56,24 @@ where {
     OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt; ngsild:hasValue ?f  ] .} .
     OPTIONAl{?a ?b [ ngsild:datasetId ?index; ngsild:hasValue ?f  ] .} .
     OPTIONAl{?a ?b [ ngsild:unitCode ?unitCode; ngsild:hasValue ?f  ] .} .
+    }
+  }
+UNION
+  {
+    {?a ?b [ ngsild:hasValueList ?h ] .
+    VALUES ?e {ngsild:ListProperty} .
+    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt; ngsild:hasValueList ?h  ] .} .
+    OPTIONAl{?a ?b [ ngsild:datasetId ?index; ngsild:hasValueList ?h  ] .} .
+    OPTIONAl{?a ?b [ ngsild:unitCode ?unitCode; ngsild:hasValueList ?h  ] .} .
+    }
+  }
+UNION
+  {
+    {?a ?b [ ngsild:hasJSON ?i ] .
+    VALUES ?e {ngsild:JsonProperty} .
+    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt; ngsild:hasJSON ?i  ] .} .
+    OPTIONAl{?a ?b [ ngsild:datasetId ?index; ngsild:hasJSON ?i  ] .} .
+    OPTIONAl{?a ?b [ ngsild:unitCode ?unitCode; ngsild:hasJSON ?i  ] .} .
     }
   }
 }
@@ -153,7 +171,7 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
             print(f'INSERT INTO `{configs.attributes_table_name}` VALUES',
                   file=sqlitef)
         for entityId, name, type, nodeType, valueType, hasValue, \
-                hasObject, observedAt, index, unitCode in qres:
+                hasObject, hasValueList, hasJSON, observedAt, index, unitCode in qres:
             id, entityId, parentId = get_entity_id_and_parentId(entityId, name, index, attributes_model)
 
             if index is None:
@@ -163,10 +181,15 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
             valueType = nullify(valueType)
             attributeValue = nullify(None)
             unitCode = nullify(unitCode)
+            nodeType = nullify(nodeType)
             if str(type) == 'https://uri.etsi.org/ngsi-ld/Relationship':
                 attributeValue = nullify(hasObject)
             elif str(type) == 'https://uri.etsi.org/ngsi-ld/Property':
                 attributeValue = nullify(hasValue)
+            elif str(type) == 'https://uri.etsi.org/ngsi-ld/ListProperty':
+                attributeValue = nullify(hasValueList)
+            elif str(type) == 'https://uri.etsi.org/ngsi-ld/JsonProperty':
+                attributeValue = nullify(hasJSON)
             if "string" in valueType:
                 valueType = 'NULL'
             if first:
