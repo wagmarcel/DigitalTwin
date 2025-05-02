@@ -36,6 +36,16 @@
             sh:nodeKind sh:BlankNode ;
             sh:order 1 ;
             sh:path iffBaseEntities:hasFilter ;
+             sh:property [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:order 30 ;
+            sh:path iffBaseEntities:hasTrust ;
+            sh:property [ 
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:Literal ;
+                    sh:path ngsild:hasValue ] ] ;
             sh:property [ sh:class iffBaseEntities:Filter ;
                     sh:maxCount 1 ;
                     sh:minCount 1 ;
@@ -60,7 +70,15 @@
                     sh:maxCount 1 ;
                     sh:minCount 1 ;
                     sh:nodeKind sh:IRI ;
-                    sh:path ngsild:hasObject ] ] ;
+                    sh:path ngsild:hasObject ] ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path iffBaseEntities:hasList ;
+            sh:property [
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:path ngsild:hasValueList ] ] ;
     sh:targetClass iffBaseEntities:Cutter .
 
 :FilterShape a sh:NodeShape ;
@@ -128,7 +146,18 @@ SELECT ?this ?value
                     sh:maxCount 1 ;
                     sh:minCount 1 ;
                     sh:nodeKind sh:IRI ;
-                    sh:path ngsild:hasValue ] ] ;
+                    sh:path ngsild:hasValue ],
+            [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path iffBaseEntities:hasXXXWorkpiece ;
+            sh:property [ sh:class iffBaseEntities:Workpiece ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsild:hasObject ] ]
+                    
+                    ] ;
     sh:targetClass iffBaseEntities:Machine .
 
 :StateOnCutterShape a sh:NodeShape ;

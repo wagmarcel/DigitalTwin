@@ -279,7 +279,7 @@ SELECT this AS resource,
     'customer'  customer,
     CASE WHEN NOT edeleted AND NOT IFNULL(adeleted, false) AND (nodeType <> `propertyNodetype`  OR attr_typ <> attributeType)
         THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Node is not ' ||
-            CASE WHEN `propertyNodetype` = '@id' THEN ' an IRI' ELSE 'a Literal' END || 'or not of type ' || attributeType
+            'of nodetype "' || `nodeType` || '" or not of attribute type "' || attributeType || '"'
         ELSE 'All ok' END as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
@@ -661,7 +661,7 @@ def translate(shaclefile, knowledgefile, prefixes):
         maxcount = row.maxcount.toPython() if row.maxcount else None
         severitycode = row.severitycode.toPython() if row.severitycode \
             else 'warning'
-        nodekind = row.nodekind if row.mincount else None
+        nodekind = row.nodekind if row.nodekind else None
         valuepath = row.valuepath
         min_exclusive = row.minexclusive.toPython() if row.minexclusive \
             is not None else None
@@ -696,8 +696,10 @@ def translate(shaclefile, knowledgefile, prefixes):
             check['attributeType'] = 'https://uri.etsi.org/ngsi-ld/Property'
         elif valuepath == NGSILD['hasJSON']:
             check['attributeType'] = 'https://uri.etsi.org/ngsi-ld/JsonProperty'
+            check['propertyNodetype'] = '@json'
         elif valuepath == NGSILD['hasValueList']:
             check['attributeType'] = 'https://uri.etsi.org/ngsi-ld/ListProperty'
+            check['propertyNodetype'] = '@list'
         check['maxCount'] = maxcount
         check['minCount'] = mincount
         check['severity'] = severitycode

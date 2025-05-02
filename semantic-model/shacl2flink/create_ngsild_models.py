@@ -181,15 +181,16 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
             valueType = nullify(valueType)
             attributeValue = nullify(None)
             unitCode = nullify(unitCode)
-            nodeType = nullify(nodeType)
             if str(type) == 'https://uri.etsi.org/ngsi-ld/Relationship':
                 attributeValue = nullify(hasObject)
             elif str(type) == 'https://uri.etsi.org/ngsi-ld/Property':
                 attributeValue = nullify(hasValue)
             elif str(type) == 'https://uri.etsi.org/ngsi-ld/ListProperty':
                 attributeValue = nullify(hasValueList)
+                nodeType = '@list'
             elif str(type) == 'https://uri.etsi.org/ngsi-ld/JsonProperty':
                 attributeValue = nullify(hasJSON)
+                nodeType = '@json'
             if "string" in valueType:
                 valueType = 'NULL'
             if first:
