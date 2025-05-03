@@ -106,7 +106,7 @@ sql_check_relationship_base = """
                     LEFT JOIN attributes_view AS B ON B.name = D.propertyPath and B.entityId = A.id and B.parentId IS NULL
                     LEFT JOIN attributes_view AS E ON E.name = D.subpropertyPath and E.entityId = A.id and E.parentId = B.id
                     LEFT JOIN {{target_class}}_view AS C ON COALESCE(E.`attributeValue`, B.`attributeValue`) = C.id
-                    WHERE D.subpropertyPath IS NULL or E.id is not NULL
+                    WHERE D.subpropertyPath IS NULL or E.id is not NULL and D.attributeType = 'https://uri.etsi.org/ngsi-ld/Relationship'
             )
 """  # noqa: E501
 
@@ -218,7 +218,7 @@ WITH A1 AS (SELECT A.id as this,
              LEFT JOIN attributes_view AS E ON D.subpropertyPath = E.name and E.entityId = A.id and B.id = E.parentId
             LEFT JOIN {{rdf_table_name}} as C ON C.subject = '<' || COALESCE(E.attributeValue, B.attributeValue) || '>'
                 and C.predicate = '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>' and C.object = '<' || D.propertyClass || '>'
-             WHERE D.subpropertyPath IS NULL or E.id is not NULL
+             WHERE D.subpropertyPath IS NULL or E.id is not NULL and attributeType IN ('https://uri.etsi.org/ngsi-ld/Property', 'https://uri.etsi.org/ngsi-ld/ListProperty', 'https://uri.etsi.org/ngsi-ld/JsonProperty')
             )
 """  # noqa: E501
 
@@ -654,14 +654,15 @@ def translate(shaclefile, knowledgefile, prefixes):
     sqlite = ''
     # Get all NGSI-LD Relationship
 
+    constraint_checks = []
+
     qres = g.query(sparql_get_all_relationships, initNs=prefixes)
-    relationshp_checks = []
     for row in qres:
         paths = get_full_path_of_shacl_property(g, row.property)
         if len(paths) > MAX_SUBPROPERTY_DEPTH +1:
             print(f"Warning, subproperty depth {len(paths)} not supported in paths {paths}")
             continue
-        check = {}
+        check = utils.init_constraint_check()
         target_class = row.inheritedTargetclass.toPython() \
             if row.targetclass else None
         property_path = row.propertypath.toPython() if row.propertypath \
@@ -684,10 +685,10 @@ def translate(shaclefile, knowledgefile, prefixes):
         check['maxCount'] = maxcount
         check['minCount'] = mincount
         check['severity'] = severitycode
-        relationshp_checks.append(check)
+        
+        constraint_checks.append(check)
     # Get all NGSI-LD Properties
     qres = g.query(sparql_get_all_properties, initNs=prefixes)
-    property_checks = []
     for row in qres:
         paths = get_full_path_of_shacl_property(g, row.property)
         if len(paths) > MAX_SUBPROPERTY_DEPTH +1:
@@ -765,16 +766,12 @@ def translate(shaclefile, knowledgefile, prefixes):
             print(f"Warning: Conversion of sh:in list failed for nodeshape {nodeshape}. Please check. Currently only \
 string elements in list are supported.")
             check['ins'] = None
-        property_checks.append(check)
+        constraint_checks.append(check)
     tables.append(configs.kafka_topic_ngsi_prefix_name)
     views.append(configs.kafka_topic_ngsi_prefix_name + "-view")
     sqlite += '\n'
-    sqlite += utils.add_relationship_checks(relationshp_checks, utils.SQL_DIALECT.SQLITE)
-    sql_command_yaml = utils.add_relationship_checks(relationshp_checks, utils.SQL_DIALECT.SQL)
-    statementsets.append(sql_command_yaml)
-    sqlite += '\n'
-    sqlite += utils.add_property_checks(property_checks, utils.SQL_DIALECT.SQLITE)
-    sql_command_yaml = utils.add_property_checks(property_checks, utils.SQL_DIALECT.SQL)
+    sqlite += utils.add_constraint_checks(constraint_checks, utils.SQL_DIALECT.SQLITE)
+    sql_command_yaml = utils.add_constraint_checks(constraint_checks, utils.SQL_DIALECT.SQL)
     statementsets.append(sql_command_yaml)
     sqlite += '\n'
     sql_command_sqlite, sql_command_yaml = create_relationship_sql()
@@ -784,6 +781,5 @@ string elements in list are supported.")
     sql_command_sqlite, sql_command_yaml = create_property_sql()
     sqlite += sql_command_sqlite
     statementsets.append(sql_command_yaml)
-    tables.append(utils.class_to_obj_name(utils.relationship_checks_tablename))
-    tables.append(utils.class_to_obj_name(utils.property_checks_tablename))
+    tables.append(utils.class_to_obj_name(utils.constraint_tablename))
     return sqlite, (statementsets, tables, views)

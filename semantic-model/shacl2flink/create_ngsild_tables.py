@@ -79,14 +79,8 @@ def main(output_folder='output'):
                                            config),
                   fk)
         # Create property_checks and relational_checks
-        kafka_relationship_checks = {
-            'topic': utils.relationship_checks_tablename,
-            'properties': {'bootstrap.servers': configs.kafka_bootstrap},
-            'key.format': 'json'
-
-        }
-        kafka_property_checks = {
-            'topic': utils.property_checks_tablename,
+        kafka_constraint_checks = {
+            'topic': utils.constraint_tablename,
             'properties': {'bootstrap.servers': configs.kafka_bootstrap},
             'key.format': 'json'
         }
@@ -98,12 +92,9 @@ def main(output_folder='output'):
         }
         connector = 'upsert-kafka'
         print('---', file=f)
-        yaml.dump(utils. create_relationship_check_yaml_table(connector, kafka_relationship_checks, value), f)
-        print('---', file=f)
-        yaml.dump(utils.create_property_check_yaml_table(connector, kafka_property_checks, value), f)
-        print(utils.create_relationship_check_sql_table(),
-              file=sqlitef)
-        print(utils.create_property_check_sql_table(),
+        yaml.dump(utils.create_constraint_yaml_table(connector, kafka_constraint_checks, value), f)
+
+        print(utils.create_constraint_sql_table(),
               file=sqlitef)
 
 

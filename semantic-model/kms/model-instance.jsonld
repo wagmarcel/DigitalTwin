@@ -74,7 +74,7 @@
     "iffBaseEntities:hasStrength": [
       {
         "type": "Property",
-        "value": true,
+        "value": 0.9,
         "observedAt": "2024-02-28 13:52:32.0" 
       },
       {
@@ -89,7 +89,7 @@
       },
       {
         "type": "Property",
-        "value": true,
+        "value": 0.6,
         "observedAt": "2024-02-28 13:52:35.0" 
       }
     ]

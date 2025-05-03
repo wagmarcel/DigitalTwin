@@ -43,21 +43,13 @@ class DnsNameNotCompliant(Exception):
     Exception for non compliant DNS name
     """
 
+constraint_id = 0
 
-relationship_checks_tablename = "relationshipChecksTable"
-property_checks_tablename = "propertyChecksTable"
-checks_table_primary_key = ["targetClass", "propertyPath"]
-relationship_checks_table = [
-    {"targetClass": "STRING"},
-    {"propertyPath": "STRING"},
-    {"subpropertyPath": "STRING"},
-    {"propertyClass": "STRING"},
-    {"attributeType": "STRING"},
-    {"maxCount": "STRING"},
-    {"minCount": "STRING"},
-    {"severity": "STRING"}
-]
-property_checks_table = [
+constraint_tablename = "constraintTable"
+constraint_table_primary_key = ["id"]
+
+constraint_table = [
+    {"id":  "INTEGER"},
     {"targetClass": "STRING"},
     {"propertyPath": "STRING"},
     {"subpropertyPath": "STRING"},
@@ -596,56 +588,25 @@ def split_statementsets(statementsets, max_map_size):
     return grouped_strings
 
 
-def create_relationship_check_yaml_table(connector, kafka, value):
-    return create_yaml_table(relationship_checks_tablename, connector, relationship_checks_table,
-                             checks_table_primary_key, kafka, value)
+def create_constraint_yaml_table(connector, kafka, value):
+    return create_yaml_table(constraint_tablename, connector, constraint_table,
+                             constraint_table_primary_key, kafka, value)
 
 
-def create_relationship_check_sql_table():
-    return create_sql_table(relationship_checks_tablename, relationship_checks_table, checks_table_primary_key,
+def create_constraint_sql_table():
+    return create_sql_table(constraint_tablename, constraint_table, constraint_table_primary_key,
                             SQL_DIALECT.SQLITE)
 
 
-def create_property_check_yaml_table(connector, kafka, value):
-    return create_yaml_table(property_checks_tablename, connector, property_checks_table,
-                             checks_table_primary_key, kafka, value)
-
-
-def create_property_check_sql_table():
-    return create_sql_table(property_checks_tablename, property_checks_table, checks_table_primary_key,
-                            SQL_DIALECT.SQLITE)
-
-
-def add_relationship_checks(checks, sqldialect):
+def add_constraint_checks(checks, sqldialect):
+    global constraint_id
     if sqldialect == SQL_DIALECT.SQLITE:
-        statement = f'INSERT OR REPLACE INTO {relationship_checks_tablename} VALUES'
+        statement = f'INSERT OR REPLACE INTO {constraint_tablename} VALUES'
     else:
-        statement = f'INSERT INTO {relationship_checks_tablename} VALUES'
+        statement = f'INSERT INTO {constraint_tablename} VALUES'
     first = True
     for check in checks:
-        lcheck = {}
-        for k, v in check.items():
-            if v is None:
-                lcheck[k] = 'CAST(NULL as STRING)'
-            else:
-                lcheck[k] = f"'{v}'"
-        if first:
-            first = False
-        else:
-            statement += ', '
-        statement += f'({lcheck["targetClass"]}, {lcheck["propertyPath"]}, {lcheck["subpropertyPath"]}, \
-{lcheck["propertyClass"]}, {lcheck["attributeType"]}, {lcheck["maxCount"]}, {lcheck["minCount"]}, {lcheck["severity"]})'
-    statement += ';'
-    return statement
-
-
-def add_property_checks(checks, sqldialect):
-    if sqldialect == SQL_DIALECT.SQLITE:
-        statement = f'INSERT OR REPLACE INTO {property_checks_tablename} VALUES'
-    else:
-        statement = f'INSERT INTO {property_checks_tablename} VALUES'
-    first = True
-    for check in checks:
+        constraint_id+=1
         lcheck = {}
         for k, v in check.items():
             if v is None:
@@ -656,7 +617,9 @@ def add_property_checks(checks, sqldialect):
             first = False
         else:
             statement += ', '
-        statement += f'({lcheck["targetClass"]}, \
+        statement += f'(\
+{constraint_id}, \
+{lcheck["targetClass"]}, \
 {lcheck["propertyPath"]}, \
 {lcheck["subpropertyPath"]}, \
 {lcheck["propertyClass"]}, \
@@ -677,6 +640,27 @@ def add_property_checks(checks, sqldialect):
     statement += ';'
     return statement
 
+def init_constraint_check():
+    check = {}
+    check["targetClass"] = None
+    check["propertyPath"] = None
+    check["subpropertyPath"] = None
+    check["propertyClass"] = None
+    check["propertyNodetype"] = None
+    check["attributeType"] = None
+    check["maxCount"] = None
+    check["minCount"] = None
+    check["severity"] = None
+    check["minExclusive"] = None
+    check["maxExclusive"] = None
+    check["minInclusive"] = None
+    check["maxInclusive"] = None
+    check["minLength"] = None
+    check["maxLength"] = None
+    check["pattern"] = None
+    check["ins"] = None
+    check["datatypes"] = None
+    return check
 
 # This creates a transitive closure of all OWL.TransitiveProperty elements given in the ontology
 # plus rdfs:subClassOf. In addition is makes sure that every rdfs:Class and owl:Class are reflexive
