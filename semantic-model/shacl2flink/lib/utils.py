@@ -74,7 +74,8 @@ property_checks_table = [
     {"minLength": "STRING"},
     {"maxLength": "STRING"},
     {"pattern": "STRING"},
-    {"ins": "STRING"}
+    {"ins": "STRING"},
+    {"datatypes": "STRING"}
 ]
 
 
@@ -671,7 +672,8 @@ def add_property_checks(checks, sqldialect):
 {lcheck["minLength"]}, \
 {lcheck["maxLength"]}, \
 {lcheck["pattern"]}, \
-{lcheck["ins"]})'
+{lcheck["ins"]}, \
+{lcheck["datatypes"]})'
     statement += ';'
     return statement
 

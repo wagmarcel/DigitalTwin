@@ -161,6 +161,23 @@ def main():
         {'watermark': 'FOR `ts` AS `ts`'},
         {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp'"}
     ]
+    sqlite_table = [
+        {'id': 'TEXT'},
+        {'parentId': 'TEXT'},
+        {'entityId': 'TEXT'},
+        {'name': 'TEXT'},
+        {'nodeType': 'TEXT'},
+        {'valueType': 'TEXT'},
+        {'type': 'TEXT'},
+        {'attributeValue': 'TEXT'},
+        {'datasetId': 'TEXT'},
+        {'unitCode': 'TEXT'},
+        {'lang': 'TEXT'},
+        {'deleted': 'BOOLEAN'},
+        {'synced': 'BOOLEAN'},
+        {'watermark': 'FOR `ts` AS `ts`'},
+        {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp'"}
+    ]
     primary_key = None
     kafka = {
         'topic': kafka_topic_attributes,
@@ -175,12 +192,12 @@ def main():
     print('---', file=f)
     yaml.dump(utils.create_yaml_table(table_name, connector, table,
                                       primary_key, kafka, value), f)
-    print(utils.create_sql_table(table_name, table, primary_key,
+    print(utils.create_sql_table(table_name, sqlite_table, primary_key,
                                  utils.SQL_DIALECT.SQLITE), file=sqlitef)
     print('---', file=f)
     yaml.dump(utils.create_yaml_view(table_name, table, ['id',
                                                          'datasetId']), f)
-    print(utils.create_sql_view(table_name, table, ['id', 'datasetId']),
+    print(utils.create_sql_view(table_name, sqlite_table, ['id', 'datasetId']),
           file=sqlitef)
     # attributes_insert upsert-table
     table_name = "attributes-insert"

@@ -41,7 +41,8 @@
             sh:nodeKind sh:BlankNode ;
             sh:order 30 ;
             sh:path iffBaseEntities:hasTrust ;
-            sh:property [ 
+            sh:property [
+                    sh:datatype xsd:double ;
                     sh:maxCount 1 ;
                     sh:minCount 1 ;
                     sh:nodeKind sh:Literal ;
@@ -91,6 +92,7 @@
                     sh:maxInclusive 100.0 ;
                     sh:minCount 1 ;
                     sh:minInclusive 0.0 ;
+                    sh:or ([sh:datatype xsd:double] [sh:datatype xsd:integer]) ;
                     sh:nodeKind sh:Literal ;
                     sh:path ngsild:hasValue ] ],
         [ sh:maxCount 1 ;

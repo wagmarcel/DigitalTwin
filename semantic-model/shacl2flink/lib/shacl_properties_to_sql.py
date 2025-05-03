@@ -50,6 +50,7 @@ SELECT
     ?nodeshape ?targetclass ?inheritedTargetclass ?propertypath ?mincount ?maxcount ?attributeclass ?nodekind
     ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode ?property ?valuepath
     (GROUP_CONCAT(CONCAT('"', ?in, '"'); separator=',') as ?ins)
+    (GROUP_CONCAT(?datatype; separator=',') as ?datatypes)
 where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?targetclass .
@@ -72,7 +73,9 @@ where {
     OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:pattern ?pattern ;] ; }
     OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:in/(rdf:rest*/rdf:first)+ ?in ;] ; }
     OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:class ?attributeclass ;] ; }
-  OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:nodeKind ?nodekind ;] ; }
+    OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:nodeKind ?nodekind ;] ; }
+    OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:or/rdf:rest*/rdf:first ?dtShape ] . ?dtShape sh:datatype ?datatype .}
+    OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:datatype ?datatype] ; }
     OPTIONAL { ?property sh:severity ?severity . ?severity rdfs:label ?severitycode .}
 }
 GROUP BY ?nodeshape ?targetclass ?propertypath ?mincount ?maxcount ?attributeclass ?nodekind
@@ -208,7 +211,8 @@ WITH A1 AS (SELECT A.id as this,
                    D.minLength as minLength,
                    D.maxLength as maxLength,
                    D.`pattern` as `pattern`,
-                   D.ins as ins
+                   D.ins as ins,
+                   D.datatypes as datatypes
                    FROM `{{target_class}}_view` AS A JOIN `propertyChecksTable` as D ON A.`type` = D.targetClass
             LEFT JOIN attributes_view AS B ON D.propertyPath = B.name and B.entityId = A.id and B.parentId IS NULL
              LEFT JOIN attributes_view AS E ON D.subpropertyPath = E.name and E.entityId = A.id and B.id = E.parentId
@@ -377,6 +381,37 @@ SELECT this AS resource,
 FROM A1 where `ins` IS NOT NULL and `index` IS NOT NULL
 """  # noqa: E501
 
+sql_check_literal_datatypes = """
+SELECT this AS resource,
+ '{{constraintname}}(' || `parentPath` || `printPath` || ')' AS event,
+    'Development' AS environment,
+     {%- if sqlite -%}
+    '[SHACL Validator]' AS service,
+    {%- else %}
+    ARRAY ['SHACL Validator'] AS service,
+    {%- endif %}
+    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND
+        CASE WHEN (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#double%' AND `val` REGEXP '^(?=.*[\.eE])[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$')
+            OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#integer%' AND `val` REGEXP '^[+-]?\d+$')
+            OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#boolean%' AND `val` REGEXP '^(?i:true|false)$')
+            OR (propertyNodeType = '@json' AND json_valid(`val`))
+            OR (propertyNodeType = '@list' AND json_valid(`val`) AND json_type(`val`) = 'array') THEN false ELSE true END
+            THEN `severity` 
+        ELSE 'ok' END AS severity,
+    'customer'  customer,
+    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND
+        CASE WHEN (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#double%' AND `val` REGEXP '^(?=.*[\.eE])[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$')
+            OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#integer%' AND `val` REGEXP '^[+-]?\d+$')
+            OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#boolean%' AND `val` REGEXP '^(?i:true|false)$')
+            OR (propertyNodeType = '@json' AND json_valid(`val`))
+            OR (propertyNodeType = '@list' AND json_valid(`val`) AND json_type(`val`) = 'array') THEN false ELSE true END
+            THEN 'Datatype check failed. "' || `val` || '" does not fit to datatypes "' || `datatypes` || '" or property node type "' || `propertyNodeType` || '".' 
+        ELSE 'All ok' END as `text`
+        {% if sqlite %}
+        ,CURRENT_TIMESTAMP
+        {% endif %}
+FROM A1 where `datatypes` IS NOT NULL and `index` IS NOT NULL AND `propertyNodeType` IN ('@value', '@list', '@json') 
+"""  # noqa: E501
 
 def create_relationship_sql():
     sql_command_yaml = Template(sql_check_relationship_base).render(
@@ -578,7 +613,16 @@ def create_property_sql():
         minmaxname="MaxLength",
         sqlite=True
     )
-
+    sql_command_yaml += "\nUNION ALL"
+    sql_command_sqlite += "\nUNION ALL"
+    sql_command_yaml += Template(sql_check_literal_datatypes).render(
+        constraintname="DatatypeConstraintComponent",
+        sqlite=False
+    )
+    sql_command_sqlite += Template(sql_check_literal_datatypes).render(
+        constraintname="DatatypeConstraintComponent",
+        sqlite=True
+    )
     sql_command_sqlite += ";"
     sql_command_yaml += ";"
     sql_command_sqlite = utils.process_sql_dialect(sql_command_sqlite, True)
@@ -677,7 +721,7 @@ def translate(shaclefile, knowledgefile, prefixes):
             else None
         pattern = row.pattern.toPython() if row.pattern is not None else None
         ins = row.ins.toPython() if str(row.ins) != '' else None
-
+        datatypes = row.datatypes.toPython() if str(row.datatypes) != '' else None
         check['targetClass'] = target_class
         if len(paths) >= 2:
             check['subpropertyPath'] = property_path
@@ -711,6 +755,7 @@ def translate(shaclefile, knowledgefile, prefixes):
         check['maxLength'] = max_length
         check['pattern'] = pattern
         check['ins'] = ins
+        check['datatypes'] = datatypes
         ins_is_broken = False
         if ins:
             for in_val in ins:
