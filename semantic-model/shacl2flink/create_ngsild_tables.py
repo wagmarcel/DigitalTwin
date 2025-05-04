@@ -78,9 +78,10 @@ def main(output_folder='output'):
                                            f'{configs.kafka_topic_ngsi_prefix}', configs.kafka_topic_object_label,
                                            config),
                   fk)
-        # Create property_checks and relational_checks
+
+        # Create constraint_checks and and combination tables
         kafka_constraint_checks = {
-            'topic': utils.constraint_tablename,
+            'topic': utils.constraint_table_name,
             'properties': {'bootstrap.servers': configs.kafka_bootstrap},
             'key.format': 'json'
         }
@@ -96,6 +97,43 @@ def main(output_folder='output'):
 
         print(utils.create_constraint_sql_table(),
               file=sqlitef)
+
+        # Create constraint trigger table
+        kafka_constraint_trigger_checks = {
+            'topic': utils.constraint_trigger_tablename,
+            'properties': {'bootstrap.servers': configs.kafka_bootstrap},
+            'key.format': 'json'
+        }
+
+        value = {
+            'format': 'json',
+            'json.fail-on-missing-field': False,
+            'json.ignore-parse-errors': True
+        }
+        connector = 'upsert-kafka'
+        print('---', file=f)
+        yaml.dump(utils.create_constraint_trigger_yaml_table(connector, kafka_constraint_trigger_checks, value), f)
+
+        print(utils.create_constraint_trigger_sql_table(),
+              file=sqlitef)        
+        # Create constraint combination table
+        kafka_constraint_combination_checks = {
+            'topic': utils.constraint_combination_tablename,
+            'properties': {'bootstrap.servers': configs.kafka_bootstrap},
+            'key.format': 'json'
+        }
+
+        value = {
+            'format': 'json',
+            'json.fail-on-missing-field': False,
+            'json.ignore-parse-errors': True
+        }
+        connector = 'upsert-kafka'
+        print('---', file=f)
+        yaml.dump(utils.create_constraint_combination_yaml_table(connector, kafka_constraint_trigger_checks, value), f)
+
+        print(utils.create_constraint_combination_sql_table(),
+              file=sqlitef)        
 
 
 if __name__ == '__main__':

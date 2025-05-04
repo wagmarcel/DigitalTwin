@@ -17,6 +17,8 @@ yaml = ruamel.yaml.YAML()
 
 alerts_bulk_table = configs.alerts_bulk_table_name
 alerts_bulk_table_object = configs.alerts_bulk_table_object_name
+triggered_constraint_table_name = configs.triggered_constraint_table_name
+constraint_table_name = configs.constraint_table_name
 
 sparql_get_all_relationships = """
 SELECT ?nodeshape ?targetclass ?inheritedTargetclass ?propertypath ?mincount ?maxcount ?attributeclass ?severitycode ?property
@@ -101,29 +103,27 @@ sql_check_relationship_base = """
                         D.attributeType as attributeType,
                         D.maxCount as maxCount,
                         D.minCount as minCount,
-                        D.severity as severity
-                    FROM {{target_class}}_view AS A JOIN `relationshipChecksTable` as D ON A.`type` = D.targetClass
+                        D.severity as severity,
+                        D.id as constraint_id
+                    FROM {{target_class}}_view AS A JOIN {{constraint_table}} as D ON A.`type` = D.targetClass
                     LEFT JOIN attributes_view AS B ON B.name = D.propertyPath and B.entityId = A.id and B.parentId IS NULL
                     LEFT JOIN attributes_view AS E ON E.name = D.subpropertyPath and E.entityId = A.id and E.parentId = B.id
                     LEFT JOIN {{target_class}}_view AS C ON COALESCE(E.`attributeValue`, B.`attributeValue`) = C.id
-                    WHERE D.subpropertyPath IS NULL or E.id is not NULL and D.attributeType = 'https://uri.etsi.org/ngsi-ld/Relationship'
+                    WHERE (D.subpropertyPath IS NULL or E.id is not NULL) and D.attributeType = 'https://uri.etsi.org/ngsi-ld/Relationship'
             )
 """  # noqa: E501
 
 sql_check_relationship_property_class = """
+            {% set constraint_cond%}
+            NOT edeleted AND NOT IFNULL(adeleted, false) AND link IS NOT NULL AND entity IS NULL
+            {% endset %}
             SELECT this AS resource,
                 'ClassConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
-                'Development' AS environment,
-                {% if sqlite %}
-                '[SHACL Validator]' AS service,
-                {% else %}
-                ARRAY ['SHACL Validator'] AS service,
-                {% endif %}
-                CASE WHEN NOT edeleted AND NOT IFNULL(adeleted, false) AND link IS NOT NULL AND entity IS NULL THEN `severity`
+                `constraint_id` as constraint_id,
+                CASE WHEN {{ constraint_cond }} THEN true ELSE false END as triggered,
+                CASE WHEN {{ constraint_cond }} THEN `severity`
                     ELSE 'ok' END AS severity,
-                'customer'  customer,
-
-                CASE WHEN NOT edeleted AND NOT IFNULL(adeleted, false) AND link IS NOT NULL AND entity IS NULL
+                CASE WHEN {{ constraint_cond }}
                         THEN 'Model validation for relationship' || `propertyPath` || 'failed for '|| this || '. Relationship not linked to existing entity of type ' ||  `propertyClass` || '.'
                     ELSE 'All ok' END as `text`
                 {%- if sqlite %}
@@ -133,21 +133,18 @@ sql_check_relationship_property_class = """
 """  # noqa: E501
 
 sql_check_relationship_property_count = """
+            {% set constraint_cond %}
+            NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER)
+                                            OR count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) < SQL_DIALECT_CAST(`minCount` AS INTEGER))
+            {% endset %}
             SELECT this AS resource,
                 'CountConstraintComponent(' || `parentPath` || `propertyPath` || ')' AS event,
-                'Development' AS environment,
-                {% if sqlite %}
-                '[SHACL Validator]' AS service,
-                {% else %}
-                ARRAY ['SHACL Validator'] AS service,
-                {% endif %}
-                CASE WHEN NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER)
-                                            OR count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) < SQL_DIALECT_CAST(`minCount` AS INTEGER))
+                `constraint_id` as constraint_id,
+                CASE WHEN {{ constraint_cond }} THEN true ELSE false END as triggered,
+                CASE WHEN {{ constraint_cond }}
                     THEN `severity`
                     ELSE 'ok' END AS severity,
-                'customer'  customer,
-                CASE WHEN NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER)
-                                            OR count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) < SQL_DIALECT_CAST(`minCount` AS INTEGER))
+                CASE WHEN {{ constraint_cond }}
                     THEN
                         'Model validation for relationship ' || `propertyPath` || 'failed for ' || this || ' . Found ' ||
                             SQL_DIALECT_CAST(count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) AS STRING) || ' relationships instead of
@@ -161,19 +158,17 @@ sql_check_relationship_property_count = """
 """  # noqa: E501
 
 sql_check_relationship_nodeType = """
+            {% set constraint_cond %}
+            NOT edeleted AND NOT IFNULL(`adeleted`, false) AND (nodeType <> '{{ property_nodetype }}'  OR link <> attributeType)
+            {% endset %} 
             SELECT this AS resource,
                 'NodeKindConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
-                'Development' AS environment,
-                {% if sqlite %}
-                '[SHACL Validator]' AS service,
-                {% else %}
-                ARRAY ['SHACL Validator'] AS service,
-                {% endif %}
-                CASE WHEN NOT edeleted AND NOT IFNULL(`adeleted`, false) AND (nodeType <> '{{ property_nodetype }}'  OR link <> attributeType)
+                `constraint_id` as constraint_id,
+                CASE WHEN {{ constraint_cond }} THEN true ELSE false END as triggered,
+                CASE WHEN {{ constraint_cond }}
                     THEN `severity`
                     ELSE 'ok' END AS severity,
-                'customer'  customer,
-                CASE WHEN NOT edeleted AND NOT IFNULL(`adeleted`, false) AND (nodeType <> '{{ property_nodetype }}'  OR link <> attributeType)
+                CASE WHEN {{ constraint_cond }}
                     THEN
                         'Model validation for relationship ' || `propertyPath` || ' failed for ' || this || ' . Either NodeType '|| nodeType || ' is not an IRI or type is not a Relationship.'
                     ELSE 'All ok' END as `text`
@@ -218,7 +213,7 @@ WITH A1 AS (SELECT A.id as this,
              LEFT JOIN attributes_view AS E ON D.subpropertyPath = E.name and E.entityId = A.id and B.id = E.parentId
             LEFT JOIN {{rdf_table_name}} as C ON C.subject = '<' || COALESCE(E.attributeValue, B.attributeValue) || '>'
                 and C.predicate = '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>' and C.object = '<' || D.propertyClass || '>'
-             WHERE D.subpropertyPath IS NULL or E.id is not NULL and attributeType IN ('https://uri.etsi.org/ngsi-ld/Property', 'https://uri.etsi.org/ngsi-ld/ListProperty', 'https://uri.etsi.org/ngsi-ld/JsonProperty')
+             WHERE (D.subpropertyPath IS NULL or E.id is not NULL) and attributeType IN ('https://uri.etsi.org/ngsi-ld/Property', 'https://uri.etsi.org/ngsi-ld/ListProperty', 'https://uri.etsi.org/ngsi-ld/JsonProperty')
             )
 """  # noqa: E501
 
@@ -415,45 +410,53 @@ FROM A1 where `datatypes` IS NOT NULL and `index` IS NOT NULL AND `propertyNodeT
 
 def create_relationship_sql():
     sql_command_yaml = Template(sql_check_relationship_base).render(
-        alerts_bulk_table=alerts_bulk_table,
+        alerts_bulk_table=triggered_constraint_table_name,
+        constraint_table=constraint_table_name,
         target_class="entities",
         sqlite=False)
     sql_command_sqlite = Template(sql_check_relationship_base).render(
-        alerts_bulk_table=alerts_bulk_table,
+        alerts_bulk_table=triggered_constraint_table_name,
+        constraint_table=constraint_table_name,
         target_class="entities",
         sqlite=True)
     sql_command_yaml += \
         Template(sql_check_relationship_property_class).render(
-            alerts_bulk_table=alerts_bulk_table,
+            alerts_bulk_table=triggered_constraint_table_name,
+            constraint_table=constraint_table_name,
             target_class="entities",
             sqlite=False)
     sql_command_sqlite += \
         Template(sql_check_relationship_property_class).render(
-            alerts_bulk_table=alerts_bulk_table,
+            alerts_bulk_table=triggered_constraint_table_name,
+            constraint_table=constraint_table_name,
             target_class="entities",
             sqlite=True)
     sql_command_yaml += "\nUNION ALL"
     sql_command_sqlite += "\nUNION ALL"
     sql_command_yaml += \
         Template(sql_check_relationship_property_count).render(
-            alerts_bulk_table=alerts_bulk_table,
+            alerts_bulk_table=triggered_constraint_table_name,
+            constraint_table=constraint_table_name,
             target_class="entities",
             sqlite=False)
     sql_command_sqlite += \
         Template(sql_check_relationship_property_count).render(
-            alerts_bulk_table=alerts_bulk_table,
+            alerts_bulk_table=triggered_constraint_table_name,
+            constraint_table=constraint_table_name,
             target_class="entities",
             sqlite=True)
     sql_command_yaml += "\nUNION ALL"
     sql_command_sqlite += "\nUNION ALL"
     sql_command_yaml += Template(sql_check_relationship_nodeType).render(
-        alerts_bulk_table=alerts_bulk_table,
+        alerts_bulk_table=triggered_constraint_table_name,
+        constraint_table=constraint_table_name,
         property_nodetype='@id',
         property_nodetype_description='an IRI',
         sqlite=False
     )
     sql_command_sqlite += Template(sql_check_relationship_nodeType).render(
-        alerts_bulk_table=alerts_bulk_table,
+        alerts_bulk_table=triggered_constraint_table_name,
+        constraint_table=constraint_table_name,
         property_nodetype='@id',
         property_nodetype_description='an IRI',
         sqlite=True
@@ -781,5 +784,5 @@ string elements in list are supported.")
     sql_command_sqlite, sql_command_yaml = create_property_sql()
     sqlite += sql_command_sqlite
     statementsets.append(sql_command_yaml)
-    tables.append(utils.class_to_obj_name(utils.constraint_tablename))
+    tables.append(utils.class_to_obj_name(utils.constraint_table_name))
     return sqlite, (statementsets, tables, views)

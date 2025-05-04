@@ -21,6 +21,7 @@ from urllib.parse import urlparse
 from enum import Enum
 from rdflib import Graph, RDFS, RDF, OWL, XSD, Literal, SH, Namespace
 from collections import deque
+from lib.configs import constraint_table_name
 
 NGSILD = Namespace('https://uri.etsi.org/ngsi-ld/')
 
@@ -45,9 +46,7 @@ class DnsNameNotCompliant(Exception):
 
 constraint_id = 0
 
-constraint_tablename = "constraintTable"
 constraint_table_primary_key = ["id"]
-
 constraint_table = [
     {"id":  "INTEGER"},
     {"targetClass": "STRING"},
@@ -70,6 +69,27 @@ constraint_table = [
     {"datatypes": "STRING"}
 ]
 
+constraint_trigger_tablename = "triggered_constraintTable"
+constraint_trigger_table_primary_key = ["resource", "constraint_id", "event"]
+constraint_trigger_table = [
+    {"resource":  "INTEGER"},
+    {"event": "INTEGER"},
+    {"constraint_id": "INTEGER"},
+    {"triggered": "BOOLEAN"},
+    {"severity": "STRING"}, 
+    {"text": "STRING"},
+    {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp'"}
+]
+
+constraint_combination_tablename = "constraint_combinationTable"
+constraint_combination_table_primary_key = ["resource", "constraint_id1", "constraint_id2"]
+constraint_combination_table = [
+    {"resource":  "INTEGER"},
+    {"constraint_id1": "INTEGER"},
+    {"constraint_id2": "INTEGER"},
+    {"operation": "STRING"},
+    {"target_constraint_id": "INTEGER"}
+]
 
 def get_full_path_of_shacl_property(g, property):
     cur_property = property
@@ -589,21 +609,48 @@ def split_statementsets(statementsets, max_map_size):
 
 
 def create_constraint_yaml_table(connector, kafka, value):
-    return create_yaml_table(constraint_tablename, connector, constraint_table,
+    return create_yaml_table(constraint_table_name, connector, constraint_table,
                              constraint_table_primary_key, kafka, value)
 
 
 def create_constraint_sql_table():
-    return create_sql_table(constraint_tablename, constraint_table, constraint_table_primary_key,
+    return create_sql_table(constraint_table_name, constraint_table, constraint_table_primary_key,
+                            SQL_DIALECT.SQLITE)
+
+
+def create_constraint_trigger_yaml_table(connector, kafka, value):
+    return create_yaml_table(constraint_trigger_tablename,
+                             connector,
+                             constraint_trigger_table,
+                             constraint_trigger_table_primary_key,
+                             kafka, value)
+
+def create_constraint_trigger_sql_table():
+    return create_sql_table(constraint_trigger_tablename,
+                            constraint_trigger_table,
+                            constraint_trigger_table_primary_key,
+                            SQL_DIALECT.SQLITE)
+
+def create_constraint_combination_yaml_table(connector, kafka, value):
+    return create_yaml_table(constraint_combination_tablename,
+                             connector,
+                             constraint_combination_table,
+                             constraint_trigger_table_primary_key, kafka, value)
+
+
+def create_constraint_combination_sql_table():
+    return create_sql_table(constraint_combination_tablename,
+                            constraint_combination_table,
+                            constraint_combination_table_primary_key,
                             SQL_DIALECT.SQLITE)
 
 
 def add_constraint_checks(checks, sqldialect):
     global constraint_id
     if sqldialect == SQL_DIALECT.SQLITE:
-        statement = f'INSERT OR REPLACE INTO {constraint_tablename} VALUES'
+        statement = f'INSERT OR REPLACE INTO {constraint_table_name} VALUES'
     else:
-        statement = f'INSERT INTO {constraint_tablename} VALUES'
+        statement = f'INSERT INTO {constraint_table_name} VALUES'
     first = True
     for check in checks:
         constraint_id+=1

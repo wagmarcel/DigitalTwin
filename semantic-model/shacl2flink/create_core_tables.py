@@ -277,6 +277,40 @@ def main():
                                  utils.SQL_DIALECT.SQLITE), file=sqlitef)
     print('---', file=f)
 
+ # alerts table
+    table_name = "constraints"
+    connector = 'kafka'
+    table = [{'id': 'STRING'},
+             {'event': 'STRING'},
+             {'environment': 'STRING'},
+             {'service': 'ARRAY<STRING>'},
+             {'severity': 'STRING'},
+             {'customer': 'STRING'},
+             {'text': 'STRING'}]
+    table_sqlite = [{'resource': 'STRING'},
+                    {'event': 'STRING'},
+                    {'environment': 'STRING'},
+                    {'service': 'STRING'},
+                    {'severity': 'STRING'},
+                    {'customer': 'STRING'},
+                    {'text': 'STRING'}]
+    primary_key = ['resource', 'event']
+    kafka = {
+        'topic': kafka_topic_listen_alerts,
+        'properties': {'bootstrap.servers': kafka_bootstrap},
+        'key.format': 'json'
+    }
+    value = {
+        'format': 'json',
+        'json.fail-on-missing-field': False,
+        'json.ignore-parse-errors': True
+    }
+
+    print('---', file=f)
+    yaml.dump(utils.create_yaml_table(table_name, connector, table,
+                                      primary_key, kafka, value), f)
+    print(utils.create_sql_table(table_name, table_sqlite,
+                                 primary_key), file=sqlitef)
 
 if __name__ == '__main__':
     main()
