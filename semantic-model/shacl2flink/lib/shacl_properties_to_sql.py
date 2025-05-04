@@ -207,8 +207,9 @@ WITH A1 AS (SELECT A.id as this,
                    D.maxLength as maxLength,
                    D.`pattern` as `pattern`,
                    D.ins as ins,
-                   D.datatypes as datatypes
-                   FROM `{{target_class}}_view` AS A JOIN `propertyChecksTable` as D ON A.`type` = D.targetClass
+                   D.datatypes as datatypes,
+                   D.id as constraint_id
+                   FROM `{{target_class}}_view` AS A JOIN {{constraint_table}} as D ON A.`type` = D.targetClass
             LEFT JOIN attributes_view AS B ON D.propertyPath = B.name and B.entityId = A.id and B.parentId IS NULL
              LEFT JOIN attributes_view AS E ON D.subpropertyPath = E.name and E.entityId = A.id and B.id = E.parentId
             LEFT JOIN {{rdf_table_name}} as C ON C.subject = '<' || COALESCE(E.attributeValue, B.attributeValue) || '>'
@@ -218,19 +219,17 @@ WITH A1 AS (SELECT A.id as this,
 """  # noqa: E501
 
 sql_check_property_count = """
+{% set constraint_cond%}
+NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER) OR  count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) < SQL_DIALECT_CAST(`minCount` AS INTEGER))
+{% endset %}
 SELECT this AS resource,
     'CountConstraintComponent(' || `parentPath` || `propertyPath` || ')' AS event,
-    'Development' AS environment,
-    {%- if sqlite %}
-    '[SHACL Validator]' AS service,
-    {%- else %}
-    ARRAY ['SHACL Validator'] AS service,
-    {%- endif %}
-    CASE WHEN NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER) OR  count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) < SQL_DIALECT_CAST(`minCount` AS INTEGER))
+    `constraint_id` as constraint_id,
+    CASE WHEN {{ constraint_cond }} THEN true ELSE false END as triggered,
+    CASE WHEN {{ constraint_cond }}
         THEN `severity`
         ELSE 'ok' END AS severity,
-    'customer'  customer,
-    CASE WHEN NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER) OR count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) < SQL_DIALECT_CAST(`minCount` AS STRING))
+    CASE WHEN {{ constraint_cond }}
         THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '.  Found ' || SQL_DIALECT_CAST(count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) AS STRING) || ' relationships instead of
                             [' || IFNULL('[' || `minCount`, '[0') || IFNULL(`maxCount` || ']', '[') || '!'
         ELSE 'All ok' END as `text`
@@ -242,19 +241,18 @@ group by this, typ, propertyPath, minCount, maxCount, severity, edeleted
 """  # noqa: E501
 
 sql_check_property_iri_class = """
+{% set constraint_cond%}
+NOT edeleted AND attr_typ IS NOT NULL  AND (val is NULL OR foundVal is NULL)
+{% endset %}
+
 SELECT this AS resource,
     'DatatypeConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
-    'Development' AS environment,
-    {%- if sqlite %}
-    '[SHACL Validator]' AS service,
-    {%- else %}
-    ARRAY ['SHACL Validator'] AS service,
-    {%- endif %}
-    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL  AND (val is NULL OR foundVal is NULL)
+    `constraint_id` as constraint_id,
+    CASE WHEN {{ constraint_cond }} THEN true ELSE false END as triggered,
+    CASE WHEN {{ constraint_cond }}
         THEN `severity`
         ELSE 'ok' END AS severity,
-    'customer'  customer,
-    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND (val is NULL OR foundVal is NULL)
+    CASE WHEN {{ constraint_cond }}
         THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Invalid value ' || IFNULL(val, 'NULL')  || ' not type of ' || `propertyClass` || '.'
         ELSE 'All ok' END as `text`
         {% if sqlite %}
@@ -264,19 +262,15 @@ FROM A1  WHERE propertyNodetype = '@id' and propertyClass IS NOT NULL and NOT IF
 """  # noqa: E501
 
 sql_check_property_nodeType = """
+{% set constraint_cond%}
+NOT edeleted AND NOT IFNULL(adeleted, false) AND (nodeType <> `propertyNodetype` OR attr_typ <> attributeType)
+{% endset %}
 SELECT this AS resource,
- 'NodeKindConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
-    'Development' AS environment,
-     {%- if sqlite -%}
-    '[SHACL Validator]' AS service,
-    {%- else %}
-    ARRAY ['SHACL Validator'] AS service,
-    {%- endif %}
-    CASE WHEN NOT edeleted AND NOT IFNULL(adeleted, false) AND (nodeType <> `propertyNodetype` OR attr_typ <> attributeType)
-        THEN `severity`
-        ELSE 'ok' END AS severity,
-    'customer'  customer,
-    CASE WHEN NOT edeleted AND NOT IFNULL(adeleted, false) AND (nodeType <> `propertyNodetype`  OR attr_typ <> attributeType)
+    'NodeKindConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
+    `constraint_id` as constraint_id,
+    CASE WHEN {{ constraint_cond }} THEN true ELSE false END as triggered,
+    CASE WHEN {{ constraint_cond }} THEN `severity` ELSE 'ok' END AS severity,
+    CASE WHEN {{ constraint_cond }}
         THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Node is not ' ||
             'of nodetype "' || `nodeType` || '" or not of attribute type "' || attributeType || '"'
         ELSE 'All ok' END as `text`
@@ -287,19 +281,15 @@ FROM A1 WHERE propertyNodetype IS NOT NULL and `index` IS NOT NULL
 """  # noqa: E501
 
 sql_check_property_minmax = """
+{% set constraint_cond%}
+NOT edeleted AND attr_typ IS NOT NULL AND (SQL_DIALECT_CAST(val AS DOUBLE) is NULL or NOT (SQL_DIALECT_CAST(val as DOUBLE) {{ operator }} SQL_DIALECT_CAST(`{{ comparison_value }}` AS DOUBLE)) )
+{% endset %}
 SELECT this AS resource,
  '{{minmaxname}}ConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
-    'Development' AS environment,
-     {%- if sqlite -%}
-    '[SHACL Validator]' AS service,
-    {%- else %}
-    ARRAY ['SHACL Validator'] AS service,
-    {%- endif %}
-    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND (SQL_DIALECT_CAST(val AS DOUBLE) is NULL or NOT (SQL_DIALECT_CAST(val as DOUBLE) {{ operator }} SQL_DIALECT_CAST(`{{ comparison_value }}` AS DOUBLE)) )
-        THEN `severity`
-        ELSE 'ok' END AS severity,
-    'customer'  customer,
-    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND (SQL_DIALECT_CAST(val AS DOUBLE) is NULL or NOT (SQL_DIALECT_CAST(val as DOUBLE) {{ operator }} SQL_DIALECT_CAST(`{{ comparison_value }}` AS DOUBLE)) )
+    `constraint_id` as constraint_id,
+    CASE WHEN {{ constraint_cond }} THEN true ELSE false END as triggered,
+    CASE WHEN {{ constraint_cond }} THEN `severity` ELSE 'ok' END AS severity,
+    CASE WHEN {{ constraint_cond }}
         THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' not comparable with ' || `{{ comparison_value }}` || '.'
         WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND NOT (SQL_DIALECT_CAST(val as DOUBLE) {{ operator }} SQL_DIALECT_CAST( `{{ comparison_value }}` as DOUBLE) )
         THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' is not {{ operator }} ' || `{{ comparison_value }}` || '.'
@@ -311,19 +301,15 @@ FROM A1 where `{{ comparison_value}}` IS NOT NULL and `index` IS NOT NULL
 """  # noqa: E501
 
 sql_check_string_length = """
+{% set constraint_cond%}
+NOT edeleted  AND attr_typ IS NOT NULL AND {%- if sqlite %} LENGTH(val) {%- else  %} CHAR_LENGTH(val) {%- endif %} {{ operator }} SQL_DIALECT_CAST(`{{ comparison_value }}` AS INTEGER)
+{% endset %}
 SELECT this AS resource,
  '{{minmaxname}}ConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
-    'Development' AS environment,
-     {%- if sqlite -%}
-    '[SHACL Validator]' AS service,
-    {%- else %}
-    ARRAY ['SHACL Validator'] AS service,
-    {%- endif %}
-    CASE WHEN NOT edeleted  AND attr_typ IS NOT NULL AND {%- if sqlite %} LENGTH(val) {%- else  %} CHAR_LENGTH(val) {%- endif %} {{ operator }} SQL_DIALECT_CAST(`{{ comparison_value }}` AS INTEGER)
-        THEN `severity`
-        ELSE 'ok' END AS severity,
-    'customer'  customer,
-    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND {%- if sqlite %} LENGTH(val) {%- else  %} CHAR_LENGTH(val) {%- endif %} {{ operator }} SQL_DIALECT_CAST(`{{ comparison_value }}` as INTEGER)
+    `constraint_id` as constraint_id,
+    CASE WHEN {{ constraint_cond }} THEN true ELSE false END as triggered,
+    CASE WHEN {{ constraint_cond }} THEN `severity` ELSE 'ok' END AS severity,
+    CASE WHEN {{ constraint_cond }}
         THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Length of ' || IFNULL(val, 'NULL') || ' is {{ operator }} ' || `{{ comparison_value }}` || '.'
         ELSE 'All ok' END as `text`
         {% if sqlite %}
@@ -333,19 +319,15 @@ FROM A1 WHERE `{{ comparison_value }}` IS NOT NULL and `index` IS NOT NULL
 """  # noqa: E501
 
 sql_check_literal_pattern = """
+{% set constraint_cond%}
+NOT edeleted AND attr_typ IS NOT NULL AND {%- if sqlite %} NOT (val REGEXP `pattern`) {%- else  %} NOT REGEXP(val, `pattern`) {%- endif %}
+{% endset %}
 SELECT this AS resource,
  '{{validationname}}ConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
-    'Development' AS environment,
-     {%- if sqlite -%}
-    '[SHACL Validator]' AS service,
-    {%- else %}
-    ARRAY ['SHACL Validator'] AS service,
-    {%- endif %}
-    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND {%- if sqlite %} NOT (val REGEXP `pattern`) {%- else  %} NOT REGEXP(val, `pattern`) {%- endif %}
-        THEN `severity`
-        ELSE 'ok' END AS severity,
-    'customer'  customer,
-    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND {%- if sqlite %} NOT (val REGEXP `pattern`) {%- else  %} NOT REGEXP(val, `pattern`) {%- endif %}
+    `constraint_id` as constraint_id,
+    CASE WHEN {{ constraint_cond }} THEN true ELSE false END as triggered,
+    CASE WHEN {{ constraint_cond }} THEN `severity` ELSE 'ok' END AS severity,
+    CASE WHEN {{ constraint_cond }}
         THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' does not match pattern ' || `pattern`
         ELSE 'All ok' END as `text`
         {% if sqlite %}
@@ -355,19 +337,15 @@ FROM A1 WHERE `pattern` IS NOT NULL and `index` IS NOT NULL
 """  # noqa: E501
 
 sql_check_literal_in = """
+{% set constraint_cond%}
+NOT edeleted AND attr_typ IS NOT NULL AND NOT ',' || `ins` || ',' LIKE '%,"' || replace(val, '"', '\\\"') || '",%'
+{% endset %}
 SELECT this AS resource,
  '{{constraintname}}(' || `parentPath` || `printPath` || ')' AS event,
-    'Development' AS environment,
-     {%- if sqlite -%}
-    '[SHACL Validator]' AS service,
-    {%- else %}
-    ARRAY ['SHACL Validator'] AS service,
-    {%- endif %}
-    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND NOT ',' || `ins` || ',' LIKE '%,"' || replace(val, '"', '\\\"') || '",%'
-        THEN `severity`
-        ELSE 'ok' END AS severity,
-    'customer'  customer,
-    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND NOT ',' || `ins` || ',' LIKE '%,"' || replace(val, '"', '\\\"') || '",%'
+    `constraint_id` as constraint_id,
+    CASE WHEN {{ constraint_cond }} THEN true ELSE false END as triggered,
+    CASE WHEN {{ constraint_cond }} THEN `severity` ELSE 'ok' END AS severity,
+    CASE WHEN {{ constraint_cond }}
         THEN 'Model validation for Property propertyPath failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' is not allowed.'
         ELSE 'All ok' END as `text`
         {% if sqlite %}
@@ -377,29 +355,20 @@ FROM A1 where `ins` IS NOT NULL and `index` IS NOT NULL
 """  # noqa: E501
 
 sql_check_literal_datatypes = """
+{% set constraint_cond%}
+NOT edeleted AND attr_typ IS NOT NULL AND
+        CASE WHEN (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#double%' AND `val` REGEXP '^(?=.*[\.eE])[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$')
+            OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#integer%' AND `val` REGEXP '^[+-]?\d+$')
+            OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#boolean%' AND `val` REGEXP '^(?i:true|false)$')
+            OR (propertyNodeType = '@json' AND json_valid(`val`))
+            OR (propertyNodeType = '@list' AND json_valid(`val`) AND json_type(`val`) = 'array') THEN false ELSE true END
+{% endset %}
 SELECT this AS resource,
  '{{constraintname}}(' || `parentPath` || `printPath` || ')' AS event,
-    'Development' AS environment,
-     {%- if sqlite -%}
-    '[SHACL Validator]' AS service,
-    {%- else %}
-    ARRAY ['SHACL Validator'] AS service,
-    {%- endif %}
-    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND
-        CASE WHEN (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#double%' AND `val` REGEXP '^(?=.*[\.eE])[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$')
-            OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#integer%' AND `val` REGEXP '^[+-]?\d+$')
-            OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#boolean%' AND `val` REGEXP '^(?i:true|false)$')
-            OR (propertyNodeType = '@json' AND json_valid(`val`))
-            OR (propertyNodeType = '@list' AND json_valid(`val`) AND json_type(`val`) = 'array') THEN false ELSE true END
-            THEN `severity` 
-        ELSE 'ok' END AS severity,
-    'customer'  customer,
-    CASE WHEN NOT edeleted AND attr_typ IS NOT NULL AND
-        CASE WHEN (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#double%' AND `val` REGEXP '^(?=.*[\.eE])[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$')
-            OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#integer%' AND `val` REGEXP '^[+-]?\d+$')
-            OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#boolean%' AND `val` REGEXP '^(?i:true|false)$')
-            OR (propertyNodeType = '@json' AND json_valid(`val`))
-            OR (propertyNodeType = '@list' AND json_valid(`val`) AND json_type(`val`) = 'array') THEN false ELSE true END
+    `constraint_id` as constraint_id,
+    CASE WHEN {{ constraint_cond }} THEN true ELSE false END as triggered,
+    CASE WHEN {{ constraint_cond }} THEN `severity` ELSE 'ok' END AS severity,
+    CASE WHEN {{ constraint_cond }}
             THEN 'Datatype check failed. "' || `val` || '" does not fit to datatypes "' || `datatypes` || '" or property node type "' || `propertyNodeType` || '".' 
         ELSE 'All ok' END as `text`
         {% if sqlite %}
@@ -472,35 +441,37 @@ def create_property_sql():
 
     sql_command_yaml = Template(
         sql_check_property_iri_base).render(
-        alerts_bulk_table=alerts_bulk_table,
+        alerts_bulk_table=triggered_constraint_table_name,
+        constraint_table=constraint_table_name,
         target_class="entities",
         rdf_table_name=configs.rdf_table_name,
         sqlite=False
     )
     sql_command_sqlite = Template(sql_check_property_iri_base).render(
-        alerts_bulk_table=alerts_bulk_table,
+        alerts_bulk_table=triggered_constraint_table_name,
+        constraint_table=constraint_table_name,
         target_class="entities",
         rdf_table_name=configs.rdf_table_name,
         sqlite=True
     )
     sql_command_yaml += Template(
         sql_check_property_nodeType).render(
-        alerts_bulk_table=alerts_bulk_table,
+        alerts_bulk_table=triggered_constraint_table_name,
         sqlite=False
     )
     sql_command_sqlite += Template(sql_check_property_nodeType).render(
-        alerts_bulk_table=alerts_bulk_table,
+        alerts_bulk_table=triggered_constraint_table_name,
         sqlite=True
     )
     sql_command_yaml += "\nUNION ALL"
     sql_command_sqlite += "\nUNION ALL"
     sql_command_yaml += \
         Template(sql_check_property_iri_class).render(
-            alerts_bulk_table=alerts_bulk_table,
+            alerts_bulk_table=triggered_constraint_table_name,
             sqlite=False)
     sql_command_sqlite += \
         Template(sql_check_property_iri_class).render(
-            alerts_bulk_table=alerts_bulk_table,
+            alerts_bulk_table=triggered_constraint_table_name,
             sqlite=True)
     sql_command_yaml += "\nUNION ALL"
     sql_command_sqlite += "\nUNION ALL"
@@ -561,12 +532,12 @@ def create_property_sql():
     sql_command_yaml += "\nUNION ALL"
     sql_command_sqlite += "\nUNION ALL"
     sql_command_yaml += Template(sql_check_literal_in).render(
-        alerts_bulk_table=alerts_bulk_table,
+        alerts_bulk_table=triggered_constraint_table_name,
         sqlite=False,
         constraintname="InConstraintComponent"
     )
     sql_command_sqlite += Template(sql_check_literal_in).render(
-        alerts_bulk_table=alerts_bulk_table,
+        alerts_bulk_table=triggered_constraint_table_name,
         sqlite=True,
         constraintname="InConstraintComponent"
     )
