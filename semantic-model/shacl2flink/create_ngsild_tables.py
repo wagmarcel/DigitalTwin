@@ -100,7 +100,7 @@ def main(output_folder='output'):
 
         # Create constraint trigger table
         kafka_constraint_trigger_checks = {
-            'topic': utils.constraint_trigger_tablename,
+            'topic': configs.constraint_trigger_table_name,
             'properties': {'bootstrap.servers': configs.kafka_bootstrap},
             'key.format': 'json'
         }
@@ -118,7 +118,7 @@ def main(output_folder='output'):
               file=sqlitef)        
         # Create constraint combination table
         kafka_constraint_combination_checks = {
-            'topic': utils.constraint_combination_tablename,
+            'topic': configs.constraint_combination_table_name,
             'properties': {'bootstrap.servers': configs.kafka_bootstrap},
             'key.format': 'json'
         }

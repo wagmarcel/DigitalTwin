@@ -17,8 +17,9 @@ yaml = ruamel.yaml.YAML()
 
 alerts_bulk_table = configs.alerts_bulk_table_name
 alerts_bulk_table_object = configs.alerts_bulk_table_object_name
-triggered_constraint_table_name = configs.triggered_constraint_table_name
 constraint_table_name = configs.constraint_table_name
+constraint_trigger_table_name = configs.constraint_trigger_table_name
+constraint_combination_table_name = configs.constraint_combination_table_name
 
 sparql_get_all_relationships = """
 SELECT ?nodeshape ?targetclass ?inheritedTargetclass ?propertypath ?mincount ?maxcount ?attributeclass ?severitycode ?property
@@ -377,26 +378,61 @@ SELECT this AS resource,
 FROM A1 where `datatypes` IS NOT NULL and `index` IS NOT NULL AND `propertyNodeType` IN ('@value', '@list', '@json') 
 """  # noqa: E501
 
+
+sql_insert_constraint_in_alerts = """
+INSERT {% if sqlite %} OR REPlACE{% endif %} INTO {{alerts_bulk_table}}
+SELECT
+  t.resource,
+  t.event,
+  'Development'                      AS environment,
+  '[SHACL Validator]'               AS service,
+  CASE
+    WHEN MAX(CASE WHEN t.triggered THEN 1 ELSE 0 END) = 1
+      THEN MAX(t.severity)
+    ELSE 'OK'
+  END                                AS severity,
+  'customer'                        AS customer,
+  CASE
+    WHEN MAX(CASE WHEN t.triggered THEN 1 ELSE 0 END) = 1
+      THEN MAX(t.text)
+    ELSE 'OK'
+  END                                AS text
+    {% if sqlite %}
+    ,CURRENT_TIMESTAMP
+    {% endif %}
+FROM
+  constraint_trigger_table AS t
+  JOIN constraint_combination_table AS comb
+    ON comb.operation = 'PUBLISH'
+   AND comb.member_constraint_id = t.constraint_id
+  JOIN constraint_table AS ct
+    ON ct.id = comb.member_constraint_id
+GROUP BY
+  t.resource,
+  t.event;
+"""  # noqa: E501
+
+
 def create_relationship_sql():
     sql_command_yaml = Template(sql_check_relationship_base).render(
-        alerts_bulk_table=triggered_constraint_table_name,
+        alerts_bulk_table=constraint_trigger_table_name,
         constraint_table=constraint_table_name,
         target_class="entities",
         sqlite=False)
     sql_command_sqlite = Template(sql_check_relationship_base).render(
-        alerts_bulk_table=triggered_constraint_table_name,
+        alerts_bulk_table=constraint_trigger_table_name,
         constraint_table=constraint_table_name,
         target_class="entities",
         sqlite=True)
     sql_command_yaml += \
         Template(sql_check_relationship_property_class).render(
-            alerts_bulk_table=triggered_constraint_table_name,
+            alerts_bulk_table=constraint_trigger_table_name,
             constraint_table=constraint_table_name,
             target_class="entities",
             sqlite=False)
     sql_command_sqlite += \
         Template(sql_check_relationship_property_class).render(
-            alerts_bulk_table=triggered_constraint_table_name,
+            alerts_bulk_table=constraint_trigger_table_name,
             constraint_table=constraint_table_name,
             target_class="entities",
             sqlite=True)
@@ -404,27 +440,27 @@ def create_relationship_sql():
     sql_command_sqlite += "\nUNION ALL"
     sql_command_yaml += \
         Template(sql_check_relationship_property_count).render(
-            alerts_bulk_table=triggered_constraint_table_name,
+            alerts_bulk_table=constraint_trigger_table_name,
             constraint_table=constraint_table_name,
             target_class="entities",
             sqlite=False)
     sql_command_sqlite += \
         Template(sql_check_relationship_property_count).render(
-            alerts_bulk_table=triggered_constraint_table_name,
+            alerts_bulk_table=constraint_trigger_table_name,
             constraint_table=constraint_table_name,
             target_class="entities",
             sqlite=True)
     sql_command_yaml += "\nUNION ALL"
     sql_command_sqlite += "\nUNION ALL"
     sql_command_yaml += Template(sql_check_relationship_nodeType).render(
-        alerts_bulk_table=triggered_constraint_table_name,
+        alerts_bulk_table=constraint_trigger_table_name,
         constraint_table=constraint_table_name,
         property_nodetype='@id',
         property_nodetype_description='an IRI',
         sqlite=False
     )
     sql_command_sqlite += Template(sql_check_relationship_nodeType).render(
-        alerts_bulk_table=triggered_constraint_table_name,
+        alerts_bulk_table=constraint_trigger_table_name,
         constraint_table=constraint_table_name,
         property_nodetype='@id',
         property_nodetype_description='an IRI',
@@ -441,14 +477,14 @@ def create_property_sql():
 
     sql_command_yaml = Template(
         sql_check_property_iri_base).render(
-        alerts_bulk_table=triggered_constraint_table_name,
+        alerts_bulk_table=constraint_trigger_table_name,
         constraint_table=constraint_table_name,
         target_class="entities",
         rdf_table_name=configs.rdf_table_name,
         sqlite=False
     )
     sql_command_sqlite = Template(sql_check_property_iri_base).render(
-        alerts_bulk_table=triggered_constraint_table_name,
+        alerts_bulk_table=constraint_trigger_table_name,
         constraint_table=constraint_table_name,
         target_class="entities",
         rdf_table_name=configs.rdf_table_name,
@@ -456,22 +492,22 @@ def create_property_sql():
     )
     sql_command_yaml += Template(
         sql_check_property_nodeType).render(
-        alerts_bulk_table=triggered_constraint_table_name,
+        alerts_bulk_table=constraint_trigger_table_name,
         sqlite=False
     )
     sql_command_sqlite += Template(sql_check_property_nodeType).render(
-        alerts_bulk_table=triggered_constraint_table_name,
+        alerts_bulk_table=constraint_trigger_table_name,
         sqlite=True
     )
     sql_command_yaml += "\nUNION ALL"
     sql_command_sqlite += "\nUNION ALL"
     sql_command_yaml += \
         Template(sql_check_property_iri_class).render(
-            alerts_bulk_table=triggered_constraint_table_name,
+            alerts_bulk_table=constraint_trigger_table_name,
             sqlite=False)
     sql_command_sqlite += \
         Template(sql_check_property_iri_class).render(
-            alerts_bulk_table=triggered_constraint_table_name,
+            alerts_bulk_table=constraint_trigger_table_name,
             sqlite=True)
     sql_command_yaml += "\nUNION ALL"
     sql_command_sqlite += "\nUNION ALL"
@@ -532,12 +568,12 @@ def create_property_sql():
     sql_command_yaml += "\nUNION ALL"
     sql_command_sqlite += "\nUNION ALL"
     sql_command_yaml += Template(sql_check_literal_in).render(
-        alerts_bulk_table=triggered_constraint_table_name,
+        alerts_bulk_table=constraint_trigger_table_name,
         sqlite=False,
         constraintname="InConstraintComponent"
     )
     sql_command_sqlite += Template(sql_check_literal_in).render(
-        alerts_bulk_table=triggered_constraint_table_name,
+        alerts_bulk_table=constraint_trigger_table_name,
         sqlite=True,
         constraintname="InConstraintComponent"
     )
@@ -629,6 +665,8 @@ def translate(shaclefile, knowledgefile, prefixes):
     # Get all NGSI-LD Relationship
 
     constraint_checks = []
+    constraint_combination = []
+    constraint_id_counter = 0
 
     qres = g.query(sparql_get_all_relationships, initNs=prefixes)
     for row in qres:
@@ -659,8 +697,15 @@ def translate(shaclefile, knowledgefile, prefixes):
         check['maxCount'] = maxcount
         check['minCount'] = mincount
         check['severity'] = severitycode
-        
+        check['id'] = constraint_id_counter     
         constraint_checks.append(check)
+        # combination table must publish this constraint
+        combination = {}
+        combination['operation'] = 'PUBLISH'
+        combination['member_constraint_id'] = constraint_id_counter
+        combination['target_constraint_id'] = None
+        constraint_combination.append(combination)
+        constraint_id_counter += 1
     # Get all NGSI-LD Properties
     qres = g.query(sparql_get_all_properties, initNs=prefixes)
     for row in qres:
@@ -731,6 +776,7 @@ def translate(shaclefile, knowledgefile, prefixes):
         check['pattern'] = pattern
         check['ins'] = ins
         check['datatypes'] = datatypes
+        check['id'] = constraint_id_counter
         ins_is_broken = False
         if ins:
             for in_val in ins:
@@ -741,11 +787,25 @@ def translate(shaclefile, knowledgefile, prefixes):
 string elements in list are supported.")
             check['ins'] = None
         constraint_checks.append(check)
+        
+        # Add Publish rule to direct publish it to alerts
+        combination = {}
+        combination['operation'] = 'PUBLISH'
+        combination['member_constraint_id'] = constraint_id_counter
+        combination['target_constraint_id'] = None
+        constraint_combination.append(combination)
+        constraint_id_counter += 1
     tables.append(configs.kafka_topic_ngsi_prefix_name)
     views.append(configs.kafka_topic_ngsi_prefix_name + "-view")
     sqlite += '\n'
-    sqlite += utils.add_constraint_checks(constraint_checks, utils.SQL_DIALECT.SQLITE)
-    sql_command_yaml = utils.add_constraint_checks(constraint_checks, utils.SQL_DIALECT.SQL)
+    #sqlite += utils.add_constraint_checks(constraint_checks, utils.SQL_DIALECT.SQLITE)
+    #sql_command_yaml = utils.add_constraint_checks(constraint_checks, utils.SQL_DIALECT.SQL)
+    sqlite += utils.add_table_values(constraint_checks, utils.constraint_table, utils.SQL_DIALECT.SQLITE, configs.constraint_table_name)
+    sql_command_yaml = utils.add_table_values(constraint_checks, utils.constraint_table, utils.SQL_DIALECT.SQL, configs.constraint_table_name)
+    statementsets.append(sql_command_yaml)
+    sqlite += '\n'
+    sqlite += utils.add_table_values(constraint_combination, utils.constraint_combination_table, utils.SQL_DIALECT.SQLITE, configs.constraint_combination_table_name)
+    sql_command_yaml = utils.add_table_values(constraint_combination, utils.constraint_combination_table, utils.SQL_DIALECT.SQL, configs.constraint_combination_table_name)
     statementsets.append(sql_command_yaml)
     sqlite += '\n'
     sql_command_sqlite, sql_command_yaml = create_relationship_sql()
@@ -755,5 +815,22 @@ string elements in list are supported.")
     sql_command_sqlite, sql_command_yaml = create_property_sql()
     sqlite += sql_command_sqlite
     statementsets.append(sql_command_yaml)
+    sql_command_yaml = Template(sql_insert_constraint_in_alerts).render(
+    alerts_bulk_table=alerts_bulk_table,
+    constraint_table=constraint_table_name,
+    constraint_trigger_table=constraint_trigger_table_name,
+    constraint_combination_table=constraint_combination_table_name,
+    target_class="entities",
+    sqlite=False)
+    sql_command_sqlite = Template(sql_insert_constraint_in_alerts).render(
+    alerts_bulk_table=alerts_bulk_table,
+    constraint_table=constraint_table_name,
+    constraint_trigger_table=constraint_trigger_table_name,
+    constraint_combination_table=constraint_combination_table_name,
+    target_class="entities",
+    sqlite=True)
+    statementsets.append(sql_command_yaml)
+    sqlite += sql_command_sqlite
+    sqlite += '\n'
     tables.append(utils.class_to_obj_name(utils.constraint_table_name))
     return sqlite, (statementsets, tables, views)

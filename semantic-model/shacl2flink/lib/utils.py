@@ -21,7 +21,7 @@ from urllib.parse import urlparse
 from enum import Enum
 from rdflib import Graph, RDFS, RDF, OWL, XSD, Literal, SH, Namespace
 from collections import deque
-from lib.configs import constraint_table_name
+from lib.configs import constraint_table_name, constraint_trigger_table_name, constraint_combination_table_name
 
 NGSILD = Namespace('https://uri.etsi.org/ngsi-ld/')
 
@@ -44,7 +44,6 @@ class DnsNameNotCompliant(Exception):
     Exception for non compliant DNS name
     """
 
-constraint_id = 0
 
 constraint_table_primary_key = ["id"]
 constraint_table = [
@@ -69,11 +68,10 @@ constraint_table = [
     {"datatypes": "STRING"}
 ]
 
-constraint_trigger_tablename = "triggered_constraintTable"
 constraint_trigger_table_primary_key = ["resource", "constraint_id", "event"]
 constraint_trigger_table = [
-    {"resource":  "INTEGER"},
-    {"event": "INTEGER"},
+    {"resource":  "STRING"},
+    {"event": "STRING"},
     {"constraint_id": "INTEGER"},
     {"triggered": "BOOLEAN"},
     {"severity": "STRING"}, 
@@ -81,12 +79,9 @@ constraint_trigger_table = [
     {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp'"}
 ]
 
-constraint_combination_tablename = "constraint_combinationTable"
-constraint_combination_table_primary_key = ["resource", "constraint_id1", "constraint_id2"]
+constraint_combination_table_primary_key = ["member_constraint_id", "target_constraint_id"]
 constraint_combination_table = [
-    {"resource":  "INTEGER"},
-    {"constraint_id1": "INTEGER"},
-    {"constraint_id2": "INTEGER"},
+    {"member_constraint_id": "INTEGER"},
     {"operation": "STRING"},
     {"target_constraint_id": "INTEGER"}
 ]
@@ -619,41 +614,77 @@ def create_constraint_sql_table():
 
 
 def create_constraint_trigger_yaml_table(connector, kafka, value):
-    return create_yaml_table(constraint_trigger_tablename,
+    return create_yaml_table(constraint_trigger_table_name,
                              connector,
                              constraint_trigger_table,
                              constraint_trigger_table_primary_key,
                              kafka, value)
 
 def create_constraint_trigger_sql_table():
-    return create_sql_table(constraint_trigger_tablename,
+    return create_sql_table(constraint_trigger_table_name,
                             constraint_trigger_table,
                             constraint_trigger_table_primary_key,
                             SQL_DIALECT.SQLITE)
 
 def create_constraint_combination_yaml_table(connector, kafka, value):
-    return create_yaml_table(constraint_combination_tablename,
+    return create_yaml_table(constraint_combination_table_name,
                              connector,
                              constraint_combination_table,
                              constraint_trigger_table_primary_key, kafka, value)
 
 
 def create_constraint_combination_sql_table():
-    return create_sql_table(constraint_combination_tablename,
+    return create_sql_table(constraint_combination_table_name,
                             constraint_combination_table,
                             constraint_combination_table_primary_key,
                             SQL_DIALECT.SQLITE)
 
 
+def add_table_values(values, table, sqldialect, table_name):
+    if sqldialect == SQL_DIALECT.SQLITE:
+        statement = f'INSERT OR REPLACE INTO {table_name} VALUES'
+    else:
+        statement = f'INSERT INTO {table_name} VALUES'
+    first = True
+    for value in values:
+        lcheck = {}
+        for k, v in value.items():
+            try:
+                datatype = next((typ[k] for typ in table if k in typ))
+            except:
+                print(f"Error: You provided a table field {k} which does not have a type in the given table schema {table}.")
+            if v is None:
+                lcheck[k] = f'CAST (NULL as {datatype})'
+            else:
+                if datatype in ("STRING", "TEXT"):
+                    lcheck[k] = f"'{v}'"
+                else:
+                    lcheck[k] = f"{v}"
+        if first:
+            first = False
+        else:
+            statement += ', ' 
+        statement += f'('
+        first = True
+        for col in table:
+            col_name = next(iter(col))
+            if first:
+                first = False
+            else:
+                statement += ','
+            statement += lcheck[col_name]
+        statement += ')'
+    statement += ';'
+    return statement
+
+
 def add_constraint_checks(checks, sqldialect):
-    global constraint_id
     if sqldialect == SQL_DIALECT.SQLITE:
         statement = f'INSERT OR REPLACE INTO {constraint_table_name} VALUES'
     else:
         statement = f'INSERT INTO {constraint_table_name} VALUES'
     first = True
     for check in checks:
-        constraint_id+=1
         lcheck = {}
         for k, v in check.items():
             if v is None:
@@ -665,7 +696,7 @@ def add_constraint_checks(checks, sqldialect):
         else:
             statement += ', '
         statement += f'(\
-{constraint_id}, \
+{lcheck["constraintId"]}, \
 {lcheck["targetClass"]}, \
 {lcheck["propertyPath"]}, \
 {lcheck["subpropertyPath"]}, \
