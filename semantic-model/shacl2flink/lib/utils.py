@@ -678,46 +678,6 @@ def add_table_values(values, table, sqldialect, table_name):
     return statement
 
 
-def add_constraint_checks(checks, sqldialect):
-    if sqldialect == SQL_DIALECT.SQLITE:
-        statement = f'INSERT OR REPLACE INTO {constraint_table_name} VALUES'
-    else:
-        statement = f'INSERT INTO {constraint_table_name} VALUES'
-    first = True
-    for check in checks:
-        lcheck = {}
-        for k, v in check.items():
-            if v is None:
-                lcheck[k] = 'CAST (NULL as STRING)'
-            else:
-                lcheck[k] = f"'{v}'"
-        if first:
-            first = False
-        else:
-            statement += ', '
-        statement += f'(\
-{lcheck["constraintId"]}, \
-{lcheck["targetClass"]}, \
-{lcheck["propertyPath"]}, \
-{lcheck["subpropertyPath"]}, \
-{lcheck["propertyClass"]}, \
-{lcheck["propertyNodetype"]}, \
-{lcheck["attributeType"]}, \
-{lcheck["maxCount"]}, \
-{lcheck["minCount"]}, \
-{lcheck["severity"]}, \
-{lcheck["minExclusive"]}, \
-{lcheck["maxExclusive"]}, \
-{lcheck["minInclusive"]}, \
-{lcheck["maxInclusive"]}, \
-{lcheck["minLength"]}, \
-{lcheck["maxLength"]}, \
-{lcheck["pattern"]}, \
-{lcheck["ins"]}, \
-{lcheck["datatypes"]})'
-    statement += ';'
-    return statement
-
 def init_constraint_check():
     check = {}
     check["targetClass"] = None
