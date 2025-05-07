@@ -27,23 +27,19 @@ where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?targetclass .
     ?inheritedTargetclass rdfs:subClassOf* ?targetclass .
-    ?nodeshape sh:property* ?property .
-  ?property  
-        sh:path ?propertypath ;
-        sh:property [
-            sh:path ngsi-ld:hasObject ;
-            sh:class ?attributeclass ;
-        ]
-     .
-    OPTIONAL{?proprety  sh:path ?propertypath; sh:maxCount ?maxcount }
-    OPTIONAL{?property  sh:path ?propertypath; sh:minCount ?mincount }
-    OPTIONAL {
-        ?property 
-            sh:path ?propertypath;
-            sh:severity ?severity ;
-         .
-        ?severity rdfs:label ?severitycode .
-    }
+    ?nodeshape sh:property/(sh:or/rdf:rest*/rdf:first/sh:property)* ?property .
+    ?property  
+    	sh:path ?propertypath ;
+        sh:or ?outerOr .
+        ?outerOr rdf:rest*/rdf:first ?clause .
+        OPTIONAL{?clause sh:maxCount ?maxcount ; }
+        OPTIONAL{?clause sh:minCount ?mincount ; }
+        OPTIONAL{?clause sh:severity ?severity . ?severity rdfs:label ?severitycode .}
+        ?clause     sh:property    ?innerProp .
+        ?innerProp  sh:path ngsi-ld:hasObject ;
+        sh:or   ?innerOr .
+        ?innerOr rdf:rest*/rdf:first ?innerclause .
+        OPTIONAL { ?innerclause sh:class ?attributeclass ; }
 }
 order by ?inhertiedTargetclass
 """  # noqa: E501
