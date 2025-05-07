@@ -51,38 +51,45 @@ order by ?inhertiedTargetclass
 sparql_get_all_properties = """
 SELECT
     ?nodeshape ?targetclass ?inheritedTargetclass ?propertypath ?mincount ?maxcount ?attributeclass ?nodekind
-    ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode ?property ?valuepath
+    ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode ?property ?valuepath ?innerOr ?hasValue
     (GROUP_CONCAT(CONCAT('"', ?in, '"'); separator=',') as ?ins)
     (GROUP_CONCAT(?datatype; separator=',') as ?datatypes)
 where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?targetclass .
     ?inheritedTargetclass rdfs:subClassOf* ?targetclass .
-    ?nodeshape sh:property* ?property .
-    ?property 
-        sh:path ?propertypath ;
-        sh:property [
-            sh:path ?valuepath ;
-        ] .
+    ?nodeshape sh:property/(sh:or/rdf:rest*/rdf:first/sh:property)* ?property .
+      ## First-level property
+  ?property
+    sh:path ?propertypath ;
+    sh:or   ?outerOr .
+    ?outerOr rdf:rest*/rdf:first ?clause .
+    OPTIONAL { ?clause  sh:minCount ?mincount ; }
+    OPTIONAL { ?clause sh:maxCount ?maxcount ; }
+    OPTIONAL { ?clause sh:severity ?severity . ?severity rdfs:label ?severitycode .}
+    ?clause     sh:property    ?innerProp .
+    ?innerProp  sh:path        ?valuepath ;
+        sh:or   ?innerOr .
+    ?innerOr rdf:rest*/rdf:first ?innerclause .
     FILTER(?valuepath = ngsi-ld:hasValue || ?valuepath = ngsi-ld:hasValueList || ?valuepath = ngsi-ld:hasJSON)
-    OPTIONAL { ?property  sh:minCount ?mincount ; }
-    OPTIONAL { ?property sh:maxCount ?maxcount ; }
-    OPTIONAL { ?property sh:property [sh:path ?valuepath; sh:minExclusive ?minexclusive ;] ; }
-    OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:maxExclusive ?maxexclusive ;] ; }
-    OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:minInclusive ?mininclusive ;] ; }
-    OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:maxInclusive ?maxinclusive ;] ; }
-    OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:minLength ?minlength ;] ; }
-    OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:maxLength ?maxlength ;] ; }
-    OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:pattern ?pattern ;] ; }
-    OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:in/(rdf:rest*/rdf:first)+ ?in ;] ; }
-    OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:class ?attributeclass ;] ; }
-    OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:nodeKind ?nodekind ;] ; }
-    OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:or/rdf:rest*/rdf:first ?dtShape ] . ?dtShape sh:datatype ?datatype .}
-    OPTIONAL { ?property sh:property [sh:path ?valuepath ; sh:datatype ?datatype] ; }
-    OPTIONAL { ?property sh:severity ?severity . ?severity rdfs:label ?severitycode .}
+    OPTIONAL { ?innerclause sh:minExclusive ?minexclusive ; }
+    OPTIONAL { ?innerclause sh:maxExclusive ?maxexclusive ; }
+    OPTIONAL { ?innerclause sh:minInclusive ?mininclusive ; }
+    OPTIONAL { ?innerclause sh:maxInclusive ?maxinclusive ; }
+    OPTIONAL { ?innerclause sh:minLength ?minlength ; }
+    OPTIONAL { ?innerclause sh:maxLength ?maxlength ; }
+    OPTIONAL { ?innerclause sh:pattern ?pattern ; }
+    OPTIONAL { ?innerclause sh:in/(rdf:rest*/rdf:first)+ ?in ; }
+    OPTIONAL { ?innerclause sh:hasValue ?hasValue ; }
+    OPTIONAL { ?innerclause sh:class ?attributeclass ; }
+    OPTIONAL { ?innerclause sh:nodeKind ?nodekind ; }
+    OPTIONAL { ?innerclause sh:or/rdf:rest*/rdf:first ?dtShape  . ?dtShape sh:datatype ?datatype .}
+    OPTIONAL { ?innerclause sh:property/sh:or/rdf:rest*/rdf:first ?dtShape  . ?dtShape sh:datatype ?datatype .}
+    OPTIONAL { ?innerclause sh:datatype ?datatype ; }
 }
 GROUP BY ?nodeshape ?targetclass ?propertypath ?mincount ?maxcount ?attributeclass ?nodekind
-    ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode ?inheritedTargetclass ?property ?valuepath
+    ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode ?inheritedTargetclass ?property ?valuepath ?innerOr ?hasValue
+order by ?inheritedTargetclass
 order by ?inheritedTargetclass
 """  # noqa: E501   
 sql_check_relationship_base = """
