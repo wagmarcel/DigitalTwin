@@ -22,7 +22,7 @@ constraint_trigger_table_name = configs.constraint_trigger_table_name
 constraint_combination_table_name = configs.constraint_combination_table_name
 
 sparql_get_all_relationships = """
-SELECT ?nodeshape ?targetclass ?inheritedTargetclass ?propertypath ?mincount ?maxcount ?attributeclass ?severitycode ?property
+SELECT ?nodeshape ?targetclass ?inheritedTargetclass ?propertypath ?mincount ?maxcount ?attributeclass ?severitycode ?property ?innerOr
 where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?targetclass .
@@ -85,7 +85,6 @@ where {
 }
 GROUP BY ?nodeshape ?targetclass ?propertypath ?mincount ?maxcount ?attributeclass ?nodekind
     ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode ?inheritedTargetclass ?property ?valuepath ?innerOr ?hasValue
-order by ?inheritedTargetclass
 order by ?inheritedTargetclass
 """  # noqa: E501   
 sql_check_relationship_base = """
@@ -671,6 +670,7 @@ def translate(shaclefile, knowledgefile, prefixes):
     constraint_combination = []
     constraint_id_counter = 0
 
+    property_nodes = {}
     qres = g.query(sparql_get_all_relationships, initNs=prefixes)
     for row in qres:
         paths = get_full_path_of_shacl_property(g, row.property)
@@ -686,6 +686,9 @@ def translate(shaclefile, knowledgefile, prefixes):
             else None
         mincount = row.mincount.toPython() if row.mincount else 0
         maxcount = row.maxcount.toPython() if row.maxcount else None
+        property = row.property.toPython()
+        if (property, target_class) not in property_nodes.keys():
+            property_nodes[(property, target_class)] = []
         severitycode = row.severitycode.toPython() if row.severitycode \
             else 'warning'
         check['targetClass'] = target_class
@@ -708,6 +711,7 @@ def translate(shaclefile, knowledgefile, prefixes):
         combination['member_constraint_id'] = constraint_id_counter
         combination['target_constraint_id'] = None
         constraint_combination.append(combination)
+        property_nodes[(property, target_class)].append(constraint_id_counter)
         constraint_id_counter += 1
     # Get all NGSI-LD Properties
     qres = g.query(sparql_get_all_properties, initNs=prefixes)
@@ -726,6 +730,9 @@ def translate(shaclefile, knowledgefile, prefixes):
             else None
         mincount = row.mincount.toPython() if row.mincount else None
         maxcount = row.maxcount.toPython() if row.maxcount else None
+        property = row.property.toPython()
+        if (property, target_class) not in property_nodes.keys():
+            property_nodes[(property, target_class)] = []
         severitycode = row.severitycode.toPython() if row.severitycode \
             else 'warning'
         nodekind = row.nodekind if row.nodekind else None
@@ -790,14 +797,32 @@ def translate(shaclefile, knowledgefile, prefixes):
 string elements in list are supported.")
             check['ins'] = None
         constraint_checks.append(check)
-        
-        # Add Publish rule to direct publish it to alerts
-        combination = {}
-        combination['operation'] = 'PUBLISH'
-        combination['member_constraint_id'] = constraint_id_counter
-        combination['target_constraint_id'] = None
-        constraint_combination.append(combination)
+        property_nodes[(property, target_class)].append(constraint_id_counter)
         constraint_id_counter += 1
+
+    
+    for or_node in property_nodes.keys():
+        if len(property_nodes[or_node]) == 1:
+            constraint_id = property_nodes[or_node]
+            # Only single "OR" mean that this can be published directly
+            # Add Publish rule to direct publish it to alerts
+            combination = {}
+            combination['operation'] = 'PUBLISH'
+            combination['member_constraint_id'] = constraint_id
+            combination['target_constraint_id'] = None
+            constraint_combination.append(combination)
+        else:
+            target_constraint_id = constraint_id_counter
+            constraint_id_counter += 1
+            or_combination = {}
+            or_combination['operation'] = 'PUBLISH'
+            or_combination['member_constraint_id'] = target_constraint_id
+            or_combination['target_constraint_id'] = None
+            for id in property_nodes[or_node]:
+                combination = {}
+                combination['operation'] = 'OR'
+                combination['member_constraint_id'] = id
+                combination['target_constraint_id'] = target_constraint_id
     tables.append(configs.kafka_topic_ngsi_prefix_name)
     views.append(configs.kafka_topic_ngsi_prefix_name + "-view")
     sqlite += '\n'
