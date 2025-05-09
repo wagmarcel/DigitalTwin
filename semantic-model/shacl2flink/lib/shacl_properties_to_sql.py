@@ -137,8 +137,8 @@ sql_check_relationship_property_class = """
 
 sql_check_relationship_property_count = """
             {% set constraint_cond %}
-            NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER)
-                                            OR count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) < SQL_DIALECT_CAST(`minCount` AS INTEGER))
+            NOT edeleted AND (count(CASE WHEN NOT `adeleted` THEN 1 ELSE 0 END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER)
+                                            OR count(CASE WHEN NOT `adeleted` THEN 1 ELSE 0 END) < SQL_DIALECT_CAST(`minCount` AS INTEGER))
             {% endset %}
             SELECT this AS resource,
                 'CountConstraintComponent(' || `parentPath` || `propertyPath` || ')' AS event,
@@ -150,14 +150,14 @@ sql_check_relationship_property_count = """
                 CASE WHEN {{ constraint_cond }}
                     THEN
                         'Model validation for relationship ' || `propertyPath` || 'failed for ' || this || ' . Found ' ||
-                            SQL_DIALECT_CAST(count(CASE WHEN NOT IFNULL(adeleted, false) THEN link ELSE NULL END) AS STRING) || ' relationships instead of
+                            SQL_DIALECT_CAST(count(CASE WHEN NOT `adeleted` THEN 1 ELSE 0 END) AS STRING) || ' relationships instead of
                             [' || `minCount` || ', ' || `maxCount` || ']!'
                     ELSE 'All ok' END as `text`
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
             FROM A1 WHERE `minCount` is NOT NULL or `maxCount` is NOT NULL
-            group by this, edeleted, propertyPath, maxCount, minCount, severity
+            group by this, edeleted, propertyPath, maxCount, minCount, severity, constraint_id
 """  # noqa: E501
 
 sql_check_relationship_nodeType = """
@@ -223,7 +223,10 @@ WITH A1 AS (SELECT A.id as this,
 
 sql_check_property_count = """
 {% set constraint_cond%}
-NOT edeleted AND (count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER) OR  count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) < SQL_DIALECT_CAST(`minCount` AS INTEGER))
+NOT edeleted
+     AND ( count(CASE WHEN NOT `adeleted` THEN 1 ELSE 0 END) > CAST(`maxCount` AS INTEGER)
+        OR count(CASE WHEN NOT `adeleted` THEN 1 ELSE 0 END) < CAST(`minCount` AS INTEGER)
+         )
 {% endset %}
 SELECT this AS resource,
     'CountConstraintComponent(' || `parentPath` || `propertyPath` || ')' AS event,
@@ -233,14 +236,15 @@ SELECT this AS resource,
         THEN `severity`
         ELSE 'ok' END AS severity,
     CASE WHEN {{ constraint_cond }}
-        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '.  Found ' || SQL_DIALECT_CAST(count(CASE WHEN NOT IFNULL(adeleted, false) THEN attr_typ ELSE NULL END) AS STRING) || ' relationships instead of
+        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '.  Found ' ||
+                            SQL_DIALECT_CAST(count(CASE WHEN NOT `adeleted` THEN 1 ELSE 0 END) AS STRING) || ' relationships instead of
                             [' || IFNULL('[' || `minCount`, '[0') || IFNULL(`maxCount` || ']', '[') || '!'
         ELSE 'All ok' END as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
 FROM A1  WHERE `minCount` is NOT NULL or `maxCount` is NOT NULL
-group by this, typ, propertyPath, minCount, maxCount, severity, edeleted
+group by this, typ, propertyPath, minCount, maxCount, severity, edeleted, constraint_id
 """  # noqa: E501
 
 sql_check_property_iri_class = """
@@ -414,6 +418,76 @@ GROUP BY
   t.event;
 """  # noqa: E501
 
+
+sql_combine_or_into_alerts = """
+WITH
+  -- 1) How many members each OR-rule has
+  needed AS (
+    SELECT
+      target_constraint_id,
+      COUNT(*) AS needed_count
+    FROM
+      constraint_combination_table
+    WHERE
+      operation = 'OR'
+    GROUP BY
+      target_constraint_id
+  ),
+
+  -- 2) For each resource/target, find how many distinct members actually triggered
+  --    and collect their events
+  fired AS (
+    SELECT
+      t.resource,
+      comb.target_constraint_id,
+      nm.needed_count,
+      COUNT(DISTINCT t.constraint_id) AS fired_count,
+      {% if sqlite %}
+      -- SQLite: GROUP_CONCAT only takes one argument when DISTINCT
+      GROUP_CONCAT(DISTINCT t.event)      AS events
+      {% else %}
+      -- Calcite: LISTAGG without DISTINCT
+      LISTAGG(t.event, ',') 
+        WITHIN GROUP (ORDER BY t.event)   AS events
+      {% endif %}
+    FROM
+      constraint_trigger_table AS t
+    JOIN
+      constraint_combination_table AS comb
+      ON comb.member_constraint_id = t.constraint_id
+     AND comb.operation            = 'OR'
+    JOIN
+      needed AS nm
+      ON nm.target_constraint_id   = comb.target_constraint_id
+    WHERE
+      t.triggered = TRUE
+    GROUP BY
+      t.resource,
+      comb.target_constraint_id,
+      nm.needed_count
+    HAVING
+      COUNT(DISTINCT t.constraint_id) = nm.needed_count
+  )
+
+INSERT INTO constraint_trigger_table
+  (resource, event, constraint_id, triggered, severity, text, ts)
+SELECT
+  f.resource                             AS resource,
+  f.events                               AS event,
+  f.target_constraint_id                 AS constraint_id,
+  TRUE                                   AS triggered,
+  ct.severity                            AS severity,
+  'OR rule ' || f.target_constraint_id
+    || ' fired (' || f.fired_count
+    || '/' || f.needed_count || ')'      AS text,
+  CURRENT_TIMESTAMP                     AS ts
+FROM
+  fired AS f
+JOIN
+  constraint_table AS ct
+  ON ct.id = f.target_constraint_id
+;
+"""
 
 def create_relationship_sql():
     sql_command_yaml = Template(sql_check_relationship_base).render(
@@ -801,9 +875,9 @@ string elements in list are supported.")
         constraint_id_counter += 1
 
     
-    for or_node in property_nodes.keys():
-        if len(property_nodes[or_node]) == 1:
-            constraint_id = property_nodes[or_node]
+    for property_node in property_nodes.keys():
+        if len(property_nodes[property_node]) == 1:
+            constraint_id = property_nodes[property_node][0]
             # Only single "OR" mean that this can be published directly
             # Add Publish rule to direct publish it to alerts
             combination = {}
@@ -818,11 +892,14 @@ string elements in list are supported.")
             or_combination['operation'] = 'PUBLISH'
             or_combination['member_constraint_id'] = target_constraint_id
             or_combination['target_constraint_id'] = None
-            for id in property_nodes[or_node]:
+            constraint_combination.append(or_combination)
+            for id in property_nodes[property_node]:
                 combination = {}
                 combination['operation'] = 'OR'
                 combination['member_constraint_id'] = id
                 combination['target_constraint_id'] = target_constraint_id
+                constraint_combination.append(combination)
+
     tables.append(configs.kafka_topic_ngsi_prefix_name)
     views.append(configs.kafka_topic_ngsi_prefix_name + "-view")
     sqlite += '\n'
@@ -843,6 +920,20 @@ string elements in list are supported.")
     sql_command_sqlite, sql_command_yaml = create_property_sql()
     sqlite += sql_command_sqlite
     statementsets.append(sql_command_yaml)
+    
+    sql_command_yaml = Template(sql_combine_or_into_alerts).render(
+    alerts_bulk_table=alerts_bulk_table,
+    constraint_trigger_table=constraint_trigger_table_name,
+    constraint_combination_table=constraint_combination_table_name,
+    sqlite=False)
+    sql_command_sqlite = Template(sql_combine_or_into_alerts).render(
+    alerts_bulk_table=alerts_bulk_table,
+    constraint_trigger_table=constraint_trigger_table_name,
+    constraint_combination_table=constraint_combination_table_name,
+    sqlite=True)
+    statementsets.append(sql_command_yaml)
+    sqlite += sql_command_sqlite
+    sqlite += '\n'
     sql_command_yaml = Template(sql_insert_constraint_in_alerts).render(
     alerts_bulk_table=alerts_bulk_table,
     constraint_table=constraint_table_name,
