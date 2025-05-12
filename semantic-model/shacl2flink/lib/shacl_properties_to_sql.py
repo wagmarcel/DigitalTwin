@@ -137,8 +137,8 @@ sql_check_relationship_property_class = """
 
 sql_check_relationship_property_count = """
             {% set constraint_cond %}
-            NOT edeleted AND (count(CASE WHEN NOT `adeleted` THEN 1 ELSE 0 END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER)
-                                            OR count(CASE WHEN NOT `adeleted` THEN 1 ELSE 0 END) < SQL_DIALECT_CAST(`minCount` AS INTEGER))
+            NOT edeleted AND (COUNT(CASE WHEN NOT COALESCE(adeleted, FALSE) THEN link ELSE 0 END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER)
+                                            OR COUNT(CASE WHEN NOT COALESCE(adeleted, FALSE) THEN link ELSE 0 END) < SQL_DIALECT_CAST(`minCount` AS INTEGER))
             {% endset %}
             SELECT this AS resource,
                 'CountConstraintComponent(' || `parentPath` || `propertyPath` || ')' AS event,
@@ -150,7 +150,7 @@ sql_check_relationship_property_count = """
                 CASE WHEN {{ constraint_cond }}
                     THEN
                         'Model validation for relationship ' || `propertyPath` || 'failed for ' || this || ' . Found ' ||
-                            SQL_DIALECT_CAST(count(CASE WHEN NOT `adeleted` THEN 1 ELSE 0 END) AS STRING) || ' relationships instead of
+                            SQL_DIALECT_CAST(COUNT(CASE WHEN NOT COALESCE(adeleted, FALSE) THEN link ELSE 0 END) AS STRING) || ' relationships instead of
                             [' || `minCount` || ', ' || `maxCount` || ']!'
                     ELSE 'All ok' END as `text`
                 {%- if sqlite %}
@@ -364,11 +364,11 @@ FROM A1 where `ins` IS NOT NULL and `index` IS NOT NULL
 sql_check_literal_datatypes = """
 {% set constraint_cond%}
 NOT edeleted AND attr_typ IS NOT NULL AND
-        CASE WHEN (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#double%' AND `val` REGEXP '^(?=.*[\.eE])[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$')
-            OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#integer%' AND `val` REGEXP '^[+-]?\d+$')
-            OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#boolean%' AND `val` REGEXP '^(?i:true|false)$')
-            OR (propertyNodeType = '@json' AND json_valid(`val`))
-            OR (propertyNodeType = '@list' AND json_valid(`val`) AND json_type(`val`) = 'array') THEN false ELSE true END
+        CASE WHEN (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#double%' AND NOT `val` REGEXP '^(?=.*[\.eE])[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$')
+            OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#integer%' AND NOT `val` REGEXP '^[+-]?\d+$')
+            OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#boolean%' AND NOT `val` REGEXP '^(?i:true|false)$')
+            OR (propertyNodeType = '@json' AND NOT json_valid(`val`))
+            OR (propertyNodeType = '@list' AND NOT (json_valid(`val`) AND json_type(`val`) = 'array')) THEN true ELSE false END
 {% endset %}
 SELECT this AS resource,
  '{{constraintname}}(' || `parentPath` || `printPath` || ')' AS event,
@@ -395,13 +395,13 @@ SELECT
   CASE
     WHEN MAX(CASE WHEN t.triggered THEN 1 ELSE 0 END) = 1
       THEN MAX(t.severity)
-    ELSE 'OK'
+    ELSE 'ok'
   END                                AS severity,
   'customer'                        AS customer,
   CASE
     WHEN MAX(CASE WHEN t.triggered THEN 1 ELSE 0 END) = 1
       THEN MAX(t.text)
-    ELSE 'OK'
+    ELSE 'ok'
   END                                AS text
     {% if sqlite %}
     ,CURRENT_TIMESTAMP

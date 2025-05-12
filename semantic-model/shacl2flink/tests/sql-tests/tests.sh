@@ -14,6 +14,7 @@ for testdir in ${testdirs_constraints}; do
     echo Entering test ${testdir} in  ${KMS_CONSTRAINTS}
     KNOWLEDGE=knowledge.ttl
     SHACL=shacl.ttl
+    SHACL_NORMALIZED=shacl_normalized.ttl
     CONTEXT=context.jsonld
     pushd .
     cd $KMS_CONSTRAINTS/$testdir || break
@@ -21,7 +22,8 @@ for testdir in ${testdirs_constraints}; do
 
     python3 $TOOLDIR/create_rdf_table.py ${KNOWLEDGE}
     python3 $TOOLDIR/create_core_tables.py
-    python3 $TOOLDIR/create_sql_checks_from_shacl.py -c ${CONTEXT} ${SHACL} ${KNOWLEDGE} 
+    python3 $TOOLDIR/shacl_normalization.py ${SHACL} ${SHACL_NORMALIZED}
+    python3 $TOOLDIR/create_sql_checks_from_shacl.py -c ${CONTEXT} ${SHACL_NORMALIZED} ${KNOWLEDGE} 
 
     for model in $(ls model*.jsonld); do
         MODEL=$model
