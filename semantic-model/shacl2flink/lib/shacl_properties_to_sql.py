@@ -223,10 +223,8 @@ WITH A1 AS (SELECT A.id as this,
 
 sql_check_property_count = """
 {% set constraint_cond%}
-NOT edeleted
-     AND ( count(CASE WHEN NOT `adeleted` THEN 1 ELSE 0 END) > CAST(`maxCount` AS INTEGER)
-        OR count(CASE WHEN NOT `adeleted` THEN 1 ELSE 0 END) < CAST(`minCount` AS INTEGER)
-         )
+    NOT edeleted AND (COUNT(CASE WHEN NOT COALESCE(adeleted, FALSE) THEN attr_typ ELSE 0 END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER)
+                                    OR COUNT(CASE WHEN NOT COALESCE(adeleted, FALSE) THEN attr_typ ELSE 0 END) < SQL_DIALECT_CAST(`minCount` AS INTEGER))
 {% endset %}
 SELECT this AS resource,
     'CountConstraintComponent(' || `parentPath` || `propertyPath` || ')' AS event,

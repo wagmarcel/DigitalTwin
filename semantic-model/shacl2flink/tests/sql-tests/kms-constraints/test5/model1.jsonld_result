@@ -42,6 +42,7 @@
 'urn:workpiece:1','CountConstraintComponent(https://industry-fusion.com/types/v0.9/material)','ok'
 'urn:workpiece:1','CountConstraintComponent(https://industry-fusion.com/types/v0.9/qualityCheck)','warning'
 'urn:workpiece:1','CountConstraintComponent(https://schema.org/depth)','ok'
+'urn:workpiece:1','DatatypeConstraintComponent(https://industry-fusion.com/types/v0.9/material[0])','ok'
 'urn:workpiece:1','MaxInclusiveConstraintComponent(https://schema.org/depth[0])','ok'
 'urn:workpiece:1','MaxLengthConstraintComponent(https://industry-fusion.com/types/v0.9/material[0])','ok'
 'urn:workpiece:1','MinExclusiveConstraintComponent(https://schema.org/depth[0])','ok'
