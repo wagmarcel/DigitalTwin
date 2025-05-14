@@ -190,6 +190,7 @@ WITH A1 AS (SELECT A.id as this,
                    COALESCE(E.`nodeType`, B.`nodeType`) as nodeType,
                    COALESCE(E.`type`, B.`type`) as attr_typ,
                    COALESCE(E.`deleted`, B.`deleted`) as `adeleted`,
+                   COALESCE(E.`valueType`, B.`valueType`) as `valueType`,
                    C.subject as foundVal,
                    C.object as foundClass,
                    COALESCE(E.`datasetId`, B.`datasetId`) as `index`,
@@ -362,11 +363,17 @@ FROM A1 where `ins` IS NOT NULL and `index` IS NOT NULL
 sql_check_literal_datatypes = """
 {% set constraint_cond%}
 NOT edeleted AND attr_typ IS NOT NULL AND
-        CASE WHEN (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#double%' AND NOT `val` REGEXP '^(?=.*[\.eE])[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$')
-            OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#integer%' AND NOT `val` REGEXP '^[+-]?\d+$')
-            OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#boolean%' AND NOT `val` REGEXP '^(?i:true|false)$')
-            OR (propertyNodeType = '@json' AND NOT json_valid(`val`))
-            OR (propertyNodeType = '@list' AND NOT (json_valid(`val`) AND json_type(`val`) = 'array')) THEN true ELSE false END
+        CASE WHEN ( (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#double%' OR 
+                         datatypes LIKE '%http://www.w3.org/2001/XMLSchema#boolean%' OR 
+                         datatypes LIKE '%http://www.w3.org/2001/XMLSchema#integer%' OR
+                         datatypes LIKE '%http://www.w3.org/2001/XMLSchema#string%')
+                    AND ((datatypes LIKE '%http://www.w3.org/2001/XMLSchema#double%' AND `val` REGEXP '^(?=.*[\.eE])[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$')
+                         OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#integer%' AND `val` REGEXP '^[+-]?\d+$')
+                         OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#boolean%' AND `val` REGEXP '^(?i:true|false)$')
+                         OR valueType LIKE '%' || dataTypes || '%'
+                         )
+                         OR (propertyNodeType = '@json' AND json_valid(`val`))
+                         OR (propertyNodeType = '@list' AND json_valid(`val`) AND json_type(`val`) = 'array')) THEN false ELSE true END
 {% endset %}
 SELECT this AS resource,
  '{{constraintname}}(' || `parentPath` || `printPath` || ')' AS event,
@@ -374,12 +381,18 @@ SELECT this AS resource,
     CASE WHEN {{ constraint_cond }} THEN true ELSE false END as triggered,
     CASE WHEN {{ constraint_cond }} THEN `severity` ELSE 'ok' END AS severity,
     CASE WHEN {{ constraint_cond }}
-            THEN 'Datatype check failed. "' || `val` || '" does not fit to datatypes "' || `datatypes` || '" or property node type "' || `propertyNodeType` || '".' 
+            THEN 'Datatype check failed. "' || CASE WHEN `datatypes` is NULL THEN '"' || `val` || '" does not fit to '  ELSE `val` 
+                                            || '" does not fit to datatypes "' 
+                                            || `datatypes` 
+                                            || '" or ' END 
+                                            || 'property node type "' 
+                                            || `propertyNodeType` 
+                                            || '".' 
         ELSE 'All ok' END as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1 where `datatypes` IS NOT NULL and `index` IS NOT NULL AND `propertyNodeType` IN ('@value', '@list', '@json') 
+FROM A1 where `index` IS NOT NULL AND `propertyNodeType` IN ('@value', '@list', '@json') 
 """  # noqa: E501
 
 
@@ -792,7 +805,7 @@ def translate(shaclefile, knowledgefile, prefixes):
         if len(paths) > MAX_SUBPROPERTY_DEPTH +1:
             print(f"Warning, subproperty depth {len(paths)} not supported in paths {paths}")
             continue
-        check = {}
+        check = utils.init_constraint_check()
         nodeshape = row.nodeshape.toPython()
         target_class = row.inheritedTargetclass.toPython() \
             if row.targetclass else None
@@ -891,6 +904,15 @@ string elements in list are supported.")
             or_combination['member_constraint_id'] = target_constraint_id
             or_combination['target_constraint_id'] = None
             constraint_combination.append(or_combination)
+            check = utils.init_constraint_check()
+            severity_id = None
+            if len(property_nodes[property_node]) > 0:
+                severity_id = property_nodes[property_node][0]
+            # We take severity of first object for now
+            severity_object = next((d for d in constraint_checks if d.get('id') == severity_id), None)
+            check['id'] = target_constraint_id
+            check['severity'] = severity_object['severity']
+            constraint_checks.append(check)
             for id in property_nodes[property_node]:
                 combination = {}
                 combination['operation'] = 'OR'

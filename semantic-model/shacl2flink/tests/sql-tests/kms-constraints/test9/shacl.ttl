@@ -16,7 +16,6 @@
     sh:property [ sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:BlankNode ;
-            sh:order 10 ;
             sh:path iffBaseEntities:hasDouble ;
             sh:property [ sh:maxCount 1 ;
                     sh:minCount 1 ;
@@ -26,7 +25,6 @@
             [ sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:BlankNode ;
-            sh:order 10 ;
             sh:path iffBaseEntities:hasInteger ;
             sh:property [ sh:maxCount 1 ;
                     sh:minCount 1 ;
@@ -36,7 +34,6 @@
             [ sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:BlankNode ;
-            sh:order 10 ;
             sh:path iffBaseEntities:hasIntegerOrDouble ;
             sh:property [ sh:maxCount 1 ;
                     sh:minCount 1 ;
@@ -46,17 +43,15 @@
                 [ sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:BlankNode ;
-            sh:order 10 ;
             sh:path iffBaseEntities:hasBoolean ;
             sh:property [ sh:maxCount 1 ;
                     sh:minCount 1 ;
-                    sh:datatype xsd:integer;
+                    sh:datatype xsd:boolean;
                     sh:nodeKind sh:Literal ;
                     sh:path ngsild:hasValue ] ],
             [ sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:BlankNode ;
-            sh:order 10 ;
             sh:path iffBaseEntities:hasString ;
             sh:property [ sh:maxCount 1 ;
                     sh:minCount 1 ;
@@ -66,7 +61,6 @@
             [ sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:BlankNode ;
-            sh:order 10 ;
             sh:path iffBaseEntities:hasJSON ;
             sh:property [ sh:maxCount 1 ;
                     sh:minCount 1 ;
@@ -76,7 +70,6 @@
             [ sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:BlankNode ;
-            sh:order 10 ;
             sh:path iffBaseEntities:hasList ;
            sh:property [ sh:maxCount 1 ;
                     sh:minCount 1 ;
