@@ -212,6 +212,7 @@ WITH A1 AS (SELECT A.id as this,
                    D.`pattern` as `pattern`,
                    D.ins as ins,
                    D.datatypes as datatypes,
+                   D.hasValue as hasValue,
                    D.id as constraint_id
                    FROM `{{target_class}}_view` AS A JOIN {{constraint_table}} as D ON A.`type` = D.targetClass
             LEFT JOIN attributes_view AS B ON D.propertyPath = B.name and B.entityId = A.id and B.parentId IS NULL
@@ -395,6 +396,45 @@ SELECT this AS resource,
 FROM A1 where `index` IS NOT NULL AND `propertyNodeType` IN ('@value', '@list', '@json') 
 """  # noqa: E501
 
+
+sql_check_literal_hasvalue = """
+{% set constraint_cond %}
+  /* only non-deleted entities with a value present */
+  NOT edeleted
+  AND attr_typ IS NOT NULL
+  /* and the actual value ≠ the required hasValue constant */
+  AND CASE WHEN `valueType` = 'http://www.w3.org/2001/XMLSchema#double' THEN SQL_DIALECT_CAST(val as DOUBLE) <> SQL_DIALECT_CAST(hasValue as DOUBLE)
+    WHEN `valueType` = 'http://www.w3.org/2001/XMLSchema#integer' THEN SQL_DIALECT_CAST(val as INTEGER) <> SQL_DIALECT_CAST(hasValue as INTEER)
+    WHEN `valueType` = 'http://www.w3.org/2001/XMLSchema#boolean' THEN SQL_DIALECT_CAST(val as BOOLEAN) <> SQL_DIALECT_CAST(hasValue as BOOLEAN)
+    ELSE `val` <> `hasValue`END
+{% endset %}
+  SELECT this           AS resource,
+  'HasValueConstraintComponent('
+    || parentPath
+    || propertyPath
+    || ')'         AS event,
+  `constraint_id` as constraint_id,
+  CASE WHEN {{ constraint_cond }} THEN TRUE ELSE FALSE END  AS triggered,
+  CASE WHEN {{ constraint_cond }} THEN `severity` ELSE 'ok' END AS severity,
+  CASE
+    WHEN {{ constraint_cond }}
+    THEN
+      'Model validation for Property '
+      || propertyPath
+      || ' failed for '
+      || this
+      || '. Value "'
+      || val
+      || '" does not match required "'
+      || hasValue
+      || '".'
+    ELSE 'All ok'
+  END AS text
+  {% if sqlite %}, CURRENT_TIMESTAMP{% endif %}
+FROM A1
+
+WHERE hasValue IS NOT NULL AND `index` IS NOT NULL 
+"""
 
 sql_insert_constraint_in_alerts = """
 INSERT {% if sqlite %} OR REPlACE{% endif %} INTO {{alerts_bulk_table}}
@@ -722,6 +762,18 @@ def create_property_sql():
         constraintname="DatatypeConstraintComponent",
         sqlite=True
     )
+    sql_command_sqlite = utils.process_sql_dialect(sql_command_sqlite, True)
+    sql_command_yaml = utils.process_sql_dialect(sql_command_yaml, False)
+    sql_command_yaml += "\nUNION ALL"
+    sql_command_sqlite += "\nUNION ALL"
+    sql_command_yaml += Template(sql_check_literal_hasvalue).render(
+        constraintname="DatatypeConstraintComponent",
+        sqlite=False
+    )
+    sql_command_sqlite += Template(sql_check_literal_hasvalue).render(
+        constraintname="DatatypeConstraintComponent",
+        sqlite=True
+    )
     sql_command_sqlite += ";"
     sql_command_yaml += ";"
     sql_command_sqlite = utils.process_sql_dialect(sql_command_sqlite, True)
@@ -839,6 +891,8 @@ def translate(shaclefile, knowledgefile, prefixes):
         pattern = row.pattern.toPython() if row.pattern is not None else None
         ins = row.ins.toPython() if str(row.ins) != '' else None
         datatypes = row.datatypes.toPython() if str(row.datatypes) != '' else None
+        hasValue = row.hasValue.toPython() if row.hasValue is not None else None
+
         check['targetClass'] = target_class
         if len(paths) >= 2:
             check['subpropertyPath'] = property_path
@@ -861,6 +915,8 @@ def translate(shaclefile, knowledgefile, prefixes):
         elif valuepath == NGSILD['hasValueList']:
             check['attributeType'] = 'https://uri.etsi.org/ngsi-ld/ListProperty'
             check['propertyNodetype'] = '@list'
+            if hasValue:
+                hasValue = utils.rdf_list_to_pylist(g, hasValue)
         check['maxCount'] = maxcount
         check['minCount'] = mincount
         check['severity'] = severitycode
@@ -873,6 +929,7 @@ def translate(shaclefile, knowledgefile, prefixes):
         check['pattern'] = pattern
         check['ins'] = ins
         check['datatypes'] = datatypes
+        check['hasValue'] = hasValue
         check['id'] = constraint_id_counter
         ins_is_broken = False
         if ins:

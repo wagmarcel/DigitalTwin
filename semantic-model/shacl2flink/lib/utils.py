@@ -66,7 +66,8 @@ constraint_table = [
     {"maxLength": "STRING"},
     {"pattern": "STRING"},
     {"ins": "STRING"},
-    {"datatypes": "STRING"}
+    {"datatypes": "STRING"},
+    {"hasValue": "STRING"}
 ]
 
 constraint_trigger_table_primary_key = ["resource", "constraint_id", "event"]
@@ -699,6 +700,7 @@ def init_constraint_check():
     check["pattern"] = None
     check["ins"] = None
     check["datatypes"] = None
+    check["hasValue"] = None
     return check
 
 # This creates a transitive closure of all OWL.TransitiveProperty elements given in the ontology

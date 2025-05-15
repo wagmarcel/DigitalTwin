@@ -23,8 +23,10 @@ for testdir in ${testdirs_constraints}; do
     python3 $TOOLDIR/create_rdf_table.py ${KNOWLEDGE}
     python3 $TOOLDIR/create_core_tables.py
     python3 $TOOLDIR/shacl_normalization.py ${SHACL} ${SHACL_NORMALIZED}
+    echo so far so good
+    echo now executing $TOOLDIR/create_sql_checks_from_shacl.py -c ${CONTEXT} ${SHACL_NORMALIZED} ${KNOWLEDGE} 
     python3 $TOOLDIR/create_sql_checks_from_shacl.py -c ${CONTEXT} ${SHACL_NORMALIZED} ${KNOWLEDGE} 
-
+    echo Done Generic, now iterating
     for model in $(ls model*.jsonld); do
         MODEL=$model
         DATABASE=$OUTPUTDIR/database.db
