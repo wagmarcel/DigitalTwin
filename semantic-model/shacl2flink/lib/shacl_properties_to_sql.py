@@ -381,7 +381,7 @@ SELECT this AS resource,
     CASE WHEN {{ constraint_cond }} THEN true ELSE false END as triggered,
     CASE WHEN {{ constraint_cond }} THEN `severity` ELSE 'ok' END AS severity,
     CASE WHEN {{ constraint_cond }}
-            THEN 'Datatype check failed. "' || CASE WHEN `datatypes` is NULL THEN '"' || `val` || '" does not fit to '  ELSE `val` 
+            THEN 'Datatype check failed. ' || CASE WHEN `datatypes` is NULL THEN '"' || `val` || '" does not fit to '  ELSE '"' || `val` 
                                             || '" does not fit to datatypes "' 
                                             || `datatypes` 
                                             || '" or ' END 
@@ -455,11 +455,14 @@ WITH
       COUNT(DISTINCT t.constraint_id) AS fired_count,
       {% if sqlite %}
       -- SQLite: GROUP_CONCAT only takes one argument when DISTINCT
-      GROUP_CONCAT(DISTINCT t.event)      AS events
+      GROUP_CONCAT(DISTINCT t.event)      AS events,
+      GROUP_CONCAT(DISTINCT t.text)      AS texts
       {% else %}
       -- Calcite: LISTAGG without DISTINCT
       LISTAGG(t.event, ',') 
-        WITHIN GROUP (ORDER BY t.event)   AS events
+        WITHIN GROUP (ORDER BY t.event)   AS events,
+    LISTAGG(t.text, ' OR ') 
+        WITHIN GROUP (ORDER BY t.text)   AS texts
       {% endif %}
     FROM
       constraint_trigger_table AS t
@@ -489,8 +492,7 @@ SELECT
   TRUE                                   AS triggered,
   ct.severity                            AS severity,
   'OR rule ' || f.target_constraint_id
-    || ' fired (' || f.fired_count
-    || '/' || f.needed_count || ')'      AS text,
+    || ' fired (' || f.texts || ')'      AS text,
   CURRENT_TIMESTAMP                     AS ts
 FROM
   fired AS f

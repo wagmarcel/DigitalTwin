@@ -19,7 +19,8 @@ import re
 import rdflib
 from urllib.parse import urlparse
 from enum import Enum
-from rdflib import Graph, RDFS, RDF, OWL, XSD, Literal, SH, Namespace
+from rdflib import Graph, RDFS, RDF, OWL, XSD, Literal, SH, Namespace, BNode
+from rdflib.collection import Collection
 from collections import deque
 from lib.configs import constraint_table_name, constraint_trigger_table_name, constraint_combination_table_name
 
@@ -763,3 +764,25 @@ def transitive_closure(g):
                 closure_graph.add((bag, RDFS.member, Literal(member, datatype=XSD.string)))
 
     return closure_graph
+
+
+def rdf_list_to_pylist(graph, head):
+    """
+    Recursively convert an RDF Collection (starting at `head`) 
+    into a Python list. If an element is itself a blank‐node list,
+    recurse; otherwise, convert Literals/URIs to str.
+    """
+    py_list = []
+    col = Collection(graph, head)
+    for item in col:
+        if isinstance(item, BNode) and (item, RDF.first, None) in graph:
+            # nested list
+            py_list.append(rdf_list_to_pylist(graph, item))
+        else:
+            # leaf node: Literal or URIRef
+            if isinstance(item, Literal):
+                py_list.append(item.toPython())
+            else:
+                # you can choose .n3(), .toPython(), or str(item) for URIs
+                py_list.append(str(item))
+    return py_list

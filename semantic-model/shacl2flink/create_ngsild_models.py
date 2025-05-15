@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from rdflib import Graph, BNode, XSD
+from rdflib import Graph, BNode, XSD, Literal
 import os
 import sys
 import argparse
@@ -195,7 +195,8 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                     if isinstance(valueType, str):
                         valueType = XSD.string
             elif str(type) == 'https://uri.etsi.org/ngsi-ld/ListProperty':
-                attributeValue = nullify(hasValueList)
+                py_list = utils.rdf_list_to_pylist(attributes_model, hasValueList)
+                attributeValue = nullify(Literal(str(py_list)))
                 nodeType = '@list'
             elif str(type) == 'https://uri.etsi.org/ngsi-ld/JsonProperty':
                 attributeValue = nullify(hasJSON)
