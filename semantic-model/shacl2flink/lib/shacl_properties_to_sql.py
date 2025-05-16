@@ -373,7 +373,7 @@ NOT edeleted AND attr_typ IS NOT NULL AND
                          OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#boolean%' AND `val` REGEXP '^(?i:true|false)$')
                          OR valueType LIKE '%' || dataTypes || '%'
                          )
-                         OR (propertyNodeType = '@json' AND json_valid(`val`))
+                         OR (propertyNodeType = '@json' AND CASE WHEN json_valid(`val`) AND json_type(`val`) = 'object' THEN 1 ELSE 0 END)
                          OR (propertyNodeType = '@list' AND json_valid(`val`) AND json_type(`val`) = 'array')) THEN false ELSE true END
 {% endset %}
 SELECT this AS resource,
@@ -891,7 +891,7 @@ def translate(shaclefile, knowledgefile, prefixes):
         pattern = row.pattern.toPython() if row.pattern is not None else None
         ins = row.ins.toPython() if str(row.ins) != '' else None
         datatypes = row.datatypes.toPython() if str(row.datatypes) != '' else None
-        hasValue = row.hasValue.toPython() if row.hasValue is not None else None
+        hasValue = row.hasValue if row.hasValue is not None else None
 
         check['targetClass'] = target_class
         if len(paths) >= 2:
@@ -909,9 +909,13 @@ def translate(shaclefile, knowledgefile, prefixes):
             check['propertyNodetype'] = None
         if valuepath == NGSILD['hasValue']:
             check['attributeType'] = 'https://uri.etsi.org/ngsi-ld/Property'
+            if hasValue is not None:
+                hasValue = hasValue.toPython()
         elif valuepath == NGSILD['hasJSON']:
             check['attributeType'] = 'https://uri.etsi.org/ngsi-ld/JsonProperty'
             check['propertyNodetype'] = '@json'
+            if hasValue is not None:
+                hasValue = hasValue.toPython()
         elif valuepath == NGSILD['hasValueList']:
             check['attributeType'] = 'https://uri.etsi.org/ngsi-ld/ListProperty'
             check['propertyNodetype'] = '@list'

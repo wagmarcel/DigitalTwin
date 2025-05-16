@@ -774,6 +774,10 @@ def rdf_list_to_pylist(graph, head):
     into a Python list. If an element is itself a blank‐node list,
     recurse; otherwise, convert Literals/URIs to str.
     """
+    if not isinstance(head, BNode) and head != RDF.nil:
+        # allow returning of potentially wrong list elements to allow
+        # debugging
+        return head
     py_list = []
     col = Collection(graph, head)
     for item in col:
