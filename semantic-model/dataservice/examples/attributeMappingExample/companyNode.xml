@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UANodeSet xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet">
+  <!-- 1) Namespace and Model metadata -->
+  <NamespaceUris>
+    <Uri>http://mycompany.com/UA/RawData/</Uri>
+  </NamespaceUris>
+  <Models>
+    <Model ModelUri="http://mycompany.com/UA/RawData/"
+           Version="1.0.0"
+           PublicationDate="2025-05-18T00:00:00Z"/>
+  </Models>
+
+  <!-- 2) Define a new ObjectType: RawDataType -->
+  <UAObjectType NodeId="ns=1;i=1001" BrowseName="1:RawDataType">
+    <DisplayName>RawDataType</DisplayName>
+    <References>
+      <!-- Inherit from BaseObjectType (i=58) -->
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+    </References>
+  </UAObjectType>
+
+  <!-- 3) Instantiate one Object of that type -->
+  <UAObject NodeId="ns=1;i=1101" BrowseName="1:RawData1">
+    <DisplayName>RawData1</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="false">ns=1;i=1001</Reference>
+    </References>
+  </UAObject>
+
+  <!-- 4) Three Variables as components of RawData1 -->
+  <UAVariable NodeId="ns=1;i=2001"
+               BrowseName="1:TemperatureF"
+               DataType="Double"
+               ValueRank="-1">
+    <DisplayName>TemperatureF</DisplayName>
+    <References>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1101</Reference>
+    </References>
+  </UAVariable>
+
+  <UAVariable NodeId="ns=1;i=2002"
+               BrowseName="1:StatusCode"
+               DataType="Int32"
+               ValueRank="-1">
+    <DisplayName>StatusCode</DisplayName>
+    <References>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1101</Reference>
+    </References>
+  </UAVariable>
+
+  <UAVariable NodeId="ns=1;i=2003"
+               BrowseName="1:ModeString"
+               DataType="String"
+               ValueRank="-1">
+    <DisplayName>ModeString</DisplayName>
+    <References>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1101</Reference>
+    </References>
+  </UAVariable>
+</UANodeSet>
