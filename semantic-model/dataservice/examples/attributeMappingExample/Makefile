@@ -167,16 +167,22 @@ PACKML_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY)
 PACKML_OPTS          = -p packml
 
 # COMPANY-SPECIFICATION
-
 COMPANY_SPECIFICATION_NODESET_URL	= company_specification.xml
 COMPANY_SPECIFICATION_ONTOLOGY 		= company_specification.ttl
 COMPANY_SPECIFICATION_DEPENDENCIES	= $(BASE_ONTOLOGY) $(CORE_ONTOLOGY)
 COMPANY_SPECIFICATION_OPTS 			= -p company_specification
 
+# IFF-Mapping
+IFFMAPPING_NODESET_URL	= iffmapping.xml
+IFFMAPPING_ONTOLOGY		= iffmapping.ttl
+IFFMAPPING_DEPENDENCIES	= $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(COMPANY_SPECIFICATION_ONTOLOGY)
+IFFMAPPING_OPTS			= -p iffmapping
+
+
 # -----------------------------------------------------------------------------
 # List of all target files to be built.
 # -----------------------------------------------------------------------------
-TARGET_NAMES = CORE COMPANY_SPECIFICATION
+TARGET_NAMES = CORE COMPANY_SPECIFICATION IFFMAPPING
 
 ALL_TARGETS = $(foreach t, $(TARGET_NAMES), $($(t)_ONTOLOGY))
 
