@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:uax="http://opcfoundation.org/UA/2008/02/Types.xsd" xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <!-- 1) Namespace and Model metadata -->
   <NamespaceUris>
+    <Uri>http://mycompany.com/UA/Binding/</Uri>
+    <Uri>https://industry-fusion.org/UA/Mapping/</Uri>
     <Uri>http://mycompany.com/UA/RawData/</Uri>
   </NamespaceUris>
   <Models>
-    <Model ModelUri="http://mycompany.com/UA/RawData/"
-           ModelVersion="1.0.0"
+    <Model ModelUri="http://mycompany.com/UA/Binding/"
+           Version="1.0.0"
            PublicationDate="2025-05-18T00:00:00Z"/>
   </Models>
   <Aliases>
@@ -58,53 +59,72 @@
     <Alias Alias="HasInterface">i=17603</Alias>
   </Aliases>
 
-  <!-- 2) Define a new ObjectType: RawDataType -->
-  <UAObjectType NodeId="ns=1;i=1001" BrowseName="1:RawDataType">
-    <DisplayName>RawDataType</DisplayName>
+  <!-- Objects exposed to the IFFMappingsFolder -->
+  <UAObjectType NodeId="ns=1;i=1001" BrowseName="Attribute_Temperature">
+    <DisplayName>Attribute_Temperature</DisplayName>
     <References>
-      <!-- Inherit from BaseObjectType (i=58) -->
-      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasSubtype" IsForward="false">ns=2;i=1001</Reference>
+      <Reference ReferenceType="Organizes" IsForward="false">ns=2;i=42</Reference>
     </References>
   </UAObjectType>
 
-  <!-- 3) Instantiate one Object of that type -->
-  <UAObject NodeId="ns=1;i=1101" BrowseName="1:RawData1">
-    <DisplayName>RawData1</DisplayName>
-    <References>
-      <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1001</Reference>
-    </References>
-  </UAObject>
-
-  <!-- 4) Three Variables as components of RawData1 -->
-  <UAVariable NodeId="ns=1;i=2001"
-               BrowseName="1:TemperatureF"
-               DataType="Double"
+ <!-- Variables -->
+    <UAVariable NodeId="ns=1;i=2001"
+               BrowseName="1:LogicExpression"
+               DataType="String"
                ValueRank="-1">
-    <DisplayName>TemperatureF</DisplayName>
+    <DisplayName>LogicExpression</DisplayName>
     <References>
-      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1101</Reference>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1001</Reference>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
     </References>
+    <Value>
+      <uax:String> "WHERE {BIND ((?var1 - 32)/9 * 5) as ?value}" </uax:String>
+    </Value>
   </UAVariable>
 
   <UAVariable NodeId="ns=1;i=2002"
-               BrowseName="1:StatusCode"
-               DataType="Int32"
+               BrowseName="1:AttributeName"
+               DataType="String"
                ValueRank="-1">
-    <DisplayName>StatusCode</DisplayName>
+    <DisplayName>AttributeName</DisplayName>
     <References>
-      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1101</Reference>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1001</Reference>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+    </References>
+    <Value>
+      <uax:String> "http://www.industry-fusion.org/schema#Temperature" </uax:String>
+    </Value>
+  </UAVariable>
+
+  <UAVariable NodeId="ns=1;i=2004"
+               BrowseName="1:NGSILDAttributeType"
+               DataType="String"
+               ValueRank="-1">
+    <DisplayName>NGSILDAttributeType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1001</Reference>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
     </References>
   </UAVariable>
 
-  <UAVariable NodeId="ns=1;i=2003"
-               BrowseName="1:ModeString"
+    <UAVariable NodeId="ns=1;i=2005"
+               BrowseName="1:LogicVariable"
                DataType="String"
                ValueRank="-1">
-    <DisplayName>ModeString</DisplayName>
+    <DisplayName>LogicVariable</DisplayName>
     <References>
-      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1101</Reference>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1003</Reference>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+    </References>
+  </UAVariable>
+    <UAVariable NodeId="ns=1;i=2005"
+               BrowseName="1:LogicVariable"
+               DataType="String"
+               ValueRank="-1">
+    <DisplayName>LogicVariable</DisplayName>
+    <References>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=3001</Reference>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
     </References>
   </UAVariable>

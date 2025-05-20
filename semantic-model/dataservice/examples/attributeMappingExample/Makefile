@@ -178,11 +178,16 @@ IFFMAPPING_ONTOLOGY		= iffmapping.ttl
 IFFMAPPING_DEPENDENCIES	= $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(COMPANY_SPECIFICATION_ONTOLOGY)
 IFFMAPPING_OPTS			= -p iffmapping
 
+# Company-Bindings
+COMPANY_BINDINGS_NODESET_URL 	= company_bindings.xml
+COMPANY_BINDINGS_ONTOLOGY 		= company_bindings.ttl
+COMPANY_BINDINGS_DEPENDENCIES 	= $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(COMPANY_SPECIFICATION_ONTOLOGY) $(IFFMAPPING_ONTOLOGY)
+COMPANY_BINDINGS_OPTS 			= -p company_bindings
 
 # -----------------------------------------------------------------------------
 # List of all target files to be built.
 # -----------------------------------------------------------------------------
-TARGET_NAMES = CORE COMPANY_SPECIFICATION IFFMAPPING
+TARGET_NAMES = CORE COMPANY_SPECIFICATION IFFMAPPING COMPANY_BINDINGS
 
 ALL_TARGETS = $(foreach t, $(TARGET_NAMES), $($(t)_ONTOLOGY))
 
