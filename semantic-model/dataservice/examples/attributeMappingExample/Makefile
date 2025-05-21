@@ -207,7 +207,7 @@ all: $(ALL_TARGETS)
 #
 #   are used in the command line.
 # -----------------------------------------------------------------------------
-%.ttl:
+%.ttl: %.xml
 	@echo "Creating $@"
 	$(eval NAME := $(shell echo $* | tr a-z A-Z))
 	python3 $(NODESET2OWL) $($(NAME)_NODESET_URL) -i $($(NAME)_DEPENDENCIES) $($(NAME)_OPTS) -o $@
