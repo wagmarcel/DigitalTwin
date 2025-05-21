@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:uax="http://opcfoundation.org/UA/2008/02/Types.xsd" xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <NamespaceUris>
-    <Uri>http://mycompany.com/UA/Binding/</Uri>
+    <Uri>http://mycompany.com/UA/IFFBinding/</Uri>
     <Uri>https://industry-fusion.org/UA/Mapping/</Uri>
-    <Uri>http://mycompany.com/UA/RawData/</Uri>
+    <Uri>http://mycompany.com/UA/StandardModel/</Uri>
   </NamespaceUris>
   <Models>
-    <Model ModelUri="http://mycompany.com/UA/Binding/"
+    <Model ModelUri="http://mycompany.com/UA/IFFBinding/"
            Version="1.0.0"
            PublicationDate="2025-05-18T00:00:00Z"/>
   </Models>
@@ -73,7 +73,7 @@
     <DisplayName>AttributeParameter</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition">ns=2;i=1003</Reference>
-      <Reference ReferenceType="ns=2;i=1002">ns=2;i=2001</Reference>
+      <Reference ReferenceType="ns=2;i=1002">ns=3;i=2001</Reference>
     </References>
   </UAObject>
 

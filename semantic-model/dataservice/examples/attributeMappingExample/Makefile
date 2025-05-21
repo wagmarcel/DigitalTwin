@@ -22,6 +22,12 @@
 # -----------------------------------------------------------------------------
 NODESET_VERSION := UA-1.05.03-2023-12-15
 NODESET2OWL = ../../../opcua/nodeset2owl.py
+EXTRACTTYPE = ../../../opcua/extractType.py
+
+INSTANCE_TYPE           := http://mycompany.com/UA/StandardModel/StandardDataObjectType
+INSTANCE_NS_PREFIX      := http://demo.machine/
+
+
 
 CORE_NODESET              := https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/$(NODESET_VERSION)/Schema/Opc.Ua.NodeSet2.xml
 CORE_SERVICES_NODESET     := https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/$(NODESET_VERSION)/Schema/Opc.Ua.NodeSet2.Services.xml
@@ -167,33 +173,34 @@ PACKML_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY)
 PACKML_OPTS          = -p packml
 
 # COMPANY-SPECIFICATION
-COMPANY_SPECIFICATION_NODESET_URL	= company_specification.xml
-COMPANY_SPECIFICATION_ONTOLOGY 		= company_specification.ttl
-COMPANY_SPECIFICATION_DEPENDENCIES	= $(BASE_ONTOLOGY) $(CORE_ONTOLOGY)
-COMPANY_SPECIFICATION_OPTS 			= -p company_specification
+COMPANY_STANDARDMODEL_NODESET_URL	= company_standardmodel.xml
+COMPANY_STANDARDMODEL_ONTOLOGY 		= company_standardmodel.ttl
+COMPANY_STANDARDMODEL_DEPENDENCIES	= $(BASE_ONTOLOGY) $(CORE_ONTOLOGY)
+COMPANY_STANDARDMODEL_OPTS 			= -p company_standardmodel
 
 # IFF-Mapping
 IFFMAPPING_NODESET_URL	= iffmapping.xml
 IFFMAPPING_ONTOLOGY		= iffmapping.ttl
-IFFMAPPING_DEPENDENCIES	= $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(COMPANY_SPECIFICATION_ONTOLOGY)
+IFFMAPPING_DEPENDENCIES	= $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(COMPANY_STANDARDMODEL_ONTOLOGY)
 IFFMAPPING_OPTS			= -p iffmapping
 
 # Company-Bindings
-COMPANY_BINDINGS_NODESET_URL 	= company_bindings.xml
-COMPANY_BINDINGS_ONTOLOGY 		= company_bindings.ttl
-COMPANY_BINDINGS_DEPENDENCIES 	= $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(COMPANY_SPECIFICATION_ONTOLOGY) $(IFFMAPPING_ONTOLOGY)
-COMPANY_BINDINGS_OPTS 			= -p company_bindings
+COMPANY_IFFBINDINGS_NODESET_URL 	= company_iffbindings.xml
+COMPANY_IFFBINDINGS_ONTOLOGY 		= company_iffbindings.ttl
+COMPANY_IFFBINDINGS_DEPENDENCIES 	= $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(COMPANY_STANDARDMODEL_ONTOLOGY) $(IFFMAPPING_ONTOLOGY)
+COMPANY_IFFBINDINGS_OPTS 			= -p company_iffbindings
 
 # -----------------------------------------------------------------------------
 # List of all target files to be built.
 # -----------------------------------------------------------------------------
-TARGET_NAMES = CORE COMPANY_SPECIFICATION IFFMAPPING COMPANY_BINDINGS
+TARGET_NAMES = CORE COMPANY_STANDARDMODEL IFFMAPPING COMPANY_IFFBINDINGS
 
 ALL_TARGETS = $(foreach t, $(TARGET_NAMES), $($(t)_ONTOLOGY))
 
 
 .PHONY: all clean
 all: $(ALL_TARGETS)
+
 
 # -----------------------------------------------------------------------------
 # Generic rule to build a .ttl file.
@@ -207,10 +214,19 @@ all: $(ALL_TARGETS)
 #
 #   are used in the command line.
 # -----------------------------------------------------------------------------
-%.ttl: %.xml
+%.ttl: core.ttl
 	@echo "Creating $@"
 	$(eval NAME := $(shell echo $* | tr a-z A-Z))
 	python3 $(NODESET2OWL) $($(NAME)_NODESET_URL) -i $($(NAME)_DEPENDENCIES) $($(NAME)_OPTS) -o $@
+
+# -----------------------------------------------------------------------------
+# BUILD instance file
+#
+# -----------------------------------------------------------------------------
+INSTANCE_ONTOLOGY = $(COMPANY_STANDARDMODEL_ONTOLOGY)
+shacl.ttl instances.jsonld entities.ttl context.jsonld: $(COMPANY_STANDARDMODEL_ONTOLOGY)
+	echo "Creating shacl.ttl, instances.jsonld, context.jsonld and entities.ttl"
+	python3 $(EXTRACTTYPE) -t $(INSTANCE_TYPE) -n $(INSTANCE_NS_PREFIX) $(INSTANCE_ONTOLOGY)
 
 # -----------------------------------------------------------------------------
 # Inter-target dependencies (if you need to ensure that some ontologies are built
@@ -220,10 +236,14 @@ all: $(ALL_TARGETS)
 $(foreach t, $(TARGET_NAMES), \
   $(eval $($(t)_ONTOLOGY): $(filter-out $(BASE_ONTOLOGY), $($(t)_DEPENDENCIES))))
 
-
+DEP_NAMES = COMPANY_STANDARDMODEL IFFMAPPING COMPANY_IFFBINDINGS
+$(foreach t, $(DEP_NAMES), \
+  $(eval $($(t)_ONTOLOGY): $($(t)_NODESET_URL)))
 # -----------------------------------------------------------------------------
 # Clean target: remove all generated .ttl files.
 # -----------------------------------------------------------------------------
 clean:
-	@echo "Cleaning generated .ttl files..."
-	rm -f *.ttl
+	@echo "Cleaning generated files..."
+	$(foreach t, $(TARGET_NAMES), \
+		 rm -f $($(t)_ONTOLOGY))
+	rm -f shacl.ttl instances.jsonld bindings.ttl entities.ttl

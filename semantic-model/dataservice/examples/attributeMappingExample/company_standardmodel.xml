@@ -2,10 +2,10 @@
 <UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:uax="http://opcfoundation.org/UA/2008/02/Types.xsd" xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <!-- 1) Namespace and Model metadata -->
   <NamespaceUris>
-    <Uri>http://mycompany.com/UA/RawData/</Uri>
+    <Uri>http://mycompany.com/UA/StandardModel/</Uri>
   </NamespaceUris>
   <Models>
-    <Model ModelUri="http://mycompany.com/UA/RawData/"
+    <Model ModelUri="http://mycompany.com/UA/StandardModel/"
            ModelVersion="1.0.0"
            PublicationDate="2025-05-18T00:00:00Z"/>
   </Models>
@@ -58,9 +58,9 @@
     <Alias Alias="HasInterface">i=17603</Alias>
   </Aliases>
 
-  <!-- 2) Define a new ObjectType: RawDataType -->
-  <UAObjectType NodeId="ns=1;i=1001" BrowseName="1:RawDataType">
-    <DisplayName>RawDataType</DisplayName>
+  <!-- 2) Define a new ObjectType: StandardDataObjectType -->
+  <UAObjectType NodeId="ns=1;i=1001" BrowseName="1:StandardDataObjectType">
+    <DisplayName>StandardDataObjectType</DisplayName>
     <References>
       <!-- Inherit from BaseObjectType (i=58) -->
       <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
@@ -68,14 +68,46 @@
   </UAObjectType>
 
   <!-- 3) Instantiate one Object of that type -->
-  <UAObject NodeId="ns=1;i=1101" BrowseName="1:RawData1">
-    <DisplayName>RawData1</DisplayName>
+  <UAObject NodeId="ns=1;i=1101" BrowseName="1:StandardDataObject1">
+    <DisplayName>StandardDataObject1</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1001</Reference>
     </References>
   </UAObject>
 
-  <!-- 4) Three Variables as components of RawData1 -->
+  <!-- Variables  -->
+    <UAVariable NodeId="ns=1;i=2001"
+               BrowseName="1:TemperatureF"
+               DataType="Double"
+               ValueRank="-1">
+    <DisplayName>TemperatureF</DisplayName>
+    <References>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1001</Reference>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+    </References>
+  </UAVariable>
+
+  <UAVariable NodeId="ns=1;i=2002"
+               BrowseName="1:StatusCode"
+               DataType="Int32"
+               ValueRank="-1">
+    <DisplayName>StatusCode</DisplayName>
+    <References>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1001</Reference>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+    </References>
+  </UAVariable>
+
+  <UAVariable NodeId="ns=1;i=2003"
+               BrowseName="1:StatusString"
+               DataType="String"
+               ValueRank="-1">
+    <DisplayName>ModeString</DisplayName>
+    <References>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1001</Reference>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+    </References>
+  </UAVariable>
   <UAVariable NodeId="ns=1;i=2001"
                BrowseName="1:TemperatureF"
                DataType="Double"
@@ -99,7 +131,7 @@
   </UAVariable>
 
   <UAVariable NodeId="ns=1;i=2003"
-               BrowseName="1:ModeString"
+               BrowseName="1:StatusString"
                DataType="String"
                ValueRank="-1">
     <DisplayName>ModeString</DisplayName>
