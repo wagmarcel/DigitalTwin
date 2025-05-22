@@ -58,6 +58,7 @@
     <Alias Alias="HasAddIn">i=17604</Alias>
     <Alias Alias="HasInterface">i=17603</Alias>
   </Aliases>
+
   <!-- Types -->
   <UAObjectType NodeId="ns=1;i=1001" BrowseName="1:AttributeBindingType">
     <DisplayName>AttributeBindingType</DisplayName>
@@ -67,19 +68,19 @@
     </References>
   </UAObjectType>
 
-    <UAReferenceType NodeId="ns=1;i=1002" BrowseName="HasVariable" Symmetric="false">
-        <DisplayName>HasVariable</DisplayName>
-        <References>
-        <Reference ReferenceType="HasSubtype" IsForward="false">i=32</Reference>
-        </References>
-    </UAReferenceType>
+  <UAReferenceType NodeId="ns=1;i=1002" BrowseName="HasVariable" Symmetric="false">
+      <DisplayName>HasVariable</DisplayName>
+      <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=32</Reference>
+      </References>
+  </UAReferenceType>
 
-    <UAObjectType NodeId="ns=1;i=1003" BrowseName="1:AttributeParameterType">
-        <DisplayName>AttributeParameterType</DisplayName>
-        <References>
-        <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
-        </References>
-    </UAObjectType>
+  <UAObjectType NodeId="ns=1;i=1003" BrowseName="1:AttributeParameterType">
+      <DisplayName>AttributeParameterType</DisplayName>
+      <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      </References>
+  </UAObjectType>
 
   <UAObjectType NodeId="ns=1;i=1004" BrowseName="1:IFFMappingsFolderType">
     <DisplayName>IFFMappingsFolder</DisplayName>
@@ -89,6 +90,12 @@
     </References>
   </UAObjectType>
 
+  <UAObjectType NodeId="ns=1;i=1005" BrowseName="1:ModelInfoType">
+    <DisplayName>ModelInfoType</DisplayName>
+    <References>
+    <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+    </References>
+  </UAObjectType>
 
   <!-- Variables -->
     <UAVariable NodeId="ns=1;i=2001"
@@ -99,6 +106,7 @@
     <References>
       <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1001</Reference>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
 
@@ -110,6 +118,7 @@
     <References>
       <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1001</Reference>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
     </References>
   </UAVariable>
 
@@ -121,6 +130,7 @@
     <References>
       <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1001</Reference>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
 
@@ -132,6 +142,7 @@
     <References>
       <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1001</Reference>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
 
@@ -145,7 +156,6 @@
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
     </References>
   </UAVariable>
-
 
   <UAVariable NodeId="ns=1;i=2006" BrowseName="EnumValues" DataType="i=7594" ValueRank="1" ArrayDimensions="4">
     <DisplayName>EnumValues</DisplayName>
@@ -234,6 +244,18 @@
     </References>
   </UAVariable>
 
+  <UAVariable NodeId="ns=1;i=2008"
+               BrowseName="1:EntityType"
+               DataType="String"
+               ValueRank="-1">
+    <DisplayName>AttributeName</DisplayName>
+    <References>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1005</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+    </References>
+  </UAVariable>
+
 <!--Objects -->
   <UAObject NodeId="ns=1;i=3001" BrowseName="1:AttributeParameter">
     <DisplayName>AttributeParameter</DisplayName>
@@ -249,6 +271,15 @@
     </References>
   </UAObject>
  
+   <UAObject NodeId="ns=1;i=3003" BrowseName="ModelInfo">
+    <DisplayName>ModelInfo</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1005</Reference>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1004</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAObject>
+
   <UAObject NodeId="ns=1;i=42" BrowseName="IFFMappingsFolder">
     <DisplayName>IFFMappingsFolder</DisplayName>
     <References>
@@ -259,10 +290,10 @@
 
   <!--DataTypes-->
   
-  <UADataType NodeId="i=4000" BrowseName="NGSILDAttribute">
+  <UADataType NodeId="ns=1;i=4000" BrowseName="NGSILDAttribute">
     <DisplayName>NGSILDAttribute</DisplayName>
     <References>
-      <Reference ReferenceType="HasProperty">i=24236</Reference>
+      <Reference ReferenceType="HasProperty">ns=1;i=2006</Reference>
       <Reference ReferenceType="HasSubtype" IsForward="false">i=29</Reference>
     </References>
     <Definition Name="NGSILDAttribute">
