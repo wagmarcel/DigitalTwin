@@ -55,7 +55,7 @@ parse nodeset instance and create ngsi-ld model')
     parser.add_argument('-b', '--bindings',
                         help='Filename of bindings output file',
                         required=False,
-                        default='bindings.ttl')
+                        default='bindings_iffmodel.ttl')
     parser.add_argument('-i', '--instance-file',
                         help='Filename of instances file contating entity Ids',
                         required=False,
@@ -356,9 +356,8 @@ if __name__ == '__main__':
                                        entities=entities)
 
     # Output the RDF graph to a file
-    rdf_output_file = bindingsname.replace(".ttl", "_rdf.ttl")
-    bindings_rdf.serialize(destination=rdf_output_file, format="turtle")
+    bindings_rdf.serialize(destination=bindingsname, format="turtle")
 
-    print(f"RDF graph for bindings written to {rdf_output_file}")
+    print(f"RDF graph for bindings written to {bindingsname}")
 
 
