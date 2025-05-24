@@ -23,6 +23,7 @@
 NODESET_VERSION := UA-1.05.03-2023-12-15
 NODESET2OWL = ../../../opcua/nodeset2owl.py
 EXTRACTTYPE = ../../../opcua/extractType.py
+EXTRACTIFFBINDINGS = ../../../opcua/extractIffBindings.py
 
 INSTANCE_TYPE           := http://mycompany.com/UA/StandardModel/StandardDataObjectType
 INSTANCE_NS_PREFIX      := http://demo.machine/
@@ -198,11 +199,11 @@ TARGET_NAMES = CORE COMPANY_STANDARDMODEL IFFMAPPING COMPANY_IFFBINDINGS
 ALL_TARGETS = $(foreach t, $(TARGET_NAMES), $($(t)_ONTOLOGY))
 
 
-.PHONY: all clean ontology instances
+.PHONY: all clean ontology instances iffbindings
 ontology: $(ALL_TARGETS)
 instances: ontology shacl.ttl 
 
-all: ontology instances
+all: ontology instances iffbindings
 
 # -----------------------------------------------------------------------------
 # Generic rule to build a .ttl file.
@@ -230,6 +231,9 @@ shacl.ttl instances.jsonld entities.ttl context.jsonld: $(COMPANY_STANDARDMODEL_
 	echo "Creating shacl.ttl, instances.jsonld, context.jsonld and entities.ttl"
 	python3 $(EXTRACTTYPE) -t $(INSTANCE_TYPE) -n $(INSTANCE_NS_PREFIX) $(INSTANCE_ONTOLOGY)
 
+iffbindings: ontology
+	@echo "Extracting IFF Bindings"
+	python3 $(EXTRACTIFFBINDINGS) $(COMPANY_IFFBINDINGS_ONTOLOGY)
 # -----------------------------------------------------------------------------
 # Inter-target dependencies (if you need to ensure that some ontologies are built
 # before others, list them here)

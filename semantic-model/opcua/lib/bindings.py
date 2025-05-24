@@ -31,30 +31,32 @@ class Bindings:
         self.bindingsg.bind('binding', self.binding_namespace)
 
     def create_binding(self, g, parent_node_id, var_node, attribute_iri, version='0.1', firmware='firmware'):
-        randname = ''.join(random.choices(string.ascii_uppercase + string.digits, k=randnamelength))
-        bindingiri = self.binding_namespace['binding_' + randname]
-        mapiri = self.binding_namespace['map_' + randname]
-        dtype = next(g.objects(var_node, self.basens['hasDatatype']), XSD.anyType)
-        node_id = next(g.objects(var_node, self.basens['hasNodeId']))
-        idtype = next(g.objects(var_node, self.basens['hasIdentifierType']))
-        ns = next(g.objects(var_node, self.basens['hasNamespace']))
-        nsuri = next(g.objects(ns, self.basens['hasUri']))
-        self.bindingsg.add((bindingiri, RDF['type'], self.basens['Binding']))
-        self.bindingsg.add((bindingiri, self.basens['bindsEntity'], parent_node_id))
-        self.bindingsg.add((bindingiri, self.basens['bindingVersion'], Literal(version)))
-        self.bindingsg.add((bindingiri, self.basens['bindsFirmware'], Literal(firmware)))
-        self.bindingsg.add((bindingiri, self.basens['bindsMap'], mapiri))
-        self.bindingsg.add((bindingiri, self.basens['bindsAttributeType'], utils.NGSILD['Property']))
-        self.bindingsg.add((attribute_iri, self.basens['boundBy'], bindingiri))
-        self.bindingsg.add((mapiri, RDF['type'], self.basens['BoundMap']))
-        self.bindingsg.add((mapiri, self.basens['bindsConnector'], self.basens['OPCUAConnector']))
-        self.bindingsg.add((mapiri, self.basens['bindsMapDatatype'], dtype))
-        self.bindingsg.add((mapiri, self.basens['bindsLogicVar'], Literal('var1')))
-        self.bindingsg.add((mapiri,
-                            self.basens['bindsConnectorParameter'],
-                            Literal(f'nsu={nsuri};{utils.idtype2String(idtype, self.basens)}={node_id}')))
+        bindingiri = self.create_attribute_binding(parent_node_id, attribute_iri, None, version, firmware)
+        #randname = ''.join(random.choices(string.ascii_uppercase + string.digits, k=randnamelength))
+        #bindingiri = self.binding_namespace['binding_' + randname]
+        #mapiri = self.binding_namespace['map_' + randname]
+        #dtype = next(g.objects(var_node, self.basens['hasDatatype']), XSD.anyType)
+        #node_id = next(g.objects(var_node, self.basens['hasNodeId']))
+        #idtype = next(g.objects(var_node, self.basens['hasIdentifierType']))
+        #ns = next(g.objects(var_node, self.basens['hasNamespace']))
+        #nsuri = next(g.objects(ns, self.basens['hasUri']))
+        #self.bindingsg.add((bindingiri, RDF['type'], self.basens['Binding']))
+        #self.bindingsg.add((bindingiri, self.basens['bindsEntity'], parent_node_id))
+        #self.bindingsg.add((bindingiri, self.basens['bindingVersion'], Literal(version)))
+        #self.bindingsg.add((bindingiri, self.basens['bindsFirmware'], Literal(firmware)))
+        #self.bindingsg.add((bindingiri, self.basens['bindsMap'], mapiri))
+        #self.bindingsg.add((bindingiri, self.basens['bindsAttributeType'], utils.NGSILD['Property']))
+        #self.bindingsg.add((attribute_iri, self.basens['boundBy'], bindingiri))
+        self.add_map_to_attribute(g, bindingiri, 'var1', var_node, self.basens['OPCUAConnector'])
+        #self.bindingsg.add((mapiri, RDF['type'], self.basens['BoundMap']))
+        #self.bindingsg.add((mapiri, self.basens['bindsConnector'], self.basens['OPCUAConnector']))
+        #self.bindingsg.add((mapiri, self.basens['bindsMapDatatype'], dtype))
+        #self.bindingsg.add((mapiri, self.basens['bindsLogicVar'], Literal('var1')))
+        #self.bindingsg.add((mapiri,
+        #                    self.basens['bindsConnectorParameter'],
+        #                    Literal(f'nsu={nsuri};{utils.idtype2String(idtype, self.basens)}={node_id}')))
 
-    def create_attribute_binding(self, parent_node_id, attribute_iri, version='0.1', firmware='firmware'):
+    def create_attribute_binding(self, parent_node_id, attribute_iri, logic_transform=None, version='0.1', firmware='firmware'):
         """
         Create a binding for an attribute.
         This function generates a unique binding ID and associates it with the given parent node ID and attribute IRI.
@@ -74,6 +76,8 @@ class Bindings:
         self.bindingsg.add((bindingiri, self.basens['bindingVersion'], Literal(version)))
         self.bindingsg.add((bindingiri, self.basens['bindsFirmware'], Literal(firmware)))
         self.bindingsg.add((bindingiri, self.basens['bindsAttributeType'], utils.NGSILD['Property']))
+        if logic_transform is not None:
+            self.bindingsg.add((bindingiri, self.basens['bindsLogic'], Literal(logic_transform)))
         self.bindingsg.add((attribute_iri, self.basens['boundBy'], bindingiri))
         return bindingiri
 

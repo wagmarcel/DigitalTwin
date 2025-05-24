@@ -95,7 +95,7 @@
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
     </References>
     <Value>
-      <uax:String> "WHERE {BIND ((?var1 - 32)/9 * 5) as ?value}" </uax:String>
+      <uax:String>WHERE {BIND (((?var1 - 32)/9 * 5) as ?value)}</uax:String>
     </Value>
   </UAVariable>
 

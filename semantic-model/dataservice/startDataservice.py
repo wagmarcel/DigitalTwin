@@ -35,7 +35,7 @@ SELECT ?map ?binding ?attribute ?connectorAttribute ?logicVar ?logicVarType ?con
     ?binding base:bindsEntity ?entityId .
     ?binding base:bindsMap ?map .
     ?binding base:bindsFirmware ?firmwareVersion .
-    ?map base:bindsConnectorAttribute ?connectorAttribute .
+    ?map base:bindsConnectorParameter ?connectorAttribute .
     ?map base:bindsLogicVar ?logicVar .
     ?map base:bindsConnector ?connector .
     ?map base:bindsMapDatatype ?logicVarType .
@@ -284,7 +284,10 @@ async def calculate_attribute(attribute, binding, firmwareVersion, attribute_tru
         if binding_dict['logic'] is not None:
             query = 'SELECT ?type ?value ?object ?datasetId ?trustLevel ' + binding_dict['logic']
             query = re.sub(r'^PREFIX .*\n', '', query)
-            qres = g.query(query, initBindings=querybindings, initNs=prefixes)
+            try:
+                qres = g.query(query, initBindings=querybindings, initNs=prefixes)
+            except Exception as e:
+                print(f'Error in executing query "{query}": {e}')
             if len(qres) == 0:
                 print("Warning: Could not derive any value binding from connector data.")
                 return

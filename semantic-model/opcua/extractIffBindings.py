@@ -18,7 +18,7 @@ import sys
 import urllib
 import random
 import string
-from lib.utils import warnings, print_warning
+from lib.utils import warnings, print_warning  # Ensure print_warning is imported
 from collections import defaultdict
 from rdflib import Graph, Namespace, URIRef, Literal
 from rdflib.namespace import OWL, RDF, RDFS, XSD
@@ -267,45 +267,14 @@ def create_bindings_rdf(g, basens, bindingns, attributes, parameters, entity_typ
     entity_id = next(entities_graph.subjects(RDF.type, entity_type), None)
     if entity_id is None:
         raise ValueError("Entity ID not found in the entities graph.")
-    # Add the entity type to the graph
-    #g.add((entity_type, RDF.type, iffmappingns.EntityType))
-    # @copilot, do you listen? that was all crap
-    # Map parameters to their respective bindings
-    #parameter_map = {str(binding): params for binding, params in parameters}
+
     bindings = Bindings(bindingns, basens)
     for attribute in attributes:
-        binding_uri = bindings.create_attribute_binding(entity_id, attribute[1], binding_version)
-        # create random hash for binding name
-        # randname = ''.join(random.choices(string.ascii_uppercase + string.digits, k=16))
-        # binding_uri = URIRef(f'{bindingns}binding_{randname}')
-        # g.add((binding[1], basens.boundBy, binding_uri))
-        # g.add((binding_uri, RDF.type, basens.Binding))
-        # g.add((binding_uri, basens.bindingVersion, Literal(str(binding_version))))
-        # g.add((binding_uri, basens.bindsEntity, entity_id))
-        # g.add((binding_uri, basens.bindsFirmware, Literal("firmware")))
-        # ngsild_type = get_ngsild_attribute(binding[2], iffmappingns)
-        # g.add((binding_uri, basens.bindsAttributeType, ngsild_type))
-        # if binding[3] is not None:
-        #   g.add((binding_uri, basens.bindsLogic, Literal(binding[3])))
-        # if binding[4] is not None:
-        #   g.add((binding_uri, iffmappingns.bindsEntitySelector, Literal(binding[4])))
-
+        binding_uri = bindings.create_attribute_binding(entity_id, attribute[1], attribute[3], binding_version)
         # Add parameters if available
         if attribute[0] in parameters:
             for param in parameters[attribute[0]]:
                 bindings.add_map_to_attribute(g, binding_uri, param[0], param[1],  basens.OPCUAConnector)
-                # randname = ''.join(random.choices(string.ascii_uppercase + string.digits, k=16))
-                # param_node = URIRef(f'{bindingns}map_{randname}')
-                # g.add((binding_uri, basens.bindsMap, param_node))
-                # g.add((param_node, basens.bindsLogicVar, Literal(param[0])))
-                # nodeid = utils.create_node_ref(param[1], param[2], param[3], basens)
-                # g.add((param_node, basens.bindsConnectorParameter, Literal(str(nodeid))))
-                # g.add((param_node, basens.bindsConnector, basens.OPCUAConnector))
-                # g.add((param_node, RDF.type, basens.BoundMap))
-                # datatype, _ = JsonLd.map_datatype_to_jsonld(g, param[4], opcuans=opcuans)
-                # if datatype is not None:
-                #     g.add((param_node, basens.bindsMapDatatype, datatype[0]))
-
     return bindings.get_binding_graph()
 
 
@@ -321,7 +290,10 @@ if __name__ == '__main__':
     g = Graph(store='Oxigraph')
     g.parse(mappingname)
     # get all owl imports
-    mainontology = next(g.subjects(RDF.type, OWL.Ontology))
+    mainontology = next(g.subjects(RDF.type, OWL.Ontology), None)
+    if mainontology is None:
+        print_warning("warning", "No main ontology found in the mapping file. Exiting.")
+        sys.exit(1)
     imports = g.objects(mainontology, OWL.imports)
     ontology_loader = OntologyLoader(True)
     ontology_loader.init_imports(imports)
