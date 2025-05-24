@@ -198,9 +198,11 @@ TARGET_NAMES = CORE COMPANY_STANDARDMODEL IFFMAPPING COMPANY_IFFBINDINGS
 ALL_TARGETS = $(foreach t, $(TARGET_NAMES), $($(t)_ONTOLOGY))
 
 
-.PHONY: all clean
-all: $(ALL_TARGETS)
+.PHONY: all clean ontology instances
+ontology: $(ALL_TARGETS)
+instances: ontology shacl.ttl 
 
+all: ontology instances
 
 # -----------------------------------------------------------------------------
 # Generic rule to build a .ttl file.
@@ -224,7 +226,7 @@ all: $(ALL_TARGETS)
 #
 # -----------------------------------------------------------------------------
 INSTANCE_ONTOLOGY = $(COMPANY_STANDARDMODEL_ONTOLOGY)
-shacl.ttl instances.jsonld entities.ttl context.jsonld: $(COMPANY_STANDARDMODEL_ONTOLOGY)
+shacl.ttl instances.jsonld entities.ttl context.jsonld: $(COMPANY_STANDARDMODEL_ONTOLOGY) ontology
 	echo "Creating shacl.ttl, instances.jsonld, context.jsonld and entities.ttl"
 	python3 $(EXTRACTTYPE) -t $(INSTANCE_TYPE) -n $(INSTANCE_NS_PREFIX) $(INSTANCE_ONTOLOGY)
 
