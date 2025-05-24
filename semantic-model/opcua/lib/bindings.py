@@ -51,14 +51,74 @@ class Bindings:
         self.bindingsg.add((mapiri, self.basens['bindsMapDatatype'], dtype))
         self.bindingsg.add((mapiri, self.basens['bindsLogicVar'], Literal('var1')))
         self.bindingsg.add((mapiri,
-                            self.basens['bindsConnectorAttribute'],
+                            self.basens['bindsConnectorParameter'],
                             Literal(f'nsu={nsuri};{utils.idtype2String(idtype, self.basens)}={node_id}')))
+
+    def create_attribute_binding(self, parent_node_id, attribute_iri, version='0.1', firmware='firmware'):
+        """
+        Create a binding for an attribute.
+        This function generates a unique binding ID and associates it with the given parent node ID and attribute IRI.
+        Args:
+            parent_node_id (rdflib.term.Identifier): The identifier of the parent node to bind.
+            attribute_iri (rdflib.term.Identifier): The IRI of the attribute to bind.
+            version (str, optional): The version of the binding. Defaults to '0.1'.
+            firmware (str, optional): The firmware associated with the binding. Defaults to 'firmware'.
+
+        Returns:
+            rdflib.term.Identifier: The IRI of the created map.
+        """
+        randname = ''.join(random.choices(string.ascii_uppercase + string.digits, k=randnamelength))
+        bindingiri = self.binding_namespace['binding_' + randname]
+        self.bindingsg.add((bindingiri, RDF['type'], self.basens['Binding']))
+        self.bindingsg.add((bindingiri, self.basens['bindsEntity'], parent_node_id))
+        self.bindingsg.add((bindingiri, self.basens['bindingVersion'], Literal(version)))
+        self.bindingsg.add((bindingiri, self.basens['bindsFirmware'], Literal(firmware)))
+        self.bindingsg.add((bindingiri, self.basens['bindsAttributeType'], utils.NGSILD['Property']))
+        self.bindingsg.add((attribute_iri, self.basens['boundBy'], bindingiri))
+        return bindingiri
+
+    def add_map_to_attribute(self, g, attribute_iri, varname, var_node, connector):
+        """
+        Add a map to an attribute.
+        This function associates a OPC Ua variable with a given attribute IRI in the graph.
+        Args:
+            g (rdflib.Graph): The RDF graph to which the map will be added.
+            attribute_iri (rdflib.term.Identifier): The IRI of the attribute to bind.
+            varname (str): The name of the variable to bind.
+            var_node (rdflib.term.Identifier): The identifier of the variable node in the graph.
+            connector (rdflib.term.Identifier): The identifier of the connector to bind.
+
+        """
+        randname = ''.join(random.choices(string.ascii_uppercase + string.digits, k=randnamelength))
+        mapiri = self.binding_namespace['map_' + randname]
+        dtype = next(g.objects(var_node, self.basens['hasDatatype']), XSD.anyType)
+        node_id = next(g.objects(var_node, self.basens['hasNodeId']))
+        idtype = next(g.objects(var_node, self.basens['hasIdentifierType']))
+        ns = next(g.objects(var_node, self.basens['hasNamespace']))
+        nsuri = next(g.objects(ns, self.basens['hasUri']))
+        self.bindingsg.add((mapiri, RDF['type'], self.basens['BoundMap']))
+        self.bindingsg.add((mapiri, self.basens['bindsConnector'], connector))
+        self.bindingsg.add((mapiri, self.basens['bindsLogicVar'], Literal(varname)))
+        self.bindingsg.add((mapiri, self.basens['bindsMapDatatype'], dtype))
+        self.bindingsg.add((attribute_iri, self.basens['bindsMap'], mapiri))
+        self.bindingsg.add((mapiri,
+                            self.basens['bindsConnectorParameter'],
+                            Literal(f'nsu={nsuri};{utils.idtype2String(idtype, self.basens)}={node_id}')))
+
 
     def bind(self, prefix, namespace):
         self.bindingsg.bind(prefix, namespace)
 
     def len(self):
         return len(self.bindingsg)
+
+    def get_binding_graph(self):
+        """
+        Get the RDF graph containing all bindings.
+        Returns:
+            rdflib.Graph: The graph containing all bindings.
+        """
+        return self.bindingsg
 
     def serialize(self, destination):
         self.bindingsg.serialize(destination)

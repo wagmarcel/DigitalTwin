@@ -41,28 +41,28 @@ parse nodeset instance and create ngsi-ld model')
 
     parser.add_argument('mapping', help='Path to the mapping ttl file which contains the IFFMappingsFolder Object.')
     parser.add_argument('-fi', '--folder-id',
-                        help='Id of IFFMappingFolder Object',
+                        help='Id of IFFMappingFolder Object. default: %(default)s',
                         required=False,
                         default=42)
     parser.add_argument('-bv', '--binding-version',
-                        help='Verion of the binding model.',
+                        help='Version of the binding model. default: %(default)s',
                         required=False,
                         default="0.1")
     parser.add_argument('-bn', '--binding-namespace',
-                        help='Namespace prefix for binding ontology.',
+                        help='Namespace prefix for binding ontology. default: %(default)s',
                         required=False,
                         default="https://industry-fusion.org/UA/Bindings/")
     parser.add_argument('-b', '--bindings',
-                        help='Filename of bindings output file',
+                        help='Filename of bindings output file. default: %(default)s',
                         required=False,
                         default='bindings_iffmodel.ttl')
     parser.add_argument('-i', '--instance-file',
-                        help='Filename of instances file contating entity Ids',
+                        help='Filename of instances file contating entity Ids.  default: %(default)s',
                         required=False,
-                        default='instances.jsonld')
+                        default='iff_instances.jsonld')
     parser.add_argument('-n', '--iffmapping-namespace',
                         default='https://industry-fusion.org/UA/Mapping/',
-                        help='Overwrite Namespace for IFF mapping ontology.)',
+                        help='Overwrite Namespace for IFF mapping ontology. default: %(default)s',
                         required=False)
     parsed_args = parser.parse_args(args)
     return parsed_args
@@ -156,7 +156,7 @@ def get_attribute_parameter(graph, iffmappingns, basens, opcuans, iffmappingfold
     """
     query = """
   SELECT
-  ?attributebinding ?logicVariable ?varidtype ?varid ?varns ?datatype
+  ?attributebinding ?logicVariable ?varnode ?varidtype ?varid ?varns ?datatype
   where {{
     BIND( "{folderid}" as ?folderid)
     ?folder base:hasNodeId ?nodeid .
@@ -250,7 +250,7 @@ def get_ngsild_attribute(attribute, iffmappingns):
           return NGSILD.JsonProperty
     return None
 
-def create_bindings_rdf(basens, opcuans, bindingns, bindings, parameters, entity_type, iffmappingns, binding_version, entities):
+def create_bindings_rdf(g, basens, bindingns, attributes, parameters, entity_type, binding_version, entities_graph):
     """
     Create an RDF graph for the OPC UA bindings structure.
 
@@ -263,15 +263,8 @@ def create_bindings_rdf(basens, opcuans, bindingns, bindings, parameters, entity
     Returns:
         rdflib.Graph: An RDF graph representing the OPC UA bindings structure.
     """
-    g = Graph()
-
-    # Define namespaces
-    g.bind("base", basens)
-    g.bind("opcua", opcuans)
-    g.bind("iffmapping", iffmappingns)
-
     # Get id of rdf node with entitiy_type
-    entity_id = next(entities.subjects(RDF.type, entity_type), None)
+    entity_id = next(entities_graph.subjects(RDF.type, entity_type), None)
     if entity_id is None:
         raise ValueError("Entity ID not found in the entities graph.")
     # Add the entity type to the graph
@@ -279,39 +272,41 @@ def create_bindings_rdf(basens, opcuans, bindingns, bindings, parameters, entity
     # @copilot, do you listen? that was all crap
     # Map parameters to their respective bindings
     #parameter_map = {str(binding): params for binding, params in parameters}
-
-    for binding in bindings:
+    bindings = Bindings(bindingns, basens)
+    for attribute in attributes:
+        binding_uri = bindings.create_attribute_binding(entity_id, attribute[1], binding_version)
         # create random hash for binding name
-        randname = ''.join(random.choices(string.ascii_uppercase + string.digits, k=16))
-        binding_uri = URIRef(bindingns + randname + '_binding')
-        g.add((binding[1], basens.boundBy, binding_uri))
-        g.add((binding_uri, RDF.type, basens.Binding))
-        g.add((binding_uri, basens.bindingVersion, Literal(str(binding_version))))
-        g.add((binding_uri, basens.bindingEntity, entity_id))
-        g.add((binding_uri, basens.bindingFirmware, Literal("firmware")))
-        ngsild_type = get_ngsild_attribute(binding[2], iffmappingns)
-        g.add((binding_uri, basens.bindsAttributeType, ngsild_type))
-        if binding[3] is not None:
-          g.add((binding_uri, basens.bindsLogic, Literal(binding[3])))
-        if binding[4] is not None:
-          g.add((binding_uri, iffmappingns.hasEntitySelector, Literal(binding[4])))
+        # randname = ''.join(random.choices(string.ascii_uppercase + string.digits, k=16))
+        # binding_uri = URIRef(f'{bindingns}binding_{randname}')
+        # g.add((binding[1], basens.boundBy, binding_uri))
+        # g.add((binding_uri, RDF.type, basens.Binding))
+        # g.add((binding_uri, basens.bindingVersion, Literal(str(binding_version))))
+        # g.add((binding_uri, basens.bindsEntity, entity_id))
+        # g.add((binding_uri, basens.bindsFirmware, Literal("firmware")))
+        # ngsild_type = get_ngsild_attribute(binding[2], iffmappingns)
+        # g.add((binding_uri, basens.bindsAttributeType, ngsild_type))
+        # if binding[3] is not None:
+        #   g.add((binding_uri, basens.bindsLogic, Literal(binding[3])))
+        # if binding[4] is not None:
+        #   g.add((binding_uri, iffmappingns.bindsEntitySelector, Literal(binding[4])))
 
         # Add parameters if available
-        if binding[0] in parameters:
-            for param in parameters[binding[0]]:
-                randname = ''.join(random.choices(string.ascii_uppercase + string.digits, k=16))
-                param_node = URIRef(f"{bindingns}{randname}_map")
-                g.add((binding_uri, basens.bindsMap, param_node))
-                g.add((param_node, basens.bindsLogicVar, Literal(param[0])))
-                nodeid = utils.create_node_ref(param[1], param[2], param[3], basens)
-                g.add((param_node, basens.bindsConnectorParameter, Literal(str(nodeid))))
-                g.add((param_node, basens.bindsConnector, basens.OPCUAConnector))
-                g.add((param_node, RDF.type, basens.BoundMap))
-                datatype, _ = JsonLd.map_datatype_to_jsonld(g, param[4], opcuans=opcuans)
-                if datatype is not None:
-                    g.add((param_node, basens.bindsMapDatatype, datatype[0]))
+        if attribute[0] in parameters:
+            for param in parameters[attribute[0]]:
+                bindings.add_map_to_attribute(g, binding_uri, param[0], param[1],  basens.OPCUAConnector)
+                # randname = ''.join(random.choices(string.ascii_uppercase + string.digits, k=16))
+                # param_node = URIRef(f'{bindingns}map_{randname}')
+                # g.add((binding_uri, basens.bindsMap, param_node))
+                # g.add((param_node, basens.bindsLogicVar, Literal(param[0])))
+                # nodeid = utils.create_node_ref(param[1], param[2], param[3], basens)
+                # g.add((param_node, basens.bindsConnectorParameter, Literal(str(nodeid))))
+                # g.add((param_node, basens.bindsConnector, basens.OPCUAConnector))
+                # g.add((param_node, RDF.type, basens.BoundMap))
+                # datatype, _ = JsonLd.map_datatype_to_jsonld(g, param[4], opcuans=opcuans)
+                # if datatype is not None:
+                #     g.add((param_node, basens.bindsMapDatatype, datatype[0]))
 
-    return g
+    return bindings.get_binding_graph()
 
 
 if __name__ == '__main__':
@@ -345,15 +340,14 @@ if __name__ == '__main__':
     # https://github.com/IndustryFusion/DigitalTwin/blob/main/semantic-model/dataservice/README.md
 
     # Create the RDF graph for the bindings
-    bindings_rdf = create_bindings_rdf(basens=basens,
-                                       opcuans=opcuans,
+    bindings_rdf = create_bindings_rdf(g=g,
+                                       basens=basens,
                                        bindingns=bindingns,
-                                       bindings=bindings,
+                                       attributes=bindings,
                                        parameters=parameters,
                                        entity_type=entity_type,
-                                       iffmappingns=iffmapping_namespace,
                                        binding_version=binding_version,
-                                       entities=entities)
+                                       entities_graph=entities)
 
     # Output the RDF graph to a file
     bindings_rdf.serialize(destination=bindingsname, format="turtle")
