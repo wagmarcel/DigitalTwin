@@ -68,7 +68,7 @@
   </UAObjectType>
 
   <!-- 3) Instantiate one Object of that type -->
-  <UAObject NodeId="ns=1;i=1101" BrowseName="1:StandardDataObject1">
+  <UAObject NodeId="ns=1;i=1101" BrowseName="1:StandardDataObject1" ParentNodeId="i=85">
     <DisplayName>StandardDataObject1</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1001</Reference>
@@ -108,7 +108,7 @@
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
     </References>
   </UAVariable>
-  <UAVariable NodeId="ns=1;i=2001"
+  <UAVariable NodeId="ns=1;i=2004"
                BrowseName="1:TemperatureF"
                DataType="Double"
                ValueRank="-1">
@@ -117,9 +117,12 @@
       <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1101</Reference>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
     </References>
+    <Value>
+      <uax:Double>100.0</uax:Double>
+    </Value>
   </UAVariable>
 
-  <UAVariable NodeId="ns=1;i=2002"
+  <UAVariable NodeId="ns=1;i=2005"
                BrowseName="1:StatusCode"
                DataType="Int32"
                ValueRank="-1">
@@ -128,9 +131,12 @@
       <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1101</Reference>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
     </References>
+        <Value>
+      <uax:Int32>1</uax:Int32>
+    </Value>
   </UAVariable>
 
-  <UAVariable NodeId="ns=1;i=2003"
+  <UAVariable NodeId="ns=1;i=2006"
                BrowseName="1:StatusString"
                DataType="String"
                ValueRank="-1">
@@ -139,5 +145,8 @@
       <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1101</Reference>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
     </References>
+    <Value>
+      <uax:String>RUNNING</uax:String>
+    </Value>
   </UAVariable>
 </UANodeSet>
