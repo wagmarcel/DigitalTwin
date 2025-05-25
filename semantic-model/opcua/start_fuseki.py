@@ -74,7 +74,8 @@ and optionally start Fuseki."
     parser.add_argument("--fuseki-exec",
                         help="Path to the fuseki-server executable. If provided, the server will be started.",
                         default=None)
-    parser.add_argument('-o','--ontology-files', nargs='+', help='Additional Ontology Files', required=False, default='')
+    parser.add_argument('-o', '--ontology-files', nargs='+',
+                        help='Additional Ontology Files', required=False, default='')
     args = parser.parse_args()
 
     ontology_path = args.ontology_file

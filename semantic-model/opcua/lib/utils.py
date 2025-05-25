@@ -98,8 +98,9 @@ def downcase_string(s):
 def isNodeId(nodeId):
     return 'i=' in nodeId or 'g=' in nodeId or 's=' in nodeId
 
+
 def create_node_ref(idtype, id, nsuri, basens):
-    
+
     # use nsu= scheme to make namespace explicit
     # replace nsuri by nsid in the following
     nsid = f'nsu={nsuri};'

@@ -45,7 +45,11 @@ class Bindings:
         bindingiri = self.create_attribute_binding(parent_node_id, attribute_iri, None, version, firmware)
         self.add_map_to_attribute(g, bindingiri, 'var1', var_node, self.basens['OPCUAConnector'])
 
-    def create_attribute_binding(self, parent_node_id, attribute_iri, logic_transform=None, version='0.1', firmware='firmware'):
+    def create_attribute_binding(self, parent_node_id,
+                                 attribute_iri,
+                                 logic_transform=None,
+                                 version='0.1',
+                                 firmware='firmware'):
         """
         Create a binding for an attribute.
         This function generates a unique binding ID and associates it with the given parent node ID and attribute IRI.
@@ -97,7 +101,6 @@ class Bindings:
         self.bindingsg.add((mapiri,
                             self.basens['bindsConnectorParameter'],
                             Literal(f'nsu={nsuri};{utils.idtype2String(idtype, self.basens)}={node_id}')))
-
 
     def bind(self, prefix, namespace):
         self.bindingsg.bind(prefix, namespace)

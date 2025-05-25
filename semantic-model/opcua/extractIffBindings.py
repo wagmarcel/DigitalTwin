@@ -15,24 +15,16 @@
 # limitations under the License.
 #
 import sys
-import urllib
-import random
-import string
 from lib.utils import warnings, print_warning  # Ensure print_warning is imported
 from collections import defaultdict
-from rdflib import Graph, Namespace, URIRef, Literal
-from rdflib.namespace import OWL, RDF, RDFS, XSD
+from rdflib import Graph, Namespace
+from rdflib.namespace import OWL, RDF
 import argparse
-import lib.utils as utils
-from lib.utils import RdfUtils, OntologyLoader, NULL_IRI, NGSILD
+from lib.utils import OntologyLoader, NGSILD
 from lib.bindings import Bindings
-from lib.jsonld import JsonLd
-from lib.entity import Entity
-from lib.shacl import Shacl
 
 warnings.filterwarnings("ignore", message=".*anyType is not defined in namespace XSD.*")
 attribute_prefix = 'has'
-
 
 
 def parse_args(args=sys.argv[1:]):
@@ -72,8 +64,8 @@ def get_bindings(graph, iffmappingns, basens, opcuans, iffmappingfolder_id):
     """
     Get a list of all attribute bindings from the IFF Mappings ontology.
 
-    This function queries an RDF graph to retrieve attribute bindings associated 
-    with a specific folder ID in the IFF Mappings ontology. The query extracts 
+    This function queries an RDF graph to retrieve attribute bindings associated
+    with a specific folder ID in the IFF Mappings ontology. The query extracts
     details such as the attribute name, type, logic expression, and entity selector.
 
         graph (rdflib.Graph): The RDF graph to query.
@@ -123,19 +115,20 @@ def get_bindings(graph, iffmappingns, basens, opcuans, iffmappingfolder_id):
       ?esnode base:hasBrowseName "EntitySelector" .
       ?esnode base:hasValue ?entitySelector .
     }}
-	BIND(IRI(?namestr) as ?name)
+    BIND(IRI(?namestr) as ?name)
 }}
     """.format(folderid=iffmappingfolder_id)
     initNs = {"iffmappingns": iffmappingns, "base": basens, "opcua": opcuans}
     result = graph.query(query, initNs=initNs)
     return list(result)
 
+
 def get_attribute_parameter(graph, iffmappingns, basens, opcuans, iffmappingfolder_id):
     """
         Retrieve a list of attribute bindings from the IFF mappings ontology.
 
-        This function queries an RDF graph to extract attribute bindings and their associated parameters 
-        from the IFF mappings ontology. It returns a dictionary where the keys are attribute bindings 
+        This function queries an RDF graph to extract attribute bindings and their associated parameters
+        from the IFF mappings ontology. It returns a dictionary where the keys are attribute bindings
         and the values are lists of associated parameters.
 
             graph (rdflib.Graph): The RDF graph to query.
@@ -145,8 +138,8 @@ def get_attribute_parameter(graph, iffmappingns, basens, opcuans, iffmappingfold
             iffmappingfolder_id (str): The folder ID to filter the query.
 
         Returns:
-            list: A list of dictionaries where each key is an attribute binding and the value is a list 
-                of associated parameters. Each parameter includes optional logic variables and variable 
+            list: A list of dictionaries where each key is an attribute binding and the value is a list
+                of associated parameters. Each parameter includes optional logic variables and variable
                 details such as identifier type, namespace, and node ID.
 
         Notes:
@@ -164,8 +157,8 @@ def get_attribute_parameter(graph, iffmappingns, basens, opcuans, iffmappingfold
     ?namespace base:hasUri ?iffmappingns .
     FILTER(?nodeid = ?folderid && ?iffmappingns = STR(iffmappingns:))
     ?folder opcua:Organizes ?attributebinding .
-  	?attributebinding opcua:HasComponent ?attributeParameter .
-  	?attributeParameter base:hasBrowseName "AttributeParameter" .
+    ?attributebinding opcua:HasComponent ?attributeParameter .
+    ?attributeParameter base:hasBrowseName "AttributeParameter" .
     OPTIONAL{{
       ?attributeParameter opcua:HasComponent ?lvnode .
       ?lvnode base:hasBrowseName "LogicVariable" .
@@ -195,6 +188,7 @@ def get_attribute_parameter(graph, iffmappingns, basens, opcuans, iffmappingfold
         result_dict[key].append(value)
     return result_dict
 
+
 def get_entity_type(graph, iffmappingns, basens, opcuans, iffmappingfolder_id):
 
     query = """
@@ -207,7 +201,7 @@ def get_entity_type(graph, iffmappingns, basens, opcuans, iffmappingfolder_id):
     ?namespace base:hasUri ?iffmappingns .
     FILTER(?nodeid = ?folderid && ?iffmappingns = STR(iffmappingns:))
     ?folder opcua:HasComponent ?modelInfo .
-  	?modelInfo base:hasBrowseName "ModelInfo" .
+    ?modelInfo base:hasBrowseName "ModelInfo" .
     ?modelInfo opcua:HasComponent ?typenode .
     ?typenode base:hasBrowseName "EntityType" .
     ?typenode base:hasValue ?entityTpe .
@@ -226,7 +220,7 @@ def get_entity_type(graph, iffmappingns, basens, opcuans, iffmappingfolder_id):
 def get_ngsild_attribute(attribute, iffmappingns):
     """
     Get the NGSILD attribute type from the attribute.
-    
+
     Attribute is given from iffmappingns namesapce.
     For instance, iffmappingns:Property => ngsi-ld:Property
     This function maps the attribute to its corresponding NGSILD type.
@@ -241,14 +235,15 @@ def get_ngsild_attribute(attribute, iffmappingns):
     """
     if str(attribute).startswith(str(iffmappingns)):
         if attribute.endswith("Property"):
-          return NGSILD.Property
+            return NGSILD.Property
         elif attribute.endswith("Relationship"):
-          return NGSILD.Relationship
+            return NGSILD.Relationship
         elif attribute.endswith("ListProperty"):
-          return NGSILD.ListProperty
+            return NGSILD.ListProperty
         elif attribute.endswith("JsonProperty"):
-          return NGSILD.JsonProperty
+            return NGSILD.JsonProperty
     return None
+
 
 def create_bindings_rdf(g, basens, bindingns, attributes, parameters, entity_type, binding_version, entities_graph):
     """
@@ -274,7 +269,7 @@ def create_bindings_rdf(g, basens, bindingns, attributes, parameters, entity_typ
         # Add parameters if available
         if attribute[0] in parameters:
             for param in parameters[attribute[0]]:
-                bindings.add_map_to_attribute(g, binding_uri, param[0], param[1],  basens.OPCUAConnector)
+                bindings.add_map_to_attribute(g, binding_uri, param[0], param[1], basens.OPCUAConnector)
     return bindings.get_binding_graph()
 
 
@@ -298,16 +293,16 @@ if __name__ == '__main__':
     ontology_loader = OntologyLoader(True)
     ontology_loader.init_imports(imports)
     g += ontology_loader.get_graph()
-    
+
     entities = Graph(store='Oxigraph')
     entities.parse(args.instance_file)
-    
+
     basens = next(Namespace(uri) for prefix, uri in list(g.namespaces()) if prefix == 'base')
     opcuans = next(Namespace(uri) for prefix, uri in list(g.namespaces()) if prefix == 'opcua')
     bindings = get_bindings(g, iffmapping_namespace, basens, opcuans, iffmappingsfolder_id)
     parameters = get_attribute_parameter(g, iffmapping_namespace, basens, opcuans, iffmappingsfolder_id)
     entity_type = get_entity_type(g, iffmapping_namespace, basens, opcuans, iffmappingsfolder_id)
-    
+
     # transform bindings parameters and entity_type to opcua bindings as described here:
     # https://github.com/IndustryFusion/DigitalTwin/blob/main/semantic-model/dataservice/README.md
 
@@ -325,5 +320,3 @@ if __name__ == '__main__':
     bindings_rdf.serialize(destination=bindingsname, format="turtle")
 
     print(f"RDF graph for bindings written to {bindingsname}")
-
-
