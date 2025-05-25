@@ -290,7 +290,6 @@ async def calculate_attribute(attribute, binding, firmwareVersion, attribute_tru
                 print(f'Error in executing query "{query}": {e}')
             if len(list(qres)) == 0:
                 print(f"Warning: Could not derive any value binding from connector data: {binding_dict['maps']}")
-                #return
 
         else:  # if there is only one map, take this over directly
             if len(binding_dict['maps']) == 1:
