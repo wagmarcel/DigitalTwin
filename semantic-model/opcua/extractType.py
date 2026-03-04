@@ -618,11 +618,11 @@ will flag this.")
         else:
             if value is None:
                 value = jsonld.get_default_iri(shacl_rule.get('value_rank'),
-                                                     shacl_rule.get('array_dimensions'), g=g)
+                                               shacl_rule.get('array_dimensions'), g=g)
                 if value != []:
                     # Only "valid" case is allowed empty list.
                     warnmsg = f"IRI value is not found for {full_attribute_name} in node {node}." \
-                            f"Will use default '{value}' but this might trigger validation problems."
+                        f"Will use default '{value}' but this might trigger validation problems."
                     print_warning('no_iri_value', warnmsg)
             instance[f'{full_attribute_name}'] = jsonld.get_ngsild_property(value)
         if type is not None:
