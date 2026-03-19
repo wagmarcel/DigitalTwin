@@ -297,6 +297,19 @@ def scan_type_recursive(o, node, instancetype, shapename, reftype):
         _, placeholder_pattern = utils.normalize_angle_bracket_name(browse_name)
     shacl_rule['path'] = attributename
 
+    # Check if this is a placeholder. This is the case if the modelling rule indicates an array and 
+    # the browse name contains a placeholder pattern.
+    _, is_placeholder_array = rdfutils.get_modelling_rule(g, o, None, instancetype)
+    if is_placeholder_array:
+        # This indicates a placeholder
+        shacl_rule['array'] = True
+    if not is_placeholder_array and placeholder_pattern is not None:
+        logger.warning(f"Placeholder pattern with non matching modelling rule found for node {o}.")
+    if is_placeholder_array and placeholder_pattern is None:
+        logger.warning(f"Array modelling rule found for node {o} but no placeholder pattern in Browsename"
+                        f"{attributename}.")
+    
+    # Now process objects and variables differently
     if rdfutils.isObjectNodeClass(nodeclass):
         stop_scan, _ = check_object_consistency(shapename, attributename, classtype)
         if stop_scan:
@@ -313,15 +326,7 @@ a loop.")
             scanned_types.add((instancetype, node, o))
         has_components = False
         shacl_rule['is_property'] = False
-        _, is_placeholder_array = rdfutils.get_modelling_rule(g, o, None, instancetype)
-        if is_placeholder_array:
-            # This indicates a placeholder
-            shacl_rule['array'] = True
-        if not is_placeholder_array and placeholder_pattern is not None:
-            logger.warning(f"Placeholder pattern with non matching modelling rule found for node {o}.")
-        if is_placeholder_array and placeholder_pattern is None:
-            logger.warning(f"Array modelling rule found for node {o} but no placeholder pattern in Browsename"
-                           f"{attributename}.")
+      
         # Now, get the type node. Do not recurse on the instance declaration
         # instance declarations might contain references which are not normative
         # for the type node
