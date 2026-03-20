@@ -14,8 +14,7 @@ from lib.utils import RdfUtils, downcase_string, isNodeId, convert_to_json_type,
                                 contains_both_angle_brackets, get_typename, get_common_supertype, rdfStringToPythonBool, \
                                 get_rank_dimensions, get_type_and_template, OntologyLoader, file_path_to_uri, create_list, \
                                 extract_subgraph, dump_without_prefixes, get_contentclass, quote_url, merge_attributes, dump_graph, \
-                                is_subclass, create_list, get_contentclass, expand_term, RdfUtils, rank_value_to_string, \
-                                nodeId_to_iri
+                                is_subclass, expand_term, rank_value_to_string, nodeId_to_iri
 
 
 class TestNormalizeNamespaceUri(unittest.TestCase):

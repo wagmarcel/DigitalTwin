@@ -838,7 +838,6 @@ class TestNodesetParser(unittest.TestCase):
         self.parser.get_rdf_ns_from_ua_index = MagicMock(return_value=Namespace('http://example.com/ns1#'))
         self.parser.nodeId_to_iri = MagicMock(return_value=URIRef('http://example.com/ns1#500'))
         node.find.return_value = MagicMock()  # Mock for references_node
-        mock_nodeId_to_iri.return_value = URIRef('http://example.com/ns1#500')
         # Call the method to be tested
         self.parser.add_typedef(node)
 

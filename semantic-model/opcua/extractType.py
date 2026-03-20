@@ -309,7 +309,7 @@ def scan_type_recursive(o, node, instancetype, shapename, reftype):
         logger.warning(f"Array modelling rule found for node {o} but no placeholder pattern in Browsename"
                         f"{attributename}.")
     
-    # Now process objects and variables differently
+    # Now process objects and variables
     if rdfutils.isObjectNodeClass(nodeclass):
         stop_scan, _ = check_object_consistency(shapename, attributename, classtype)
         if stop_scan:
