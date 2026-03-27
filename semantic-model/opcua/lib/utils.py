@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+import hashlib
 from urllib.parse import urlparse, quote, urlsplit, urlunsplit
 from rdflib.namespace import RDFS, OWL, RDF
 from rdflib import URIRef, Namespace, Graph, Literal, BNode
@@ -33,6 +34,7 @@ EX = Namespace("http://example.org/")
 _V_SEG_REGEX = re.compile(r"/v(?P<maj>\d+)(?:\.\d+)?(?=/|$)")
 ATTRIBUTE_PREFIX = 'has'
 SEMANTIC_RELATIONSHIP_TYPE = 'SemanticBridgeReferenceType'
+SEMANTIC_VARIABLE_TYPE = 'SemanticBridgeVariableType'
 ROOT_PROPERTY_OF_SEMANTIC_BRIDGE = 'Aggregates'
 WARNSTR = {
     'subclass_inconsistency': 'SUBCLASS_INCONSISTENCY',
@@ -85,6 +87,13 @@ modelling_nodeid_mandatory_placeholder = 11510
 NGSILD = Namespace('https://uri.etsi.org/ngsi-ld/')
 MACHINERY = Namespace('http://opcfoundation.org/UA/Machinery/')
 ngsild_context = "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld"
+
+
+def vartype_to_hash(vartype, parenttype):
+    full_name = f'{{"vartype"="{vartype}"'\
+                f'"parenttype"="{parenttype}"}}'.encode('utf-8')
+    hash_value = hashlib.sha256(full_name).hexdigest()
+    return hash_value
 
 
 def nodeId_to_iri(namespace, basens, nid, idtype, instance_id='', is_entityns=False):
@@ -974,9 +983,11 @@ class RdfUtils:
     def get_semantic_relationship_type(self):
         return self.basens[SEMANTIC_RELATIONSHIP_TYPE]
 
+    def get_semantic_variable_type(self):
+        return self.basens[SEMANTIC_VARIABLE_TYPE]
+
     def get_root_property_of_semantic_bridge(self):
         return self.opcuans[ROOT_PROPERTY_OF_SEMANTIC_BRIDGE]
-
 
 class OntologyLoader:
     def __init__(self, verbose=False):

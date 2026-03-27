@@ -113,6 +113,8 @@ if __name__ == '__main__':
     if not args.disable_semantic_bridge:
         print("Adding semantic relationships...")
         nodesetparser.add_semantic_bridge()
+        nodesetparser.add_semantic_bridge_for_typed_instance_declarations()
+        nodesetparser.add_semantic_bridge_for_non_typed_instance_declarations()
     if not args.enforce_opcua_type_semantic:
         print("Cleaning up types of nodeIds ...")
         utils.replace_type_of_node_iris(nodesetparser.g,

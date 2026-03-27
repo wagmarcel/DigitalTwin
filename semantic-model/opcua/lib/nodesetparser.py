@@ -135,8 +135,8 @@ class NodesetParser:
         self.known_ns_classes = {
             'http://opcfoundation.org/UA/': URIRef('http://opcfoundation.org/UA/OPCUANamespace')
         }
-        self.g = Graph()
-        self.ig = Graph()
+        self.g = Graph(store="Oxigraph")
+        self.ig = Graph(store="Oxigraph")
         self.nodeIds = [{}]
         self.typeIds = [{}]
         self.opcua_ns = ['http://opcfoundation.org/UA/']
@@ -279,6 +279,11 @@ Please set it explictly.")
         if (targetreference, RDFS.subPropertyOf, semantic_bridge_property) not in self.ig:
             self.g.add((targetreference, RDFS.subPropertyOf, semantic_bridge_property))
 
+    def add_semantic_variable_type(self, typename):
+        semantic_variable_type = self.rdf_utils.get_semantic_variable_type()
+        if (typename, RDFS.subClassOf, semantic_variable_type) not in self.ig:
+            self.g.add((typename, RDFS.subClassOf, semantic_variable_type))
+
     def init_imports(self, base_ontologies):
         if not self.isstrict:
             loader = utils.OntologyLoader(verbose=True)
@@ -290,6 +295,80 @@ Please set it explictly.")
                 hgraph.parse(file)
                 self.ig += hgraph
         utils.restore_type_of_node_iris(self.ig, self.rdf_ns['opcua'], self.rdf_ns['base'])
+
+    def add_semantic_bridge_for_typed_instance_declarations(self):
+        """Add semantic relationships for variables whose parents
+           are type nodes.
+
+        This function executes a SPARQL query to find all variables and provide parent type and BN.
+
+        """
+        not_needed_property_query = """
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+        SELECT ?parentbn ?parenturi ?varnode ?vartype ?instancebn ?instancebnuri ?parenttype
+        WHERE {
+        ?varnode a opcua:VariableNodeClass .
+        ?parentnode ?prop ?varnode .
+        ?prop rdfs:subClassOf* opcua:HasComponent .
+        ?parentnode a ?nodeclass .
+        ?parentnode base:hasBrowseName ?parentbn .
+        ?parentnode base:hasNamespace ?parentns .
+        ?parentnode base:definesType ?parenttype .
+        ?parentns base:hasUri ?parenturi .
+        ?varnode base:hasBrowseName ?instancebn .
+        ?varnode base:hasBrowseNameNamespace ?instancebnns .
+        ?varnode a ?vartype .
+        ?instancebnns base:hasUri ?instancebnuri .
+
+        FILTER(?nodeclass = opcua:ObjectTypeNodeClass || ?nodeclass = opcua:VariableTypeNodeClass)
+        FILTER(?vartype != opcua:VariableNodeClass)
+        }
+        """
+        query_result = self.g.query(not_needed_property_query, initNs=self.rdf_ns)
+        for parentbn, parenturi, varnode, vartype, instancebn, instancebnuri, parenttype in query_result:
+            hash_value = utils.vartype_to_hash(vartype, parenttype)
+            typename = URIRef(f"{parenturi}{hash_value}")
+            self.add_semantic_variable_type(typename)
+            self.g.add((varnode, self.rdf_ns['base']['definesVarSubType'], typename))
+            self.g.add((typename, RDFS.subClassOf, vartype))
+            #self.g.add((typename, self.rdf_ns['base']['hasParentContext'], parenttype))
+
+    def add_semantic_bridge_for_non_typed_instance_declarations(self):
+        """Add semantic relationships for variables whose parents
+           are no type nodes. These variable do not define a type themselves,
+           but need to determine their semantic type based on their parents and their own type.
+
+        This function executes a SPARQL query to find all variables and provide parent type and BN.
+
+        """
+        not_needed_property_query = """
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+        SELECT  ?varNode ?varSubType
+        WHERE {
+            ?varNode a opcua:VariableNodeClass .
+            FILTER NOT EXISTS{ ?varNode base:definesVarSubType ?node .}
+            # Get parent and parentType
+            ?parentNode ?prop ?varNode .
+            ?prop rdfs:subPropertyOf* opcua:Aggregates .
+            ?parentNode a ?parentType .
+            ?parentTypeNode base:definesType ?parentType .
+            # Get semantic bridge for the parent/var relationship
+            ?parentNode ?semprop ?varNode .
+            ?semprop rdfs:subPropertyOf* base:SemanticBridgeReferenceType .
+            ?parentTypeNode ?semprop ?typeVarNode .
+            # We have the corresponding typevar node
+            ?typeVarNode base:definesVarSubType ?varSubType .
+        }
+        """
+        query_result = self.g.query(not_needed_property_query, initNs=self.rdf_ns)
+        for var_node, var_sub_type in query_result:
+            self.g.add((var_node, self.rdf_ns['base']['hasVarSubType'], var_sub_type))
 
     def get_all_node_ids(self):
         query_result = self.ig.query(query_nodeIds, initNs=self.rdf_ns)
