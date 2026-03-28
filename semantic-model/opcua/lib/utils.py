@@ -89,6 +89,39 @@ MACHINERY = Namespace('http://opcfoundation.org/UA/Machinery/')
 ngsild_context = "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld"
 
 
+def get_class_and_property_hierarchy(graph, basens):
+    """
+    Get the class and property hierarchy of the graph. E.g. all what is owl:Class, rdfs:subClassOf, owl:ObjectProperty, rdfs:subPropertyOf, etc.
+    """
+    schema = Graph(store="Oxigraph")
+    # All class declarations
+    for s, p, o in graph.triples((None, RDF.type, OWL.Class)):
+        schema.add((s, p, o))
+    # subClassOf hierarchy
+    for s, p, o in graph.triples((None, RDFS.subClassOf, None)):
+        schema.add((s, p, o))
+    # subPropertyOf hierarchy
+    for s, p, o in graph.triples((None, RDFS.subPropertyOf, None)):
+        schema.add((s, p, o))
+    for s, p, o in graph.triples((None, RDF.type, OWL.ObjectProperty)):
+        schema.add((s, p, o))
+    for s, p, o in graph.triples((None, RDF.type, OWL.DatatypeProperty)):
+        schema.add((s, p, o))
+    for s, p, o in graph.triples((None, RDF.type, basens['Namespace'])):
+        schema += copy_namespace(graph, s)
+    return schema
+
+
+def copy_namespace(graph, nsnode):
+    schema = Graph(store="Oxigraph")
+    if (nsnode, None, None) not in graph:
+        return
+    for s, p, o in graph.triples((nsnode, None, None)):
+        schema.add((s, p, o))
+    return schema
+
+
+
 def vartype_to_hash(vartype, parenttype):
     full_name = f'{{"vartype"="{vartype}"'\
                 f'"parenttype"="{parenttype}"}}'.encode('utf-8')

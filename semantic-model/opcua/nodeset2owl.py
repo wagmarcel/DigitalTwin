@@ -22,6 +22,7 @@ from rdflib import Graph, URIRef
 import argparse
 from lib.nodesetparser import NodesetParser
 import lib.utils as utils
+import time
 
 
 def parse_args(args=sys.argv[1:]):
@@ -111,10 +112,13 @@ if __name__ == '__main__':
     print("Parsing nodesets and build OWL graph ...")
     nodesetparser.parse()
     if not args.disable_semantic_bridge:
-        print("Adding semantic relationships...")
+        print("Adding semantic relationships", end="")
         nodesetparser.add_semantic_bridge()
+        print(".", end="")
         nodesetparser.add_semantic_bridge_for_typed_instance_declarations()
+        print(".", end="")
         nodesetparser.add_semantic_bridge_for_non_typed_instance_declarations()
+        print(".")
     if not args.enforce_opcua_type_semantic:
         print("Cleaning up types of nodeIds ...")
         utils.replace_type_of_node_iris(nodesetparser.g,

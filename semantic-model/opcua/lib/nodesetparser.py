@@ -135,8 +135,10 @@ class NodesetParser:
         self.known_ns_classes = {
             'http://opcfoundation.org/UA/': URIRef('http://opcfoundation.org/UA/OPCUANamespace')
         }
-        self.g = Graph(store="Oxigraph")
-        self.ig = Graph(store="Oxigraph")
+        #self.g = Graph(store="Oxigraph")
+        #self.ig = Graph(store="Oxigraph")
+        self.g = Graph()
+        self.ig = Graph()
         self.nodeIds = [{}]
         self.typeIds = [{}]
         self.opcua_ns = ['http://opcfoundation.org/UA/']
@@ -262,13 +264,18 @@ Please set it explictly.")
             ?bnn base:hasUri ?nsuri .
         }
         """
-        joint_graph = self.g + self.ig
+        joint_graph = Graph(store="Oxigraph")
+        tbox_of_ig = utils.get_class_and_property_hierarchy(self.ig, self.rdf_ns['base'])
+        joint_graph += self.g + tbox_of_ig
+        #joint_graph = self.g + self.ig
         root_property = self.rdf_utils.get_root_property_of_semantic_bridge()
         bindings = {'root_property': root_property}
         query_result = joint_graph.query(not_needed_property_query, initNs=self.rdf_ns, initBindings=bindings)
+        numberofresults = 0
         for s, sbc, o, bn, nsuri in query_result:
             if ((s, sbc, o) in self.g) is False:
                 continue
+            numberofresults += 1
             targetns = Namespace(str(nsuri))
             targetreference = targetns[urllib.parse.quote(f'{attribute_prefix}{bn}')]
             self.g.add((s, targetreference, o))
@@ -303,32 +310,36 @@ Please set it explictly.")
         This function executes a SPARQL query to find all variables and provide parent type and BN.
 
         """
-        not_needed_property_query = """
+        variables_query = """
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-
         SELECT ?parentbn ?parenturi ?varnode ?vartype ?instancebn ?instancebnuri ?parenttype
         WHERE {
-        ?varnode a opcua:VariableNodeClass .
-        ?parentnode ?prop ?varnode .
-        ?prop rdfs:subClassOf* opcua:HasComponent .
-        ?parentnode a ?nodeclass .
-        ?parentnode base:hasBrowseName ?parentbn .
-        ?parentnode base:hasNamespace ?parentns .
-        ?parentnode base:definesType ?parenttype .
-        ?parentns base:hasUri ?parenturi .
-        ?varnode base:hasBrowseName ?instancebn .
-        ?varnode base:hasBrowseNameNamespace ?instancebnns .
-        ?varnode a ?vartype .
-        ?instancebnns base:hasUri ?instancebnuri .
+            ?varnode a opcua:VariableNodeClass .
+            ?parentnode ?prop ?varnode .
+            ?prop rdfs:subPropertyOf* opcua:Aggregates .
+            ?parentnode a ?nodeclass .
+            ?parentnode base:hasBrowseName ?parentbn .
+            ?parentnode base:hasNamespace ?parentns .
+            ?parentnode base:definesType ?parenttype .
+            ?parentns base:hasUri ?parenturi .
+            ?varnode base:hasBrowseName ?instancebn .
+            ?varnode base:hasBrowseNameNamespace ?instancebnns .
+            ?varnode a ?vartype .
+            ?instancebnns base:hasUri ?instancebnuri .
 
-        FILTER(?nodeclass = opcua:ObjectTypeNodeClass || ?nodeclass = opcua:VariableTypeNodeClass)
-        FILTER(?vartype != opcua:VariableNodeClass)
+            FILTER(?nodeclass = opcua:ObjectTypeNodeClass || ?nodeclass = opcua:VariableTypeNodeClass)
+            FILTER(?vartype != opcua:VariableNodeClass)
         }
         """
-        query_result = self.g.query(not_needed_property_query, initNs=self.rdf_ns)
+        joint_graph = Graph(store="Oxigraph")
+        tbox_of_ig = utils.get_class_and_property_hierarchy(self.ig, self.rdf_ns['base'])
+        joint_graph += self.g + tbox_of_ig
+        query_result = joint_graph.query(variables_query, initNs=self.rdf_ns)
         for parentbn, parenturi, varnode, vartype, instancebn, instancebnuri, parenttype in query_result:
+            if str(parenturi) != str(self.ontology_name):
+                continue
             hash_value = utils.vartype_to_hash(vartype, parenttype)
             typename = URIRef(f"{parenturi}{hash_value}")
             self.add_semantic_variable_type(typename)
@@ -366,7 +377,10 @@ Please set it explictly.")
             ?typeVarNode base:definesVarSubType ?varSubType .
         }
         """
-        query_result = self.g.query(not_needed_property_query, initNs=self.rdf_ns)
+        joint_graph = Graph(store="Oxigraph")
+        tbox_of_ig = utils.get_class_and_property_hierarchy(self.ig, self.rdf_ns['base'])
+        joint_graph += self.g + tbox_of_ig
+        query_result = joint_graph.query(not_needed_property_query, initNs=self.rdf_ns)
         for var_node, var_sub_type in query_result:
             self.g.add((var_node, self.rdf_ns['base']['hasVarSubType'], var_sub_type))
 
