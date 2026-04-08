@@ -122,9 +122,10 @@ def copy_namespace(graph, nsnode):
 
 
 
-def vartype_to_hash(vartype, parenttype):
-    full_name = f'{{"vartype"="{vartype}"'\
-                f'"parenttype"="{parenttype}"}}'.encode('utf-8')
+def vartype_to_hash(parenttype, instancebn, instancebnuri):
+    fullbn = f'{instancebnuri}{instancebn}'
+    full_name = f'{{"parenttype"="{parenttype}"'\
+                f'"fullbn"="{fullbn}"}}'.encode('utf-8')
     hash_value = hashlib.sha256(full_name).hexdigest()
     return hash_value
 
@@ -591,6 +592,37 @@ def get_rank_dimensions(graph, node, typenode, templatenode, basens, opcuans):
         else:
             array_dimensions = type_array_dimensions
     return value_rank, array_dimensions
+
+
+def diff_rank_dimensions(graph, node, typenode, basens):
+    """
+    Compare the value rank and array dimensions of an instance node with its type definition.
+    Returns True if there is a difference, False otherwise.
+    """
+    value_rank = next(graph.objects(node, basens['hasValueRank']), None)
+    array_dimensions = next(graph.objects(node, basens['hasArrayDimensions']), None)
+    type_value_rank = None # next(graph.objects(typenode, basens['hasValueRank']), None) if typenode is not None else None
+    type_array_dimensions = None # next(graph.objects(typenode, basens['hasArrayDimensions']), None) \
+        #if typenode is not None else None
+    # get last defined rank_value from type_value_rank
+    search_node = typenode
+    while type_value_rank is None and search_node is not None:
+        search_node = next(graph.objects(search_node, RDFS.subClassOf), None)
+        if search_node is not None:
+            type_value_rank = next(graph.objects(search_node, basens['hasValueRank']), None)
+    # get last defined array_dimensions
+    search_node = typenode
+    while type_array_dimensions is None and search_node is not None:
+        search_node = next(graph.objects(search_node, RDFS.subClassOf), None)
+        if search_node is not None:
+            type_array_dimensions = next(graph.objects(search_node, basens['hasArrayDimensions']), None)
+    array_dimension_list = collection_to_list(array_dimensions, graph)
+    type_array_dimension_list = collection_to_list(type_array_dimensions, graph)
+    if value_rank is not None and value_rank != type_value_rank:
+        return True
+    if array_dimension_list is not None and array_dimension_list != type_array_dimension_list:
+        return True
+    return False
 
 
 def extract_subgraph(graph, start_node, predicates=None):

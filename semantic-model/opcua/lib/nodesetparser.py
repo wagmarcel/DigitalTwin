@@ -340,12 +340,13 @@ Please set it explictly.")
         for parentbn, parenturi, varnode, vartype, instancebn, instancebnuri, parenttype in query_result:
             if str(parenturi) != str(self.ontology_name):
                 continue
-            hash_value = utils.vartype_to_hash(vartype, parenttype)
-            typename = URIRef(f"{parenturi}{hash_value}")
-            self.add_semantic_variable_type(typename)
-            self.g.add((varnode, self.rdf_ns['base']['definesVarSubType'], typename))
-            self.g.add((typename, RDFS.subClassOf, vartype))
-            #self.g.add((typename, self.rdf_ns['base']['hasParentContext'], parenttype))
+            if utils.diff_rank_dimensions(joint_graph, varnode, vartype, self.rdf_ns['base']):
+                hash_value = utils.vartype_to_hash(parenttype, instancebn, instancebnuri)
+                typename = URIRef(f"{parenturi}{hash_value}")
+                self.add_semantic_variable_type(typename)
+                self.g.add((varnode, self.rdf_ns['base']['definesVarSubType'], typename))
+                self.g.add((typename, RDFS.subClassOf, vartype))
+                #self.g.add((typename, self.rdf_ns['base']['hasParentContext'], parenttype))
 
     def add_semantic_bridge_for_non_typed_instance_declarations(self):
         """Add semantic relationships for variables whose parents
