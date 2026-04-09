@@ -368,18 +368,24 @@ a loop.")
             return False
         shacl_rule['is_property'] = True
         shaclg.get_shacl_iri_and_contentclass(g, o, node, shacl_rule)
-        shacl_node = shaclg.create_shacl_property(shapename,
-                                                  shacl_rule['path'],
-                                                  shacl_rule['optional'],
-                                                  shacl_rule['array'],
-                                                  True, shacl_rule['is_iri'],
-                                                  shacl_rule['contentclass'],
-                                                  shacl_rule['datatype'],
+        main_shape_iri, sub_shape_iri, is_subtype = shaclg.create_variable_type_shape_iri(g, o)
+        shacl_node = shaclg.create_shacl_property_variable(shapename=shapename,
+                                                  path=shacl_rule['path'],
+                                                  optional=shacl_rule['optional'],
+                                                  is_array=shacl_rule['array'],
+                                                  is_iri=shacl_rule['is_iri'],
+                                                  contentclass=shacl_rule['contentclass'],
+                                                  datatype=shacl_rule['datatype'],
+                                                  browse_name=browse_name,
                                                   pattern=shacl_rule['pattern'],
                                                   value_rank=shacl_rule.get('value_rank'),
                                                   array_dimensions=shacl_rule.get('array_dimensions'),
-                                                  reftype=reftype)
+                                                  reftype=reftype,
+                                                  variable_shape_iri=main_shape_iri,
+                                                  subvariable_shape_iri=sub_shape_iri,
+                                                  is_variable_subtype=is_subtype)
         if shacl_node is not None:
+            shaclg.add((shapename, SH.property, shacl_node))
             if shacl_rule['datatype'] != opcuans['NodeId']:
                 e.add_enum_class(g, shacl_rule['contentclass'])
             components_found = scan_type(o, classtype, shacl_node)
@@ -549,7 +555,8 @@ def scan_entity_recursive(node, id, instance, node_id, o, type=None, is_property
     shacl_rule['optional'] = optional
     shacl_rule['array'] = array
     datasetId = None
-
+    # Placeholders can be part of a Variable or Object NodeClass.
+    # Therefore detect it here before we branch into variable and object processing.
     try:
         expanded_type = utils.expand_term(context_graph, instance['type'])
         is_placeholder = shaclg.is_placeholder(expanded_type, attributename)
@@ -563,7 +570,8 @@ will flag this.")
             datasetId = "@none"
         else:
             datasetId = rdfutils.get_semantic_bridge(g, node, o)
-
+    # Now process objects and variables separately
+    # First, check objects
     if rdfutils.isObjectNodeClass(nodeclass):
         shacl_rule['is_property'] = False
         relid = scan_entity(o, classtype, id, shacl_rule['optional'])
@@ -584,6 +592,7 @@ will flag this.")
         if not shacl_rule['optional']:
             has_components = True
             shacl_rule['contentclass'] = classtype
+    # Now check variables
     elif rdfutils.isVariableNodeClass(nodeclass):
         shacl_rule['is_property'] = True
         shaclg.get_shacl_iri_and_contentclass(g, o, node, shacl_rule)

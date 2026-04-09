@@ -49,6 +49,9 @@ class Shacl:
         self.shaclg.add((shapename, SH.targetClass, URIRef(targetclass)))
         return shapename
 
+    def add(self, triple):
+        self.shaclg.add(triple)
+
     def create_shacl_property_name(self, value_rank, array_dimensions, datatype, contentclass=None):
         """
         Generates a SHACL property name (as a URIRef) based on the provided value rank, array dimensions, and datatype.
@@ -87,6 +90,36 @@ class Shacl:
         shapename = self.shacl_namespace[name]
         return shapename
 
+    def create_variable_type_shape_iri(self, g: Graph, node: URIRef):
+        """
+        Generates a SHACL property name (as a URIRef) for the sub-variable type of
+        the current node. It first will lookup whether the node has base:definesVarSubType or 
+        base:hasVarSubType elements. This will be the foundation of the name. If not, it will
+        fallback to the variable type name
+
+        Args:
+            g (Graph): The RDF graph containing the node and its properties
+            node (URIRef): The RDF node for which to generate the variable type shape name
+        Returns:
+            rdflib.term.URIRef: The generated SHACL property name as a URIRef within the SHACL namespace.
+
+        Notes:
+           
+        """
+        # Create a string by joining all elements with "_"
+        is_subtype_definition = False
+        var_subtype = next(g.objects(node, self.basens['definesVarSubType']), None)
+        if var_subtype is None:
+            var_subtype = next(g.objects(node, self.basens['hasVarSubType']), None)
+        else:
+            is_subtype_definition = True
+        var_maintype = next((obj for obj in g.objects(node, RDF.type) if obj != self.opcuans['VariableNodeClass']), None)
+        sub_shapename = None
+        if var_subtype is not None:
+            sub_shapename = self.create_shacl_type(var_subtype)
+        main_shapename = self.create_shacl_type(var_maintype)
+        return main_shapename, sub_shapename, is_subtype_definition
+    
     def get_array_validation_shape(self, datatype, pattern, value_rank, array_dimensions):
         """Create Shape for Array
            Example: "@list": [1] is translated to RDF like a linked list:
@@ -218,7 +251,8 @@ class Shacl:
         minCount = 1
         if optional:
             minCount = 0
-        self.shaclg.add((shapename, SH.property, property))
+        if shapename is not None:
+            self.shaclg.add((shapename, SH.property, property))
         self.shaclg.add((property, SH.path, path))
         self.shaclg.add((property, SH.nodeKind, SH.BlankNode))
         self.shaclg.add((property, SH.minCount, Literal(minCount)))
@@ -265,6 +299,78 @@ class Shacl:
                 self.shaclg.add((property, RDF.type, self.basens['SubComponentRelationship']))
             else:
                 self.shaclg.add((property, RDF.type, self.basens['PeerRelationship']))
+        return property
+
+    def create_shacl_property_variable(self,
+                              shapename,
+                              path,
+                              optional,
+                              is_array,
+                              is_iri,
+                              contentclass,
+                              datatype,
+                              browse_name,
+                              pattern=None,
+                              value_rank=-1,
+                              array_dimensions=None,
+                              reftype=None,
+                              maxCount=1,
+                              variable_shape_iri=None,
+                              subvariable_shape_iri=None,
+                              is_variable_subtype=False
+                              ):
+        """
+        Similar to create_shacl_property, but creates a property shape with a variable name based on the value rank, datatype and array dimensions.
+        """
+        if optional is None:
+            # No modeeling rule provided
+            # So igore the property
+            return None
+        assert(variable_shape_iri is not None)
+        property = BNode()
+        minCount = 1
+        if optional:
+            minCount = 0
+        if shapename is not None:
+            self.shaclg.add((shapename, SH.property, property))
+        self.shaclg.add((property, SH.path, path))
+        self.shaclg.add((property, SH.nodeKind, SH.BlankNode))
+        self.shaclg.add((property, SH.minCount, Literal(minCount)))
+        if reftype is not None:
+            self.shaclg.add((property, self.basens['hasReferenceType'], reftype))
+        if not is_array and maxCount is not None:
+            self.shaclg.add((property, SH.maxCount, Literal(maxCount)))
+        #if int(value_rank) == -2 and datatype is None and array_dimensions is None:
+        #    pass
+        if not self.value_rank_subshapes_enabled:
+            # Only create the shape if it is not already known or if subshapes are disabled
+            shapes = self.get_ngsild_property_constraints(value_rank,
+                                                            array_dimensions,
+                                                            datatype,
+                                                            pattern,
+                                                            is_iri,
+                                                            contentclass)
+            tuples = self.shacl_or(shapes)
+            if not self.value_rank_subshapes_enabled:
+                self.shacl_add_to_shape(property, tuples)
+        else:
+            #shape_name = self.create_shacl_property_name(value_rank, array_dimensions, datatype, contentclass)
+            #shapename_is_known = (shape_name, RDF.type, SH.NodeShape) in self.shaclg
+            if subvariable_shape_iri is not None:
+                self.shaclg.add((property, SH['node'], subvariable_shape_iri))
+                self.shaclg.add((subvariable_shape_iri, SH['node'], variable_shape_iri))
+            else:
+                self.shaclg.add((property, SH['node'], variable_shape_iri))
+            if is_variable_subtype:
+                # if shape is not known, it must have been created above so, reference it
+                shapes = self.get_ngsild_property_constraints(value_rank,
+                                                            array_dimensions,
+                                                            datatype,
+                                                            pattern,
+                                                            is_iri,
+                                                            contentclass)
+                tuples = self.shacl_or(shapes)
+                self.add_value_rank_shape(subvariable_shape_iri, tuples, value_rank, array_dimensions, datatype)
         return property
 
     def add_value_rank_shape(self, shape_name, tuples, value_rank, array_dimensions, datatype):
