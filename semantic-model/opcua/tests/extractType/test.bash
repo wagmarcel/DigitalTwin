@@ -36,6 +36,7 @@ if [ "$DEBUG" = "true" ]; then
     DEBUG_CMDLINE="-m debugpy --listen 5678"
 fi
 TESTNODESETS=(
+    test_variable_type_subclasses,,,,"--type-all;-eid;-vrs"
     test_full_id.Nodeset2,http://example.org/MinimalNodeset/ObjectType,,,,,,http://example.org/FullId/
     test_eid_switch.NodeSet2,,,,"--type-all;-eid"
     test_type_all_switch.NodeSet2,,,,--type-all
@@ -217,7 +218,11 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
     fi
     if [ "$DEBUG" = "true" ]; then
         echo DEBUG: python3 ${NODESET2OWL} ${nodeset}.xml -i ${IMPORTS[@]} ${INSTANCENAMESPACE[@]} -v http://example.com/v0.1/UA/ -p test -o ${NODESET2OWL_RESULT}
-        echo DEBUG: python3 ${EXTRACTTYPE} ${INSTANCETYPEOPTION} -n ${THETESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${OPTIONS_ARR[@]}
+        if [ -z "$instancetype" ]; then
+            echo python3 ${EXTRACTTYPE}  -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${OPTIONS_ARR[@]} 2>&1 | tee output.log
+        else
+            echo python3 ${EXTRACTTYPE} -t ${instancetype} -n ${THETESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${OPTIONS_ARR[@]} 2>&1 | tee output.log
+    fi
     fi
     echo Create owl nodesets
     echo -------------------

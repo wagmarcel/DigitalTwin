@@ -548,22 +548,31 @@ def get_type_and_template(g, node, parentnode, basens, opcuans):
         node (RDFURIRef): node to derive type and template
         parentnode (RDFURIRef): parent
     """
-    query_type_and_template = """
+    parent_block = ""
+    parent_bind = ""
+
+    # Search only for parent node if it exists
+    if parentnode is not None:
+        parent_bind = f"BIND(<{parentnode}> as ?parentnode)"
+        parent_block = """
+            OPTIONAL {
+                ?parentnode a ?parenttype .
+                ?parenttypenode base:definesType ?parenttype .
+                ?parenttypenode opcua:HasComponent ?templatenode .
+                ?templatenode base:hasBrowseName ?browsename .
+            }
+        """
+    query_type_and_template = f"""
     SELECT ?vartypenode ?templatenode WHERE {{
         BIND(<{node}> as ?node)
-        BIND(<{parentnode}> as ?parentnode)
+        {parent_bind}
         ?node a ?vartype .
         ?vartypenode base:definesType ?vartype .
-        FILTER NOT EXISTS{{ ?vartype rdfs:subClassOf opcua:BaseNodeClass}}
+        FILTER NOT EXISTS {{ ?vartype rdfs:subClassOf opcua:BaseNodeClass }}
         ?node base:hasBrowseName ?browsename .
-        OPTIONAL{{
-            ?parentnode a ?parenttype .
-            ?parenttypenode base:definesType ?parenttype .
-            ?parenttypenode opcua:HasComponent ?templatenode .
-            ?templatenode base:hasBrowseName ?browsename.
-        }}
+        {parent_block}
     }}
-    """.format(node=node, parentnode=parentnode)
+    """
     result = g.query(query_type_and_template, initNs={'base': basens, 'opcua': opcuans})
     typenode, templatenode = next(iter(result), (None, None))
     return typenode, templatenode
@@ -835,6 +844,9 @@ class RdfUtils:
     def isVariableNodeClass(self, type):
         return type == self.opcuans['VariableNodeClass']
 
+    def isVariableTypeNodeClass(self, type):
+        return type == self.opcuans['VariableTypeNodeClass']
+    
     def get_type(self, g, node):
         try:
             bindings = {'node': node}
@@ -851,6 +863,21 @@ class RdfUtils:
         except:
             print(f"Warning: Could not find nodeclass of class node {node}. This should not happen")
             return None, None
+
+    def get_type_definition_node(self, g, node):
+        """
+        Get the type definition node for a given node.
+
+        Args:
+            g (Graph): Graph containing the type definitions.
+            node (URIRef): Node for which to find the type definition.
+
+        Returns:
+            URIRef: Type definition node or None if not found.
+        """
+        _, typeiri = self.get_type(g, node)
+        typenode = next(g.subjects(self.basens['definesType'], typeiri), None)
+        return typenode
 
     def get_interfaces(self, g, node):
         """Get all interfaces with their corresponding typenodes

@@ -82,7 +82,6 @@ This test will check the variable sub-types. OPC UA variables can have subtypes 
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=1004</Reference>
-      <Reference ReferenceType="HasComponent">ns=1;i=1008</Reference>
       <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObject>
@@ -139,6 +138,15 @@ This test will check the variable sub-types. OPC UA variables can have subtypes 
     <DisplayName>Variable of B-object</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1002</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=1012" BrowseName="1:Var3" DataType="Boolean" ValueRank="1">
+    <DisplayName>Variable of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1010</Reference>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1005</Reference>
       <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
@@ -175,6 +183,13 @@ This test will check the variable sub-types. OPC UA variables can have subtypes 
     <DisplayName>Variable of B-object</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1010</Reference>
+    </References>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=2015" BrowseName="1:Var3" DataType="Boolean" ValueRank="-1">
+    <DisplayName>Variable of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1010</Reference>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=2012</Reference>
     </References>
   </UAVariable>
 </UANodeSet>

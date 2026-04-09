@@ -254,9 +254,27 @@ def scan_type(node, instancetype, shape_node=None):
     supertypes = rdfutils.get_all_supertypes_and_interfaces(g, instancetype, node)
     # Loop through all components
     if shape_node is None:
-        shapename = shaclg.create_shacl_type(instancetype)
+        shapename = shaclg.create_shacl_type(instancetype, add_metadata=False)
+        shape_is_new = not shaclg.is_shapename_existing(shapename)
+        if shape_is_new:
+            shaclg.create_shacl_type(instancetype)
     else:
         shapename = shape_node
+
+    # In case of varible types, we have to add the shape for rankvalue and array dimenstions, etc.
+    nodeclass, _ = rdfutils.get_type(g, node)
+    if rdfutils.isVariableTypeNodeClass(nodeclass) and shape_is_new:
+        shacl_rule = {}
+        shaclg.get_shacl_iri_and_contentclass(g, node, None, shacl_rule)
+        shapes = shaclg.get_ngsild_property_constraints(value_rank=shacl_rule.get('value_rank'),
+                                                            array_dimensions=shacl_rule.get('array_dimensions'),
+                                                            datatype=shacl_rule.get('datatype'),
+                                                            pattern=shacl_rule.get('pattern'),
+                                                            is_iri=shacl_rule.get('is_iri'),
+                                                            contentclass=shacl_rule.get('contentclass'))
+        tuples = shaclg.shacl_or(shapes)
+        shaclg.shacl_add_to_shape(shapename, tuples)
+    # Now process subcomponents generically
     has_components = False
     for (curtype, curnode) in supertypes:
         children = rdfutils.get_all_subreferences(g, curnode, opcuans['HasChild'])
@@ -330,12 +348,13 @@ a loop.")
         # Now, get the type node. Do not recurse on the instance declaration
         # instance declarations might contain references which are not normative
         # for the type node
-        _, typeiri = rdfutils.get_type(g, o)
-        try:
-            typenode = next(g.subjects(basens['definesType'], typeiri))
-            o = typenode
-        except:
-            pass
+        o = rdfutils.get_type_definition_node(g, o)
+        #_, typeiri = rdfutils.get_type(g, o)
+        #try:
+        #    typenode = next(g.subjects(basens['definesType'], typeiri))
+        #    o = typenode
+        #except:
+        #    pass
         components_found = scan_type(o, classtype)
         if maximal_shacl:
             components_found = True
@@ -368,7 +387,7 @@ a loop.")
             return False
         shacl_rule['is_property'] = True
         shaclg.get_shacl_iri_and_contentclass(g, o, node, shacl_rule)
-        main_shape_iri, sub_shape_iri, is_subtype = shaclg.create_variable_type_shape_iri(g, o)
+        main_shape_iri, sub_shape_iri, is_subtype = shaclg.get_variable_type_and_subtypes(g, o)
         shacl_node = shaclg.create_shacl_property_variable(shapename=shapename,
                                                   path=shacl_rule['path'],
                                                   optional=shacl_rule['optional'],
@@ -381,14 +400,17 @@ a loop.")
                                                   value_rank=shacl_rule.get('value_rank'),
                                                   array_dimensions=shacl_rule.get('array_dimensions'),
                                                   reftype=reftype,
-                                                  variable_shape_iri=main_shape_iri,
-                                                  subvariable_shape_iri=sub_shape_iri,
+                                                  variable_type=main_shape_iri,
+                                                  subvariable_type=sub_shape_iri,
                                                   is_variable_subtype=is_subtype)
         if shacl_node is not None:
             shaclg.add((shapename, SH.property, shacl_node))
             if shacl_rule['datatype'] != opcuans['NodeId']:
                 e.add_enum_class(g, shacl_rule['contentclass'])
-            components_found = scan_type(o, classtype, shacl_node)
+            # Get the type node of the variable node
+            o = rdfutils.get_type_definition_node(g, o)
+            #components_found = scan_type(o, classtype, shacl_node)
+            components_found = scan_type(o, classtype, None)
     return has_components
 
 
