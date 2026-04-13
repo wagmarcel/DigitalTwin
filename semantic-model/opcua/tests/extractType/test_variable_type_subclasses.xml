@@ -98,7 +98,7 @@ This test will check the variable sub-types. OPC UA variables can have subtypes 
       <Reference ReferenceType="HasSubtype" IsForward="false">ns=1;i=1002</Reference>
     </References>
   </UAObjectType>
-  <UAVariable NodeId="ns=1;i=1006" BrowseName="1:Var1" DataType="i=11" ValueRank="-1">
+  <UAVariable NodeId="ns=1;i=1006" BrowseName="1:Var1" ValueRank="-1" DataType="Boolean">
     <DisplayName>Variable of AType</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
@@ -127,7 +127,7 @@ This test will check the variable sub-types. OPC UA variables can have subtypes 
     <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
-  <UAVariableType NodeId="ns=1;i=1010" BrowseName="1:VariableSubType" DataType="Boolean" ValueRank="1" ArrayDimensions="1">
+  <UAVariableType NodeId="ns=1;i=1010" BrowseName="1:VariableSubType" DataType="Boolean" ValueRank="1">
     <DisplayName>Subtype of BaseDataVariable</DisplayName>
     <Description>A custom variable type with subtypes and value rank changes</Description>
     <References>
@@ -142,7 +142,7 @@ This test will check the variable sub-types. OPC UA variables can have subtypes 
       <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
-  <UAVariable NodeId="ns=1;i=1012" BrowseName="1:Var3" DataType="Boolean" ValueRank="1">
+  <UAVariable NodeId="ns=1;i=1012" BrowseName="1:Var3" DataType="Boolean" ValueRank="-1">
     <DisplayName>Variable of B-object</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1010</Reference>
